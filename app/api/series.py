@@ -248,6 +248,9 @@ def mark_read(series_id: int, before_book: int | None = None, db=Depends(get_db)
 
 @router.post("/series/{series_id}/mark-unread")
 def mark_unread(series_id: int, db=Depends(get_db)):
+    """Clear all progress; the series also drops out of Continue reading."""
+    s = get_or_404(db, Series, series_id)
+    s.last_read_at = None
     return _set_read(db, series_id, False)
 
 

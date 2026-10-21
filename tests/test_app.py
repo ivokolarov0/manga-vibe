@@ -156,6 +156,21 @@ def test_mark_unread_forgets_book(client):
     client.post(f"/api/series/{sid}/mark-unread")
 
 
+def test_mark_unread_removes_from_continue(client):
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    books = client.get(f"/api/series/{sid}/books").json()
+    client.put(f"/api/books/{books[0]['id']}/progress", json={"page": 3})
+    assert sid in [c["id"] for c in client.get("/api/continue-reading").json()]
+    client.post(f"/api/series/{sid}/mark-unread")  # "Mark all unread"
+    assert sid not in [c["id"] for c in client.get("/api/continue-reading").json()]
+
+    # unreading the only started book one by one also drops the series
+    client.put(f"/api/books/{books[1]['id']}/progress", json={"page": 2})
+    assert sid in [c["id"] for c in client.get("/api/continue-reading").json()]
+    client.put(f"/api/books/{books[1]['id']}/progress", json={"page": 0, "completed": False})
+    assert sid not in [c["id"] for c in client.get("/api/continue-reading").json()]
+
+
 def test_old_mangashelf_database_is_adopted(tmp_path, monkeypatch):
     import sqlite3
 
