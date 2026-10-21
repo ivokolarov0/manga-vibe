@@ -267,7 +267,7 @@ The owner can edit any metadata field by hand (titles, description, tags, status
 ### 7.6 Reading progress and status
 - Per-book progress (page, completed).
 - Series reading status: if the owner set one manually, use it; otherwise derive: no progress → Unread, some → Reading, all non-extra books completed → Completed.
-- **Continue Reading** view: series with in-progress books, most recent first, tapping goes straight into the reader.
+- **Continue Reading** view: series with in-progress books, most recent first, tapping opens the series page, where its Continue button resumes reading.
 - Optional later: sync progress to AniList (phase 6, needs AniList OAuth).
 
 ### 7.7 Needs attention
