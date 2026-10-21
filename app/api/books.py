@@ -88,6 +88,12 @@ def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
         # "mark unread": forget the book entirely, so Continue doesn't jump to it
         if p is not None:
             db.delete(p)
+            db.flush()
+            # nothing left read in the series: drop it from Continue reading
+            others = (db.query(Progress.id).join(Book, Book.id == Progress.book_id)
+                      .filter(Book.series_id == b.series_id).first())
+            if others is None:
+                db.get(Series, b.series_id).last_read_at = None
             db.commit()
         return {"page": 0, "completed": False}
     if p is None:

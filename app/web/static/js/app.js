@@ -469,7 +469,7 @@ function seriesView() {
         + (b.duplicate ? " · duplicate" : "");
     },
     async markAll(read) {
-      if (!read && !confirm("Clear progress for every book in this series?")) return;
+      if (!read && !confirm("Clear progress for every book in this series? It will also be removed from Continue reading.")) return;
       await api(`/api/series/${this.s.id}/${read ? "mark-read" : "mark-unread"}`, { method: "POST" });
       this.$store.app.libraryDirty++;
       this.reload();
