@@ -62,7 +62,7 @@
       <h2>Continue reading</h2>
       <div class="grid">
         <template x-for="s in items || []" :key="s.id">
-          <a class="card" :href="'#/read/' + s.continue.book_id">
+          <a class="card" :href="'#/series/' + s.id">
             <div class="poster"><img :src="s.poster" loading="lazy" alt="">
               <div class="bar"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div></div>
             <div class="card-title" x-text="s.title"></div>
