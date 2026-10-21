@@ -232,10 +232,18 @@
     grid-area: actions;
     display: grid;
     align-content: start;
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
 
     & .ctl {
       width: 100%;
+      min-width: 0;
+    }
+
+    /* long book titles: cut with an ellipsis instead of spilling out of the column */
+    & .ellipsis {
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
