@@ -679,6 +679,20 @@ function attentionView() {
       await api(`/api/series/${x.series_id}/ignore-match`, { method: "POST" });
       this.afterChange();
     },
+    rescanning: {},  // series id -> true while its rescan runs
+    async rescan(seriesId) {
+      if (this.rescanning[seriesId]) return;
+      this.rescanning = { ...this.rescanning, [seriesId]: true };
+      try {
+        const r = await api(`/api/series/${seriesId}/rescan`, { method: "POST" });
+        toast(r.removed ? "The series folder is gone, so the series was removed from the library"
+          : `Rescanned: ${r.books} files` + (r.errors ? `, ${r.errors} with errors` : ""));
+        this.afterChange();
+      } catch (e) { toast(e.message, 6000); } finally {
+        const { [seriesId]: _, ...rest } = this.rescanning;
+        this.rescanning = rest;
+      }
+    },
     afterChange() { refreshAttentionCount(); this.$store.app.libraryDirty++; },
     scoreCls,
   };
