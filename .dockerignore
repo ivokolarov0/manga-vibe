@@ -1,0 +1,9 @@
+.venv
+dev-data
+dev-library
+docker-data
+tests
+.git
+.claude
+**/__pycache__
+.pytest_cache

@@ -1,0 +1,217 @@
+/* Settings page: navigation on the left (a scrolling strip on phones), the chosen section on the right.
+   Each setting is a row with a divider, so a label and its control clearly belong together. */
+@layer pages {
+  .settings-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+
+    @media (min-width: 800px) {
+      grid-template-columns: 230px minmax(0, 1fr);
+      align-items: start;
+      gap: 24px;
+    }
+  }
+
+  .settings-nav {
+    position: sticky;
+    top: 55px;
+    z-index: 5;
+    display: flex;
+    gap: 6px;
+    margin: -12px -12px 0;
+    padding: 8px 12px;
+    overflow-x: auto;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+
+    & h4 {
+      display: none;
+    }
+
+    & button {
+      display: flex;
+      flex: none;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      font-size: 13px;
+      white-space: nowrap;
+
+      &.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-text);
+      }
+    }
+
+    & .ico {
+      width: 18px;
+      text-align: center;
+    }
+
+    & .count {
+      min-width: 20px;
+      padding: 0 6px;
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+
+      &.alert:not(.zero) {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      &.zero {
+        opacity: 0.5;
+      }
+    }
+
+    /* desktop: a real sidebar */
+    @media (min-width: 800px) {
+      top: 70px;
+      flex-direction: column;
+      gap: 2px;
+      margin: 0;
+      padding: 8px;
+      overflow: visible;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-panel);
+
+      & h4 {
+        display: block;
+        margin: 10px 10px 4px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+
+        &:first-child {
+          margin-top: 4px;
+        }
+      }
+
+      & button {
+        width: 100%;
+        padding: 9px 10px;
+        background: none;
+        border: 0;
+        border-radius: var(--radius);
+        font-size: 14px;
+        text-align: left;
+
+        &:hover {
+          background: var(--surface2);
+        }
+
+        &.active {
+          background: color-mix(in srgb, var(--accent) 18%, transparent);
+          color: var(--text);
+          font-weight: 600;
+        }
+
+        & .count {
+          margin-left: auto;
+        }
+      }
+    }
+  }
+
+  .settings-content {
+    min-width: 0;
+
+    & > section {
+      padding: 4px 16px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-panel);
+
+      & > h2 {
+        margin: 12px 0 6px;
+        font-size: 18px;
+      }
+
+      & > .muted {
+        margin: 4px 0 10px;
+      }
+    }
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 54px;
+    margin: 0 -16px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &:hover {
+      background: color-mix(in srgb, var(--surface2) 45%, transparent);
+    }
+
+    & .label {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+
+      & small {
+        color: var(--muted);
+        font-size: 12px;
+      }
+    }
+
+    & select {
+      min-width: 150px;
+    }
+  }
+
+  /* folder picker */
+  .folder-path {
+    padding: 8px 10px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    word-break: break-all;
+  }
+
+  .folder-list {
+    display: grid;
+    margin: 8px 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    & button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: none;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+
+      &:last-child {
+        border-bottom: 0;
+      }
+
+      &:hover {
+        background: var(--surface2);
+      }
+    }
+  }
+}

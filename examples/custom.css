@@ -1,0 +1,21 @@
+/*
+ * Example custom.css: copy the parts you like into docker/mangavibe/custom.css on the NAS.
+ * These rules sit outside the app's CSS layers, so they win without !important.
+ */
+
+/* 1. Change colours and sizes through the design tokens */
+:root {
+  --accent: #4f8cff;
+  --card: 120px;
+  --poster-width: 340px;
+}
+
+/* 2. Restyle one thing: bold titles under the library cards */
+.card-title {
+  font-weight: 600;
+}
+
+/* 3. Hide something you don't use, e.g. the "Plan to read" quick filter */
+.quick button:nth-child(5) {
+  display: none;
+}

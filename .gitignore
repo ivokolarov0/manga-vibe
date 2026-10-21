@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+dev-data/
+dev-library/
+.pytest_cache/
+docker-data/
+
+# exported Docker images (docker save) for the NAS: big, not source
+*.tar

@@ -1,0 +1,152 @@
+/* Library grid, poster cards, quick filters, active filter chips, filter/sort sheets. */
+@layer pages {
+  .quick {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .quick button,
+  .chip-btn {
+    padding: 4px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    font-size: 13px;
+    white-space: nowrap;
+
+    &.on {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-text);
+    }
+
+    &.ex {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+      text-decoration: line-through;
+    }
+  }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+
+    &.ex {
+      background: var(--danger);
+      color: #fff;
+    }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--card), 1fr));
+    gap: 12px 10px;
+  }
+
+  .card {
+    display: block;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 220px;
+
+    &.done .poster img {
+      opacity: 0.5;
+    }
+
+    & .poster {
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    @media (hover: hover) {
+      &:hover .poster {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+      }
+
+      &:hover .card-title {
+        color: var(--accent);
+      }
+    }
+  }
+
+  .poster {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    background: var(--surface2);
+    border-radius: var(--radius);
+
+    & img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 11px;
+    font-weight: 700;
+
+    &.done {
+      background: var(--ok);
+    }
+
+    &.status {
+      right: auto;
+      left: 4px;
+      background: rgba(0, 0, 0, 0.65);
+      font-weight: 600;
+    }
+  }
+
+  .bar {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.5);
+
+    & i {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+    }
+  }
+
+  .card-title {
+    display: -webkit-box;
+    margin-top: 5px;
+    overflow: hidden;
+    font-size: 13px;
+    line-height: 1.25;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .card-sub {
+    color: var(--muted);
+    font-size: 12px;
+
+    &.read {
+      color: var(--ok);
+    }
+
+    &.reading {
+      color: var(--accent);
+    }
+  }
+}

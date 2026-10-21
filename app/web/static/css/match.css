@@ -1,0 +1,30 @@
+/* Metadata match candidates (Fix match dialog and Needs Attention). */
+@layer components {
+  .cand {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+
+    & img {
+      flex: none;
+      width: 56px;
+      height: 80px;
+      object-fit: cover;
+      background: var(--surface2);
+      border-radius: 4px;
+    }
+
+    & .info {
+      flex: 1;
+      min-width: 0;
+      font-size: 13px;
+
+      & b {
+        display: block;
+        font-size: 15px;
+      }
+    }
+  }
+}

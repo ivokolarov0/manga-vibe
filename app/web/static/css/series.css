@@ -1,0 +1,542 @@
+/* Series page: poster + controls, titled panels, book list, files table. */
+@layer pages {
+  .series-view {
+    position: relative;
+  }
+
+  .sp-banner {
+    position: absolute;
+    top: 50px;
+    right: 0;
+    left: 0;
+    z-index: -1;
+    height: 280px;
+    background-position: center;
+    background-size: cover;
+    opacity: 0.28;
+    mask-image: linear-gradient(#000 40%, transparent);
+  }
+
+  /* phone: poster on the left; star / Edit / ⋯ above the title; controls below; then panels */
+  .sp {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto auto;
+    grid-template-areas:
+      "poster tools"
+      "poster head"
+      "actions actions"
+      "main main";
+    gap: 12px 14px;
+
+    /* desktop: big poster and controls on the left; title with the tools on its right; panels */
+    @media (min-width: 800px) {
+      grid-template-columns: var(--poster-width) minmax(0, 1fr) auto;
+      grid-template-rows: auto auto auto 1fr;
+      grid-template-areas:
+        "poster head tools"
+        "poster main main"
+        "actions main main"
+        ". main main";
+      gap: 16px 28px;
+    }
+  }
+
+  .sp-tools {
+    grid-area: tools;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    align-self: start;
+
+    @media (min-width: 800px) {
+      align-self: end;
+      margin-bottom: 6px;
+    }
+  }
+
+  /* round icon buttons: same height as the small "Edit" button, icon exactly centred */
+  .icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: var(--control-height-small);
+    height: var(--control-height-small);
+    padding: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+
+    &:hover {
+      border-color: var(--muted);
+    }
+
+    /* outline star; filled and yellow when it's a favorite */
+    &.star .icon {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linejoin: round;
+    }
+
+    &.star.on {
+      color: var(--warn);
+      border-color: var(--warn);
+
+      & .icon {
+        fill: currentColor;
+      }
+    }
+  }
+
+  /* inline SVG icons (no font glyphs: those sit off-centre) */
+  .icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+
+    &.dots {
+      fill: currentColor;
+    }
+  }
+
+  #edit-series .icon {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ⋯ dropdown */
+  .menu {
+    position: relative;
+  }
+
+  .menu-pop {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    display: grid;
+    min-width: 230px;
+    padding: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+
+    & button {
+      display: grid;
+      gap: 2px;
+      padding: 9px 10px;
+      background: none;
+      border: 0;
+      border-radius: var(--radius);
+      font-size: 14px;
+      text-align: left;
+
+      &:hover {
+        background: var(--surface2);
+      }
+
+      & small {
+        padding-left: 24px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+    }
+  }
+
+  /* small dialog: reading direction */
+  .modal > .small-dialog {
+    max-width: 420px;
+  }
+
+  .sp-poster {
+    position: relative;
+    grid-area: poster;
+    align-self: start;
+    padding: 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    /* "✎ Poster" appears on hover (desktop) */
+    & .poster-hint {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    &:hover .poster-hint,
+    &:focus-visible .poster-hint {
+      opacity: 1;
+    }
+
+    & img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      background: var(--surface2);
+      border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+    }
+  }
+
+  .sp-head {
+    grid-area: head;
+    align-self: end;
+    min-width: 0;
+
+    & h1 {
+      margin: 0 0 4px;
+      font-size: 22px;
+      line-height: 1.2;
+    }
+
+    @media (min-width: 800px) {
+      padding-top: 40px;
+
+      & h1 {
+        font-size: 30px;
+      }
+    }
+  }
+
+  .alt-titles {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .sp-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin: 6px 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .sp-actions {
+    grid-area: actions;
+    display: grid;
+    align-content: start;
+    gap: 8px;
+
+    & .ctl {
+      width: 100%;
+    }
+  }
+
+  .sp-main {
+    grid-area: main;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    gap: 14px;
+
+    & .stack {
+      display: grid;
+      align-content: start;
+      gap: 14px;
+    }
+
+    /* phone: the book list comes right after the description */
+    @media (max-width: 799px) {
+      & > * {
+        order: 2;
+      }
+
+      & > .about-panel {
+        order: 0;
+      }
+
+      & > .books-panel {
+        order: 1;
+      }
+    }
+
+    @media (min-width: 800px) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+      & .wide {
+        grid-column: 1 / -1;
+      }
+    }
+  }
+
+  .panel {
+    & .chips {
+      margin: 4px 0;
+    }
+
+    & .tabs {
+      margin-top: -4px;
+    }
+  }
+
+  .desc {
+    position: relative;
+    white-space: pre-line;
+
+    &.clamp {
+      max-height: 5.6em;
+      overflow: hidden;
+
+      &::after {
+        content: "";
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 2em;
+        background: linear-gradient(transparent, var(--surface));
+      }
+    }
+  }
+
+  .other-titles {
+    margin-top: 8px;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 16px;
+    font-size: 14px;
+
+    & b {
+      color: var(--muted);
+      font-weight: 500;
+    }
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    & a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 13px;
+    }
+  }
+
+  .site-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+  }
+
+  .chip.match-auto,
+  .chip.match-manual {
+    background: var(--ok);
+    color: #000;
+  }
+
+  .chip.match-failed {
+    background: var(--warn);
+    color: #000;
+  }
+
+  .books {
+    margin: 8px 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .book {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px 8px 8px;
+    border-bottom: 1px solid var(--border);
+    border-left: 4px solid transparent;
+    border-radius: 6px;
+
+    /* read: green edge and tint, check on the thumbnail */
+    &.read {
+      background: color-mix(in srgb, var(--ok) 9%, transparent);
+      border-left-color: var(--ok);
+
+      & .meta {
+        color: var(--ok);
+      }
+    }
+
+    /* started: accent edge and a progress bar */
+    &.reading {
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+      border-left-color: var(--accent);
+
+      & .meta {
+        color: var(--accent);
+      }
+    }
+
+    & .thumb {
+      position: relative;
+      flex: none;
+    }
+
+    & .done-mark {
+      position: absolute;
+      right: -4px;
+      bottom: -4px;
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--ok);
+      color: #000;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    & .manual-mark {
+      margin-left: 4px;
+      color: var(--warn);
+      font-size: 12px;
+    }
+
+    & .book-progress {
+      height: 4px;
+      margin-top: 5px;
+      overflow: hidden;
+      background: var(--surface2);
+      border-radius: 2px;
+
+      & i {
+        display: block;
+        height: 100%;
+        background: var(--accent);
+      }
+    }
+
+    & img {
+      flex: none;
+      width: 46px;
+      height: 66px;
+      object-fit: cover;
+      background: var(--surface2);
+      border-radius: 4px;
+    }
+
+    & .info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    & .label {
+      font-weight: 600;
+    }
+
+    & .meta {
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & .err {
+      font-size: 12px;
+    }
+
+  }
+
+  .file-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .manual-chip {
+    display: inline-block;
+    margin: 4px 0;
+    background: color-mix(in srgb, var(--warn) 25%, transparent);
+    color: var(--warn);
+  }
+
+  .override-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px 12px;
+    margin: 8px 0 4px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+
+    & label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 12px;
+
+      &.check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+        font-size: 14px;
+      }
+    }
+
+    & input[type="number"] {
+      width: 100%;
+      background: var(--surface);
+    }
+
+    & .muted,
+    & .checks,
+    & .btn-row {
+      grid-column: 1 / -1;
+      margin: 0;
+    }
+
+    & .checks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+    }
+  }
+
+  .files {
+    width: 100%;
+    border-collapse: collapse;
+
+    & td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    & .fname {
+      word-break: break-all;
+    }
+
+    & tr.hidden-row {
+      opacity: 0.55;
+    }
+  }
+}

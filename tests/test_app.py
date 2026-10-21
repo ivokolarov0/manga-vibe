@@ -1,0 +1,294 @@
+"""Scanner, archive reading and API smoke tests."""
+import shutil
+import time
+from pathlib import Path
+
+from tests.conftest import TMP
+
+
+def series_by_name(client):
+    return {s["title"]: s for s in client.get("/api/series").json()["items"]}
+
+
+def test_health(client):
+    assert client.get("/api/health").json() == {"ok": True}
+    assert (TMP / "data" / "mangavibe.db").exists()
+    assert (TMP / "data" / "covers").is_dir()
+
+
+def test_series_found_and_junk_ignored(client):
+    names = series_by_name(client)
+    assert set(names) == {"Hana to Akuma", "Series B", "Broken"}  # "Empty" is not a series
+
+
+def test_book_order_and_revisions(client):
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    books = client.get(f"/api/series/{sid}/books").json()
+    assert [b["label"] for b in books] == ["Vol 1 Ch 1", "Vol 1 Ch 3", "Ch 52", "Extra 2"]
+    assert books[1]["revision"] == 2
+    all_books = client.get(f"/api/series/{sid}/books?all=1").json()
+    hidden = [b["file_name"] for b in all_books if b["hidden"]]
+    assert hidden == ["Hana_to_Akuma_v01_ch03_[OT].zip"]
+
+
+def test_image_folder_book(client):
+    sid = series_by_name(client)["Series B"]["id"]
+    books = client.get(f"/api/series/{sid}/books").json()
+    assert len(books) == 1  # @eaDir ignored
+    assert books[0]["format"] == "folder" and books[0]["label"] == "Ch 5"
+    assert books[0]["page_count"] == 3
+
+
+def test_broken_file_reported(client):
+    sid = series_by_name(client)["Broken"]["id"]
+    books = client.get(f"/api/series/{sid}/books").json()
+    assert books[0]["error"]
+
+
+def test_pages_and_resize(client):
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    book = client.get(f"/api/series/{sid}/books").json()[0]
+    assert book["page_count"] == 10  # __MACOSX / Thumbs.db not counted
+    r = client.get(f"/api/books/{book['id']}/pages/0")
+    assert r.status_code == 200 and r.headers["content-type"] == "image/png"
+    assert "immutable" in r.headers["cache-control"]
+    r2 = client.get(f"/api/books/{book['id']}/pages/0", headers={"If-None-Match": r.headers["etag"]})
+    assert r2.status_code == 304
+    small = client.get(f"/api/books/{book['id']}/pages/1?w=200")
+    assert small.headers["content-type"] == "image/webp"
+    assert client.get(f"/api/books/{book['id']}/pages/99").status_code == 404
+    assert client.get(f"/api/books/{book['id']}/thumbnail").status_code == 200
+    assert client.get(f"/api/series/{sid}/poster").status_code == 200
+
+
+def test_progress_and_continue_reading(client):
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    books = client.get(f"/api/series/{sid}/books").json()
+    first = books[0]
+    client.put(f"/api/books/{first['id']}/progress", json={"page": 4})
+    cont = client.get("/api/continue-reading").json()
+    assert cont[0]["id"] == sid and cont[0]["continue"] == {
+        "book_id": first["id"], "page": 4, "label": "Vol 1 Ch 1", "page_count": 10}
+    assert series_by_name(client)["Hana to Akuma"]["reading_status"] == "reading"
+
+    r = client.put(f"/api/books/{first['id']}/progress", json={"page": 9}).json()
+    assert r["completed"] is True  # last page reached
+    info = client.get(f"/api/books/{first['id']}").json()
+    assert info["next"]["id"] == books[1]["id"]
+    assert client.get(f"/api/series/{sid}").json()["continue"]["book_id"] == books[1]["id"]
+
+    client.post(f"/api/series/{sid}/mark-read")
+    assert series_by_name(client)["Hana to Akuma"]["reading_status"] == "completed"
+    client.post(f"/api/series/{sid}/mark-unread")
+    assert series_by_name(client)["Hana to Akuma"]["unread_count"] == 4
+
+
+def test_incremental_rescan_and_missing(client):
+    from app.scanner import walker
+    hana = TMP / "manga" / "Hana to Akuma"
+    moved = TMP / "moved.zip"
+    shutil.move(hana / "[KnO]Hana_to_Akuma52.zip", moved)
+    walker.scan_all()
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    assert "Ch 52" not in [b["label"] for b in client.get(f"/api/series/{sid}/books").json()]
+    shutil.move(moved, hana / "[KnO]Hana_to_Akuma52.zip")
+    walker.scan_all()
+    assert "Ch 52" in [b["label"] for b in client.get(f"/api/series/{sid}/books").json()]
+
+
+def test_path_safety(client):
+    from fastapi import HTTPException
+
+    from app.api.common import ensure_inside_library
+    from app.db import SessionLocal
+    with SessionLocal() as db:
+        try:
+            ensure_inside_library(db, str(TMP / "manga" / ".." / "data" / "mangavibe.db"))
+            assert False, "should refuse"
+        except HTTPException as e:
+            assert e.status_code == 403
+
+
+def test_settings(client):
+    assert client.get("/api/settings").json()["reader_mode"] == "rtl"
+    client.put("/api/settings", json={"reader_mode": "vertical", "bogus": 1})
+    s = client.get("/api/settings").json()
+    assert s["reader_mode"] == "vertical" and "bogus" not in s
+
+
+def test_example_plugin(client):
+    from app.plugins import manager
+    from app.scanner import walker
+    plugin_dir = TMP / "data" / "plugins"
+    shutil.copy(Path(__file__).parent.parent / "examples" / "plugins" / "translation_groups.py",
+                plugin_dir)
+    (plugin_dir / "broken.py").write_text("raise RuntimeError('boom')")
+    data = client.post("/api/plugins/reload").json()
+    assert [p["id"] for p in data["plugins"]] == ["anilist", "mangaupdates", "translation-groups"]
+    assert "broken.py" in data["errors"]  # a broken plugin is reported, app keeps working
+
+    (TMP / "manga" / "Hana to Akuma" / "series.json").write_text(
+        '{"chapters": {"Hana_to_Akuma_Extra2.zip": 7}}')
+    time.sleep(0.01)
+    (TMP / "manga" / "Hana to Akuma" / "Hana_to_Akuma_Extra2.zip").touch()  # force re-read
+    walker.scan_all()
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    s = client.get(f"/api/series/{sid}").json()
+    assert {"label": "Translation groups", "value": "KnO, OT"}.items() <= s["plugin_fields"][0].items()
+    msg = client.post(f"/api/series/{sid}/actions/translation-groups/gaps").json()["message"]
+    assert "7 -> 52" in msg
+    labels = [b["label"] for b in client.get(f"/api/series/{sid}/books").json()]
+    assert labels == ["Vol 1 Ch 1", "Vol 1 Ch 3", "Ch 7", "Ch 52"]  # series.json fixed the extra
+    manager.disabled.add("translation-groups")
+    assert client.get(f"/api/series/{sid}").json()["actions"] == []
+    manager.disabled.clear()
+
+
+def test_mark_unread_forgets_book(client):
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    books = client.get(f"/api/series/{sid}/books").json()
+    client.put(f"/api/books/{books[0]['id']}/progress", json={"page": 3})
+    last = books[-1]["id"]
+    client.put(f"/api/books/{last}/progress", json={"page": 5, "completed": True})
+    client.put(f"/api/books/{last}/progress", json={"page": 0, "completed": False})  # "Unread" button
+    cont = client.get(f"/api/series/{sid}").json()["continue"]
+    assert cont["book_id"] == books[0]["id"] and cont["page"] == 3
+    client.post(f"/api/series/{sid}/mark-unread")
+
+
+def test_old_mangashelf_database_is_adopted(tmp_path, monkeypatch):
+    import sqlite3
+
+    from app import config, db
+    old = tmp_path / "mangashelf.db"
+    con = sqlite3.connect(old)
+    con.execute("CREATE TABLE marker (x)")
+    con.execute("INSERT INTO marker VALUES (42)")
+    con.commit()
+    con.close()
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path)
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "mangavibe.db")
+    db._adopt_old_database()
+    assert not old.exists() and (tmp_path / "mangavibe.db").exists()
+    assert sqlite3.connect(tmp_path / "mangavibe.db").execute("SELECT x FROM marker").fetchone() == (42,)
+    db._adopt_old_database()  # second start: nothing to do
+
+
+def test_manual_chapter_range_reorders_and_survives_rescan(client):
+    from app.scanner import walker
+    from tests.conftest import make_zip
+    folder = TMP / "manga" / "Odd Names"
+    make_zip(folder / "Odd Names ch05.zip")
+    make_zip(folder / "random_upload_final.zip")   # really chapters 10-18
+    make_zip(folder / "Odd Names ch20.zip")
+    walker.scan_all()
+    sid = series_by_name(client)["Odd Names"]["id"]
+    books = {b["file_name"]: b for b in client.get(f"/api/series/{sid}/books").json()}
+    odd = books["random_upload_final.zip"]
+    assert [b["label"] for b in client.get(f"/api/series/{sid}/books").json()][-1] == "random_upload_final"
+
+    r = client.patch(f"/api/books/{odd['id']}", json={"chapter": 10, "chapter_end": 18})
+    assert r.status_code == 200 and r.json()["label"] == "Ch 10-18" and r.json()["manual"]
+    order = lambda: [b["label"] for b in client.get(f"/api/series/{sid}/books").json()]
+    assert order() == ["Ch 5", "Ch 10-18", "Ch 20"]
+
+    assert client.post(f"/api/series/{sid}/rescan").json() == {"books": 3, "errors": 0}
+    walker.scan_all()
+    assert order() == ["Ch 5", "Ch 10-18", "Ch 20"]          # kept after rescans
+
+    assert client.patch(f"/api/books/{odd['id']}", json={"chapter": 18, "chapter_end": 10}).status_code == 400
+    client.patch(f"/api/books/{odd['id']}", json={"hidden": True})
+    assert order() == ["Ch 5", "Ch 20"]
+    client.patch(f"/api/books/{odd['id']}", json={"reset": True})
+    assert order()[-1] == "random_upload_final"
+    import shutil
+    shutil.rmtree(folder)
+    walker.scan_all()
+
+
+def test_rescan_single_series_picks_up_new_file(client):
+    from tests.conftest import make_zip
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    before = len(client.get(f"/api/series/{sid}/books").json())
+    new = TMP / "manga" / "Hana to Akuma" / "Hana_to_Akuma99.zip"
+    make_zip(new)
+    assert client.post(f"/api/series/{sid}/rescan").json()["books"] >= before + 1
+    assert "Ch 99" in [b["label"] for b in client.get(f"/api/series/{sid}/books").json()]
+    new.unlink()
+    client.post(f"/api/series/{sid}/rescan")
+
+
+def test_duplicate_groups_and_ignoring_rows(client):
+    from app.scanner import walker
+    from tests.conftest import make_zip
+    folder = TMP / "manga" / "Dup Series"
+    for name in ("[A] Dup Series ch01.zip", "[B] Dup Series ch01.zip", "[A] Dup Series ch02.zip",
+                 "[B] Dup Series ch02.zip", "Dup Series ch09.zip"):
+        make_zip(folder / name)
+    walker.scan_all()
+    att = client.get("/api/attention").json()
+    groups = [d for d in att["duplicates"] if d["series"] == "Dup Series"]
+    assert [g["label"] for g in groups] == ["Ch 1", "Ch 2"]          # one card per chapter
+    assert [len(g["files"]) for g in groups] == [2, 2]
+    assert {"thumbnail", "page_count", "file_size"} <= set(groups[0]["files"][0])
+    gap = next(g for g in att["gaps"] if g["series"] == "Dup Series")
+    before = att["count"]
+
+    # ignore one duplicate group and the gap: they disappear from the lists and the badge
+    assert client.post("/api/attention/ignore", json={"key": groups[0]["key"]}).json() == {"ok": True}
+    client.post("/api/attention/ignore", json={"key": gap["key"]})
+    att = client.get("/api/attention").json()
+    assert [g["label"] for g in att["duplicates"] if g["series"] == "Dup Series"] == ["Ch 2"]
+    assert not [g for g in att["gaps"] if g["series"] == "Dup Series"]
+    assert att["count"] == before - 1 and att["ignored_counts"]["duplicates"] == 1
+    shown = client.get("/api/attention?ignored=true").json()
+    assert any(d["key"] == groups[0]["key"] and d["ignored"] for d in shown["duplicates"])
+
+    client.post("/api/attention/ignore", json={"key": groups[0]["key"], "ignore": False})  # restore
+    assert len([g for g in client.get("/api/attention").json()["duplicates"] if g["series"] == "Dup Series"]) == 2
+    assert client.post("/api/attention/ignore", json={"key": "drop table;"}).status_code == 400
+    import shutil
+    shutil.rmtree(folder)
+    walker.scan_all()
+
+
+def test_attention_count_matches_full_lists(client):
+    from app.scanner import walker
+    from tests.conftest import make_zip
+    folder = TMP / "manga" / "Count Series"
+    for name in ("[A] Count Series ch01.zip", "[B] Count Series ch01.zip"):
+        make_zip(folder / name)
+    (folder / "broken.cbz").write_bytes(b"nope")
+    walker.scan_all()
+    full = client.get("/api/attention").json()["count"]
+    assert client.get("/api/attention/count").json()["count"] == full
+    dup = next(d for d in client.get("/api/attention").json()["duplicates"] if d["series"] == "Count Series")
+    client.post("/api/attention/ignore", json={"key": dup["key"]})
+    assert client.get("/api/attention/count").json()["count"] == full - 1 == client.get("/api/attention").json()["count"]
+    client.post("/api/attention/ignore", json={"key": dup["key"], "ignore": False})
+
+    # rescanning one series doesn't change the last full scan's error count
+    errors = walker.status["errors"]
+    sid = series_by_name(client)["Count Series"]["id"]
+    assert client.post(f"/api/series/{sid}/rescan").json()["errors"] == 1
+    assert walker.status["errors"] == errors
+    import shutil
+    shutil.rmtree(folder)
+    walker.scan_all()
+
+
+def test_tag_with_comma_filters(client):
+    from app.db import SessionLocal
+    from app.metadata import service
+    from app.models import Series
+    sid = series_by_name(client)["Berserk"]["id"] if "Berserk" in series_by_name(client) else \
+        client.get("/api/series").json()["items"][0]["id"]
+    with SessionLocal() as db:
+        service.set_tags(db, db.get(Series, sid), ["Dark, Gritty"], [])
+        db.commit()
+    ids = [s["id"] for s in client.get("/api/series", params={"genre": "Dark, Gritty"}).json()["items"]]
+    assert ids == [sid]
+    assert sid not in [s["id"] for s in client.get("/api/series", params={"exclude": "Dark, Gritty"}).json()["items"]]
+    with SessionLocal() as db:
+        service.set_tags(db, db.get(Series, sid), [], [])
+        db.commit()

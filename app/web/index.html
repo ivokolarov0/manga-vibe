@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111318">
+  <title>MangaVibe</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+  <!-- all styles: css/main.css imports the feature files and your custom.css -->
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+  <!-- ============ top bar ============ -->
+  <header id="topbar" x-data="topbar()" x-show="$store.app.view !== 'read'">
+    <a href="#/" class="brand">MangaVibe</a>
+    <input id="search" x-ref="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search"
+           x-model="q" @input="search()">
+    <button class="iconbtn" aria-label="Sort" title="Sort" @click="openSheet('sort')">⇅<span class="count"
+      x-show="customSort" x-cloak>•</span></button>
+    <button class="iconbtn" aria-label="Filters" title="Filter" @click="openSheet('filter')">⚲<span class="count"
+      x-show="filterCount" x-text="filterCount" x-cloak></span></button>
+  </header>
+
+  <main>
+    <!-- ============ library ============ -->
+    <section class="view" x-data="library()" x-show="$store.app.view === 'library'">
+      <div class="quick">
+        <template x-for="[v, label] in quick" :key="v">
+          <button :class="{ on: quickOn(v) }" @click="setQuick(v)" x-text="label"></button>
+        </template>
+      </div>
+      <div class="chips" x-show="chips.length" x-cloak>
+        <template x-for="c in chips" :key="c.k + c.v">
+          <span class="chip filter-chip" :class="{ ex: c.ex }" @click="removeChip(c)" x-text="c.label + ' ✕'"></span>
+        </template>
+        <button class="link-btn" @click="clearAll()">Clear all</button>
+      </div>
+      <div class="grid">
+        <template x-for="s in items" :key="s.id">
+          <a class="card" :class="{ done: s.reading_status === 'completed' }" :href="'#/series/' + s.id">
+            <div class="poster">
+              <img :src="s.poster" loading="lazy" alt="">
+              <span class="badge done" x-show="s.reading_status === 'completed'">✓</span>
+              <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"></span>
+              <span class="badge status" x-show="s.favorite">★</span>
+              <div class="bar" x-show="s.reading_status === 'reading'"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
+            </div>
+            <div class="card-title" x-text="s.title"></div>
+            <div class="card-sub" :class="{ read: s.reading_status === 'completed', reading: s.reading_status === 'reading' }"
+                 x-text="cardSub(s)"></div>
+          </a>
+        </template>
+      </div>
+      <div x-ref="sentinel"></div>
+      <p class="empty" x-show="total === 0" x-text="emptyText" x-cloak></p>
+    </section>
+
+    <!-- ============ continue reading ============ -->
+    <section class="view" x-data="continueView()" x-show="$store.app.view === 'continue'" x-cloak>
+      <h2>Continue reading</h2>
+      <div class="grid">
+        <template x-for="s in items || []" :key="s.id">
+          <a class="card" :href="'#/read/' + s.continue.book_id">
+            <div class="poster"><img :src="s.poster" loading="lazy" alt="">
+              <div class="bar"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div></div>
+            <div class="card-title" x-text="s.title"></div>
+            <div class="card-sub reading" x-text="`${s.continue.label} · p${s.continue.page + 1}/${s.continue.page_count}`"></div>
+          </a>
+        </template>
+      </div>
+      <p class="empty" x-show="items && !items.length">Nothing in progress. Start a series from the Library.</p>
+    </section>
+
+    <!-- ============ series page ============ -->
+    <section class="view series-view" x-data="seriesView()" x-show="$store.app.view === 'series'" x-cloak>
+      <template x-if="s">
+        <div>
+          <div class="sp-banner" x-show="s.banner_url" :style="s.banner_url && `background-image:url('${s.banner_url}')`"></div>
+          <div class="sp">
+            <button class="sp-poster" title="Change poster" @click="editInfo('poster')"><img :src="s.poster_large" alt="">
+              <span class="poster-hint">✎ Poster</span></button>
+            <header class="sp-head">
+              <h1 x-text="s.title"></h1>
+              <div class="alt-titles" x-show="alt.length" x-text="alt.join(' · ')"></div>
+              <div class="sp-facts" x-show="facts.length"><template x-for="f in facts"><span x-text="f"></span></template></div>
+              <div class="chips">
+                <span class="chip" x-text="s.book_count + ' books'"></span>
+                <span class="chip" x-text="s.unread_count + ' unread'"></span>
+                <span class="chip warn" x-show="s.has_duplicates">Duplicates</span>
+              </div>
+            </header>
+            <div class="sp-tools">
+              <button class="icon-btn star" :class="{ on: s.favorite }" @click="toggleFav()"
+                      :title="s.favorite ? 'Remove from favorites' : 'Add to favorites'"
+                      :aria-pressed="s.favorite">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3.2l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.1 6.6 20l1-6.1-4.4-4.3 6.1-.9z"/></svg>
+              </button>
+              <button class="btn small" id="edit-series" @click="editInfo()">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 20h4L19 9l-4-4L4 16z M13.5 6.5l4 4"/></svg>
+                Edit</button>
+              <div class="menu" @click.outside="menuOpen = false" @keydown.escape="menuOpen = false">
+                <button class="icon-btn" aria-label="More" title="More" @click="menuOpen = !menuOpen">
+                  <svg class="icon dots" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                </button>
+                <div class="menu-pop" x-show="menuOpen" x-transition.opacity x-cloak>
+                  <button @click="menuOpen = false; readerOpen = true">📖 Reading direction…
+                    <small x-text="readerModeLabel"></small></button>
+                  <button @click="menuOpen = false; rescan()">⟳ Rescan this series</button>
+                  <button @click="menuOpen = false; fixMatch()">🔎 Fix match…</button>
+                </div>
+              </div>
+            </div>
+            <div class="sp-actions">
+              <template x-if="s.continue">
+                <a class="btn primary ctl" :href="`#/read/${s.continue.book_id}?page=${s.continue.page}`"
+                   x-text="`▶ ${s.continue.started ? 'Continue' : 'Start'} · ${s.continue.label}`"></a>
+              </template>
+              <span class="btn ctl disabled" x-show="!s.continue">✓ All read</span>
+              <select class="ctl" aria-label="Reading status" @change="setStatus($event.target.value)">
+                <option value="" :selected="!s.manual_reading_status" x-text="'Status: ' + statusLabels[s.reading_status] + ' (auto)'"></option>
+                <template x-for="k in ['reading', 'completed', 'plan_to_read', 'on_hold', 'dropped']">
+                  <option :value="k" :selected="s.manual_reading_status === k" x-text="statusLabels[k]"></option>
+                </template>
+              </select>
+            </div>
+
+            <!-- reading direction for this series (from the ⋯ menu) -->
+            <div class="modal" x-show="readerOpen" x-cloak @click.self="readerOpen = false"
+                 @keydown.escape.window="readerOpen = false">
+              <div class="small-dialog">
+                <div class="sheet-head"><b>Reading direction</b>
+                  <button class="btn small" @click="readerOpen = false">Close</button></div>
+                <p class="muted">Only for this series. “Default” follows Settings → Reader.</p>
+                <div class="options" role="radiogroup" aria-label="Reading direction">
+                  <template x-for="[v, label, hint] in readerModes" :key="v">
+                    <button role="radio" :aria-checked="(s.reader_mode || '') === v"
+                            :class="{ on: (s.reader_mode || '') === v }" @click="setReader(v)">
+                      <span class="radio" aria-hidden="true"></span>
+                      <span class="text"><span x-text="label"></span><small x-text="hint"></small></span>
+                    </button>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <div class="sp-main">
+              <section class="panel wide about-panel" x-show="s.description || s.synonyms.length">
+                <h2>About</h2>
+                <div class="desc" :class="{ clamp: descLong && !descOpen }" x-ref="desc" x-html="formatText(s.description || 'No description.')"></div>
+                <button class="link-btn" x-show="descLong" @click="descOpen = !descOpen" x-text="descOpen ? 'Show less' : 'Show more'"></button>
+                <details class="other-titles" x-show="s.synonyms.length">
+                  <summary class="muted" x-text="`Other titles (${s.synonyms.length})`"></summary>
+                  <div class="muted" x-text="s.synonyms.join(' · ')"></div>
+                </details>
+              </section>
+
+              <section class="panel">
+                <h2>Details</h2>
+                <div class="meta-grid">
+                  <template x-for="[k, v] in details" :key="k">
+                    <div style="display:contents"><b x-text="k"></b><span class="pre" :class="{ 'muted break': k === 'Folder' }" x-text="v"></span></div>
+                  </template>
+                </div>
+              </section>
+
+              <div class="stack">
+                <section class="panel" x-show="s.links.length">
+                  <h2>Links</h2>
+                  <div class="links">
+                    <template x-for="l in s.links" :key="l.id">
+                      <a :href="l.url" target="_blank" rel="noopener noreferrer">
+                        <img class="site-icon" :src="'/api/links/' + l.id + '/icon'" alt="" loading="lazy" @error="$el.remove()">
+                        <span x-text="l.site"></span> ↗</a>
+                    </template>
+                  </div>
+                </section>
+                <section class="panel">
+                  <h2>Metadata</h2>
+                  <div class="chips"><span class="chip" :class="'match-' + s.match_status" x-text="matchLabel"></span></div>
+                  <p class="muted" x-show="s.metadata_source">
+                    Source: <span x-text="$store.app.providerName(s.metadata_source?.provider)"></span>
+                    <span x-show="s.metadata_source?.retry_primary"> (AniList will be tried again when it's back online)</span>
+                  </p>
+                  <div class="btn-row">
+                    <button class="btn" @click="fixMatch()">Fix match</button>
+                    <button class="btn" x-show="s.metadata_source" @click="refreshMeta($el)">Refresh metadata</button>
+                  </div>
+                </section>
+                <section class="panel">
+                  <h2>Folder</h2>
+                  <p class="muted break" x-text="s.folder_path"></p>
+                  <div class="btn-row">
+                    <button class="btn" :disabled="rescanning" @click="rescan()"
+                            x-text="rescanning ? 'Rescanning…' : '⟳ Rescan this series'"></button>
+                  </div>
+                </section>
+                <section class="panel" x-show="s.actions.length">
+                  <h2>Plugin tools</h2>
+                  <div class="btn-row">
+                    <template x-for="a in s.actions"><button class="btn" @click="runAction(a)" x-text="a.label"></button></template>
+                  </div>
+                </section>
+              </div>
+
+              <section class="panel wide" x-show="s.tags.length">
+                <h2>Genres &amp; tags</h2>
+                <template x-if="genres.length">
+                  <div><h3>Genres</h3><div class="chips">
+                    <template x-for="t in genres"><a class="chip tag" :href="tagUrl(t.name)" x-text="t.name"></a></template>
+                  </div></div>
+                </template>
+                <template x-if="tagList.length">
+                  <div><h3>Tags</h3><div class="chips">
+                    <template x-for="t in visibleTags" :key="t.name">
+                      <a class="chip tag" :class="{ spoiler: t.spoiler }" :href="tagUrl(t.name)" x-text="t.name"></a>
+                    </template>
+                    <button class="link-btn" x-show="!showAllTags && tagList.length > 12" @click="showAllTags = true"
+                            x-text="`+${tagList.length - 12} more`"></button>
+                    <button class="link-btn" x-show="spoilerCount && !showSpoilers" @click="showSpoilers = true; showAllTags = true"
+                            x-text="`Show ${spoilerCount} spoiler tag${spoilerCount > 1 ? 's' : ''}`"></button>
+                  </div></div>
+                </template>
+              </section>
+
+              <section class="panel wide books-panel">
+                <div class="tabs">
+                  <button :class="{ active: tab !== 'files' }" @click="setTab('')">Books <span class="count" x-text="s.book_count"></span></button>
+                  <button :class="{ active: tab === 'files' }" @click="setTab('files')">Files</button>
+                </div>
+
+                <div x-show="tab !== 'files'">
+                  <div class="row">
+                    <button class="btn small" @click="markAll(true)">Mark all read</button>
+                    <button class="btn small" @click="markAll(false)">Mark all unread</button>
+                  </div>
+                  <ul class="books">
+                    <template x-for="b in books" :key="b.id">
+                      <li class="book" :class="{ read: b.completed, reading: !b.completed && b.page > 0 }">
+                        <a class="thumb" :href="'#/read/' + b.id"><img :src="b.thumbnail" loading="lazy" alt="">
+                          <span class="done-mark" x-show="b.completed">✓</span></a>
+                        <a class="info" :href="'#/read/' + b.id">
+                          <div class="label"><span x-text="b.label"></span>
+                            <span class="manual-mark" x-show="b.manual" title="Numbers set by you">✎</span></div>
+                          <div class="err" x-show="b.error" x-text="b.error"></div>
+                          <div class="meta" x-show="!b.error" x-text="bookState(b)"></div>
+                          <div class="book-progress" x-show="!b.completed && b.page > 0"><i :style="`width:${progressPct(b)}%`"></i></div>
+                        </a>
+                        <button class="btn small" title="Mark this and all previous as read" @click="readUpTo(b)">✓↑</button>
+                        <button class="btn small" @click="toggleBook(b)" x-text="b.completed ? 'Unread' : 'Read'"></button>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+
+                <div x-show="tab === 'files'">
+                  <p class="muted">Every file in the series folder, in reading order. Faded rows are older revisions or
+                    hidden. Use <b>Edit</b> when a file name has the wrong number or holds several chapters: your numbers
+                    re-order the list. The files themselves are never changed.</p>
+                  <table class="files"><tbody>
+                    <template x-for="b in books" :key="b.id">
+                      <tr :class="{ 'hidden-row': b.hidden }">
+                        <td x-text="b.sort_index"></td>
+                        <td>
+                          <div class="file-head">
+                            <div class="fname" x-text="b.file_name"></div>
+                            <button class="btn small" x-show="editing !== b.id" @click="startEdit(b)">Edit</button>
+                          </div>
+                          <span class="chip manual-chip" x-show="b.manual">✎ manual</span>
+                          <div class="muted" x-text="`${b.label} · vol ${n(b.volume)} · ch ${n(b.chapter)}${b.chapter_end ? '–' + b.chapter_end : ''}${b.extra ? ' · extra' : ''} · rev ${b.revision} · ${mb(b.file_size)}`"></div>
+                          <div class="muted" x-show="b.hidden">Hidden (older revision)</div>
+                          <div class="err" x-show="b.duplicate">Duplicate of another file with the same number</div>
+                          <div class="err" x-show="b.error" x-text="b.error"></div>
+                          <form class="override-form" x-show="editing === b.id" @submit.prevent="saveEdit(b)">
+                            <label>Volume <input type="number" step="any" min="0" x-model="form.volume" placeholder="–"></label>
+                            <label>Chapter <input type="number" step="any" min="0" x-model="form.chapter" placeholder="–"></label>
+                            <label>to chapter <input type="number" step="any" min="0" x-model="form.chapter_end" placeholder="(single)"></label>
+                            <p class="muted">Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18.</p>
+                            <div class="checks">
+                              <label class="check"><input type="checkbox" x-model="form.extra"> Extra / bonus</label>
+                              <label class="check"><input type="checkbox" x-model="form.hidden"> Hide from reading</label>
+                            </div>
+                            <div class="btn-row">
+                              <button class="btn small primary" type="submit">Save</button>
+                              <button class="btn small" type="button" @click="editing = null">Cancel</button>
+                              <button class="btn small" type="button" x-show="b.manual" @click="resetEdit(b)">Use file name again</button>
+                            </div>
+                          </form>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody></table>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </template>
+      <p class="muted" x-show="!s">Loading…</p>
+    </section>
+
+    <!-- ============ settings (with Needs attention) ============ -->
+    <section class="view settings-page" x-data="settingsView()" x-show="$store.app.view === 'settings'" x-cloak>
+      <nav class="settings-nav">
+        <h4>Settings</h4>
+        <template x-for="[k, label, icon] in nav" :key="k">
+          <button :class="{ active: section === k }" @click="go(k)">
+            <span class="ico" x-text="icon"></span><span x-text="label"></span></button>
+        </template>
+        <h4>Needs attention</h4>
+        <template x-for="[k, label] in attNav" :key="k">
+          <button :class="{ active: section === 'att-' + k }" @click="go('att-' + k)">
+            <span class="ico">•</span><span x-text="label"></span>
+            <span class="count" :class="{ zero: !attCount(k), alert: ['unreadable', 'matches', 'duplicates'].includes(k) }"
+                  x-text="attCount(k)"></span></button>
+        </template>
+      </nav>
+
+      <div class="settings-content">
+        <!-- library folders -->
+        <section x-show="section === 'library'">
+          <h2>Library folders</h2>
+          <template x-for="l in libs" :key="l.id">
+            <div class="setting-row">
+              <div class="label">
+                <span x-text="l.name"></span>
+                <small x-text="l.root_path + ' · ' + l.series + ' series' + (l.available ? '' : ' · not found, check the volume mount')"></small>
+              </div>
+              <button class="btn small danger" @click="removeLibrary(l)">Remove</button>
+            </div>
+          </template>
+          <div class="setting-row">
+            <div class="label"><span x-text="scanText || 'Scan for new files'"></span>
+              <small>Runs by itself every 6 hours and on start.</small></div>
+            <button class="btn small" @click="rescan()">Rescan now</button>
+          </div>
+          <div class="setting-row">
+            <div class="label"><span>Add a folder</span>
+              <small>Only folders mounted in the container are visible (e.g. /library2).</small></div>
+            <button class="btn small primary" @click="$store.app.folderPicker = true">+ Add folder</button>
+          </div>
+        </section>
+
+        <!-- display -->
+        <section x-show="section === 'display'">
+          <h2>Display</h2>
+          <label class="setting-row"><span class="label">Theme</span>
+            <select x-model="st.theme" @change="save('theme')"><option value="dark">Dark</option><option value="light">Light</option></select></label>
+          <label class="setting-row"><span class="label">Card size</span>
+            <select x-model="st.card_size" @change="save('card_size')"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
+          <label class="setting-row"><span class="label">Title language<small>Falls back to the next one if missing</small></span>
+            <select x-model="st.title_language" @change="save('title_language')"><option value="english">English</option><option value="romaji">Romaji</option><option value="native">Native</option></select></label>
+        </section>
+
+        <!-- reader -->
+        <section x-show="section === 'reader'">
+          <h2>Reader</h2>
+          <label class="setting-row"><span class="label">Default direction<small>Each series can override it</small></span>
+            <select x-model="st.reader_mode" @change="save('reader_mode')"><option value="rtl">Right to left</option><option value="ltr">Left to right</option><option value="vertical">Vertical</option></select></label>
+          <label class="setting-row"><span class="label">Fit</span>
+            <select x-model="st.reader_fit" @change="save('reader_fit')"><option value="screen">Fit screen</option><option value="width">Fit width</option><option value="height">Fit height</option><option value="original">Original</option></select></label>
+          <label class="setting-row"><span class="label">Fullscreen on first tap</span>
+            <select x-model="st.auto_fullscreen" @change="save('auto_fullscreen')"><option value="true">On</option><option value="false">Off</option></select></label>
+          <label class="setting-row"><span class="label">Pages to preload<small>More = smoother, uses more data</small></span>
+            <select x-model="st.preload" @change="save('preload')"><option>2</option><option>3</option><option>4</option><option>5</option><option>8</option></select></label>
+        </section>
+
+        <!-- metadata -->
+        <section x-show="section === 'metadata'">
+          <h2>Metadata</h2>
+          <p class="muted" x-text="metaText"></p>
+          <label class="setting-row"><span class="label">Find metadata automatically<small>For new series after each scan</small></span>
+            <select x-model="st.auto_match" @change="save('auto_match')"><option value="true">On</option><option value="false">Off</option></select></label>
+          <label class="setting-row"><span class="label">Auto-accept a match from<small>Lower = fewer series in Needs attention, more wrong matches</small></span>
+            <select x-model="st.match_threshold" @change="save('match_threshold')"><option value="80">80%</option><option value="85">85%</option><option value="90">90% (default)</option><option value="95">95%</option></select></label>
+          <label class="setting-row"><span class="label">Include adult titles</span>
+            <select x-model="st.include_adult" @change="save('include_adult')"><option value="false">No</option><option value="true">Yes</option></select></label>
+        </section>
+
+        <!-- plugins -->
+        <section x-show="section === 'plugins'">
+          <h2>Plugins</h2>
+          <template x-for="p in plugins" :key="p.id">
+            <label class="setting-row">
+              <span class="label"><span x-text="p.name"></span><small x-text="`v${p.version}` + (p.description ? ' · ' + p.description : '')"></small></span>
+              <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)">
+            </label>
+          </template>
+          <p class="muted" x-show="!plugins.length">No plugins installed.</p>
+          <template x-for="[f, e] in Object.entries(pluginErrors)"><p class="err" x-text="`${f}: ${e}`"></p></template>
+          <div class="setting-row">
+            <div class="label"><span>Plugins and custom styles</span>
+              <small>Plugin .py files go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css</small></div>
+            <button class="btn small" @click="reloadPlugins()">Reload plugins</button>
+          </div>
+        </section>
+
+        <!-- needs attention -->
+        <section class="att" x-data="attentionView()" x-show="kind" x-cloak>
+          <div class="att-head">
+            <h2 x-text="title"></h2>
+            <button class="link-btn" x-show="ignoredCount || $store.app.showIgnored" @click="toggleIgnored()"
+                    x-text="$store.app.showIgnored ? 'Hide ignored rows' : `Show ${ignoredCount} ignored`"></button>
+          </div>
+          <p class="muted" x-text="help"></p>
+          <p class="empty" x-show="a && !rows.length">Nothing here. 🎉</p>
+
+          <!-- errors / not supported: grouped by series -->
+          <template x-if="a && (kind === 'unreadable' || kind === 'unsupported')">
+            <div class="att-list">
+              <template x-for="g in groups(kind)" :key="g.series_id">
+                <div class="att-card">
+                  <div class="att-card-head">
+                    <a :href="'#/series/' + g.series_id"><b x-text="g.series"></b></a>
+                    <span class="muted" x-text="`${g.files.length} ${g.files.length === 1 ? 'file' : 'files'}`"></span>
+                    <button class="btn small push" x-show="g.files.length > 1 && g.files.some((f) => !f.ignored)"
+                            @click="ignoreAll(g)" x-text="`Ignore all ${g.files.length}`"></button>
+                  </div>
+                  <div class="err" x-show="g.sameError" x-text="g.files[0].error"></div>
+                  <details :open="g.files.length <= 4">
+                    <summary class="muted" x-show="g.files.length > 4" x-text="`Show ${g.files.length} files`"></summary>
+                    <div class="att-rows">
+                      <template x-for="f in g.files" :key="f.key">
+                        <div class="att-row" :class="{ ignored: f.ignored }">
+                          <div class="what">
+                            <span class="name" x-text="f.file"></span>
+                            <span class="err" x-show="!g.sameError" x-text="f.error"></span>
+                          </div>
+                          <button class="btn small" @click="ignore(f.key, !f.ignored)" x-text="f.ignored ? 'Restore' : 'Ignore'"></button>
+                        </div>
+                      </template>
+                    </div>
+                  </details>
+                  <div class="muted break folder" x-text="g.folder"></div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- metadata matches -->
+          <template x-if="a && kind === 'matches'">
+            <div>
+              <template x-for="x in a.matches" :key="x.series_id">
+                <div class="item">
+                  <a :href="'#/series/' + x.series_id"><b x-text="x.series"></b></a>
+                  <span class="muted" x-text="'folder: ' + x.folder"></span>
+                  <template x-for="c in x.candidates" :key="c.provider + c.provider_id">
+                    <div class="cand">
+                      <img :src="c.cover_url" x-show="c.cover_url" loading="lazy" alt="">
+                      <div class="info"><b x-text="c.title"></b>
+                        <span x-text="[c.year, c.format].filter(Boolean).join(' · ')"></span> ·
+                        <span class="score" :class="scoreCls(c.score)" x-text="c.score + '%'"></span> ·
+                        <span x-text="$store.app.providerName(c.provider)"></span></div>
+                      <button class="btn small" @click="use(x, c)">Use</button>
+                    </div>
+                  </template>
+                  <div class="row">
+                    <button class="btn small" @click="fix(x)">Fix match…</button>
+                    <button class="btn small" @click="dontMatch(x)">Don't match</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- duplicates: one card per chapter, the files side by side -->
+          <template x-if="a && kind === 'duplicates'">
+            <div class="dup-list">
+              <template x-for="d in a.duplicates" :key="d.key">
+                <div class="dup-group" :class="{ ignored: d.ignored }">
+                  <div class="dup-head">
+                    <div><a :href="'#/series/' + d.series_id"><b x-text="d.series"></b></a>
+                      <span class="chip" x-text="d.label"></span></div>
+                    <button class="btn small" @click="ignore(d.key, !d.ignored)"
+                            x-text="d.ignored ? 'Restore' : 'Not a duplicate'"></button>
+                  </div>
+                  <div class="dup-files">
+                    <template x-for="f in d.files" :key="f.book_id">
+                      <div class="dup-file" :class="{ hidden: f.hidden }">
+                        <a :href="'#/read/' + f.book_id"><img :src="f.thumbnail" loading="lazy" alt=""></a>
+                        <div class="name" x-text="f.file"></div>
+                        <div class="muted" x-text="`${f.page_count} pages · ${(f.file_size / 1048576).toFixed(1)} MB` + (f.revision > 1 ? ` · v${f.revision}` : '')"></div>
+                        <div class="btn-row">
+                          <a class="btn small" :href="'#/read/' + f.book_id">Open</a>
+                          <button class="btn small" @click="hideFile(f)" x-text="f.hidden ? 'Show again' : 'Hide this one'"></button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- missing chapters -->
+          <template x-if="a && kind === 'gaps'">
+            <div class="att-rows">
+              <template x-for="x in a.gaps" :key="x.key">
+                <div class="att-row" :class="{ ignored: x.ignored }">
+                  <div class="what">
+                    <a :href="'#/series/' + x.series_id"><b x-text="x.series"></b></a>
+                    <span class="muted" x-text="'Missing between ' + x.gaps.join(', ')"></span>
+                  </div>
+                  <button class="btn small" @click="ignore(x.key, !x.ignored)" x-text="x.ignored ? 'Restore' : 'Ignore'"></button>
+                </div>
+              </template>
+            </div>
+          </template>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ bottom nav ============ -->
+  <nav id="bottomnav" x-data x-show="$store.app.view !== 'read'">
+    <a href="#/" :class="{ active: $store.app.view === 'library' }"><span>▦</span>Library</a>
+    <a href="#/continue" :class="{ active: $store.app.view === 'continue' }"><span>▶</span>Continue</a>
+    <a href="#/settings" :class="{ active: $store.app.view === 'settings' }"><span>⚙<i id="att-count"
+      x-show="$store.app.attentionCount" x-text="$store.app.attentionCount > 99 ? '99+' : $store.app.attentionCount" x-cloak
+      title="Things that need attention"></i></span>Settings</a>
+  </nav>
+
+  <!-- ============ filter sheet ============ -->
+  <div class="sheet" x-data="sortSheet()" x-show="$store.app.sheet === 'sort'" x-cloak
+       @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
+    <div>
+      <div class="sheet-head"><b>Sort</b><button class="btn small" @click="$store.app.sheet = null">Done</button></div>
+      <h3>Order</h3>
+      <div class="segmented" role="radiogroup" aria-label="Order">
+        <button role="radio" :aria-checked="asc" :class="{ on: asc }" @click="setOrder(true)" x-text="orderLabels[0]"></button>
+        <button role="radio" :aria-checked="!asc" :class="{ on: !asc }" @click="setOrder(false)" x-text="orderLabels[1]"></button>
+      </div>
+      <h3>Sort by</h3>
+      <div class="options" role="radiogroup" aria-label="Sort by">
+        <template x-for="[v, label] in sorts" :key="v">
+          <button role="radio" :aria-checked="sort === v" :class="{ on: sort === v }" @click="setSort(v)">
+            <span class="radio" aria-hidden="true"></span><span class="text" x-text="label"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet" x-data="filterSheet()" x-show="$store.app.sheet === 'filter'" x-cloak
+       @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
+    <div>
+      <div class="sheet-head"><b>Filter</b>
+        <span class="btn-row"><button class="btn small" @click="clearAll()">Clear</button>
+          <button class="btn small" @click="$store.app.sheet = null">Done</button></span></div>
+      <template x-for="[k, title, labels] in groups" :key="k">
+        <div>
+          <h3 x-text="title"></h3>
+          <div class="wrap">
+            <template x-for="[v, label] in Object.entries(labels)" :key="v">
+              <button class="chip-btn" :class="{ on: isOn(k, v) }" @click="toggle(k, v)" x-text="label"></button>
+            </template>
+          </div>
+        </div>
+      </template>
+      <h3>Genres <span class="muted">(tap: include · again: exclude · again: off)</span></h3>
+      <div class="wrap">
+        <template x-for="t in genres" :key="t.name">
+          <button class="chip-btn" :class="tagState(t.name)" @click="cycleTag(t.name)">
+            <span x-text="t.name"></span> <span class="muted" x-text="t.count"></span></button>
+        </template>
+        <span class="muted" x-show="!genres.length">Genres appear once series have metadata.</span>
+      </div>
+      <template x-if="tags.some((t) => t.kind !== 'genre')">
+        <div>
+          <h3>Tags</h3>
+          <input x-model="tagQuery" placeholder="Find a tag" style="width:100%;margin-bottom:8px">
+          <div class="wrap">
+            <template x-for="t in otherTags" :key="t.name">
+              <button class="chip-btn" :class="tagState(t.name)" @click="cycleTag(t.name)">
+                <span x-text="t.name"></span> <span class="muted" x-text="t.count"></span></button>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <!-- ============ fix match dialog ============ -->
+  <div class="modal" x-data="fixMatch()" x-show="$store.app.fix.open" x-cloak
+       @click.self="close()" @keydown.escape.window="close()">
+    <div>
+      <template x-if="s">
+        <div>
+          <div class="sheet-head"><b x-text="'Fix match · ' + s.folder_name"></b><button class="btn small" @click="close()">Close</button></div>
+          <div class="tabs small">
+            <template x-for="p in $store.app.providers" :key="p.id">
+              <button :class="{ active: provider === p.id }" @click="setProvider(p.id)" x-text="p.name + (p.available ? '' : ' (offline)')"></button>
+            </template>
+          </div>
+          <div class="row"><input x-model="q" style="flex:1" @keydown.enter="search()"><button class="btn primary" @click="search()">Search</button></div>
+          <p class="muted" x-show="searching" x-text="'Searching ' + $store.app.providerName(provider) + '…'"></p>
+          <p class="err" x-show="error" x-text="error"></p>
+          <p class="muted" x-show="results && !results.length && !searching">No results. Try a different spelling or the English/Japanese title.</p>
+          <template x-for="c in results || []" :key="c.provider_id">
+            <div class="cand">
+              <img :src="c.cover_url || ''" loading="lazy" alt="">
+              <div class="info"><b x-text="c.title"></b>
+                <div class="muted" x-show="c.other_titles.length" x-text="c.other_titles.join(' · ')"></div>
+                <div><span x-text="[c.year, c.format, c.status].filter(Boolean).join(' · ')"></span> ·
+                  <span class="score" :class="scoreCls(c.score)" x-text="c.score + '%'"></span></div>
+                <a class="link-btn" x-show="c.url" :href="c.url" target="_blank" rel="noopener"
+                   x-text="'Open on ' + $store.app.providerName(provider) + ' ↗'"></a>
+              </div>
+              <button class="btn small primary" :disabled="busy" @click="use(c)">Use</button>
+            </div>
+          </template>
+          <h3>Or paste a link</h3>
+          <div class="row"><input x-model="url" style="flex:1" placeholder="https://anilist.co/manga/… or https://www.mangaupdates.com/series/…">
+            <button class="btn" @click="applyUrl()">Apply</button></div>
+          <h3>Other</h3>
+          <div class="row">
+            <button class="btn small" @click="post('auto-match', 'Queued for automatic matching')">Try automatic match again</button>
+            <button class="btn small" @click="post('unmatch', 'Metadata removed')">Unmatch (use folder name)</button>
+            <button class="btn small" @click="post('ignore-match', &quot;This series won't be matched&quot;)">Don't match this series</button>
+          </div>
+        </div>
+      </template>
+      <p class="muted" x-show="!s">Loading…</p>
+    </div>
+  </div>
+
+  <!-- ============ edit series ============ -->
+  <div class="modal" x-data="editSeries()" x-show="$store.app.edit.open" x-cloak
+       @click.self="close()" @keydown.escape.window="close()">
+    <div class="edit-dialog">
+      <template x-if="s">
+        <div>
+          <div class="sheet-head"><b x-text="'Edit · ' + s.title"></b><button class="btn small" @click="close()">Close</button></div>
+          <div class="tabs small">
+            <button :class="{ active: tab === 'info' }" @click="tab = 'info'">Info</button>
+            <button :class="{ active: tab === 'poster' }" @click="tab = 'poster'">Poster</button>
+          </div>
+
+          <!-- info -->
+          <form class="edit-form" x-show="tab === 'info'" @submit.prevent="save()">
+            <p class="muted">Changed fields get a 🔒 and are kept when metadata is refreshed.
+              <button type="button" class="link-btn" x-show="lockedCount" @click="unlockAll()"
+                      x-text="`Unlock ${lockedCount} field${lockedCount > 1 ? 's' : ''}`"></button></p>
+            <label class="wide">English title <span x-show="locked('title_english')">🔒</span>
+              <input x-model="f.title_english" maxlength="300"></label>
+            <label>Romaji title <span x-show="locked('title_romaji')">🔒</span>
+              <input x-model="f.title_romaji" maxlength="300"></label>
+            <label>Native title <span x-show="locked('title_native')">🔒</span>
+              <input x-model="f.title_native" maxlength="300"></label>
+            <label class="wide">Other titles <small>one per line</small> <span x-show="locked('synonyms')">🔒</span>
+              <textarea rows="3" x-model="f.synonyms"></textarea></label>
+            <label class="wide">Description <span x-show="locked('description')">🔒</span>
+              <textarea rows="7" x-model="f.description" maxlength="20000"></textarea></label>
+            <label>Status <span x-show="locked('publication_status')">🔒</span>
+              <select x-model="f.publication_status">
+                <template x-for="[k, v] in Object.entries(pubLabels)" :key="k"><option :value="k" x-text="v"></option></template>
+              </select></label>
+            <label>Type <span x-show="locked('format') || locked('country_of_origin')">🔒</span>
+              <select x-model="f.type">
+                <option value="">Unknown</option><option value="manga">Manga</option><option value="manhwa">Manhwa</option>
+                <option value="manhua">Manhua</option><option value="one_shot">One-shot</option><option value="novel">Novel</option>
+              </select></label>
+            <label>Year <span x-show="locked('start_year')">🔒</span>
+              <input type="number" min="1900" max="2100" x-model="f.start_year"></label>
+            <label>Volumes <span x-show="locked('volumes_total')">🔒</span>
+              <input type="number" min="0" x-model="f.volumes_total"></label>
+            <label>Chapters <span x-show="locked('chapters_total')">🔒</span>
+              <input type="number" min="0" x-model="f.chapters_total"></label>
+            <label class="wide">Authors <small>one per line: Name (Role)</small> <span x-show="locked('authors')">🔒</span>
+              <textarea rows="3" x-model="f.authors"></textarea></label>
+            <label class="wide">Genres <small>comma separated</small> <span x-show="locked('tags')">🔒</span>
+              <input x-model="f.genres"></label>
+            <label class="wide">Tags <small>comma separated</small> <span x-show="locked('tags')">🔒</span>
+              <textarea rows="2" x-model="f.tags"></textarea></label>
+            <label class="wide">Links <small>one per line: Site | https://…</small> <span x-show="locked('links')">🔒</span>
+              <textarea rows="3" x-model="f.links"></textarea></label>
+            <div class="btn-row wide">
+              <button class="btn primary" type="submit" :disabled="saving" x-text="saving ? 'Saving…' : 'Save'"></button>
+              <button class="btn" type="button" @click="close()">Cancel</button>
+            </div>
+          </form>
+
+          <!-- poster -->
+          <div class="poster-edit" x-show="tab === 'poster'">
+            <div class="poster-now">
+              <img :src="preview || s.poster_large" alt="">
+              <small class="muted" x-text="preview ? 'Preview (not saved yet)' : ({ upload: 'Uploaded by you', page: 'A page from a book', provider: 'Cover from ' + $store.app.providerName(s.metadata_source?.provider), first_page: 'Automatic: first page' }[s.poster_source] || '')"></small>
+            </div>
+            <div class="poster-options">
+              <section>
+                <h3>Upload an image</h3>
+                <p class="muted">JPEG, PNG, WebP, GIF or AVIF, up to 10 MB. The image is checked and saved as a new JPEG.</p>
+                <input type="file" x-ref="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" @change="pickFile($event)">
+                <div class="btn-row" x-show="file">
+                  <button class="btn primary" :disabled="uploading" @click="upload()" x-text="uploading ? 'Uploading…' : 'Use this image'"></button>
+                  <button class="btn" @click="clearFile()">Cancel</button>
+                </div>
+              </section>
+              <section x-show="books.length">
+                <h3>Use a page from a book</h3>
+                <div class="page-pick">
+                  <select x-model="pageBook">
+                    <template x-for="b in books" :key="b.id"><option :value="b.id" x-text="b.label"></option></template>
+                  </select>
+                  <label>Page <input type="number" min="1" :max="pageBookObj?.page_count || 1" x-model="pageNo"></label>
+                </div>
+                <img class="page-preview" :src="pagePreview" alt="" loading="lazy">
+                <button class="btn" @click="choose('page')">Use this page</button>
+              </section>
+              <section>
+                <h3>Other</h3>
+                <div class="btn-row">
+                  <button class="btn" x-show="s.metadata_source" @click="choose('provider')"
+                          x-text="'Cover from ' + $store.app.providerName(s.metadata_source?.provider)"></button>
+                  <button class="btn" @click="choose('first_page')">Automatic (first page)</button>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </template>
+      <p class="muted" x-show="!s">Loading…</p>
+    </div>
+  </div>
+
+  <!-- ============ folder picker ============ -->
+  <div class="modal" x-data="folderPicker()" x-show="$store.app.folderPicker" x-cloak
+       @click.self="close()" @keydown.escape.window="close()">
+    <div>
+      <div class="sheet-head"><b>Add a library folder</b><button class="btn small" @click="close()">Cancel</button></div>
+      <p class="muted">These are the folders inside the MangaVibe container. To see another NAS folder here,
+        first add it as a volume in the Docker settings (see docs/SYNOLOGY.md).</p>
+      <div class="chips" x-show="crumbs.length">
+        <template x-for="c in crumbs" :key="c.path">
+          <button class="chip-btn" @click="open(c.path)" x-text="c.name"></button>
+        </template>
+      </div>
+      <p class="err" x-show="error" x-text="error"></p>
+      <div class="folder-list">
+        <button x-show="parent !== null && path" @click="open(parent)">⬆ <span>Up</span></button>
+        <template x-for="d in dirs" :key="d.path">
+          <button @click="open(d.path)">📁 <span x-text="d.name"></span>
+            <small class="muted" x-show="d.library">(already a library)</small></button>
+        </template>
+        <p class="muted" style="margin: 0; padding: 10px 12px" x-show="path && !dirs.length">No folders inside.</p>
+      </div>
+      <div class="row" x-show="path">
+        <div class="folder-path" style="flex: 1" x-text="path"></div>
+        <button class="btn primary" :disabled="busy" @click="choose()">Use this folder</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="reader" hidden></div>
+  <div id="toast" hidden></div>
+
+  <script src="/static/js/common.js"></script>
+  <script src="/static/js/reader.js"></script>
+  <script src="/static/js/app.js"></script>
+  <script defer src="/static/js/vendor/alpine.min.js"></script>
+</body>
+</html>

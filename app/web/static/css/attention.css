@@ -1,0 +1,171 @@
+/* Needs attention (inside Settings): errors, matches, duplicate cards, gaps. */
+@layer pages {
+  .att {
+    & .att-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    & .item {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+
+      &:last-child {
+        border-bottom: 0;
+      }
+    }
+
+    & details summary {
+      margin: 4px 0;
+      cursor: pointer;
+    }
+
+    & .ignored {
+      opacity: 0.5;
+    }
+  }
+
+  /* errors: one card per series, one bordered row per file with its own Ignore button */
+  .att-list {
+    display: grid;
+    gap: 12px;
+    padding-bottom: 6px;
+  }
+
+  .att-card {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+
+    & details summary {
+      margin: 0 0 6px;
+    }
+
+    & .folder {
+      font-size: 12px;
+    }
+  }
+
+  .att-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+
+    & .push {
+      margin-left: auto;
+    }
+  }
+
+  .att-rows {
+    display: grid;
+    gap: 6px;
+    padding-bottom: 6px;
+  }
+
+  /* a row with a border: what it's about on the left, the action on the right */
+  .att-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 46px;
+    padding: 8px 8px 8px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    & .what {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+      font-size: 14px;
+    }
+
+    & .name {
+      word-break: break-all;
+    }
+
+    & .err {
+      font-size: 13px;
+    }
+
+    & .btn {
+      flex: none;
+    }
+
+    &.ignored {
+      border-style: dashed;
+    }
+  }
+
+  /* duplicates: one card per chapter, its files side by side to compare */
+  .dup-list {
+    display: grid;
+    gap: 12px;
+    padding-bottom: 6px;
+  }
+
+  .dup-group {
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+  }
+
+  .dup-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+
+    & .chip {
+      margin-left: 6px;
+      background: var(--warn);
+      color: #000;
+      font-weight: 600;
+    }
+  }
+
+  .dup-files {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .dup-file {
+    display: grid;
+    align-content: start;
+    gap: 4px;
+    padding: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+
+    & img {
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      background: var(--surface2);
+      border-radius: 6px;
+    }
+
+    & .name {
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    &.hidden {
+      opacity: 0.45;
+    }
+  }
+}

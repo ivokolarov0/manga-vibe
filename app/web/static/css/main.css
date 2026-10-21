@@ -1,0 +1,34 @@
+/*
+ * MangaVibe styles: the one stylesheet index.html loads.
+ *
+ * Built-in styles live in cascade layers, in this order (later layers win):
+ *   tokens → base → layout → components → pages → reader
+ * /custom.css (plugin CSS, then docker/mangavibe/custom.css) is imported last and *outside*
+ * the layers, so your own rules always win without !important.
+ */
+@layer tokens, base, layout, components, pages, reader;
+
+/* design tokens: colours, sizes (change these to re-theme) */
+@import url("tokens.css");
+
+/* reset, buttons, inputs, chips, tabs, panels */
+@import url("base.css");
+
+/* top bar, bottom navigation, sheets and dialogs, toast */
+@import url("layout.css");
+
+/* shared components */
+@import url("match.css");
+@import url("edit.css");
+
+/* pages */
+@import url("library.css");
+@import url("series.css");
+@import url("settings.css");
+@import url("attention.css");
+
+/* the reader */
+@import url("reader.css");
+
+/* your overrides: plugin CSS + docker/mangavibe/custom.css */
+@import url("/custom.css");

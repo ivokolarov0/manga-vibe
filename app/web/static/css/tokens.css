@@ -1,0 +1,71 @@
+/*
+ * Design tokens: colours, sizes, radii. Change these to re-theme the app.
+ *
+ * The layer order is declared in main.css. Your own CSS (docker/mangavibe/custom.css)
+ * and plugin CSS are loaded outside any layer, so they win without !important.
+ */
+
+@layer tokens {
+  :root {
+    /* colours (dark theme) */
+    --bg: #111318;
+    --surface: #1b1e25;
+    --surface2: #262a33;
+    --text: #e8e9ec;
+    --muted: #9aa0ab;
+    --border: #2d323c;
+    --accent: #ff7a59;
+    --accent-text: #fff;
+    --ok: #4cc38a;
+    --warn: #f2b84b;
+    --danger: #ef5b5b;
+
+    /* shapes and sizes */
+    --radius: 8px;
+    --radius-panel: 12px;
+    --control-height: 38px;
+    --control-height-small: 32px;
+    --font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+
+    /* library grid: minimum card width */
+    --card: 108px;
+
+    /* series page poster width on desktop */
+    --poster-width: 280px;
+
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+    &[data-theme="light"] {
+      --bg: #f6f6f8;
+      --surface: #ffffff;
+      --surface2: #ecedf1;
+      --text: #1b1d22;
+      --muted: #646a75;
+      --border: #dcdee4;
+    }
+
+    &[data-card="small"] {
+      --card: 86px;
+    }
+
+    &[data-card="large"] {
+      --card: 140px;
+    }
+
+    @media (min-width: 700px) {
+      --card: 150px;
+
+      &[data-card="small"] {
+        --card: 120px;
+      }
+
+      &[data-card="large"] {
+        --card: 190px;
+      }
+    }
+
+    @media (min-width: 1300px) {
+      --poster-width: 320px;
+    }
+  }
+}

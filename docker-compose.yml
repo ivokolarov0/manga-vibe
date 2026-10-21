@@ -1,0 +1,16 @@
+# For building and testing on a PC. The Synology "Docker" package has no Compose;
+# see docs/SYNOLOGY.md for the GUI steps.
+services:
+  mangavibe:
+    build: .
+    image: mangavibe:latest
+    container_name: mangavibe
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./dev-library:/manga:ro     # your manga folder, read-only
+      - ./docker-data:/data         # database, covers, cache, plugins
+    environment:
+      TZ: Europe/Sofia
+      LIBRARY_PATHS: /manga
+    restart: unless-stopped
