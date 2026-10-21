@@ -118,7 +118,8 @@
             <div class="sp-actions">
               <template x-if="s.continue">
                 <a class="btn primary ctl" :href="`#/read/${s.continue.book_id}?page=${s.continue.page}`"
-                   x-text="`▶ ${s.continue.started ? 'Continue' : 'Start'} · ${s.continue.label}`"></a>
+                   :title="`${s.continue.started ? 'Continue' : 'Start'} · ${s.continue.label}`">
+                  <span class="ellipsis" x-text="`▶ ${s.continue.started ? 'Continue' : 'Start'} · ${s.continue.label}`"></span></a>
               </template>
               <span class="btn ctl disabled" x-show="!s.continue">✓ All read</span>
               <select class="ctl" aria-label="Reading status" @change="setStatus($event.target.value)">
