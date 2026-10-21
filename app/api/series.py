@@ -373,7 +373,8 @@ def refresh(series_id: int, db=Depends(get_db)):
 
 @router.post("/series/{series_id}/rescan")
 def rescan(series_id: int, db=Depends(get_db)):
-    """Re-read this series' folder now: new files, removed files, changed names, errors."""
+    """Re-read this series' folder now: new files, removed files, changed names, errors.
+    If the folder itself was deleted, the series is removed from the library."""
     get_or_404(db, Series, series_id)
     from app.scanner import walker
     try:

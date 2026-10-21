@@ -192,7 +192,7 @@ def test_manual_chapter_range_reorders_and_survives_rescan(client):
     order = lambda: [b["label"] for b in client.get(f"/api/series/{sid}/books").json()]
     assert order() == ["Ch 5", "Ch 10-18", "Ch 20"]
 
-    assert client.post(f"/api/series/{sid}/rescan").json() == {"books": 3, "errors": 0}
+    assert client.post(f"/api/series/{sid}/rescan").json() == {"removed": False, "books": 3, "errors": 0}
     walker.scan_all()
     assert order() == ["Ch 5", "Ch 10-18", "Ch 20"]          # kept after rescans
 
@@ -216,6 +216,27 @@ def test_rescan_single_series_picks_up_new_file(client):
     assert "Ch 99" in [b["label"] for b in client.get(f"/api/series/{sid}/books").json()]
     new.unlink()
     client.post(f"/api/series/{sid}/rescan")
+
+
+def test_rescan_deleted_series_removes_it(client):
+    """Issue #9: rescanning a series whose folder was deleted hides it instead of a 404."""
+    from app.scanner import walker
+    from tests.conftest import make_zip
+    folder = TMP / "manga" / "Gone Series"
+    folder.mkdir()
+    make_zip(folder / "Gone Series ch01.zip")
+    walker.scan_all()
+    sid = series_by_name(client)["Gone Series"]["id"]
+    shutil.rmtree(folder)
+    assert client.post(f"/api/series/{sid}/rescan").json()["removed"] is True
+    assert "Gone Series" not in series_by_name(client)
+    # the folder coming back brings the series back
+    folder.mkdir()
+    make_zip(folder / "Gone Series ch01.zip")
+    walker.scan_all()
+    assert series_by_name(client)["Gone Series"]["id"] == sid
+    shutil.rmtree(folder)
+    walker.scan_all()
 
 
 def test_duplicate_groups_and_ignoring_rows(client):

@@ -265,9 +265,16 @@ def rescan_series(series_id: int):
             if series is None:
                 raise KeyError(series_id)
             folder = Path(series.folder_path)
-            if not folder.is_dir():
-                raise FileNotFoundError(f"Folder not found: {folder}")
             lib = db.get(Library, series.library_id)
+            if not folder.is_dir():
+                if lib is None or not Path(lib.root_path).is_dir():
+                    # the whole share is gone (e.g. not mounted): don't hide anything
+                    raise FileNotFoundError(f"Library folder not found: {lib.root_path if lib else '?'}")
+                # the series folder was deleted: hide it now, like a full scan would
+                if series.missing_since is None:
+                    series.missing_since = now()
+                db.commit()
+                return {"removed": True, "books": 0, "errors": 0}
             for b in series.books:
                 b.mtime = -1  # forces each file to be opened and parsed again
             archives._pages_cached.cache_clear()
@@ -279,7 +286,7 @@ def rescan_series(series_id: int):
             apply_order(series)
             db.commit()
             books = active_books(series)
-            return {"books": len(books), "errors": sum(1 for b in books if b.error)}
+            return {"removed": False, "books": len(books), "errors": sum(1 for b in books if b.error)}
         finally:
             db.close()
     finally:
