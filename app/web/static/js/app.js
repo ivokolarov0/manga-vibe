@@ -536,6 +536,13 @@ function seriesView() {
       this.rescanning = true;
       try {
         const r = await api(`/api/series/${this.s.id}/rescan`, { method: "POST" });
+        if (r.removed) {
+          toast("The series folder is gone, so the series was removed from the library");
+          this.$store.app.libraryDirty++;
+          refreshAttentionCount();
+          location.hash = "#/";
+          return;
+        }
         toast(`Rescanned: ${r.books} files` + (r.errors ? `, ${r.errors} with errors` : ""));
         this.$store.app.libraryDirty++;
         refreshAttentionCount();
