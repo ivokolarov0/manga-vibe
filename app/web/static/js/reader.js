@@ -5,9 +5,51 @@
 const Reader = (() => {
 
 const R = { book: null, page: 0, mode: "rtl", ui: false, saveTimer: null, wake: null, firstTap: true,
-  preloaded: new Map(), cameFromApp: false, hideTimer: null, sliding: false, hovering: false };
+  preloaded: new Map(), cameFromApp: false, hideTimer: null, sliding: false, hovering: false, drawer: false };
 const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
 const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left/right); the middle toggles the controls
+const MODES = { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" };
+const FITS = { screen: "Fit screen", width: "Fit width", height: "Fit height", original: "Original size" };
+
+/* the value after `cur` in a {value: label} list, wrapping around */
+function cycle(list, cur) {
+  const keys = Object.keys(list);
+  return keys[(keys.indexOf(cur) + 1) % keys.length];
+}
+
+const svg = (body) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+const ICONS = {
+  menu: svg(`<path d="M4 6h16M4 12h16M4 18h16"/>`),
+  back: svg(`<path d="M19 12H5M11 6l-6 6 6 6"/>`),
+  chPrev: svg(`<path d="M18 6l-7 6 7 6V6zM6 6v12"/>`),
+  chNext: svg(`<path d="M6 6l7 6-7 6V6zM18 6v12"/>`),
+  close: svg(`<path d="M6 6l12 12M18 6L6 18"/>`),
+  mode: svg(`<path d="M4 7h13l-3-3M20 17H7l3 3"/>`),
+  fit: svg(`<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>`),
+  fullscreen: svg(`<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>`),
+  settings: svg(`<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>`),
+  // locked: closed shackle; unlocked: shackle swung open, so the two are easy to tell apart
+  lock: svg(`<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>`),
+  unlock: svg(`<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>`),
+};
+
+/* the options drawer slides in from the right, or from the left (Settings → Reader, for left-handed use) */
+function drawerSide() { return settings.reader_drawer_side === "left" ? "left" : "right"; }
+
+function setDrawer(open) {
+  R.drawer = open;
+  $("#reader").classList.toggle("drawer-open", open);
+  const d = $("#r-drawer");
+  d.inert = !open;
+  if (open) {
+    R.hovering = false;
+    clearTimeout(R.hideTimer);
+  } else {
+    if (d.contains(document.activeElement)) document.activeElement.blur();
+    restartHideTimer();
+  }
+}
 
 function pageWidth() {
   if (settings.reader_fit === "original") return 0;
@@ -37,47 +79,93 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   history.replaceState(history.state, "", `#/read/${book.id}`);
   document.title = `${book.label} · ${book.series_title}`;
   clearTimeout(R.hideTimer);
-  el.className = `fit-${settings.reader_fit || "screen"} ui-hidden ${R.mode}`;
+  el.className = `fit-${settings.reader_fit || "screen"} ui-hidden ${R.mode} drawer-${drawerSide()}`
+    + (R.drawer ? " drawer-open" : "");
+  const paged = R.mode !== "vertical";
   el.innerHTML = `
-    ${R.mode === "vertical" ? `<div class="vertical"></div>` : `<div class="stage"><img alt=""></div>`}
-    <div class="read-progress" aria-hidden="true"><i id="r-progress"></i></div>
-    <div class="chrome top">
-      <button id="r-back" aria-label="Back">←</button>
-      <div class="title">${esc(book.series_title)} · ${esc(book.label)}</div>
-      ${R.mode === "vertical" ? "" : `<button id="r-lock" aria-label="Lock zoom"></button>`}
-      <button id="r-fs" aria-label="Fullscreen">⛶</button>
+    ${paged ? `<div class="stage"><img alt=""></div>` : `<div class="vertical"></div>`}
+    <div class="read-progress" id="r-progress">
+      <span id="rp-cur"></span>
+      <div class="rp-track">${Array.from({ length: book.page_count },
+        (_, i) => `<i data-p="${i}" title="Page ${i + 1}"></i>`).join("")}</div>
+      <span>${book.page_count}</span>
     </div>
+    <div class="chrome top">
+      <div class="title"><b>${esc(book.series_title)}</b><span>${esc(book.label)}</span></div>
+    </div>
+    <!-- a floating card; back and the options button sit by the thumb (one-handed use) -->
     <div class="chrome bottom">
-      <div class="pageinfo"><span id="r-num"></span><span>${esc(book.label)}</span></div>
-      <input type="range" id="r-slider" min="1" max="${book.page_count}" value="${R.page + 1}"
-        ${R.mode === "rtl" ? 'dir="rtl"' : ""}>
-      <div class="opts">
-        <select id="r-mode"><option value="rtl">Right to left</option><option value="ltr">Left to right</option>
-          <option value="vertical">Vertical</option></select>
-        <select id="r-fit"><option value="screen">Fit screen</option><option value="width">Fit width</option>
-          <option value="height">Fit height</option><option value="original">Original</option></select>
-        ${book.prev ? `<button id="r-prev">◀ ${esc(book.prev.label)}</button>` : ""}
-        ${book.next ? `<button id="r-next">${esc(book.next.label)} ▶</button>` : ""}
+      <button id="r-back" class="icon b-back" aria-label="Back" title="Back">${ICONS.back}</button>
+      <!-- chapter buttons, page numbers and slider follow the reading direction (dir="rtl" mirrors them) -->
+      <div class="b-pages" ${R.mode === "rtl" ? 'dir="rtl"' : ""}>
+        <button id="r-prev" class="icon" aria-label="Previous chapter"
+          ${book.prev ? `title="${esc(book.prev.label)}"` : "disabled"}>${ICONS.chPrev}</button>
+        <span id="r-num"></span>
+        <input type="range" id="r-slider" min="1" max="${book.page_count}" value="${R.page + 1}" aria-label="Page">
+        <span>${book.page_count}</span>
+        <button id="r-next" class="icon" aria-label="Next chapter"
+          ${book.next ? `title="${esc(book.next.label)}"` : "disabled"}>${ICONS.chNext}</button>
       </div>
-    </div>`;
-  $("#r-mode").value = R.mode;
-  $("#r-fit").value = settings.reader_fit || "screen";
+      <button id="r-menu" class="icon b-menu" aria-label="Reading options" title="Reading options">${ICONS.menu}</button>
+    </div>
+    <!-- written in desktop order (top to bottom, like MangaDex). On touch screens reader.css moves
+         the rarely used options to the top and keeps page/chapter/close at the bottom, by the thumb. -->
+    <aside class="drawer" id="r-drawer" aria-label="Reading options" ${R.drawer ? "" : "inert"}>
+      <div class="d-row d-foot">
+        <button class="d-opt" id="r-exit">${ICONS.back}<span>Back to series</span></button>
+        <button id="r-close" class="icon" aria-label="Close options" title="Close">${ICONS.close}</button>
+      </div>
+      <div class="d-title">${esc(book.series_title)}</div>
+      <div class="d-sub">${esc(book.label)}</div>
+      <div class="d-row d-page">
+        <button id="r-pprev" class="icon" aria-label="Previous page">‹</button>
+        <!-- the whole box opens the list: an invisible native select over the visible text -->
+        <label class="d-field pick"><small>Page</small><span id="r-page-label"></span>
+          <select id="r-page" aria-label="Page">${Array.from({ length: book.page_count },
+            (_, i) => `<option value="${i}">${i + 1} / ${book.page_count}</option>`).join("")}</select></label>
+        <button id="r-pnext" class="icon" aria-label="Next page">›</button>
+      </div>
+      <div class="d-row d-chapter">
+        <button id="r-cprev" class="icon" aria-label="Previous chapter" ${book.prev ? `title="${esc(book.prev.label)}"` : "disabled"}>‹</button>
+        <div class="d-field"><small>Chapter</small><span>${esc(book.label)}</span></div>
+        <button id="r-cnext" class="icon" aria-label="Next chapter" ${book.next ? `title="${esc(book.next.label)}"` : "disabled"}>›</button>
+      </div>
+      <hr>
+      <button class="d-opt" id="r-mode">${ICONS.mode}<span>${MODES[R.mode]}</span></button>
+      <div class="d-row d-fit">
+        <button class="d-opt" id="r-fit">${ICONS.fit}<span>${FITS[settings.reader_fit || "screen"]}</span></button>
+        ${paged ? `<button id="r-lock" class="icon"></button>` : ""}
+      </div>
+      <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
+      <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>Reader settings</span></a>
+    </aside>`;
   $("#r-back").onclick = () => leaveReader();
+  $("#r-menu").onclick = () => setDrawer(true);
+  $("#r-close").onclick = () => setDrawer(false);
+  $("#r-exit").onclick = () => leaveReader();
   $("#r-fs").onclick = toggleFullscreen;
   if ($("#r-lock")) $("#r-lock").onclick = () => setLocked(!locked());
   $("#r-slider").oninput = (e) => goTo(+e.target.value - 1);
-  $("#r-mode").onchange = async (e) => {
-    await api(`/api/series/${book.series_id}`, { method: "PATCH", body: { reader_mode: e.target.value } });
+  $("#r-progress").onclick = (e) => { if (e.target.dataset.p) goTo(+e.target.dataset.p); };
+  // vertical mode: the wheel over the bottom strip still scrolls the pages
+  $("#r-progress").onwheel = (e) => $("#reader .vertical")?.scrollBy(0, e.deltaY);
+  $("#r-page").onchange = (e) => goTo(+e.target.value);
+  $("#r-pprev").onclick = () => (paged ? prev() : goTo(R.page - 1));
+  $("#r-pnext").onclick = () => (paged ? next() : goTo(R.page + 1));
+  $("#r-mode").onclick = async () => {
+    await api(`/api/series/${book.series_id}`, { method: "PATCH", body: { reader_mode: cycle(MODES, R.mode) } });
     saveProgress(true);
     openReader(book.id, R.page);
   };
-  $("#r-fit").onchange = async (e) => {
-    await api("/api/settings", { method: "PUT", body: { reader_fit: e.target.value } });
+  $("#r-fit").onclick = async () => {
+    await api("/api/settings", { method: "PUT", body: { reader_fit: cycle(FITS, settings.reader_fit || "screen") } });
     await loadSettings();
     openReader(book.id, R.page);
   };
-  if (book.prev) $("#r-prev").onclick = () => location.replace(`#/read/${book.prev.id}`);
-  if (book.next) $("#r-next").onclick = () => location.replace(`#/read/${book.next.id}?page=0`);
+  const toPrev = () => location.replace(`#/read/${book.prev.id}`);
+  const toNext = () => location.replace(`#/read/${book.next.id}?page=0`);
+  if (book.prev) $("#r-prev").onclick = $("#r-cprev").onclick = toPrev;
+  if (book.next) $("#r-next").onclick = $("#r-cnext").onclick = toNext;
 
   if (R.mode === "vertical") setupVertical(); else setupPaged();
   requestWakeLock();
@@ -107,8 +195,10 @@ function setLocked(on) {
 function updateLockButton() {
   const b = $("#r-lock");
   if (!b) return;
-  b.textContent = locked() ? "🔒" : "🔓";
+  b.innerHTML = locked() ? ICONS.lock : ICONS.unlock;
+  b.classList.toggle("on", locked());
   b.title = locked() ? "Zoom locked (tap to allow zoom and moving)" : "Zoom allowed (tap to lock)";
+  b.setAttribute("aria-label", b.title);
 }
 
 function img() { return $("#reader .stage img"); }
@@ -259,6 +349,7 @@ function setupPaged() {
       return;
     }
     if (type !== "tap") return;
+    if (R.drawer) return setDrawer(false);  // a tap beside the open drawer just closes it
     // tap or double tap
     maybeAutoFullscreen();
     const now = Date.now();
@@ -354,10 +445,18 @@ function preload() {
 }
 
 function updatePageUi() {
-  $("#r-num").textContent = `Page ${R.page + 1} / ${R.book.page_count}`;
+  $("#r-num").textContent = R.page + 1;
+  // filled part of the slider track (the browser only colours it natively in some engines)
+  $("#r-slider").style.setProperty("--fill", `${R.book.page_count > 1 ? (R.page / (R.book.page_count - 1)) * 100 : 100}%`);
   $("#r-slider").value = R.page + 1;
+  $("#r-page").value = R.page;
+  $("#r-page-label").textContent = `${R.page + 1} / ${R.book.page_count}`;
   // thin bar at the very bottom: how far into this book you are (right to left for RTL)
-  $("#r-progress").style.width = `${((R.page + 1) / R.book.page_count) * 100}%`;
+  for (const seg of $("#r-progress .rp-track").children) {
+    const i = +seg.dataset.p;
+    seg.className = i < R.page ? "read" : i === R.page ? "read cur" : "";
+  }
+  $("#rp-cur").textContent = R.page + 1;
 }
 
 function goTo(i) {
@@ -421,7 +520,12 @@ function setupVertical() {
   }, { passive: true });
   box.children[R.page]?.scrollIntoView();
   updatePageUi();
-  box.addEventListener("click", () => { maybeAutoFullscreen(); toggleUi(); });
+  box.addEventListener("click", (e) => {
+    if (e.target.closest("button")) return;
+    if (R.drawer) return setDrawer(false);
+    maybeAutoFullscreen();
+    toggleUi();
+  });
 }
 
 /* ---------------- controls: show/hide, auto-hide after a few seconds ----------------
@@ -445,7 +549,7 @@ function hideUi() {
   if (inChrome(document.activeElement)) document.activeElement.blur();
 }
 
-function inChrome(el) { return !!el?.closest?.("#reader .chrome"); }
+function inChrome(el) { return !!el?.closest?.("#reader .chrome, #reader .drawer"); }
 
 function restartHideTimer() {
   clearTimeout(R.hideTimer);
@@ -461,7 +565,7 @@ function restartHideTimer() {
 /* someone is using the bars right now: don't pull them away */
 function controlsBusy() {
   const a = document.activeElement;
-  return R.sliding || R.hovering || (inChrome(a) && a.tagName === "SELECT");
+  return R.drawer || R.sliding || R.hovering || (inChrome(a) && a.tagName === "SELECT");
 }
 
 // any interaction with the bars restarts the countdown (listeners on document: #reader is re-rendered)
@@ -525,7 +629,7 @@ function closeReader() {
   R.book = null;
   R.firstTap = true;
   clearTimeout(R.hideTimer);
-  Object.assign(R, { sliding: false, hovering: false });
+  Object.assign(R, { sliding: false, hovering: false, drawer: false });
   $("#reader").hidden = true;
   $("#reader").innerHTML = "";
   document.body.style.overflow = "";
@@ -533,11 +637,12 @@ function closeReader() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if ($("#reader").hidden || !R.book || R.mode === "vertical") return;
+  if ($("#reader").hidden || !R.book) return;
+  if (e.key === "Escape") return R.drawer ? setDrawer(false) : leaveReader();
+  if (R.mode === "vertical" || e.target.tagName === "SELECT") return;
   if (e.key === "ArrowRight") R.mode === "rtl" ? prev() : next();
   else if (e.key === "ArrowLeft") R.mode === "rtl" ? next() : prev();
   else if (e.key === " ") next();
-  else if (e.key === "Escape") leaveReader();
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") saveProgress(true);
