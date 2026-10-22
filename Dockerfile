@@ -20,6 +20,12 @@ COPY examples ./examples
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
+# Auto-update (app/updater.py) compares a new version's Dockerfile, entrypoint and requirements
+# with these copies: a changed Dockerfile or entrypoint needs a new image, new pip packages don't.
+ARG GIT_SHA=""
+COPY Dockerfile requirements.txt /opt/mangavibe/image/
+RUN cp /entrypoint.sh /opt/mangavibe/image/entrypoint.sh && echo "$GIT_SHA" > /opt/mangavibe/image/sha
+
 EXPOSE 8090
 VOLUME ["/data"]
 HEALTHCHECK --interval=60s --timeout=5s --start-period=30s \

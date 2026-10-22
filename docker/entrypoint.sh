@@ -5,13 +5,49 @@ set -e
 PUID="${PUID:-1000}"
 PGID="${PGID:-1000}"
 PORT="${PORT:-8090}"
-CMD="uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --no-access-log"
+DATA="${DATA_DIR:-/data}"
+
+# Auto-update (app/updater.py): run the newest downloaded version from $DATA/code/<sha>
+# instead of the code built into the image. A version that fails to start 3 times is
+# replaced by the one before it (or the built-in code), and remembered in $DATA/code/failed.
+APP_DIR=/app
+CODE="$DATA/code"
+if [ "${AUTO_UPDATE:-1}" != "0" ] && [ -f "$CODE/current" ]; then
+  SHA=$(cat "$CODE/current")
+  DIR="$CODE/$SHA"
+  if [ -n "$SHA" ] && [ -f "$DIR/app/main.py" ] && [ ! -f "$DIR/.ok" ]; then
+    TRIES=$(cat "$DIR/.tries" 2>/dev/null || echo 0)
+    if [ "$TRIES" -ge 3 ]; then
+      echo "[mangavibe] Version $SHA did not start 3 times, so it is not used. See the log above for the error."
+      echo "$SHA" > "$CODE/failed"
+      PREV=$(cat "$CODE/previous" 2>/dev/null || true)
+      if [ -n "$PREV" ] && [ "$PREV" != "$SHA" ] && [ -f "$CODE/$PREV/.ok" ]; then
+        echo "$PREV" > "$CODE/current"
+        DIR="$CODE/$PREV"
+      else
+        rm -f "$CODE/current"
+        DIR=""
+      fi
+    else
+      echo $((TRIES + 1)) > "$DIR/.tries"
+    fi
+  fi
+  if [ -n "$DIR" ] && [ -f "$DIR/app/main.py" ]; then
+    APP_DIR="$DIR"
+    echo "[mangavibe] Running version $(basename "$DIR")"
+  fi
+fi
+if [ -d "$APP_DIR/deps" ]; then
+  export PYTHONPATH="$APP_DIR/deps"
+fi
+cd "$APP_DIR"
+CMD="uvicorn app.main:app --app-dir $APP_DIR --host 0.0.0.0 --port $PORT --proxy-headers --no-access-log"
 
 if [ "$(id -u)" != "0" ] || [ "$PUID" = "0" ]; then
   exec $CMD
 fi
 
-mkdir -p /data
+mkdir -p "$DATA"
 FIRST_LIB=$(echo "${LIBRARY_PATHS:-/manga}" | cut -d, -f1)
 if ! setpriv --reuid="$PUID" --regid="$PGID" --clear-groups ls "$FIRST_LIB" >/dev/null 2>&1; then
   echo "[mangavibe] User $PUID:$PGID cannot read $FIRST_LIB, so MangaVibe keeps running as root."
@@ -20,8 +56,8 @@ if ! setpriv --reuid="$PUID" --regid="$PGID" --clear-groups ls "$FIRST_LIB" >/de
   exec $CMD
 fi
 
-if [ "$(stat -c %u /data)" != "$PUID" ]; then
-  echo "[mangavibe] Giving /data to user $PUID:$PGID"
-  chown -R "$PUID:$PGID" /data || echo "[mangavibe] Warning: could not change owner of /data"
+if [ "$(stat -c %u "$DATA")" != "$PUID" ]; then
+  echo "[mangavibe] Giving $DATA to user $PUID:$PGID"
+  chown -R "$PUID:$PGID" "$DATA" || echo "[mangavibe] Warning: could not change owner of $DATA"
 fi
 exec setpriv --reuid="$PUID" --regid="$PGID" --clear-groups $CMD

@@ -84,6 +84,8 @@ document.addEventListener("alpine:init", () => {
     providers: [],
     providerName(id) { return this.providers.find((p) => p.id === id)?.name || id; },
     libraryDirty: 0,     // bump to make the library reload (e.g. after a match)
+    update: null,        // GET /api/update: running version, newest version on GitHub
+    updating: null,      // an install in progress: { state, message, error }
     openFix(seriesId, onDone) { this.fix = { open: true, seriesId, onDone }; },
     openEdit(seriesId, onDone, tab = "info") { this.edit = { open: true, seriesId, onDone, tab }; },
   });
@@ -144,9 +146,76 @@ document.addEventListener("alpine:init", () => {
     route();
     refreshAttentionCount();
     setInterval(refreshAttentionCount, 60000);
+    refreshUpdate();
+    setInterval(refreshUpdate, 3600000);  // the server asks GitHub once a day; this only reads its answer
   });
   window.refreshAttentionCount = refreshAttentionCount;
 });
+
+/* ---------------- updates (toast + Settings → Updates) ---------------- */
+
+async function refreshUpdate() {
+  try { Alpine.store("app").update = await api("/api/update"); } catch {}
+}
+
+/* Install a version, follow its progress, then reload the page when the new version answers. */
+async function installUpdate(sha) {
+  const app = Alpine.store("app");
+  app.updating = { state: "installing", message: "Starting…", error: null };
+  try {
+    await api("/api/update/install", { method: "POST", body: { sha } });
+  } catch (e) {
+    app.updating = { state: "error", message: "", error: e.message };
+    return;
+  }
+  let restarted = false;
+  for (let i = 0; i < 900; i++) {  // pip can take a few minutes on a NAS
+    await new Promise((r) => setTimeout(r, 1500));
+    let u = null;
+    try { u = await api("/api/update"); } catch { restarted = true; continue; }  // down while restarting
+    if (u.current.sha === sha) { location.reload(); return; }
+    if (u.status.state === "error") {
+      app.updating = { state: "error", message: "", error: u.status.error };
+      app.update = u;
+      return;
+    }
+    if (restarted && u.status.state === "idle") break;  // came back on the old version
+    app.updating = { state: u.status.state, message: u.status.message, error: null };
+  }
+  app.updating = { state: "error", message: "",
+    error: "The new version did not start. MangaVibe went back to the previous one; see the container log." };
+  refreshUpdate();
+}
+
+const DISMISS_KEY = "update_dismissed";  // "sha|time": "Later" hides the toast for a day
+
+function updateToast() {
+  return {
+    dismissed: (() => { try { return localStorage.getItem(DISMISS_KEY) || ""; } catch { return ""; } })(),
+    get a() { return this.$store.app.update?.available; },
+    get busy() { return this.$store.app.updating; },
+    get show() {
+      if (this.busy) return true;
+      const u = this.$store.app.update, a = this.a;
+      if (!u?.supported || !a || a.skipped || a.failed || settings.auto_update === false) return false;
+      const app = this.$store.app;
+      if (app.view === "read" || (app.view === "settings" && app.sub === "updates")) return false;  // same buttons there
+      const [sha, at] = this.dismissed.split("|");
+      return !(sha === a.sha && Date.now() - +at < 86400000);
+    },
+    get when() { return this.a?.date ? new Date(this.a.date).toLocaleDateString() : ""; },
+    later() {
+      this.dismissed = `${this.a.sha}|${Date.now()}`;
+      try { localStorage.setItem(DISMISS_KEY, this.dismissed); } catch {}
+    },
+    async skip() {
+      this.$store.app.update = await api("/api/update/skip", { method: "POST", body: { sha: this.a.sha } });
+      toast("This version is skipped. You'll be told about the next one.", 5000);
+    },
+    install() { installUpdate(this.a.sha); },
+    close() { this.$store.app.updating = null; },
+  };
+}
 
 /* ---------------- top bar ---------------- */
 
@@ -701,7 +770,7 @@ function attentionView() {
 /* ---------------- settings ---------------- */
 
 const SETTINGS_NAV = [["library", "Library folders", "📁"], ["display", "Display", "🎨"],
-  ["reader", "Reader", "📖"], ["metadata", "Metadata", "🏷"], ["plugins", "Plugins", "🧩"]];
+  ["reader", "Reader", "📖"], ["metadata", "Metadata", "🏷"], ["plugins", "Plugins", "🧩"], ["updates", "Updates", "⟳"]];
 
 function settingsView() {
   return {
@@ -752,6 +821,31 @@ Your files are not touched. `
       refreshAttentionCount();
       this.load();
     },
+    checking: false,
+    get upd() { return this.$store.app.update; },
+    versionText(v) {
+      if (!v?.sha) return "Built-in version (from the Docker image)";
+      return v.short + (v.date ? ` · ${new Date(v.date).toLocaleDateString()}` : "")
+        + (v.message ? ` · ${v.message}` : "") + (v.builtin ? " (built into the image)" : "");
+    },
+    get checkedText() {
+      const at = this.upd?.status?.checked_at;
+      return at ? `Last checked ${new Date(at * 1000).toLocaleString()}` : "Not checked yet";
+    },
+    async checkUpdate() {
+      this.checking = true;
+      try {
+        this.$store.app.update = await api("/api/update/check", { method: "POST" });
+        const u = this.$store.app.update;
+        if (u.status.error) toast(u.status.error, 6000);
+        else toast(u.available ? "A new version is available" : "You have the newest version");
+      } catch (e) { toast(e.message, 6000); } finally { this.checking = false; }
+    },
+    async skipUpdate() {
+      this.$store.app.update = await api("/api/update/skip", { method: "POST", body: { sha: this.upd.available.sha } });
+    },
+    async unskipUpdate() { this.$store.app.update = await api("/api/update/skip", { method: "DELETE" }); },
+    installUpdate() { installUpdate(this.upd.available.sha); },
     async togglePlugin(p) { await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } }); },
     async reloadPlugins() { const r = await api("/api/plugins/reload", { method: "POST" }); this.plugins = r.plugins; this.pluginErrors = r.errors; },
     async pollScan() {
