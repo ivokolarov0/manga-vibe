@@ -5,7 +5,7 @@
 const Reader = (() => {
 
 const R = { book: null, page: 0, mode: "rtl", ui: false, saveTimer: null, wake: null, firstTap: true,
-  preloaded: new Map(), cameFromApp: false };
+  preloaded: new Map(), cameFromApp: false, hideTimer: null, sliding: false, hovering: false };
 const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
 
 function pageWidth() {
@@ -35,6 +35,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   // drop ?page= so a reload resumes from saved progress (replaceState fires no hashchange)
   history.replaceState(history.state, "", `#/read/${book.id}`);
   document.title = `${book.label} · ${book.series_title}`;
+  clearTimeout(R.hideTimer);
   el.className = `fit-${settings.reader_fit || "screen"} ui-hidden ${R.mode}`;
   el.innerHTML = `
     ${R.mode === "vertical" ? `<div class="vertical"></div>` : `<div class="stage"><img alt=""></div>`}
@@ -422,7 +423,68 @@ function setupVertical() {
   box.addEventListener("click", () => { maybeAutoFullscreen(); toggleUi(); });
 }
 
-function toggleUi() { $("#reader").classList.toggle("ui-hidden"); }
+/* ---------------- controls: show/hide, auto-hide after a few seconds ----------------
+   Tap/click toggles the bars. Once shown, they hide on their own after `reader_autohide`
+   seconds (0 = never). Any use of the bars restarts the countdown, and they wait while
+   the slider is held, the mouse is over them, or a dropdown has focus. */
+
+function uiShown() { return !$("#reader").classList.contains("ui-hidden"); }
+
+function toggleUi() { uiShown() ? hideUi() : showUi(); }
+
+function showUi() {
+  $("#reader").classList.remove("ui-hidden");
+  restartHideTimer();
+}
+
+function hideUi() {
+  clearTimeout(R.hideTimer);
+  $("#reader").classList.add("ui-hidden");
+  // hidden bars must not keep focus, or arrow keys would still change a dropdown/slider
+  if (inChrome(document.activeElement)) document.activeElement.blur();
+}
+
+function inChrome(el) { return !!el?.closest?.("#reader .chrome"); }
+
+function restartHideTimer() {
+  clearTimeout(R.hideTimer);
+  const secs = +settings.reader_autohide;
+  if (!R.book || !uiShown() || !(secs > 0)) return;
+  R.hideTimer = setTimeout(() => {
+    if (!R.book || !uiShown()) return;
+    if (controlsBusy()) return restartHideTimer();  // check again later
+    hideUi();
+  }, secs * 1000);
+}
+
+/* someone is using the bars right now: don't pull them away */
+function controlsBusy() {
+  const a = document.activeElement;
+  return R.sliding || R.hovering || (inChrome(a) && a.tagName === "SELECT");
+}
+
+// any interaction with the bars restarts the countdown (listeners on document: #reader is re-rendered)
+for (const type of ["pointerdown", "pointermove", "wheel", "keydown", "input", "change", "focusin"]) {
+  document.addEventListener(type, (e) => { if (inChrome(e.target)) restartHideTimer(); },
+    { passive: true, capture: true });
+}
+document.addEventListener("pointerdown", (e) => {
+  if (e.target.id === "r-slider") R.sliding = true;
+  // pressing anywhere else lets go of a focused dropdown, so it no longer holds the bars open
+  else if (!inChrome(e.target) && inChrome(document.activeElement)) document.activeElement.blur();
+}, true);
+const stopSliding = () => { if (R.sliding) { R.sliding = false; restartHideTimer(); } };
+document.addEventListener("pointerup", stopSliding, true);
+document.addEventListener("pointercancel", stopSliding, true);
+// mouse over the bars keeps them up (touch has no hover, and a tap must not count as one)
+document.addEventListener("pointerover", (e) => {
+  if (e.pointerType === "mouse") R.hovering = inChrome(e.target);
+}, true);
+document.addEventListener("pointerout", (e) => {
+  if (e.pointerType !== "mouse" || inChrome(e.relatedTarget)) return;
+  R.hovering = false;
+  restartHideTimer();
+}, true);
 
 function saveProgress(now = false) {
   clearTimeout(R.saveTimer);
@@ -461,6 +523,8 @@ function closeReader() {
   R.wake?.release?.().catch(() => {});
   R.book = null;
   R.firstTap = true;
+  clearTimeout(R.hideTimer);
+  Object.assign(R, { sliding: false, hovering: false });
   $("#reader").hidden = true;
   $("#reader").innerHTML = "";
   document.body.style.overflow = "";

@@ -114,6 +114,9 @@ def test_settings(client):
     client.put("/api/settings", json={"reader_mode": "vertical", "bogus": 1})
     s = client.get("/api/settings").json()
     assert s["reader_mode"] == "vertical" and "bogus" not in s
+    assert s["reader_autohide"] == 5
+    client.put("/api/settings", json={"reader_autohide": 0})
+    assert client.get("/api/settings").json()["reader_autohide"] == 0
 
 
 def test_example_plugin(client):
