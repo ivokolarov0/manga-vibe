@@ -49,7 +49,9 @@ function libParams() {
   const [path, query] = location.hash.slice(1).split("?");
   return (path || "/") === "/" ? new URLSearchParams(query || "") : new URLSearchParams();
 }
+// filter, sort and search changes go back to page 1
 function navigateLibrary(p) {
+  p.delete("page");
   const qs = p.toString();
   location.replace("#/" + (qs ? "?" + qs : ""));
 }
@@ -252,9 +254,20 @@ function topbar() {
 
 /* ---------------- library grid ---------------- */
 
+// Visible page numbers with gaps collapsed, e.g. 1 … 4 5 6 … 20 ("…" entries are gaps).
+function pageList(page, pages) {
+  const out = [];
+  for (let n = 1; n <= pages; n++) {
+    if (n === 1 || n === pages || Math.abs(n - page) <= 1 || (page <= 3 && n <= 4) || (page >= pages - 2 && n >= pages - 3)) out.push(n);
+    else if (out[out.length - 1] !== "…") out.push("…");
+  }
+  return out;
+}
+
 function library() {
   return {
     items: [], cursor: 0, done: false, loading: false, total: null, key: null,
+    paged: false, page: 1, size: 60, base: null,
     quick: QUICK,
     init() {
       // reload when the filters (URL) change; keep cards + scroll position otherwise
@@ -262,23 +275,69 @@ function library() {
       this.$watch("$store.app.view", () => this.sync());
       this.$watch("$store.app.libraryDirty", () => { this.key = null; this.sync(); });
       new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && this.$store.app.view === "library") this.loadMore();
+        if (entries[0].isIntersecting && this.$store.app.view === "library" && !this.paged) this.loadMore();
       }, { rootMargin: "800px" }).observe(this.$refs.sentinel);
     },
+    // the filters without the page number: what the API gets besides cursor/limit
+    get filters() { const p = new URLSearchParams(this.$store.app.query); p.delete("page"); return p.toString(); },
     sync() {
       if (this.$store.app.view !== "library") return;
       document.title = "MangaVibe";
-      if (this.$store.app.query !== this.key) {
-        Object.assign(this, { items: [], cursor: 0, done: false, total: null, loading: false, key: this.$store.app.query });
-        this.loadMore();
+      const paged = settings.library_listing === "paged";
+      const page = paged ? Math.max(1, parseInt(new URLSearchParams(this.$store.app.query).get("page")) || 1) : 1;
+      const size = +settings.library_page_size || 60;
+      const base = `${paged ? "paged" : "lazy"}:${size}:${this.filters}`, key = `${base}:${page}`;
+      if (key === this.key) return;
+      const pageChange = paged && base === this.base && this.key !== null;  // same list, other page
+      Object.assign(this, { cursor: 0, done: false, loading: false, key, base, paged, page, size });
+      if (!pageChange) Object.assign(this, { items: [], total: null });  // a new page keeps the old cards until it arrives
+      paged ? this.loadPage(pageChange) : this.loadMore();
+    },
+    async loadPage(scroll) {
+      const key = this.key;
+      this.loading = true;
+      try {
+        const data = await api(`/api/series?cursor=${(this.page - 1) * this.size}&limit=${this.size}&${this.filters}`);
+        if (key !== this.key) return;
+        if (!data.items.length && data.total && this.page > 1) return this.goPage(this.pages(data.total), true);  // past the end
+        Object.assign(this, { items: data.items, total: data.total, done: true });
+      } catch (e) {
+        toast("Could not load library: " + e.message, 3000, "error");
+      } finally {
+        if (key === this.key) this.loading = false;
+      }
+      if (scroll) {
+        await this.$nextTick();
+        const top = this.$root.getBoundingClientRect().top + scrollY - 70;  // clear the top bar
+        if (scrollY > top) scrollTo({ top: Math.max(0, top) });
       }
     },
+    pages(total = this.total) { return Math.max(1, Math.ceil((total || 0) / this.size)); },
+    get pageNums() { return pageList(this.page, this.pages()); },
+    get pageInfo() {
+      return `Page ${this.page} of ${this.pages()} · ${this.total} series`;
+    },
+    pageSizes: [30, 60, 120],
+    async setPageSize(v) {  // the same setting as Settings → Display → Series per page
+      await api("/api/settings", { method: "PUT", body: { library_page_size: +v } });
+      await loadSettings();
+      const p = libParams();
+      if (p.has("page")) navigateLibrary(p);  // back to page 1; the query change reloads
+      else { this.key = null; this.sync(); }
+    },
+    goPage(n, replace = false) {
+      n = Math.min(Math.max(1, n), this.pages());
+      const p = libParams();
+      n > 1 ? p.set("page", n) : p.delete("page");
+      const url = "#/" + (p.toString() ? "?" + p : "");
+      replace ? location.replace(url) : (location.hash = url);  // a new history entry, so Back returns to the last page
+    },
     async loadMore() {
-      if (this.loading || this.done || this.key === null) return;
+      if (this.paged || this.loading || this.done || this.key === null) return;
       this.loading = true;
       const key = this.key;
       try {
-        const data = await api(`/api/series?cursor=${this.cursor}&limit=60&${key}`);
+        const data = await api(`/api/series?cursor=${this.cursor}&limit=60&${this.filters}`);
         if (key !== this.key) return;  // filters changed while loading
         this.items.push(...data.items);
         this.cursor = data.next_cursor ?? this.cursor;
@@ -330,7 +389,7 @@ function library() {
       navigateLibrary(new URLSearchParams(q ? { q } : {}));
     },
     get emptyText() {
-      return this.key ? "No series match these filters." : "No series yet. The first scan may still be running; see Settings.";
+      return this.filters ? "No series match these filters." : "No series yet. The first scan may still be running; see Settings.";
     },
     cardSub,
   };
@@ -807,7 +866,7 @@ function settingsView() {
       else if (typeof v === "string" && /^\d+$/.test(v)) v = +v;
       await api("/api/settings", { method: "PUT", body: { [key]: v } });
       await loadSettings();
-      if (key === "title_language") this.$store.app.libraryDirty++;
+      if (["title_language", "library_listing", "library_page_size"].includes(key)) this.$store.app.libraryDirty++;
       toast("Saved");
     },
     async rescan(lib) {
