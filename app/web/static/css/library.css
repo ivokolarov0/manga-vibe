@@ -58,19 +58,49 @@
       opacity: 0.5;
     }
 
+    /* hover zooms the image inside the poster, not the poster itself: the card has
+       paint containment (content-visibility), so a bigger poster would be clipped */
     & .poster {
-      transition: transform 0.15s, box-shadow 0.15s;
+      transition: box-shadow 0.2s;
+
+      & img {
+        transition: transform 0.25s ease;
+        /* Safari: rasterize the image layer once instead of on every frame */
+        backface-visibility: hidden;
+      }
     }
 
     @media (hover: hover) {
       &:hover .poster {
-        transform: translateY(-3px);
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+
+        & img {
+          transform: scale(1.05);
+        }
       }
 
       &:hover .card-title {
         color: var(--accent);
       }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      & .poster img {
+        transition: none;
+      }
+
+      &:hover .poster img {
+        transform: none;
+      }
+    }
+  }
+
+  /* Once the mouse is over a grid, put its cover images on their own GPU layers. A layer
+     created only when the zoom starts (and dropped when it ends) makes the image go soft
+     and then snap back to sharp. Doing it per grid, not always, keeps big libraries light. */
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .grid:hover .poster img {
+      will-change: transform;
     }
   }
 
@@ -78,14 +108,18 @@
     position: relative;
     aspect-ratio: 2 / 3;
     overflow: hidden;
-    background: var(--surface2);
     border-radius: var(--radius);
+    /* keeps the corners rounded while the image is transformed (Safari) */
+    isolation: isolate;
 
     & img {
       display: block;
       width: 100%;
       height: 100%;
       object-fit: cover;
+      /* placeholder colour lives on the image, not the poster: a background under a
+         transformed image shows through as a thin line around the rounded edges */
+      background: var(--surface2);
     }
   }
 
