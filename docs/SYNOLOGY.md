@@ -12,8 +12,10 @@ Your manga folder is mounted **read-only**: MangaVibe can never change, rename o
 On the PC, in the project folder (`D:\projects\manga-vibe`), with Docker Desktop running:
 
 ```bash
-docker build -t mangavibe:latest .
+docker build --build-arg GIT_SHA=$(git rev-parse HEAD) -t mangavibe:latest .
 ```
+
+(`GIT_SHA` tells the app which version is built in, so it doesn't offer the same version as an update.)
 
 ```bash
 docker save mangavibe:latest -o mangavibe.tar
@@ -75,6 +77,33 @@ The app writes plain-English messages there, e.g. what it scanned, or how to fix
 - **Change settings (volumes, port, env):** stop the container → **Edit** → change → OK → start it.
 
 ## Updating to a new version
+
+### Automatic updates (most versions)
+
+MangaVibe checks GitHub once a day for a new version on the `releases` branch. When there is one,
+a message appears at the top of the page:
+
+- **Update now**: downloads the new code into `docker/mangavibe/code`, installs any new Python
+  packages, tests that it starts, and restarts the app. The page reloads by itself. Nothing else to do.
+- **Skip this version**: you won't be asked about this version again (you will about the next one).
+- **Later**: hides the message for a day.
+
+**Settings → Updates** shows the running version, has **Check now**, and turns the daily check on or off.
+To turn updates off completely, add the environment variable `AUTO_UPDATE` = `0` to the container.
+
+If a new version does not start 3 times in a row, MangaVibe goes back to the version before it
+(the container log says so) and marks the new one as failed. To go back to the code built into the
+image by hand: stop the container, delete `docker/mangavibe/code/current` in File Station, start it.
+
+### When a new image is needed
+
+Rarely, a version changes the Dockerfile (e.g. a new system program). Then the message says
+**needs a new Docker image** and the update is not installed. Get the new image in one of two ways:
+
+- **From GitHub (no PC needed):** **Docker** → **Registry** → **Settings** → **Add** →
+  name `GitHub`, URL `https://ghcr.io` → **Use** it → search `ivokolarov0/mangavibe` → **Download**, tag `latest`.
+  Then continue with step 2 below.
+- **Built on the PC:** as follows.
 
 1. Build and save the new image on the PC (step 1), upload the `.tar` and **Add From File** again (steps 2–3).
    It replaces `mangavibe:latest`.

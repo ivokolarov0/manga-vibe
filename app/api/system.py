@@ -29,6 +29,7 @@ DEFAULT_SETTINGS = {
     "auto_match": True,            # match new series automatically
     "match_threshold": 90,         # auto-accept score (0-100)
     "include_adult": False,        # include adult results from AniList
+    "auto_update": True,           # check GitHub for a new version once a day
 }
 
 

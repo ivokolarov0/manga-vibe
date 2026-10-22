@@ -164,3 +164,25 @@ Choices made where the spec was open. Newest at the bottom.
   every book for chapter gaps) load only while Settings is open.
 - **Genre/tag filters use one URL parameter per tag** (`genre=a&genre=b`): tag names may contain commas.
 - Library cards take their read counts from the same aggregate query used for filtering and sorting.
+
+## Auto-update
+
+- **Code updates without a new image** (issue #5). The image is the base (Python, unrar/7zip, pip
+  packages); the app's code is downloaded from the `releases` branch on GitHub into
+  `/data/code/<commit>/` and `docker/entrypoint.sh` starts it from there (`/data/code/current`).
+  It survives a container Reset because it lives in `/data`. Repo and branch: `UPDATE_REPO`,
+  `UPDATE_BRANCH`; `AUTO_UPDATE=0` turns it all off.
+- **New pip packages are installed by the app** with `pip install --target /data/code/<commit>/deps`,
+  only the lines that differ from the image's `requirements.txt`. pip picks the right wheel for Intel
+  or ARM by itself.
+- **A changed Dockerfile or entrypoint needs a new image**: the app compares them (line endings
+  ignored) with copies kept in `/opt/mangavibe/image` and refuses the update with a message.
+  GitHub Actions builds `ghcr.io/ivokolarov0/mangavibe` (amd64 + arm64) on every push to `releases`.
+- **Safety**: a version is installed only if `import app.main` works in a separate process. After
+  install the process re-runs the entrypoint with `exec`, so it works without Docker's auto-restart.
+  A version that fails to start 3 times is replaced by the previous one by the entrypoint and
+  remembered as failed. Database migrations only go forward, so going back is a last resort.
+- **Daily check, user decides**: the server asks GitHub once a day (unauthenticated API, 3 requests);
+  the page shows a toast that stays until **Update now**, **Skip this version** (stored on the server,
+  for all devices) or **Later** (this browser, one day).
+

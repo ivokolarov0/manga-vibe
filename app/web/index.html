@@ -400,6 +400,46 @@
           </div>
         </section>
 
+        <!-- updates -->
+        <section x-show="section === 'updates'">
+          <h2>Updates</h2>
+          <template x-if="upd && !upd.supported">
+            <p class="muted">Updates work only in the MangaVibe Docker image. Here, update with git.</p>
+          </template>
+          <div class="setting-row">
+            <div class="label"><span>Running version</span><small x-text="versionText(upd?.current)"></small></div>
+          </div>
+          <label class="setting-row"><span class="label">Check for updates every day<small x-text="`Asks GitHub (${upd?.repo || ''}, branch ${upd?.branch || ''}) and shows a message when a new version is out`"></small></span>
+            <select x-model="st.auto_update" @change="save('auto_update')"><option value="true">On</option><option value="false">Off</option></select></label>
+          <div class="setting-row">
+            <div class="label">
+              <span x-text="upd?.available ? 'New version: ' + upd.available.short : 'You have the newest version'"></span>
+              <small x-show="upd?.available" x-text="versionText(upd?.available)"></small>
+              <small x-text="checkedText"></small>
+            </div>
+            <button class="btn small" :disabled="checking || !upd?.supported" @click="checkUpdate()"
+                    x-text="checking ? 'Checking…' : 'Check now'"></button>
+          </div>
+          <template x-if="upd?.available">
+            <div class="setting-row">
+              <div class="label">
+                <span x-show="upd.available.needs_image">This version needs a new Docker image</span>
+                <span x-show="!upd.available.needs_image && upd.available.failed">This version did not start, so MangaVibe went back</span>
+                <span x-show="!upd.available.needs_image && !upd.available.failed && upd.available.skipped">You skipped this version</span>
+                <span x-show="!upd.available.needs_image && !upd.available.failed && !upd.available.skipped">Ready to install</span>
+                <small x-show="upd.available.needs_image">Files alone are not enough for it. See docs/SYNOLOGY.md → Updating to a new version.</small>
+                <small x-show="!upd.available.needs_image">Your library, progress and settings are kept. The app restarts by itself.</small>
+              </div>
+              <div class="btn-row">
+                <button class="btn small" x-show="upd.available.skipped" @click="unskipUpdate()">Don't skip</button>
+                <button class="btn small" x-show="!upd.available.skipped" @click="skipUpdate()">Skip this version</button>
+                <button class="btn small primary" x-show="!upd.available.needs_image" :disabled="!!$store.app.updating"
+                        @click="installUpdate()" x-text="upd.available.failed ? 'Try again' : 'Update now'"></button>
+              </div>
+            </div>
+          </template>
+        </section>
+
         <!-- needs attention -->
         <section class="att" x-data="attentionView()" x-show="kind" x-cloak>
           <div class="att-head">
@@ -763,6 +803,30 @@
 
   <div id="reader" hidden></div>
   <div id="toast" hidden></div>
+
+  <!-- new version toast: stays until the user answers -->
+  <div id="update-toast" x-data="updateToast()" x-show="show" x-cloak role="alert">
+    <template x-if="!busy && a">
+      <div>
+        <strong x-text="a.needs_image ? 'A new MangaVibe version needs a new Docker image' : 'A new version of MangaVibe is available'"></strong>
+        <small x-text="[a.short, when, a.message].filter(Boolean).join(' · ')"></small>
+        <small x-show="a.needs_image">See docs/SYNOLOGY.md → Updating to a new version.</small>
+        <div class="btn-row">
+          <button class="btn small primary" x-show="!a.needs_image" @click="install()">Update now</button>
+          <button class="btn small" @click="skip()">Skip this version</button>
+          <button class="btn small" @click="later()">Later</button>
+        </div>
+      </div>
+    </template>
+    <template x-if="busy">
+      <div>
+        <strong x-text="busy.error ? 'Update failed' : 'Updating MangaVibe…'"></strong>
+        <small x-text="busy.error || busy.message || 'Working…'"></small>
+        <small x-show="!busy.error">The page reloads by itself when the new version is running.</small>
+        <div class="btn-row" x-show="busy.error"><button class="btn small" @click="close()">Close</button></div>
+      </div>
+    </template>
+  </div>
 
   <script src="/static/js/common.js"></script>
   <script src="/static/js/reader.js"></script>
