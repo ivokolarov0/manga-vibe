@@ -37,7 +37,14 @@
         </template>
         <button class="link-btn" @click="clearAll()">Clear all</button>
       </div>
-      <div class="grid">
+      <div class="page-info" x-show="paged && total > 0" x-cloak>
+        <span x-text="pageInfo"></span>
+        <label>Per page
+          <select :value="size" @change="setPageSize($event.target.value)">
+            <template x-for="n in pageSizes" :key="n"><option :value="n" x-text="n" :selected="n === size"></option></template>
+          </select></label>
+      </div>
+      <div class="grid" :class="{ loading: paged && loading }">
         <template x-for="s in items" :key="s.id">
           <a class="card" :class="{ done: s.reading_status === 'completed' }" :href="'#/series/' + s.id">
             <div class="poster">
@@ -54,6 +61,17 @@
         </template>
       </div>
       <div x-ref="sentinel"></div>
+      <nav class="pager" x-show="paged && pages() > 1" x-cloak aria-label="Pages">
+        <button class="pager-step" :disabled="page <= 1" @click="goPage(page - 1)" aria-label="Previous page">‹<span> Previous</span></button>
+        <template x-for="(n, i) in pageNums" :key="i + '-' + n">
+          <span class="pager-item">
+            <span class="pager-gap" x-show="n === '…'">…</span>
+            <button x-show="n !== '…'" :class="{ on: n === page }" :aria-current="n === page ? 'page' : null"
+                    @click="goPage(n)" x-text="n"></button>
+          </span>
+        </template>
+        <button class="pager-step" :disabled="page >= pages()" @click="goPage(page + 1)" aria-label="Next page"><span>Next </span>›</button>
+      </nav>
       <p class="empty" x-show="total === 0" x-text="emptyText" x-cloak></p>
     </section>
 
@@ -358,6 +376,10 @@
             <select x-model="st.theme" @change="save('theme')"><option value="dark">Dark</option><option value="light">Light</option></select></label>
           <label class="setting-row"><span class="label">Card size</span>
             <select x-model="st.card_size" @change="save('card_size')"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
+          <label class="setting-row"><span class="label">Library listing<small>Load more while scrolling, or show numbered pages</small></span>
+            <select x-model="st.library_listing" @change="save('library_listing')"><option value="lazy">Lazy load</option><option value="paged">Paginated</option></select></label>
+          <label class="setting-row" x-show="st.library_listing === 'paged'"><span class="label">Series per page</span>
+            <select x-model="st.library_page_size" @change="save('library_page_size')"><option value="30">30</option><option value="60">60</option><option value="120">120</option></select></label>
           <label class="setting-row"><span class="label">Title language<small>Falls back to the next one if missing</small></span>
             <select x-model="st.title_language" @change="save('title_language')"><option value="english">English</option><option value="romaji">Romaji</option><option value="native">Native</option></select></label>
         </section>
