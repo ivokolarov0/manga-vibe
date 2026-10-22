@@ -114,6 +114,9 @@ def test_settings(client):
     client.put("/api/settings", json={"reader_mode": "vertical", "bogus": 1})
     s = client.get("/api/settings").json()
     assert s["reader_mode"] == "vertical" and "bogus" not in s
+    assert s["reader_autohide"] == 5
+    client.put("/api/settings", json={"reader_autohide": 0})
+    assert client.get("/api/settings").json()["reader_autohide"] == 0
 
 
 def test_example_plugin(client):
@@ -328,3 +331,42 @@ def test_tag_with_comma_filters(client):
     with SessionLocal() as db:
         service.set_tags(db, db.get(Series, sid), [], [])
         db.commit()
+
+
+def test_scan_single_library_only_touches_that_library(client):
+    """Issue #21: scanning one library folder leaves the other libraries alone."""
+    from app.db import SessionLocal
+    from app.models import Library, Series
+    from app.scanner import walker
+    from tests.conftest import make_zip
+    other_root = TMP / "manga2"
+    make_zip(other_root / "Other Series" / "Other_ch01.zip")
+    while walker.status["running"]:
+        time.sleep(0.01)
+    other_id = client.post("/api/libraries", json={"root_path": str(other_root)}).json()["id"]
+    while walker.status["running"]:  # adding a folder scans only that folder
+        time.sleep(0.01)
+    assert walker.status["library_id"] == other_id
+    with SessionLocal() as db:
+        main_id = db.query(Library).filter_by(root_path=str(TMP / "manga")).one().id
+
+    new = TMP / "manga" / "Brand New"
+    make_zip(new / "Brand_New_ch01.zip")
+    try:
+        assert client.post(f"/api/libraries/{other_id}/scan").json()["started"] is True
+        while walker.status["running"]:
+            time.sleep(0.01)
+        assert walker.status["library_id"] == other_id
+        assert "Brand New" not in series_by_name(client)  # other library not scanned
+        assert "Other Series" in series_by_name(client)
+
+        walker.scan_all(main_id)
+        assert "Brand New" in series_by_name(client)
+        with SessionLocal() as db:
+            libs = {s.folder_name: s.library_id for s in db.query(Series)}
+        assert libs["Brand New"] == main_id and libs["Other Series"] == other_id
+        assert client.post("/api/libraries/9999/scan").status_code == 404
+    finally:
+        shutil.rmtree(new)
+        walker.scan_all()
+        client.delete(f"/api/libraries/{other_id}")

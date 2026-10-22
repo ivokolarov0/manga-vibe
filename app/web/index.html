@@ -330,14 +330,19 @@
               <div class="label">
                 <span x-text="l.name"></span>
                 <small x-text="l.root_path + ' · ' + l.series + ' series' + (l.available ? '' : ' · not found, check the volume mount')"></small>
+                <small class="scan-progress" x-show="libScanText(l)" x-text="libScanText(l)"></small>
               </div>
-              <button class="btn small danger" @click="removeLibrary(l)">Remove</button>
+              <div class="row-buttons">
+                <button class="btn small" :disabled="scan.running" @click="rescan(l)"
+                        :title="scan.running ? 'A scan is running' : 'Scan only this folder'">⟳ Scan</button>
+                <button class="btn small danger" @click="removeLibrary(l)">Remove</button>
+              </div>
             </div>
           </template>
           <div class="setting-row">
             <div class="label"><span x-text="scanText || 'Scan for new files'"></span>
               <small>Runs by itself every 6 hours and on start.</small></div>
-            <button class="btn small" @click="rescan()">Rescan now</button>
+            <button class="btn small" :disabled="scan.running" @click="rescan()">Rescan all</button>
           </div>
           <div class="setting-row">
             <div class="label"><span>Add a folder</span>
@@ -368,12 +373,30 @@
             <select x-model="st.auto_fullscreen" @change="save('auto_fullscreen')"><option value="true">On</option><option value="false">Off</option></select></label>
           <label class="setting-row"><span class="label">Pages to preload<small>More = smoother, uses more data</small></span>
             <select x-model="st.preload" @change="save('preload')"><option>2</option><option>3</option><option>4</option><option>5</option><option>8</option></select></label>
+          <label class="setting-row"><span class="label">Hide controls after<small>When nothing is touched</small></span>
+            <select x-model="st.reader_autohide" @change="save('reader_autohide')"><option value="3">3 seconds</option><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="15">15 seconds</option><option value="0">Never</option></select></label>
         </section>
 
         <!-- metadata -->
         <section x-show="section === 'metadata'">
           <h2>Metadata</h2>
           <p class="muted" x-text="metaText"></p>
+          <div class="meta-sources">
+            <h3>Sources</h3>
+            <p class="muted">Tried in this order. Fallbacks are used when the main source has no match or is down.</p>
+            <template x-for="p in providers" :key="p.id">
+              <div class="setting-row" :class="{ off: !p.enabled }">
+                <span class="label">
+                  <span><template x-if="p.url"><a :href="p.url" target="_blank" rel="noopener" x-text="p.name"></a></template><template x-if="!p.url"><span x-text="p.name"></span></template></span>
+                  <small x-text="p.description"></small>
+                </span>
+                <span class="chip" :class="{ main: p.role === 'main', warn: p.enabled && !p.available }"
+                  x-text="!p.enabled ? 'Disabled' : (p.role === 'main' ? 'Main' : 'Fallback') + (p.available ? '' : ' · down')"></span>
+              </div>
+            </template>
+            <p class="muted" x-show="!providers.some((p) => p.enabled)">No metadata sources are enabled. Turn one on in Plugins.</p>
+            <p class="meta-sources-manage"><a href="#/settings/plugins" @click.prevent="go('plugins')">Manage in Plugins</a></p>
+          </div>
           <label class="setting-row"><span class="label">Find metadata automatically<small>For new series after each scan</small></span>
             <select x-model="st.auto_match" @change="save('auto_match')"><option value="true">On</option><option value="false">Off</option></select></label>
           <label class="setting-row"><span class="label">Auto-accept a match from<small>Lower = fewer series in Needs attention, more wrong matches</small></span>
@@ -802,7 +825,7 @@
   </div>
 
   <div id="reader" hidden></div>
-  <div id="toast" hidden></div>
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <!-- new version toast: stays until the user answers -->
   <div id="update-toast" x-data="updateToast()" x-show="show" x-cloak role="alert">

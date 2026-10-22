@@ -62,6 +62,7 @@ class Plugin:
     fields: list[FieldDef] = []
     actions: list[Action] = []
     is_provider = False  # True for metadata providers
+    url = ""             # optional: the site a provider gets its data from (shown in Settings)
     css = ""             # extra CSS for the web app (loaded after the built-in styles, so it wins)
 
     # --- scan hooks -------------------------------------------------------
