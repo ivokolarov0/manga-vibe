@@ -2,7 +2,10 @@
 # see docs/SYNOLOGY.md for the GUI steps.
 services:
   mangavibe:
-    build: .
+    build:
+      context: .
+      args:
+        GIT_SHA: ${GIT_SHA:-}       # set by build.py; tells auto-update which version is built in
     image: mangavibe:latest
     container_name: mangavibe
     ports:

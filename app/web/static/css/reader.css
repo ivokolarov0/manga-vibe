@@ -72,6 +72,30 @@
       }
     }
 
+    /* always-visible reading progress: a thin line on the bottom edge, no border or background */
+    & .read-progress {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1;
+      height: 3px;
+      pointer-events: none;
+
+      & i {
+        display: block;
+        width: 0;
+        height: 100%;
+        background: var(--accent);
+        transition: width 0.2s ease-out;
+      }
+    }
+
+    /* right to left: the bar grows from the right edge, like the pages */
+    &.rtl .read-progress i {
+      margin-left: auto;
+    }
+
     & .chrome {
       position: absolute;
       right: 0;

@@ -12,16 +12,12 @@ Your manga folder is mounted **read-only**: MangaVibe can never change, rename o
 On the PC, in the project folder (`D:\projects\manga-vibe`), with Docker Desktop running:
 
 ```bash
-docker build --build-arg GIT_SHA=$(git rev-parse HEAD) -t mangavibe:latest .
+python build.py --save
 ```
 
-(`GIT_SHA` tells the app which version is built in, so it doesn't offer the same version as an update.)
-
-```bash
-docker save mangavibe:latest -o mangavibe.tar
-```
-
-This makes `mangavibe.tar` (about 100–150 MB).
+This builds the image and makes `mangavibe.tar` (about 100–150 MB). It also stores the git commit
+in the image, so auto-update knows which version is built in and doesn't offer it again.
+(`python build.py --run` instead starts it on the PC at http://localhost:8090.)
 
 > Alternative: if you have a Docker Hub account, `docker tag mangavibe:latest <you>/mangavibe:latest`
 > and `docker push <you>/mangavibe:latest`, then on the NAS use **Registry** to download it instead of steps 2–3.
