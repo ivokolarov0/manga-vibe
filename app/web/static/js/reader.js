@@ -35,9 +35,10 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   // drop ?page= so a reload resumes from saved progress (replaceState fires no hashchange)
   history.replaceState(history.state, "", `#/read/${book.id}`);
   document.title = `${book.label} · ${book.series_title}`;
-  el.className = `fit-${settings.reader_fit || "screen"} ui-hidden`;
+  el.className = `fit-${settings.reader_fit || "screen"} ui-hidden ${R.mode}`;
   el.innerHTML = `
     ${R.mode === "vertical" ? `<div class="vertical"></div>` : `<div class="stage"><img alt=""></div>`}
+    <div class="read-progress" aria-hidden="true"><i id="r-progress"></i></div>
     <div class="chrome top">
       <button id="r-back" aria-label="Back">←</button>
       <div class="title">${esc(book.series_title)} · ${esc(book.label)}</div>
@@ -353,6 +354,8 @@ function preload() {
 function updatePageUi() {
   $("#r-num").textContent = `Page ${R.page + 1} / ${R.book.page_count}`;
   $("#r-slider").value = R.page + 1;
+  // thin bar at the very bottom: how far into this book you are (right to left for RTL)
+  $("#r-progress").style.width = `${((R.page + 1) / R.book.page_count) * 100}%`;
 }
 
 function goTo(i) {
