@@ -157,4 +157,33 @@
     border-radius: var(--radius);
     transform: translateX(-50%);
   }
+
+  /* "new version" message: top right, under the top bar; stays until answered */
+  #update-toast {
+    position: fixed;
+    top: 64px;
+    right: 12px;
+    z-index: 90;
+    width: min(440px, calc(100vw - 24px));
+    padding: 12px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-panel);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+
+    & strong,
+    & small {
+      display: block;
+    }
+
+    & small {
+      margin-top: 2px;
+      color: var(--muted);
+      overflow-wrap: anywhere;
+    }
+
+    & .btn-row {
+      margin-top: 10px;
+    }
+  }
 }

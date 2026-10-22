@@ -9,8 +9,8 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app import config, db as database
-from app.api import attention, books, edit, series, system
+from app import config, db as database, updater
+from app.api import attention, books, edit, series, system, update
 from app.metadata import worker as metadata_worker
 from app.plugins import manager as plugins
 from app.posters import MAX_UPLOAD
@@ -44,6 +44,10 @@ async def lifespan(app):
     walker.start_scan_in_background()
     if config.RESCAN_HOURS > 0:
         threading.Thread(target=_periodic_rescan, daemon=True, name="rescan").start()
+    updater.load_cached()
+    if updater.supported():
+        threading.Thread(target=updater.daily_loop, daemon=True, name="update-check").start()
+    updater.mark_started()
     yield
 
 
@@ -110,6 +114,7 @@ app.include_router(series.router)
 app.include_router(books.router)
 app.include_router(attention.router)
 app.include_router(edit.router)
+app.include_router(update.router)
 class StaticNoCache(StaticFiles):
     """The browser re-checks static files on every load (a quick 304 when unchanged),
     so a new version of the app shows up without ?v= numbers in the HTML."""
