@@ -235,3 +235,19 @@ def test_filters(client):
     assert ids("sort=score")[0] == sid
     tags = {t["name"]: t["count"] for t in client.get("/api/tags").json()}
     assert tags["Romance"] == 1
+
+
+def test_metadata_providers_order_and_toggle(client):
+    ps = client.get("/api/metadata/providers").json()
+    assert [(p["id"], p["role"]) for p in ps] == [("anilist", "main"), ("mangaupdates", "fallback")]
+    assert ps[0]["url"] == "https://anilist.co" and ps[0]["description"]
+    try:
+        client.put("/api/plugins/anilist", json={"enabled": False})
+        ps = client.get("/api/metadata/providers").json()
+        assert [(p["id"], p["role"], p["enabled"]) for p in ps] == [
+            ("mangaupdates", "main", True), ("anilist", None, False)]
+        client.put("/api/plugins/mangaupdates", json={"enabled": False})
+        assert not any(p["enabled"] for p in client.get("/api/metadata/providers").json())
+    finally:
+        client.put("/api/plugins/anilist", json={"enabled": True})
+        client.put("/api/plugins/mangaupdates", json={"enabled": True})

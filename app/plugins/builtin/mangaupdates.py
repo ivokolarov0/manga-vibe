@@ -67,6 +67,7 @@ class MangaUpdates(Plugin):
     name = "MangaUpdates"
     description = "Built-in metadata provider: MangaUpdates link, and fallback metadata."
     is_provider = True
+    url = "https://www.mangaupdates.com"
 
     def search(self, ctx, query, year=None):
         r = http.post_json(f"{API}/series/search", {"search": query, "perpage": 10})
