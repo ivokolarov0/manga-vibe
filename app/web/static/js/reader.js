@@ -166,7 +166,7 @@ function maybeHiRes() {
 
 function setupPaged() {
   const stage = $("#reader .stage");
-  img().onerror = () => toast("Could not load page " + (R.page + 1));
+  img().onerror = () => toast("Could not load page " + (R.page + 1), 3000, "error");
   updateLockButton();
   showPage(0);
 
