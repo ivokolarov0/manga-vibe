@@ -285,7 +285,7 @@ function library() {
         this.done = data.next_cursor === null;
         this.total = data.total;
       } catch (e) {
-        toast("Could not load library: " + e.message);
+        toast("Could not load library: " + e.message, 3000, "error");
       } finally {
         if (key === this.key) this.loading = false;
       }
@@ -514,21 +514,21 @@ function seriesView() {
         this.$store.app.libraryDirty++;
       } catch (e) {
         this.s.favorite = !on;
-        toast(e.message, 6000);
+        toast(e.message, 6000, "error");
       }
     },
     async refreshMeta(btn) {
       btn.disabled = true;
       btn.textContent = "Refreshing…";
       try { await api(`/api/series/${this.s.id}/refresh`, { method: "POST" }); toast("Metadata refreshed"); this.reload(); }
-      catch (e) { toast(e.message, 6000); btn.disabled = false; btn.textContent = "Refresh metadata"; }
+      catch (e) { toast(e.message, 6000, "error"); btn.disabled = false; btn.textContent = "Refresh metadata"; }
     },
     fixMatch() { this.$store.app.openFix(this.s.id, () => this.reload()); },
     editInfo(tab = "info") { this.$store.app.openEdit(this.s.id, () => this.reload(), tab); },
     async runAction(a) {
       if (a.confirm && !confirm(a.confirm)) return;
       try { toast((await api(`/api/series/${this.s.id}/actions/${a.plugin}/${a.key}`, { method: "POST" })).message, 6000); }
-      catch (e) { toast(e.message, 6000); }
+      catch (e) { toast(e.message, 6000, "error"); }
     },
     setTab(t) { location.replace(`#/series/${this.s.id}${t ? "?tab=" + t : ""}`); },
 
@@ -590,7 +590,7 @@ function seriesView() {
         toast("Saved. The list is re-ordered.");
         this.$store.app.libraryDirty++;
         this.reload();
-      } catch (e) { toast(e.message, 6000); }
+      } catch (e) { toast(e.message, 6000, "error"); }
     },
     async resetEdit(b) {
       await api(`/api/books/${b.id}`, { method: "PATCH", body: { reset: true } });
@@ -616,7 +616,7 @@ function seriesView() {
         this.$store.app.libraryDirty++;
         refreshAttentionCount();
         this.reload();
-      } catch (e) { toast(e.message, 6000); } finally { this.rescanning = false; }
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.rescanning = false; }
     },
     progressPct(b) { return b.page_count ? Math.round((b.page + 1) / b.page_count * 100) : 0; },
     mb(n) { return (n / 1048576).toFixed(1) + " MB"; },
@@ -674,17 +674,17 @@ function fixMatch() {
       try {
         await api(`/api/series/${this.s.id}/match`, { method: "POST", body: { provider: this.provider, provider_id: c.provider_id } });
         this.done("Matched: " + c.title);
-      } catch (e) { toast(e.message, 6000); } finally { this.busy = false; }
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.busy = false; }
     },
     async applyUrl() {
       try {
         await api(`/api/series/${this.s.id}/match`, { method: "POST", body: { url: this.url.trim() } });
         this.done("Matched");
-      } catch (e) { toast(e.message, 6000); }
+      } catch (e) { toast(e.message, 6000, "error"); }
     },
     async post(path, msg) {
       try { await api(`/api/series/${this.s.id}/${path}`, { method: "POST" }); this.done(msg); }
-      catch (e) { toast(e.message, 6000); }
+      catch (e) { toast(e.message, 6000, "error"); }
     },
     scoreCls,
   };
@@ -741,7 +741,7 @@ function attentionView() {
         await api(`/api/series/${x.series_id}/match`, { method: "POST", body: { provider: c.provider, provider_id: c.provider_id } });
         toast("Matched");
         this.afterChange();
-      } catch (e) { toast(e.message, 6000); }
+      } catch (e) { toast(e.message, 6000, "error"); }
     },
     fix(x) { this.$store.app.openFix(x.series_id, () => refreshAttentionCount()); },
     async dontMatch(x) {
@@ -757,7 +757,7 @@ function attentionView() {
         toast(r.removed ? "The series folder is gone, so the series was removed from the library"
           : `Rescanned: ${r.books} files` + (r.errors ? `, ${r.errors} with errors` : ""));
         this.afterChange();
-      } catch (e) { toast(e.message, 6000); } finally {
+      } catch (e) { toast(e.message, 6000, "error"); } finally {
         const { [seriesId]: _, ...rest } = this.rescanning;
         this.rescanning = rest;
       }
@@ -779,7 +779,7 @@ function settingsView() {
     get section() { return this.$store.app.sub || "library"; },
     go(sec) { location.replace(`#/settings/${sec}`); },
     attCount(k) { return this.$store.app.att?.[k]?.filter((x) => !x.ignored).length || 0; },
-    st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, scanText: "", metaText: "", timers: [],
+    st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, scan: {}, scanText: "", metaText: "", timers: [],
     init() {
       this.$watch("$store.app.view", (v) => (v === "settings" ? this.load() : this.stop()));
       // phone: the navigation is a scrolling strip; keep the open section's button in view
@@ -810,7 +810,19 @@ function settingsView() {
       if (key === "title_language") this.$store.app.libraryDirty++;
       toast("Saved");
     },
-    async rescan() { await api("/api/scan", { method: "POST" }); this.stop(); this.pollScan(); },
+    async rescan(lib) {
+      const r = await api(lib ? `/api/libraries/${lib.id}/scan` : "/api/scan", { method: "POST" })
+        .catch((e) => { toast(e.message, 6000); return null; });
+      if (!r) return;
+      if (!r.started) toast("A scan is already running. Try again when it has finished.", 5000);
+      this.stop(); this.pollScan();
+    },
+    // progress for one folder's row while that folder is being scanned
+    libScanText(l) {
+      const st = this.scan;
+      if (!st.running || (st.library_id != null ? st.library_id !== l.id : st.library !== l.name)) return "";
+      return st.library_id != null ? `Scanning ${st.done}/${st.total}…` : "Scanning…";
+    },
     async removeLibrary(l) {
       if (!confirm(`Remove "${l.name}" (${l.root_path}) from MangaVibe?
 
@@ -838,9 +850,9 @@ Your files are not touched. `
       try {
         this.$store.app.update = await api("/api/update/check", { method: "POST" });
         const u = this.$store.app.update;
-        if (u.status.error) toast(u.status.error, 6000);
+        if (u.status.error) toast(u.status.error, 6000, "error");
         else toast(u.available ? "A new version is available" : "You have the newest version");
-      } catch (e) { toast(e.message, 6000); } finally { this.checking = false; }
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.checking = false; }
     },
     async skipUpdate() {
       this.$store.app.update = await api("/api/update/skip", { method: "POST", body: { sha: this.upd.available.sha } });
@@ -860,6 +872,9 @@ Your files are not touched. `
     async pollScan() {
       const st = await api("/api/scan/status").catch(() => null);
       if (!st || this.$store.app.view !== "settings") return;
+      const finished = this.scan.running && !st.running;
+      this.scan = st;
+      if (finished) this.libs = await api("/api/libraries").catch(() => this.libs);  // new series counts
       this.scanText = st.running ? `Scanning ${st.done}/${st.total}: ${st.current || ""}`
         : st.finished_at ? `Last scan finished ${new Date(st.finished_at).toLocaleString()}`
           + (st.new_books ? ` · ${st.new_books} new books` : "") + (st.errors ? ` · ${st.errors} errors` : "") : "";
@@ -915,7 +930,7 @@ function folderPicker() {
         this.close();
         this.$store.app.libraryDirty++;
         window.dispatchEvent(new Event("libraries-changed"));
-      } catch (e) { toast(e.message, 6000); } finally { this.busy = false; }
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.busy = false; }
     },
   };
 }
@@ -994,7 +1009,7 @@ function editSeries() {
         await api(`/api/series/${this.s.id}/metadata`, { method: "PUT", body });
         toast("Saved. Your changes are kept when metadata is refreshed.");
         this.done();
-      } catch (e) { toast(e.message, 7000); } finally { this.saving = false; }
+      } catch (e) { toast(e.message, 7000, "error"); } finally { this.saving = false; }
     },
     async unlockAll() {
       if (!confirm("Let metadata refresh change all fields again? Your edits stay until the next refresh.")) return;
@@ -1035,7 +1050,7 @@ function editSeries() {
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
         toast("Poster changed");
         this.done();
-      } catch (e) { toast(e.message, 7000); } finally { this.uploading = false; }
+      } catch (e) { toast(e.message, 7000, "error"); } finally { this.uploading = false; }
     },
     get pageBookObj() { return this.books.find((b) => b.id === +this.pageBook); },
     get pagePreview() {
@@ -1051,7 +1066,7 @@ function editSeries() {
         await api(`/api/series/${this.s.id}/poster`, { method: "POST", body });
         toast("Poster changed");
         this.done();
-      } catch (e) { toast(e.message, 7000); }
+      } catch (e) { toast(e.message, 7000, "error"); }
     },
   };
 }

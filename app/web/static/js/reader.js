@@ -7,6 +7,7 @@ const Reader = (() => {
 const R = { book: null, page: 0, mode: "rtl", ui: false, saveTimer: null, wake: null, firstTap: true,
   preloaded: new Map(), cameFromApp: false };
 const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
+const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left/right); the middle toggles the controls
 
 function pageWidth() {
   if (settings.reader_fit === "original") return 0;
@@ -165,7 +166,7 @@ function maybeHiRes() {
 
 function setupPaged() {
   const stage = $("#reader .stage");
-  img().onerror = () => toast("Could not load page " + (R.page + 1));
+  img().onerror = () => toast("Could not load page " + (R.page + 1), 3000, "error");
   updateLockButton();
   showPage(0);
 
@@ -271,8 +272,8 @@ function setupPaged() {
     const x = e.clientX / innerWidth;
     tapTimer = setTimeout(() => {
       if (Z.s > 1.01) return toggleUi();  // zoomed: taps only show/hide the controls
-      if (x < 1 / 3) R.mode === "rtl" ? next() : prev();
-      else if (x > 2 / 3) R.mode === "rtl" ? prev() : next();
+      if (x < TAP_SIDE) R.mode === "rtl" ? next() : prev();
+      else if (x > 1 - TAP_SIDE) R.mode === "rtl" ? prev() : next();
       else toggleUi();
     }, 230);
   };

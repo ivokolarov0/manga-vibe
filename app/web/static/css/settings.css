@@ -172,6 +172,16 @@
         color: var(--muted);
         font-size: 12px;
       }
+
+      & small.scan-progress {
+        color: var(--accent);
+      }
+    }
+
+    & .row-buttons {
+      display: flex;
+      flex-shrink: 0;
+      gap: 6px;
     }
 
     & select {
