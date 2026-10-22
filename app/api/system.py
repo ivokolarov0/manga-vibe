@@ -26,6 +26,7 @@ DEFAULT_SETTINGS = {
     "reader_fit": "screen",        # width | height | screen | original
     "auto_fullscreen": True,
     "preload": 4,
+    "reader_autohide": 5,          # seconds until the reader controls hide; 0 = never
     "auto_match": True,            # match new series automatically
     "match_threshold": 90,         # auto-accept score (0-100)
     "include_adult": False,        # include adult results from AniList
