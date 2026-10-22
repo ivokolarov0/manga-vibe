@@ -19,12 +19,14 @@ async function api(path, opts = {}) {
   return res.json();
 }
 
-function toast(msg, ms = 3000) {
+/* Short message at the bottom. kind "error" marks it as an error (red stripe). */
+function toast(msg, ms = 3000, kind = "") {
   const t = $("#toast");
   t.textContent = msg;
-  t.hidden = false;
+  t.classList.toggle("error", kind === "error");
+  t.classList.add("show");
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => (t.hidden = true), ms);
+  toast.timer = setTimeout(() => t.classList.remove("show"), ms);
 }
 
 /* Descriptions from MangaUpdates use markdown-style **bold** and *italic*.

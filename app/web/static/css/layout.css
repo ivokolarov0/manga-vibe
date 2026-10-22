@@ -145,6 +145,8 @@
     background: var(--surface);
   }
 
+  /* short message at the bottom. Inverted colours (text colour as background) so it stands
+     out in both themes; the coloured stripe says success/info (accent) or error (danger). */
   #toast {
     position: fixed;
     bottom: calc(80px + var(--safe-bottom));
@@ -152,10 +154,36 @@
     z-index: 100;
     max-width: 90vw;
     padding: 10px 16px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
+    background: var(--text);
+    color: var(--bg);
+    font-weight: 500;
+    border-left: 4px solid var(--accent);
     border-radius: var(--radius);
-    transform: translateX(-50%);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.35);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, 16px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+
+    &.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, 0);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
+    }
+
+    &.error {
+      border-left-color: var(--danger);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &,
+      &.show {
+        transition: none;
+        transform: translate(-50%, 0);
+      }
+    }
   }
 
   /* "new version" message: top right, under the top bar; stays until answered */
