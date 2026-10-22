@@ -19,7 +19,8 @@ log = logging.getLogger("mangavibe.scan")
 SKIP_DIRS = {"@eaDir", "#recycle", "#snapshot", "__MACOSX", ".AppleDouble", "@Recycle"}
 KEEP_MISSING_DAYS = 30
 
-status = {"running": False, "library": None, "current": None, "done": 0, "total": 0,
+# library_id is set when only one library is scanned, None for a full scan
+status = {"running": False, "library_id": None, "library": None, "current": None, "done": 0, "total": 0,
           "started_at": None, "finished_at": None, "new_books": 0, "errors": 0}
 _lock = threading.Lock()
 
@@ -58,22 +59,26 @@ def signature(path: Path, fmt: str):
     return size, mtime
 
 
-def start_scan_in_background():
+def start_scan_in_background(lib_id: int | None = None):
+    """Scan every library, or only one when lib_id is given. False if a scan is already running."""
     if status["running"]:
         return False
-    threading.Thread(target=scan_all, daemon=True, name="scanner").start()
+    threading.Thread(target=scan_all, args=(lib_id,), daemon=True, name="scanner").start()
     return True
 
 
-def scan_all():
+def scan_all(lib_id: int | None = None):
     if not _lock.acquire(blocking=False):
         return
     try:
-        status.update(running=True, started_at=now().isoformat(), finished_at=None, done=0,
-                      total=0, new_books=0, errors=0)
+        status.update(running=True, library_id=lib_id, library=None, started_at=now().isoformat(),
+                      finished_at=None, done=0, total=0, new_books=0, errors=0)
         db = SessionLocal()
         try:
-            for lib in db.query(Library).all():
+            libs = db.query(Library)
+            if lib_id is not None:
+                libs = libs.filter(Library.id == lib_id)
+            for lib in libs.all():
                 scan_library(db, lib)
         finally:
             db.close()
@@ -117,7 +122,7 @@ def scan_library(db, lib: Library):
     for s in db.query(Series).filter(Series.library_id == lib.id):
         if s.id not in seen and s.missing_since is None:
             s.missing_since = now()
-    _purge_missing(db)
+    _purge_missing(db, lib.id)
     db.commit()
     log.info("Scanned library %s: %d series in %.1fs", lib.name, len(dirs), time.time() - t0)
 
@@ -293,12 +298,14 @@ def rescan_series(series_id: int):
         _lock.release()
 
 
-def _purge_missing(db):
+def _purge_missing(db, lib_id: int):
+    """Delete books and series of this library that have been missing for too long."""
     cutoff = now() - timedelta(days=KEEP_MISSING_DAYS)
-    for b in db.query(Book).filter(Book.missing_since.is_not(None)):
+    for b in (db.query(Book).join(Series, Book.series_id == Series.id)
+              .filter(Series.library_id == lib_id, Book.missing_since.is_not(None))):
         if _aware(b.missing_since) < cutoff:
             db.delete(b)
-    for s in db.query(Series).filter(Series.missing_since.is_not(None)):
+    for s in db.query(Series).filter(Series.library_id == lib_id, Series.missing_since.is_not(None)):
         if _aware(s.missing_since) < cutoff:
             db.delete(s)
 

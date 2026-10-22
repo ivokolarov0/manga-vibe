@@ -779,7 +779,7 @@ function settingsView() {
     get section() { return this.$store.app.sub || "library"; },
     go(sec) { location.replace(`#/settings/${sec}`); },
     attCount(k) { return this.$store.app.att?.[k]?.filter((x) => !x.ignored).length || 0; },
-    st: {}, libs: [], plugins: [], pluginErrors: {}, scanText: "", metaText: "", timers: [],
+    st: {}, libs: [], plugins: [], pluginErrors: {}, scan: {}, scanText: "", metaText: "", timers: [],
     init() {
       this.$watch("$store.app.view", (v) => (v === "settings" ? this.load() : this.stop()));
       // phone: the navigation is a scrolling strip; keep the open section's button in view
@@ -809,7 +809,19 @@ function settingsView() {
       if (key === "title_language") this.$store.app.libraryDirty++;
       toast("Saved");
     },
-    async rescan() { await api("/api/scan", { method: "POST" }); this.stop(); this.pollScan(); },
+    async rescan(lib) {
+      const r = await api(lib ? `/api/libraries/${lib.id}/scan` : "/api/scan", { method: "POST" })
+        .catch((e) => { toast(e.message, 6000); return null; });
+      if (!r) return;
+      if (!r.started) toast("A scan is already running. Try again when it has finished.", 5000);
+      this.stop(); this.pollScan();
+    },
+    // progress for one folder's row while that folder is being scanned
+    libScanText(l) {
+      const st = this.scan;
+      if (!st.running || (st.library_id != null ? st.library_id !== l.id : st.library !== l.name)) return "";
+      return st.library_id != null ? `Scanning ${st.done}/${st.total}…` : "Scanning…";
+    },
     async removeLibrary(l) {
       if (!confirm(`Remove "${l.name}" (${l.root_path}) from MangaVibe?
 
@@ -851,6 +863,9 @@ Your files are not touched. `
     async pollScan() {
       const st = await api("/api/scan/status").catch(() => null);
       if (!st || this.$store.app.view !== "settings") return;
+      const finished = this.scan.running && !st.running;
+      this.scan = st;
+      if (finished) this.libs = await api("/api/libraries").catch(() => this.libs);  // new series counts
       this.scanText = st.running ? `Scanning ${st.done}/${st.total}: ${st.current || ""}`
         : st.finished_at ? `Last scan finished ${new Date(st.finished_at).toLocaleString()}`
           + (st.new_books ? ` · ${st.new_books} new books` : "") + (st.errors ? ` · ${st.errors} errors` : "") : "";
