@@ -779,7 +779,7 @@ function settingsView() {
     get section() { return this.$store.app.sub || "library"; },
     go(sec) { location.replace(`#/settings/${sec}`); },
     attCount(k) { return this.$store.app.att?.[k]?.filter((x) => !x.ignored).length || 0; },
-    st: {}, libs: [], plugins: [], pluginErrors: {}, scan: {}, scanText: "", metaText: "", timers: [],
+    st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, scan: {}, scanText: "", metaText: "", timers: [],
     init() {
       this.$watch("$store.app.view", (v) => (v === "settings" ? this.load() : this.stop()));
       // phone: the navigation is a scrolling strip; keep the open section's button in view
@@ -791,10 +791,11 @@ function settingsView() {
     async load() {
       if (this.$store.app.view !== "settings") return;
       document.title = "Settings";
-      const [libs, plug] = await Promise.all([api("/api/libraries"), api("/api/plugins")]);
+      const [libs, plug, providers] = await Promise.all([api("/api/libraries"), api("/api/plugins"),
+        api("/api/metadata/providers")]);
       // selects compare strings, so keep every value as text here; save() converts back
       this.st = Object.fromEntries(Object.entries(settings).map(([k, v]) => [k, String(v)]));
-      Object.assign(this, { libs, plugins: plug.plugins, pluginErrors: plug.errors });
+      Object.assign(this, { libs, providers, plugins: plug.plugins, pluginErrors: plug.errors });
       this.stop();
       this.pollScan();
       this.pollMeta();
@@ -858,8 +859,16 @@ Your files are not touched. `
     },
     async unskipUpdate() { this.$store.app.update = await api("/api/update/skip", { method: "DELETE" }); },
     installUpdate() { installUpdate(this.upd.available.sha); },
-    async togglePlugin(p) { await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } }); },
-    async reloadPlugins() { const r = await api("/api/plugins/reload", { method: "POST" }); this.plugins = r.plugins; this.pluginErrors = r.errors; },
+    async loadProviders() { this.providers = await api("/api/metadata/providers").catch(() => this.providers); },
+    async togglePlugin(p) {
+      await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } });
+      if (p.provider) this.loadProviders();
+    },
+    async reloadPlugins() {
+      const r = await api("/api/plugins/reload", { method: "POST" });
+      this.plugins = r.plugins; this.pluginErrors = r.errors;
+      this.loadProviders();
+    },
     async pollScan() {
       const st = await api("/api/scan/status").catch(() => null);
       if (!st || this.$store.app.view !== "settings") return;

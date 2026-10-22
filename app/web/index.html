@@ -381,6 +381,22 @@
         <section x-show="section === 'metadata'">
           <h2>Metadata</h2>
           <p class="muted" x-text="metaText"></p>
+          <div class="meta-sources">
+            <h3>Sources</h3>
+            <p class="muted">Tried in this order. Fallbacks are used when the main source has no match or is down.</p>
+            <template x-for="p in providers" :key="p.id">
+              <div class="setting-row" :class="{ off: !p.enabled }">
+                <span class="label">
+                  <span><template x-if="p.url"><a :href="p.url" target="_blank" rel="noopener" x-text="p.name"></a></template><template x-if="!p.url"><span x-text="p.name"></span></template></span>
+                  <small x-text="p.description"></small>
+                </span>
+                <span class="chip" :class="{ main: p.role === 'main', warn: p.enabled && !p.available }"
+                  x-text="!p.enabled ? 'Disabled' : (p.role === 'main' ? 'Main' : 'Fallback') + (p.available ? '' : ' · down')"></span>
+              </div>
+            </template>
+            <p class="muted" x-show="!providers.some((p) => p.enabled)">No metadata sources are enabled. Turn one on in Plugins.</p>
+            <p class="meta-sources-manage"><a href="#/settings/plugins" @click.prevent="go('plugins')">Manage in Plugins</a></p>
+          </div>
           <label class="setting-row"><span class="label">Find metadata automatically<small>For new series after each scan</small></span>
             <select x-model="st.auto_match" @change="save('auto_match')"><option value="true">On</option><option value="false">Off</option></select></label>
           <label class="setting-row"><span class="label">Auto-accept a match from<small>Lower = fewer series in Needs attention, more wrong matches</small></span>

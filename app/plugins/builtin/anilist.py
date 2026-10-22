@@ -75,6 +75,7 @@ class AniList(Plugin):
     name = "AniList"
     description = "Built-in metadata provider: titles, description, tags, cover, links."
     is_provider = True
+    url = "https://anilist.co"
 
     def search(self, ctx, query, year=None):
         adult = None if get_setting(ctx.db, "include_adult", False) else False

@@ -297,6 +297,20 @@ def providers():
             for p in metadata.ordered_providers()]
 
 
+@router.get("/metadata/providers")
+def metadata_providers():
+    """All provider plugins for the Settings page: enabled ones in the order they are tried
+    (the first is the main source, the rest are fallbacks), then disabled ones."""
+    out = [{"id": p.id, "name": p.name, "description": p.description, "url": p.url or None,
+            "enabled": True, "role": "main" if i == 0 else "fallback",
+            "available": not metadata._is_down(p.id)}
+           for i, p in enumerate(metadata.ordered_providers())]
+    out += [{"id": p.id, "name": p.name, "description": p.description, "url": p.url or None,
+             "enabled": False, "role": None, "available": False}
+            for p in plugins.plugins.values() if p.is_provider and p.id in plugins.disabled]
+    return out
+
+
 @router.get("/metadata/status")
 def metadata_status():
     return metadata_worker.status
