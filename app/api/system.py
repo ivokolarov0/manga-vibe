@@ -69,7 +69,7 @@ def add_library(body: LibraryBody, db=Depends(get_db)):
     removed.discard(str(root))
     set_setting(db, "removed_libraries", sorted(removed))
     db.commit()
-    walker.start_scan_in_background()
+    walker.start_scan_in_background(lib.id)  # only the new folder; the others are up to date
     return {"id": lib.id}
 
 
@@ -129,6 +129,13 @@ def folders(path: str = "", db=Depends(get_db)):
 @router.post("/scan")
 def scan():
     return {"started": walker.start_scan_in_background(), **walker.status}
+
+
+@router.post("/libraries/{lib_id}/scan")
+def scan_one_library(lib_id: int, db=Depends(get_db)):
+    """Scan only this library folder. Only one scan runs at a time: started is False if one is running."""
+    get_or_404(db, Library, lib_id)
+    return {"started": walker.start_scan_in_background(lib_id), **walker.status}
 
 
 @router.get("/scan/status")
