@@ -375,6 +375,8 @@
             <select x-model="st.preload" @change="save('preload')"><option>2</option><option>3</option><option>4</option><option>5</option><option>8</option></select></label>
           <label class="setting-row"><span class="label">Hide controls after<small>When nothing is touched</small></span>
             <select x-model="st.reader_autohide" @change="save('reader_autohide')"><option value="3">3 seconds</option><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="15">15 seconds</option><option value="0">Never</option></select></label>
+          <label class="setting-row"><span class="label">Options panel side<small>Left is handier for left-handed reading</small></span>
+            <select x-model="st.reader_drawer_side" @change="save('reader_drawer_side')"><option value="right">Right</option><option value="left">Left</option></select></label>
         </section>
 
         <!-- metadata -->

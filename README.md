@@ -68,6 +68,10 @@ python -m venv .venv
 Then open http://localhost:8090. `dev.py` creates a small fake library in `dev-library/`.
 To use real manga: set `LIBRARY_PATHS=D:\Manga` before running it.
 
+Working in a git worktree? Run `python preview.py` from it instead: it borrows the main
+checkout's `.venv` and `dev-library`, gives each worktree its own port and database, opens the
+browser and prints a LAN address for testing on a phone. Several worktrees can run at once.
+
 ## Tests
 
 ```bash

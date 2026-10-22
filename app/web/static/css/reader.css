@@ -72,92 +72,452 @@
       }
     }
 
-    /* always-visible reading progress: a thin line on the bottom edge, no border or background */
+    /* always-visible reading progress: a thin line on the bottom edge, one segment per page.
+       On desktop, hovering the bottom edge grows it into a clickable bar (jump to any page). */
     & .read-progress {
       position: absolute;
       right: 0;
       bottom: 0;
       left: 0;
       z-index: 1;
-      height: 3px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      padding: 0;
       pointer-events: none;
+      transition: padding 0.15s, background 0.15s;
 
-      & i {
-        display: block;
-        width: 0;
-        height: 100%;
-        background: var(--accent);
-        transition: width 0.2s ease-out;
+      & > span {
+        display: none;
+        min-width: 2ch;
+        font-size: 12px;
+        line-height: 14px;
+        text-align: center;
       }
     }
 
-    /* right to left: the bar grows from the right edge, like the pages */
-    &.rtl .read-progress i {
-      margin-left: auto;
+    & .rp-track {
+      display: flex;
+      flex: 1;
+      height: 3px;
+      overflow: hidden;
+      transition: height 0.15s, border-radius 0.15s;
+
+      & i {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+      }
+
+      & i.read {
+        background: var(--accent);
+      }
+    }
+
+    /* right to left: the bar fills from the right edge, like the pages */
+    &.rtl .read-progress,
+    &.rtl .rp-track {
+      flex-direction: row-reverse;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      /* an invisible strip along the bottom edge catches the mouse */
+      &.ui-hidden .read-progress {
+        min-height: 36px;
+        pointer-events: auto;
+      }
+
+      &.ui-hidden .read-progress:hover {
+        align-items: center;
+        padding: 12px 14px;
+        background: rgba(15, 15, 18, 0.92);
+
+        & > span {
+          display: block;
+        }
+
+        & .rp-track {
+          height: 14px;
+          border-radius: 7px;
+          background: #4a4d55;
+          cursor: pointer;
+
+          & i + i {
+            box-shadow: inset 1px 0 rgba(0, 0, 0, 0.35);
+          }
+
+          & i.read {
+            background: color-mix(in srgb, var(--accent) 75%, #000);
+          }
+
+          & i.cur {
+            background: var(--accent);
+          }
+
+          & i:hover {
+            background: #fff;
+          }
+        }
+      }
     }
 
     & .chrome {
       position: absolute;
-      right: 0;
-      left: 0;
-      padding: 10px 12px;
-      background: rgba(15, 15, 18, 0.92);
-      transition: opacity 0.15s;
+      transition: opacity 0.2s, transform 0.2s;
 
+      /* top: just the title, on a soft fade instead of a solid bar */
       &.top {
         top: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        right: 0;
+        left: 0;
+        padding: 12px 16px 28px;
+        background: linear-gradient(rgba(0, 0, 0, 0.75), transparent);
       }
 
+      /* bottom: a floating, frosted card */
       &.bottom {
-        bottom: 0;
-        padding-bottom: calc(12px + var(--safe-bottom));
+        right: 12px;
+        bottom: calc(12px + var(--safe-bottom));
+        left: 12px;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 6px;
+        background: rgba(24, 25, 31, 0.82);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(14px) saturate(1.4);
+        -webkit-backdrop-filter: blur(14px) saturate(1.4);
       }
 
       & .title {
-        flex: 1;
+        display: flex;
+        flex-direction: column;
         min-width: 0;
-        overflow: hidden;
-        font-size: 14px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+
+        & b,
+        & span {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        & b {
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        & span {
+          color: #c8cad0;
+          font-size: 12px;
+        }
       }
 
-      & button,
-      & select {
-        height: 34px;
-        padding: 0 10px;
-        background: #2a2d35;
+      & button.icon {
+        display: inline-grid;
+        flex: none;
+        place-items: center;
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        background: transparent;
         border: 0;
-        border-radius: 6px;
+        border-radius: 12px;
         color: #fff;
+        cursor: pointer;
+        transition: background 0.15s;
+
+        &:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        &:active:not(:disabled) {
+          background: rgba(255, 255, 255, 0.16);
+        }
+
+        &:disabled {
+          opacity: 0.3;
+          cursor: default;
+        }
       }
     }
 
     &.ui-hidden .chrome {
       opacity: 0;
       pointer-events: none;
+
+      &.bottom {
+        transform: translateY(12px);
+      }
     }
 
+    /* left-handed (drawer on the left): the options button moves to the left end, back to the right */
+    &.drawer-left .chrome.bottom {
+      & .b-menu { order: -1; }
+      & .b-back { order: 1; }
+    }
+
+    /* page numbers around the slider; dir="rtl" swaps them for right-to-left reading */
+    & .b-pages {
+      display: flex;
+      flex: 1;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+
+      & span {
+        min-width: 2ch;
+        color: #c8cad0;
+        text-align: center;
+      }
+
+      & #r-num {
+        color: #fff;
+        font-weight: 600;
+      }
+      &[dir="rtl"] button svg {
+        transform: scaleX(-1);
+      }
+    }
+
+    /* the slider: thin rounded track filled up to the current page, round thumb */
     & input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
+      --fill: 0%;
+      flex: 1;
+      min-width: 0;
+      height: 24px;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      outline-offset: 4px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+
+      &::-webkit-slider-runnable-track {
+        height: 6px;
+        background: linear-gradient(to right, var(--accent) var(--fill), rgba(255, 255, 255, 0.18) var(--fill));
+        border-radius: 3px;
+      }
+
+      &::-moz-range-track {
+        height: 6px;
+        background: linear-gradient(to right, var(--accent) var(--fill), rgba(255, 255, 255, 0.18) var(--fill));
+        border-radius: 3px;
+      }
+
+      &::-webkit-slider-thumb {
+        width: 16px;
+        height: 16px;
+        margin-top: -5px;
+        background: #fff;
+        border: 0;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px var(--accent), 0 2px 6px rgba(0, 0, 0, 0.5);
+        transition: transform 0.12s;
+        -webkit-appearance: none;
+      }
+
+      &::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: #fff;
+        border: 0;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px var(--accent), 0 2px 6px rgba(0, 0, 0, 0.5);
+      }
+
+      &:active::-webkit-slider-thumb {
+        transform: scale(1.25);
+      }
     }
 
-    & .pageinfo {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 6px;
-      font-size: 13px;
+    /* right to left: the track fills from the right */
+    & .b-pages[dir="rtl"] input[type="range"] {
+      &::-webkit-slider-runnable-track {
+        background: linear-gradient(to left, var(--accent) var(--fill), rgba(255, 255, 255, 0.18) var(--fill));
+      }
+
+      &::-moz-range-track {
+        background: linear-gradient(to left, var(--accent) var(--fill), rgba(255, 255, 255, 0.18) var(--fill));
+      }
     }
 
-    & .opts {
+    /* reading options: a side drawer (right by default, left in Settings → Reader) */
+    & .drawer {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      z-index: 3;
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 10px;
+      width: min(300px, 85vw);
+      padding: 12px 14px calc(16px + var(--safe-bottom));
+      overflow-y: auto;
+      background: rgba(20, 21, 26, 0.97);
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.5);
+      transition: transform 0.2s ease-out, visibility 0.2s;
+      visibility: hidden;
+
+      & button,
+      & select,
+      & .d-opt {
+        min-height: 40px;
+        padding: 0 12px;
+        background: #2a2d35;
+        border: 0;
+        border-radius: 6px;
+        color: #fff;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      & button:disabled {
+        opacity: 0.35;
+        cursor: default;
+      }
+
+      & button.icon {
+        display: grid;
+        flex: none;
+        place-items: center;
+        width: 40px;
+        padding: 0;
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      & button.icon.on {
+        background: var(--accent);
+        color: var(--accent-text);
+      }
+
+      & hr {
+        width: 100%;
+        margin: 4px 0;
+        border: 0;
+        border-top: 1px solid #3a3e48;
+      }
+    }
+
+    &.drawer-right .drawer {
+      right: 0;
+      transform: translateX(100%);
+    }
+
+    &.drawer-left .drawer {
+      left: 0;
+      transform: translateX(-100%);
+    }
+
+    &.drawer-open .drawer {
+      transform: none;
+      visibility: visible;
+    }
+
+    &.drawer-left .d-foot {
+      flex-direction: row-reverse;
+    }
+
+    /* touch screens: rarely used options at the top; page, chapter and close at the bottom,
+       within thumb reach. With a mouse the drawer keeps the markup order (top to bottom). */
+    @media not ((hover: hover) and (pointer: fine)) {
+      & .drawer > * { order: 1; }
+      & .drawer > hr { order: 2; margin-top: auto; }
+      & .drawer > .d-chapter { order: 3; }
+      & .drawer > .d-page { order: 4; }
+      & .drawer > .d-foot { order: 5; }
+    }
+
+    & .d-title {
+      color: var(--accent);
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+
+    & .d-sub {
+      margin-top: -6px;
+      color: #c8cad0;
+      font-size: 14px;
+    }
+
+    & .d-row {
+      display: flex;
       gap: 8px;
-      margin-top: 8px;
+      align-items: stretch;
+
+      & .d-opt {
+        flex: 1;
+      }
+    }
+
+    & .d-field {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      padding: 4px 10px;
+      background: #2a2d35;
+      border-radius: 6px;
+
+      & small {
+        color: #9aa0ab;
+        font-size: 11px;
+      }
+
+      & span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      &.pick {
+        position: relative;
+        padding-right: 30px;
+        cursor: pointer;
+
+        /* a chevron, like a dropdown */
+        &::after {
+          position: absolute;
+          top: 50%;
+          right: 12px;
+          width: 7px;
+          height: 7px;
+          border: solid #c8cad0;
+          border-width: 0 2px 2px 0;
+          content: "";
+          transform: translateY(-70%) rotate(45deg);
+        }
+
+        & select {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          opacity: 0;
+          cursor: pointer;
+        }
+      }
+    }
+
+    & .d-opt {
+      display: flex;
+      flex: none;
+      gap: 12px;
+      align-items: center;
+      text-align: left;
+      text-decoration: none;
     }
 
     & .endcard {

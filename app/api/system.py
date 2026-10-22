@@ -27,6 +27,7 @@ DEFAULT_SETTINGS = {
     "auto_fullscreen": True,
     "preload": 4,
     "reader_autohide": 5,          # seconds until the reader controls hide; 0 = never
+    "reader_drawer_side": "right", # right | left: which side the reader options slide in from
     "auto_match": True,            # match new series automatically
     "match_threshold": 90,         # auto-accept score (0-100)
     "include_adult": False,        # include adult results from AniList
