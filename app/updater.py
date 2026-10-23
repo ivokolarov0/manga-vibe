@@ -276,8 +276,8 @@ def install(sha=None, downloader=_download):
         if extra:
             status["message"] = "Installing " + ", ".join(extra) + "…"
             log.info("Installing new packages for version %s: %s", sha[:7], ", ".join(extra))
-            _run([sys.executable, "-m", "pip", "install", "--no-cache-dir", "--disable-pip-version-check",
-                  "--no-warn-script-location", "--target", str(staging / "deps"), *extra], cwd=staging)
+            _run(["uv", "pip", "install", "--no-cache", "--python", sys.executable,
+                  "--target", str(staging / "deps"), *extra], cwd=staging)
         status["message"] = "Testing the new version…"
         with tempfile.TemporaryDirectory() as tmp:
             env = {**os.environ, "DATA_DIR": tmp, "START_WORKERS": "0",
