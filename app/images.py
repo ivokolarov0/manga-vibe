@@ -12,11 +12,14 @@ log = logging.getLogger("mangavibe")
 THUMB_WIDTH = 300
 _cache_lock = threading.Lock()
 _writes_since_trim = 0
+# A decoded page can take tens of MB (long webtoon strips far more). The reader asks for the page
+# plus several preloads at once, so only this many are decoded at the same time; the rest wait.
+_resize_slots = threading.BoundedSemaphore(2)
 
 
 def resize(data: bytes, width: int, quality=82) -> bytes:
     """Shrink to `width` (never enlarge) and return WebP bytes."""
-    with Image.open(io.BytesIO(data)) as im:
+    with _resize_slots, Image.open(io.BytesIO(data)) as im:
         if im.format == "JPEG" and im.width > width:
             # decode JPEGs at 1/2, 1/4 or 1/8 size directly: far less memory and CPU
             im.draft("RGB", (width, round(im.height * width / im.width)))
@@ -26,7 +29,8 @@ def resize(data: bytes, width: int, quality=82) -> bytes:
         if im.width > width:
             im = im.resize((width, round(im.height * width / im.width)), Image.LANCZOS)
         out = io.BytesIO()
-        im.save(out, "WEBP", quality=quality, method=4)
+        # method 2 encodes about twice as fast as Pillow's default 4, for files <1% bigger
+        im.save(out, "WEBP", quality=quality, method=2)
         return out.getvalue()
 
 
