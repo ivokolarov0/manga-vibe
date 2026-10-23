@@ -1,45 +1,35 @@
 # Installing MangaVibe on the Synology NAS
 
-These steps are for the older **Docker** package in DSM (no "Projects"/Compose screen).
-You build the image on your PC, copy one file to the NAS, and create the container with the wizard.
+These steps are for the older **Docker** package in DSM (no "Projects"/Compose screen); the newer
+**Container Manager** has the same screens. You download the image from Docker Hub and create the
+container with the wizard. No PC needed.
 
 Your manga folder is mounted **read-only**: MangaVibe can never change, rename or delete your files.
 
 ---
 
-## 1. Build the image on your PC (once per new version)
+## 1. Download the image
 
-On the PC, in the project folder (`D:\projects\manga-vibe`), with Docker Desktop running:
+1. Open the **Docker** app → **Registry** (left menu).
+2. Search for `ivokolarov/mangavibe` → select it → **Download** → tag **latest** → **Select**.
+3. Open **Image** and wait until `ivokolarov/mangavibe:latest` appears in the list (about 100–150 MB).
 
-```bash
-python build.py --save
-```
+The image is built automatically for Intel and ARM NAS models every time a new version is released.
 
-This builds the image and makes `mangavibe.tar` (about 100–150 MB). It also stores the git commit
-in the image, so auto-update knows which version is built in and doesn't offer it again.
-(`python build.py --run` instead starts it on the PC at http://localhost:8090.)
+> **Alternative: build the image on your PC** (to try your own changes, or if the NAS has no
+> internet). In the project folder, with Docker Desktop running, run `python build.py --save`.
+> This makes `mangavibe.tar`. Upload it with **File Station** (e.g. to `docker/`), then
+> **Image** → **Add** → **Add From File** → pick it. The image is then called `mangavibe:latest`;
+> use that name instead of `ivokolarov/mangavibe:latest` below.
 
-> Alternative: if you have a Docker Hub account, `docker tag mangavibe:latest <you>/mangavibe:latest`
-> and `docker push <you>/mangavibe:latest`, then on the NAS use **Registry** to download it instead of steps 2–3.
-
-## 2. Copy the file to the NAS
-
-Open **File Station** and upload `mangavibe.tar` to any folder, e.g. `docker/`.
-
-## 3. Import the image
-
-1. Open the **Docker** app → **Image** (left menu).
-2. **Add** → **Add From File** → pick `docker/mangavibe.tar` → OK.
-3. Wait until `mangavibe:latest` appears in the list.
-
-## 4. Create the data folder
+## 2. Create the data folder
 
 In **File Station**, create the folder `docker/mangavibe`. This holds the database, covers,
 cache and plugins. (MangaVibe creates everything inside it on first start.)
 
-## 5. Create the container
+## 3. Create the container
 
-1. **Image** → select `mangavibe:latest` → **Launch**.
+1. **Image** → select `ivokolarov/mangavibe:latest` → **Launch**.
 2. **Container Name:** `mangavibe`.
 3. Click **Advanced Settings** *before* clicking Next.
    - **Advanced Settings** tab: tick **Enable auto-restart**.
@@ -94,34 +84,36 @@ image by hand: stop the container, delete `docker/mangavibe/code/current` in Fil
 ### When a new image is needed
 
 Rarely, a version changes the Dockerfile (e.g. a new system program). Then the message says
-**needs a new Docker image** and the update is not installed. Get the new image in one of two ways:
+**needs a new Docker image** and the update is not installed. The new image is on Docker Hub
+a few minutes after the version is released:
 
-- **From GitHub (no PC needed):** **Docker** → **Registry** → **Settings** → **Add** →
-  name `GitHub`, URL `https://ghcr.io` → **Use** it → search `ivokolarov0/mangavibe` → **Download**, tag `latest`.
-  Then continue with step 2 below.
-- **Built on the PC:** as follows.
-
-1. Build and save the new image on the PC (step 1), upload the `.tar` and **Add From File** again (steps 2–3).
-   It replaces `mangavibe:latest`.
+1. **Registry** → search `ivokolarov/mangavibe` → **Download** → tag **latest** again.
+   It replaces the old `ivokolarov/mangavibe:latest`.
 2. **Container** → stop `mangavibe` → **Action** → **Reset** (DSM 7) or **Clear** (DSM 6).
    This recreates the container from the new image and keeps your settings.
 3. Start it again.
 
 Your database, progress and covers live in `docker/mangavibe`, so nothing is lost.
-If Reset/Clear is not offered: delete the container and create it again with step 5. Same result.
+If Reset/Clear is not offered: delete the container and create it again with step 3. Same result.
 
-### Upgrading from MangaShelf (the app's old name)
+(If you use a PC-built image instead: run `python build.py --save` again, **Add From File** the new
+`.tar`, then Reset and start the container as above.)
 
-The image is now called `mangavibe:latest`, so the old container can't simply be reset onto it:
+### Moving to the Docker Hub image
 
-1. Import the new image (steps 1–3).
-2. **Container** → stop the old `mangashelf` container → note its volumes, port and environment
+If your container was made from a PC-built image (`mangavibe:latest`) or from the old
+`mangashelf:latest`, Reset can't switch it to `ivokolarov/mangavibe:latest`. Make a new one instead:
+
+1. Download the image (step 1).
+2. **Container** → stop the old container → note its volumes, port and environment
    (**Edit** shows them) → **Delete** it. Deleting the container does not touch your folders.
-3. Create a new container from `mangavibe:latest` with step 5, using the **same** data folder
-   (e.g. your existing `docker/mangashelf`; there is no need to rename it) and the same manga folder.
-4. On first start the old `mangashelf.db` is renamed to `mangavibe.db` automatically. Your reading
-   progress, metadata, covers and settings are kept. The log says "Renamed the old MangaShelf database".
-5. Optional: delete the old `mangashelf:latest` image under **Image**.
+3. Create a new container from `ivokolarov/mangavibe:latest` with step 3, using the **same** data
+   folder (e.g. your existing `docker/mangavibe`, or `docker/mangashelf`; no need to rename it) and
+   the same manga folder.
+4. Coming from MangaShelf: on first start the old `mangashelf.db` is renamed to `mangavibe.db`
+   automatically. Your reading progress, metadata, covers and settings are kept.
+   The log says "Renamed the old MangaShelf database".
+5. Optional: delete the old image (`mangavibe:latest` or `mangashelf:latest`) under **Image**.
 
 ## Fixing "Cannot write to the data folder"
 

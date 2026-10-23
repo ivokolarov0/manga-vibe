@@ -1,6 +1,11 @@
 # Builds the Docker image when something is merged into `releases` and publishes it as
-# ghcr.io/<owner>/mangavibe:latest (Intel and ARM). Only needed when the Dockerfile or the
+# ghcr.io/<owner>/mangavibe:latest and, when the Docker Hub secrets are set, as
+# <DOCKERHUB_USERNAME>/mangavibe:latest (Intel and ARM). Only needed when the Dockerfile or the
 # entrypoint changed; code and pip packages update by themselves (see app/updater.py).
+#
+# Docker Hub: add the repository secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN (an access token
+# with Read & Write, from Docker Hub → Account settings → Personal access tokens). Without them
+# only ghcr.io is published.
 name: Docker image
 
 on:
@@ -15,12 +20,21 @@ permissions:
 jobs:
   image:
     runs-on: ubuntu-latest
+    env:
+      HUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Image name (lower case)
+      - name: Image names and tags (lower case)
         id: name
-        run: echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/mangavibe" >> "$GITHUB_OUTPUT"
+        run: |
+          images="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/mangavibe"
+          if [ -n "$HUB_USER" ]; then images="$images ${HUB_USER,,}/mangavibe"; fi
+          {
+            echo "tags<<EOF"
+            for i in $images; do echo "$i:latest"; echo "$i:${GITHUB_SHA}"; done
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
@@ -31,14 +45,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: docker/login-action@v3
+        if: env.HUB_USER != ''
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
           build-args: GIT_SHA=${{ github.sha }}
-          tags: |
-            ${{ steps.name.outputs.image }}:latest
-            ${{ steps.name.outputs.image }}:${{ github.sha }}
+          tags: ${{ steps.name.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
