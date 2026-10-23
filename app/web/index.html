@@ -399,6 +399,10 @@
             <select x-model="st.reader_autohide" @change="save('reader_autohide')"><option value="3">3 seconds</option><option value="5">5 seconds</option><option value="8">8 seconds</option><option value="15">15 seconds</option><option value="0">Never</option></select></label>
           <label class="setting-row"><span class="label">Options panel side<small>Left is handier for left-handed reading</small></span>
             <select x-model="st.reader_drawer_side" @change="save('reader_drawer_side')"><option value="right">Right</option><option value="left">Left</option></select></label>
+          <label class="setting-row"><span class="label">Tap zones<small>One-handed: most of the page turns forward, a narrow edge goes back, the middle shows the controls</small></span>
+            <select x-model="st.reader_tap_layout" @change="save('reader_tap_layout')"><option value="default">Left and right sides</option><option value="one-handed">One-handed</option><option value="off">Off (swipe only)</option></select></label>
+          <label class="setting-row" x-show="st.reader_tap_layout !== 'off'"><span class="label">Invert tap zones<small>In right to left, tap the right side for the next page. Swiping stays the same</small></span>
+            <select x-model="st.reader_tap_invert" @change="save('reader_tap_invert')"><option value="false">Off</option><option value="true">On</option></select></label>
         </section>
 
         <!-- metadata -->

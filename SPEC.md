@@ -255,7 +255,7 @@ The owner can edit any metadata field by hand (titles, description, tags, status
 - Opens a book at the saved page.
 - **Fullscreen:** button that calls the Fullscreen API; also enter fullscreen automatically on first tap if the setting is enabled. Hide UI chrome while reading; tap the centre to show/hide controls.
 - Modes (per-series setting with a global default): **Right-to-left** (manga default), **Left-to-right**, **Vertical/webtoon** (continuous scroll, no gaps).
-- Paged modes: tap zones (left/right thirds) and swipe to turn pages; volume keys are not available in browsers, ignore.
+- Paged modes: tap zones (left/right quarters; can be inverted or switched to a one-handed layout) and swipe to turn pages; volume keys are not available in browsers, ignore.
 - Fit: fit width, fit height, fit screen, original. Pinch-zoom and double-tap zoom in paged mode.
 - Double-page spread on landscape/desktop (nice to have, phase 5).
 - Bottom slider to jump to a page, with page number.

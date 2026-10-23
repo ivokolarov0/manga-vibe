@@ -119,6 +119,12 @@ Choices made where the spec was open. Newest at the bottom.
   (localStorage), because it depends on the phone, not on the library.
 - **Page turns slide**: on a swipe the page follows the finger, slides out and the next one slides in
   from the other side; taps and arrow keys use the same slide. Short swipes snap back.
+- **Tap zones are separate from the reading direction** (issue #38, like Mihon's "invert tapping").
+  Direction still sets page order, swipe, slide, slider and arrow keys; Settings → Reader can invert
+  the tap sides (RTL: tap right for next) or pick a one-handed layout (everything is "next" except a
+  narrow "previous" edge and a middle box for the controls) or turn tapping off. Arrow keys don't
+  follow the invert: they point at the page on that side. Vertical mode has no tap paging, so
+  nothing changes there.
 - **Manual numbers per file** (Files tab → Edit): volume, chapter, "to chapter" (a range in one file),
   extra, hidden. Stored in the database next to the file's path (`override_*`, new column
   `override_chapter_end` via migration 2), never in the file. Only values that differ from the file

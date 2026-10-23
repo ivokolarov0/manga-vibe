@@ -8,6 +8,7 @@ const R = { book: null, page: 0, mode: "rtl", ui: false, saveTimer: null, wake: 
   preloaded: new Map(), cameFromApp: false, hideTimer: null, sliding: false, hovering: false, drawer: false };
 const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
 const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left/right); the middle toggles the controls
+const TAP_EDGE = 0.2;   // one-handed layout: the narrow "previous" strip; the rest turns forward
 const MODES = { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" };
 const FITS = { screen: "Fit screen", width: "Fit width", height: "Fit height", original: "Original size" };
 
@@ -361,11 +362,12 @@ function setupPaged() {
       return;
     }
     lastTap = { t: now, x: e.clientX, y: e.clientY };
-    const x = e.clientX / innerWidth;
+    const x = e.clientX / innerWidth, y = e.clientY / innerHeight;
     tapTimer = setTimeout(() => {
       if (Z.s > 1.01) return toggleUi();  // zoomed: taps only show/hide the controls
-      if (x < TAP_SIDE) R.mode === "rtl" ? next() : prev();
-      else if (x > 1 - TAP_SIDE) R.mode === "rtl" ? prev() : next();
+      const act = tapAction(x, y);
+      if (act === "next") next();
+      else if (act === "prev") prev();
       else toggleUi();
     }, 230);
   };
@@ -379,6 +381,23 @@ function setupPaged() {
     zoomAt(Z.s * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY);
     applyZoom();
   }, { passive: false });
+}
+
+/* what a tap at (x, y) (fractions of the screen) does: "next", "prev" or "ui" (show/hide controls).
+   Tap zones are set apart from the reading direction (Settings → Reader): swipe, page order and the
+   slide stay with the direction, only where you tap changes. */
+function tapAction(x, y) {
+  const layout = settings.reader_tap_layout || "default";
+  if (layout === "off") return "ui";
+  // forward sits on the left in RTL, on the right in LTR; "Invert tap zones" swaps the sides
+  const nextOnLeft = (R.mode === "rtl") !== !!settings.reader_tap_invert;
+  const d = nextOnLeft ? x : 1 - x;  // 0 at the "next" edge, 1 at the "previous" edge
+  if (layout === "one-handed") {
+    if (d > 1 - TAP_EDGE) return "prev";
+    if (Math.abs(x - 0.5) < 0.2 && Math.abs(y - 0.5) < 0.2) return "ui";  // a box in the middle
+    return "next";
+  }
+  return d < TAP_SIDE ? "next" : d > 1 - TAP_SIDE ? "prev" : "ui";
 }
 
 addEventListener("resize", () => { if (R.book && img()) { clampPan(); applyZoom(); } });
