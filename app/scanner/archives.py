@@ -213,9 +213,10 @@ def _read(path, fmt, name) -> bytes:
 # ---------------------------------------------------------------- nested archives
 
 class _InnerCache:
-    """The last few inner archives (bytes), so turning pages doesn't re-extract them."""
+    """The last few inner archives (bytes), so turning pages doesn't re-extract them.
+    Kept small: it stays in RAM, and a NAS may only have 1-2 GB."""
 
-    def __init__(self, max_bytes=150 * 1024 * 1024):
+    def __init__(self, max_bytes=48 * 1024 * 1024):
         self.items, self.max, self.lock = OrderedDict(), max_bytes, threading.Lock()
 
     def get(self, key, load):
