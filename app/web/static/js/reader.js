@@ -617,13 +617,15 @@ document.addEventListener("pointerout", (e) => {
   restartHideTimer();
 }, true);
 
+/* with `now`, returns a promise that settles once the server has the page (never rejects) */
 function saveProgress(now = false) {
   clearTimeout(R.saveTimer);
   const book = R.book, page = R.page;
-  if (!book) return;
+  if (!book) return Promise.resolve();
   const send = () => fetch(`/api/books/${book.id}/progress`, { method: "PUT", keepalive: true,
-    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ page }) });
-  if (now) send(); else R.saveTimer = setTimeout(send, 700);
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ page }) }).catch(() => {});
+  if (now) return send();
+  R.saveTimer = setTimeout(send, 700);
 }
 
 function maybeAutoFullscreen() {
@@ -661,9 +663,10 @@ function leaveReader() {
   else location.replace(R.book ? `#/series/${R.book.series_id}` : "#/");
 }
 
+/* returns the final progress save (a promise), or nothing if the reader wasn't open */
 function closeReader() {
   if ($("#reader").hidden) return;
-  saveProgress(true);
+  const saved = saveProgress(true);
   R.wake?.release?.().catch(() => {});
   R.book = null;
   R.firstTap = true;
@@ -673,6 +676,7 @@ function closeReader() {
   $("#reader").innerHTML = "";
   document.body.style.overflow = "";
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  return saved;
 }
 
 document.addEventListener("keydown", (e) => {

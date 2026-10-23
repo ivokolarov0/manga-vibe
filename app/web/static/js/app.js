@@ -86,6 +86,7 @@ document.addEventListener("alpine:init", () => {
     providers: [],
     providerName(id) { return this.providers.find((p) => p.id === id)?.name || id; },
     libraryDirty: 0,     // bump to make the library reload (e.g. after a match)
+    progressDirty: 0,    // bumped after the reader closes and its last progress save is done
     update: null,        // GET /api/update: running version, newest version on GitHub
     updating: null,      // an install in progress: { state, message, error }
     openFix(seriesId, onDone) { this.fix = { open: true, seriesId, onDone }; },
@@ -105,7 +106,7 @@ document.addEventListener("alpine:init", () => {
     const view = parts[0] || "library";
     if (view === "read") Reader.open(+parts[1], params.get("page"),
       lastView === "read" ? undefined : lastView !== null);  // next book: keep where the reader was opened from
-    else Reader.close();
+    else Reader.close()?.then(() => app.progressDirty++);  // pages refresh once the server has the progress
     if (view !== lastView) {  // filter changes stay on the library: keep the sheet open
       app.sheet = null;
       app.folderPicker = false;
@@ -266,7 +267,7 @@ function pageList(page, pages) {
 
 function library() {
   return {
-    items: [], cursor: 0, done: false, loading: false, total: null, key: null,
+    items: [], cursor: 0, done: false, loading: false, total: null, key: null, stale: false,
     paged: false, page: 1, size: 60, base: null,
     quick: QUICK,
     init() {
@@ -274,6 +275,9 @@ function library() {
       this.$watch("$store.app.query", () => this.sync());
       this.$watch("$store.app.view", () => this.sync());
       this.$watch("$store.app.libraryDirty", () => { this.key = null; this.sync(); });
+      // after reading: update the cards in place (now, or when the library is next shown)
+      this.$watch("$store.app.progressDirty", () => { this.stale = true; this.refresh(); });
+      this.$watch("$store.app.view", () => this.refresh());
       new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && this.$store.app.view === "library" && !this.paged) this.loadMore();
       }, { rootMargin: "800px" }).observe(this.$refs.sentinel);
@@ -310,6 +314,28 @@ function library() {
         await this.$nextTick();
         const top = this.$root.getBoundingClientRect().top + scrollY - 70;  // clear the top bar
         if (scrollY > top) scrollTo({ top: Math.max(0, top) });
+      }
+    },
+    /* reload the cards already shown without clearing them, so the scroll position stays */
+    async refresh() {
+      if (!this.stale || this.$store.app.view !== "library" || this.key === null) return;
+      this.stale = false;
+      if (this.paged) return this.loadPage(false);
+      const key = this.key, want = Math.max(this.items.length, 60), items = [];
+      this.loading = true;  // keeps loadMore from appending meanwhile
+      try {
+        let cursor = 0, data;
+        do {
+          data = await api(`/api/series?cursor=${cursor}&limit=${Math.min(200, want - items.length)}&${this.filters}`);
+          if (key !== this.key) return;
+          items.push(...data.items);
+          cursor = data.next_cursor;
+        } while (cursor !== null && items.length < want);
+        Object.assign(this, { items, cursor: cursor ?? items.length, done: cursor === null, total: data.total });
+      } catch {
+        // keep the old cards; the next change reloads anyway
+      } finally {
+        if (key === this.key) this.loading = false;
       }
     },
     pages(total = this.total) { return Math.max(1, Math.ceil((total || 0) / this.size)); },
@@ -466,7 +492,11 @@ function sortSheet() {
 function continueView() {
   return {
     items: null,
-    init() { this.$watch("$store.app.view", (v) => v === "continue" && this.load()); this.load(); },
+    init() {
+      this.$watch("$store.app.view", (v) => v === "continue" && this.load());
+      this.$watch("$store.app.progressDirty", () => this.load());
+      this.load();
+    },
     async load() {
       if (this.$store.app.view !== "continue") return;
       document.title = "Continue reading";
@@ -492,6 +522,7 @@ function seriesView() {
       this.$watch("$store.app.view", check);
       this.$watch("$store.app.id", check);
       this.$watch("$store.app.params", check);
+      this.$watch("$store.app.progressDirty", () => { this.loadedFor = null; check(); });  // back from the reader
       check();
     },
     async load() {
