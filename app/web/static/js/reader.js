@@ -461,6 +461,9 @@ function showPage(fromDir = 0) {
 
 function preload() {
   const n = +settings.preload || 4;
+  // let go of pages far behind or ahead, so a long book doesn't pile up in the phone's memory
+  // (going back is still quick: the browser's HTTP cache has them)
+  for (const i of R.preloaded.keys()) if (i < R.page - 2 || i > R.page + n) R.preloaded.delete(i);
   for (let i = R.page + 1; i <= R.page + n && i < R.book.page_count; i++) {
     if (!R.preloaded.has(i)) {
       const im = new Image();
