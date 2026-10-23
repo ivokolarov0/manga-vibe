@@ -258,7 +258,7 @@
                     <button class="btn small" @click="markAll(false)">Mark all unread</button>
                   </div>
                   <ul class="books">
-                    <template x-for="b in books" :key="b.id">
+                    <template x-for="(b, i) in books" :key="b.id">
                       <li class="book" :class="{ read: b.completed, reading: !b.completed && b.page > 0 }">
                         <a class="thumb" :href="'#/read/' + b.id"><img :src="b.thumbnail" loading="lazy" alt="">
                           <span class="done-mark" x-show="b.completed">✓</span></a>
@@ -269,7 +269,8 @@
                           <div class="meta" x-show="!b.error" x-text="bookState(b)"></div>
                           <div class="book-progress" x-show="!b.completed && b.page > 0"><i :style="`width:${progressPct(b)}%`"></i></div>
                         </a>
-                        <button class="btn small" title="Mark this and all previous as read" @click="readUpTo(b)">✓↑</button>
+                        <button class="btn small" title="Mark this and all previous as read" @click="readUpTo(b)"
+                          :style="{ visibility: unreadBefore(i) ? 'visible' : 'hidden' }">✓↑</button>
                         <button class="btn small" @click="toggleBook(b)" x-text="b.completed ? 'Unread' : 'Read'"></button>
                       </li>
                     </template>

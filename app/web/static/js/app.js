@@ -608,6 +608,10 @@ function seriesView() {
       this.$store.app.libraryDirty++;
       this.reload();
     },
+    // ✓↑ only helps when some book above this one is still unread; otherwise it is the same as Read.
+    unreadBefore(i) {
+      return this.books.slice(0, i).some((x) => !x.completed);
+    },
     async readUpTo(b) {
       await api(`/api/series/${this.s.id}/mark-read?before_book=${b.id}`, { method: "POST" });
       await api(`/api/books/${b.id}/progress`, { method: "PUT", body: { page: 0, completed: true } });
