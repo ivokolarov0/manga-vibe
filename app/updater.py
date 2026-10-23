@@ -49,6 +49,12 @@ def supported():
     return config.IMAGE_DIR.is_dir() and config.ENTRYPOINT.is_file() and config.AUTO_UPDATE
 
 
+def image_sha():
+    """The commit the Docker image was built from ("" for a local build without GIT_SHA)."""
+    f = config.IMAGE_DIR / "sha"
+    return f.read_text().strip() if f.exists() else ""
+
+
 def running_dir():
     """The folder the running code came from: DATA_DIR/code/<sha>, or None for the built-in code."""
     root = Path(__file__).resolve().parent.parent
@@ -62,8 +68,7 @@ def current():
     if d is not None:
         info = _read_json(d / ".info.json") or {}
         return {"sha": d.name, "date": info.get("date"), "message": info.get("message"), "builtin": False}
-    sha_file = config.IMAGE_DIR / "sha"
-    sha = sha_file.read_text().strip() if sha_file.exists() else ""
+    sha = image_sha()
     return {"sha": sha or None, "date": None, "message": None, "builtin": True}
 
 
@@ -113,7 +118,8 @@ def fetch_latest():
         sha = data["sha"]
         info = {"sha": sha, "date": data["commit"]["committer"]["date"],
                 "message": data["commit"]["message"].split("\n")[0][:200]}
-        if latest and latest.get("sha") == sha:
+        info["image"] = image_sha()
+        if latest and latest.get("sha") == sha and latest.get("image") == info["image"]:
             info["needs_image"] = latest["needs_image"]
         else:
             files = {}
@@ -173,6 +179,8 @@ def load_cached():
     with database.SessionLocal() as s:
         latest = database.get_setting(s, "update_latest") or None
         status["checked_at"] = database.get_setting(s, "update_checked_at")
+    if latest and latest.get("image") != image_sha():
+        latest = None  # checked with another image: "needs a new image" may no longer be true
 
 
 def info(skipped=None):
@@ -285,6 +293,7 @@ def install(sha=None, downloader=_download):
             _run([sys.executable, "-c", "import app.main"], cwd=staging, env=env, timeout=120)
         meta = latest if latest and latest.get("sha") == sha else {"sha": sha}
         (staging / ".info.json").write_text(json.dumps({k: meta.get(k) for k in ("sha", "date", "message")}))
+        (staging / ".image").write_text(image_sha())  # a newer image runs its own code (entrypoint.sh)
         final = code / sha
         if final.exists():
             shutil.rmtree(final)
