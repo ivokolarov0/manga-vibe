@@ -1,16 +1,16 @@
-/* Library grid, poster cards, quick filters, active filter chips, filter/sort sheets. */
+/* Library grid, poster cards, toolbar (Filter/Sort/Letter), quick filters, active filter chips, filter/sort sheets. */
 @layer pages {
   .quick {
     display: flex;
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 10px;
     overflow-x: auto;
     scrollbar-width: none;
   }
 
   .quick button,
   .chip-btn {
-    padding: 4px 12px;
+    padding: 5px 14px;
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 16px;
@@ -28,6 +28,277 @@
       border-color: var(--danger);
       color: #fff;
       text-decoration: line-through;
+    }
+  }
+
+  /* library header: Filter / Sort / Letter buttons, then the quick filters.
+     Phones: two rows. Wide screens: one row, quick filters left, tools right. */
+  .lib-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+
+    & .quick {
+      margin: 0;
+    }
+
+    @media (min-width: 700px) {
+      flex-direction: row-reverse;
+      align-items: center;
+      gap: 16px;
+
+      & .quick {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+  }
+
+  .lib-tools {
+    display: flex;
+    gap: 8px;
+  }
+
+  .tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: var(--control-height);
+    padding: 0 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background-color 0.12s, border-color 0.12s, color 0.12s, transform 0.08s;
+
+    & svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    & .az {
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.5px;
+
+      & small {
+        font-size: 12px;
+      }
+    }
+
+    & .count {
+      min-width: 20px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: var(--accent-text);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    /* something is set: accent outline and icon, visible without opening the sheet */
+    &.on {
+      border-color: var(--accent);
+      color: var(--accent);
+
+      & span {
+        color: var(--text);
+      }
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background: color-mix(in srgb, var(--text) 9%, var(--surface2));
+      }
+    }
+
+    /* very small phones: Filter and Sort show only their icons */
+    @media (max-width: 359px) {
+      &:not(:last-child) span {
+        display: none;
+      }
+    }
+  }
+
+  /* first-letter picker: big buttons, # first */
+  .letter-sheet > div {
+    max-width: 560px;
+  }
+
+  .letter-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin: 12px 0;
+
+    @media (min-width: 500px) {
+      grid-template-columns: repeat(9, 1fr);
+    }
+
+    & button {
+      height: 48px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 18px;
+      font-weight: 700;
+      transition: background-color 0.12s, border-color 0.12s, transform 0.08s;
+
+      &.on {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-text);
+      }
+
+      &:active {
+        transform: scale(0.95);
+      }
+
+      @media (hover: hover) {
+        &:not(.on):hover {
+          background: color-mix(in srgb, var(--text) 9%, var(--surface2));
+          border-color: color-mix(in srgb, var(--text) 30%, var(--border));
+        }
+      }
+    }
+  }
+
+  .letter-sheet .fhint {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* filter sheet: one foldable section per group */
+  .filter-sheet {
+    & .fgroup {
+      border-top: 1px solid var(--border);
+
+      &:first-of-type {
+        margin-top: 6px;
+      }
+
+      & > div:not(.wrap),
+      & > .wrap {
+        padding: 2px 0 16px;
+      }
+    }
+
+    & .fgroup-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-height: 52px;
+      padding: 0 2px;
+      background: none;
+      border: 0;
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 700;
+      text-align: left;
+
+      & > span:first-child {
+        flex: 1;
+      }
+
+      & .fcount {
+        min-width: 22px;
+        padding: 1px 7px;
+        border-radius: 11px;
+        background: var(--accent);
+        color: var(--accent-text);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      /* chevron: points down when folded, up when open */
+      & .chev {
+        width: 9px;
+        height: 9px;
+        margin: 0 4px 4px;
+        border-right: 2px solid var(--muted);
+        border-bottom: 2px solid var(--muted);
+        transform: rotate(45deg);
+        transition: transform 0.15s;
+      }
+    }
+
+    & .open > .fgroup-head .chev {
+      margin-bottom: -4px;
+      transform: rotate(-135deg);
+    }
+
+    & .wrap {
+      gap: 10px 8px;
+    }
+
+    & .chip-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 36px;
+      padding: 6px 14px;
+      font-size: 14px;
+
+      & .n {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      /* the symbol says the state too, not only the colour */
+      &.on::before {
+        content: "✓";
+        font-weight: 700;
+      }
+
+      &.ex::before {
+        content: "⊘";
+        font-weight: 700;
+      }
+
+      &.on,
+      &.ex {
+        font-weight: 600;
+
+        & .n {
+          color: inherit;
+          opacity: 0.8;
+        }
+      }
+
+      &.ex span:first-child {
+        text-decoration: line-through;
+      }
+
+      &.ex {
+        text-decoration: none;
+      }
+    }
+
+    & .fhint {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    & .ffind {
+      width: 100%;
+      margin-bottom: 12px;
     }
   }
 

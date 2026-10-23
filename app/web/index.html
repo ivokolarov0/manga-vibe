@@ -17,19 +17,29 @@
     <a href="#/" class="brand">MangaVibe</a>
     <input id="search" x-ref="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search"
            x-model="q" @input="search()">
-    <button class="iconbtn" aria-label="Sort" title="Sort" @click="openSheet('sort')">⇅<span class="count"
-      x-show="customSort" x-cloak>•</span></button>
-    <button class="iconbtn" aria-label="Filters" title="Filter" @click="openSheet('filter')">⚲<span class="count"
-      x-show="filterCount" x-text="filterCount" x-cloak></span></button>
   </header>
 
   <main>
     <!-- ============ library ============ -->
     <section class="view" x-data="library()" x-show="$store.app.view === 'library'">
-      <div class="quick">
-        <template x-for="[v, label] in quick" :key="v">
-          <button :class="{ on: quickOn(v) }" @click="setQuick(v)" x-text="label"></button>
-        </template>
+      <div class="lib-head">
+        <div class="lib-tools">
+          <button class="tool" :class="{ on: filterCount }" @click="openSheet('filter')">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg>
+            <span>Filter</span><b class="count" x-show="filterCount" x-text="filterCount" x-cloak></b></button>
+          <button class="tool" :class="{ on: customSort }" @click="openSheet('sort')">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/></svg>
+            <span>Sort</span></button>
+          <button class="tool" :class="{ on: letter }" @click="openSheet('letter')"
+                  :aria-label="letter ? 'Title starts with ' + letter : 'Filter by first letter'">
+            <i class="az" aria-hidden="true">A<small>z</small></i>
+            <span x-text="letter ? 'Starts with ' + letter : 'Letter'"></span></button>
+        </div>
+        <div class="quick">
+          <template x-for="[v, label] in quick" :key="v">
+            <button :class="{ on: quickOn(v) }" @click="setQuick(v)" x-text="label"></button>
+          </template>
+        </div>
       </div>
       <div class="chips" x-show="chips.length" x-cloak>
         <template x-for="c in chips" :key="c.k + c.v">
@@ -643,41 +653,77 @@
     </div>
   </div>
 
-  <div class="sheet" x-data="filterSheet()" x-show="$store.app.sheet === 'filter'" x-cloak
+  <div class="sheet letter-sheet" x-data="letterSheet()" x-show="$store.app.sheet === 'letter'" x-cloak
+       @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
+    <div>
+      <div class="sheet-head"><b>Title starts with</b>
+        <span class="btn-row"><button class="btn small" x-show="letter" @click="pick('')">Clear</button>
+          <button class="btn small" @click="$store.app.sheet = null">Done</button></span></div>
+      <div class="letter-grid" role="group" aria-label="Title starts with">
+        <template x-for="l in letters" :key="l">
+          <button :class="{ on: letter === l }" :aria-pressed="letter === l" @click="pick(l)" x-text="l"
+                  :title="l === '#' ? 'Numbers, symbols and other scripts' : 'Starts with ' + l"></button>
+        </template>
+      </div>
+      <p class="fhint"># is for titles that start with a number, a symbol or a non-Latin script.</p>
+    </div>
+  </div>
+
+  <div class="sheet filter-sheet" x-data="filterSheet()" x-show="$store.app.sheet === 'filter'" x-cloak
        @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
     <div>
       <div class="sheet-head"><b>Filter</b>
         <span class="btn-row"><button class="btn small" @click="clearAll()">Clear</button>
           <button class="btn small" @click="$store.app.sheet = null">Done</button></span></div>
       <template x-for="[k, title, labels] in groups" :key="k">
-        <div>
-          <h3 x-text="title"></h3>
-          <div class="wrap">
+        <section class="fgroup" :class="{ open: open[k] }">
+          <button class="fgroup-head" :aria-expanded="!!open[k]" @click="toggleGroup(k)">
+            <span x-text="title"></span>
+            <span class="fcount" x-show="selected(k)" x-text="selected(k)"></span>
+            <span class="chev" aria-hidden="true"></span>
+          </button>
+          <div class="wrap" x-show="open[k]">
             <template x-for="[v, label] in Object.entries(labels)" :key="v">
-              <button class="chip-btn" :class="{ on: isOn(k, v) }" @click="toggle(k, v)" x-text="label"></button>
+              <button class="chip-btn" :class="{ on: isOn(k, v) }" :aria-pressed="isOn(k, v)" @click="toggle(k, v)"
+                      x-text="label"></button>
             </template>
           </div>
-        </div>
+        </section>
       </template>
-      <h3>Genres <span class="muted">(tap: include · again: exclude · again: off)</span></h3>
-      <div class="wrap">
-        <template x-for="t in genres" :key="t.name">
-          <button class="chip-btn" :class="tagState(t.name)" @click="cycleTag(t.name)">
-            <span x-text="t.name"></span> <span class="muted" x-text="t.count"></span></button>
-        </template>
-        <span class="muted" x-show="!genres.length">Genres appear once series have metadata.</span>
-      </div>
-      <template x-if="tags.some((t) => t.kind !== 'genre')">
-        <div>
-          <h3>Tags</h3>
-          <input x-model="tagQuery" placeholder="Find a tag" style="width:100%;margin-bottom:8px">
+      <section class="fgroup" :class="{ open: open.genres }">
+        <button class="fgroup-head" :aria-expanded="!!open.genres" @click="toggleGroup('genres')">
+          <span>Genres</span>
+          <span class="fcount" x-show="selected('genres')" x-text="selected('genres')"></span>
+          <span class="chev" aria-hidden="true"></span>
+        </button>
+        <div x-show="open.genres">
+          <p class="fhint">Tap once to include, again to exclude, again to clear.</p>
           <div class="wrap">
-            <template x-for="t in otherTags" :key="t.name">
+            <template x-for="t in genres" :key="t.name">
               <button class="chip-btn" :class="tagState(t.name)" @click="cycleTag(t.name)">
-                <span x-text="t.name"></span> <span class="muted" x-text="t.count"></span></button>
+                <span x-text="t.name"></span> <span class="n" x-text="t.count"></span></button>
             </template>
+            <span class="muted" x-show="!genres.length">Genres appear once series have metadata.</span>
           </div>
         </div>
+      </section>
+      <template x-if="tags.some((t) => t.kind !== 'genre')">
+        <section class="fgroup" :class="{ open: open.tags }">
+          <button class="fgroup-head" :aria-expanded="!!open.tags" @click="toggleGroup('tags')">
+            <span>Tags</span>
+            <span class="fcount" x-show="selected('tags')" x-text="selected('tags')"></span>
+            <span class="chev" aria-hidden="true"></span>
+          </button>
+          <div x-show="open.tags">
+            <input class="ffind" x-model="tagQuery" placeholder="Find a tag" aria-label="Find a tag">
+            <div class="wrap">
+              <template x-for="t in otherTags" :key="t.name">
+                <button class="chip-btn" :class="tagState(t.name)" @click="cycleTag(t.name)">
+                  <span x-text="t.name"></span> <span class="n" x-text="t.count"></span></button>
+              </template>
+            </div>
+          </div>
+        </section>
       </template>
     </div>
   </div>

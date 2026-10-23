@@ -194,3 +194,18 @@ Choices made where the spec was open. Newest at the bottom.
   the page shows a toast that stays until **Update now**, **Skip this version** (stored on the server,
   for all devices) or **Later** (this browser, one day).
 
+
+## Library filters: A–Z and filter panel (issue #48)
+
+- **First-letter filter** (`letter=B`, `#` for the rest) is done on the server on the displayed title,
+  so it follows Title language and falls back to the folder name. Titles in other scripts (Japanese,
+  Korean…) and those starting with a number or symbol are under `#`. Empty title fields are now skipped
+  in SQL like on the cards, so sorting and the letter match what is shown.
+- **Filter, Sort and Letter are a toolbar in the library**, not icons next to the search (it wasn't clear
+  what ⚲/⇅ were). Labelled buttons with a funnel, up/down arrows and "Az"; a button with something set gets
+  an accent outline. Phones: above the quick filters; wide screens: same row, on the right.
+- **Letters open in their own sheet** (# first, then A–Z, 48 px buttons), because a 27-letter strip was too
+  small to tap on a phone. Picking a letter closes it, like Sort; the letter also shows as a `Starts with B` chip.
+- **Filter sheet groups fold** (accordion, not separate modals: one place, fewer taps). Reading status is
+  open by default, and any group with something selected opens when the sheet opens. Each heading shows
+  how many options are on. Chips say their state with a symbol too (✓ include, ⊘ exclude), not colour only.
