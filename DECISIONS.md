@@ -178,9 +178,10 @@ Choices made where the spec was open. Newest at the bottom.
   `/data/code/<commit>/` and `docker/entrypoint.sh` starts it from there (`/data/code/current`).
   It survives a container Reset because it lives in `/data`. Repo and branch: `UPDATE_REPO`,
   `UPDATE_BRANCH`; `AUTO_UPDATE=0` turns it all off.
-- **New pip packages are installed by the app** with `pip install --target /data/code/<commit>/deps`,
-  only the lines that differ from the image's `requirements.txt`. pip picks the right wheel for Intel
-  or ARM by itself.
+- **New pip packages are installed by the app** with `uv pip install --target /data/code/<commit>/deps`,
+  only the lines that differ from the image's `requirements.txt`. uv picks the right wheel for Intel
+  or ARM by itself. The image has uv instead of pip: pip bundles old copies of urllib3, msgpack and
+  setuptools that security scanners flag.
 - **A changed Dockerfile or entrypoint needs a new image**: the app compares them (line endings
   ignored) with copies kept in `/opt/mangavibe/image` and refuses the update with a message.
   GitHub Actions builds `ghcr.io/ivokolarov0/mangavibe` and Docker Hub `ivokolarov/mangavibe`
