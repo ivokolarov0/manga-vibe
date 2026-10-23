@@ -260,7 +260,7 @@ def install(sha=None, downloader=_download):
     if not sha or not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise RuntimeError("No version to install. Check for updates first.")
     if latest and latest.get("sha") == sha and latest.get("needs_image"):
-        raise RuntimeError("This version needs a new Docker image. See docs/SYNOLOGY.md → Updating.")
+        raise RuntimeError("This version needs a new Docker image. See github.com/ivokolarov0/manga-vibe#updating")
     code = code_dir()
     code.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".staging-", dir=code))
@@ -270,7 +270,7 @@ def install(sha=None, downloader=_download):
         files = {p: (staging / p).read_bytes().decode("utf-8", "replace") if (staging / p).exists() else ""
                  for p in IMAGE_FILES}
         if needs_new_image(files):
-            raise RuntimeError("This version needs a new Docker image. See docs/SYNOLOGY.md → Updating.")
+            raise RuntimeError("This version needs a new Docker image. See github.com/ivokolarov0/manga-vibe#updating")
         req = staging / "requirements.txt"
         extra = new_requirements(req.read_text(encoding="utf-8")) if req.exists() else []
         if extra:

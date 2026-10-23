@@ -2,7 +2,7 @@
 
     python build.py          build mangavibe:latest
     python build.py --run    build, then (re)start the local container from docker-compose.yml
-    python build.py --save   build, then write mangavibe.tar for the Synology (docs/SYNOLOGY.md, steps 2-3)
+    python build.py --save   build, then write mangavibe.tar, to import elsewhere with `docker load`
     python build.py --push   build, then push ivokolarov/mangavibe:latest to Docker Hub (Intel + ARM)
     python build.py --push --tag 1.1   also push it as ivokolarov/mangavibe:1.1
 
@@ -37,7 +37,7 @@ def git(*args):
 def main():
     ap = argparse.ArgumentParser(description="Build the MangaVibe Docker image.")
     ap.add_argument("--run", action="store_true", help="(re)start the local container with docker compose")
-    ap.add_argument("--save", action="store_true", help="write mangavibe.tar for the Synology")
+    ap.add_argument("--save", action="store_true", help="write mangavibe.tar to import elsewhere")
     ap.add_argument("--push", action="store_true", help=f"push {HUB_REPO}:latest to Docker Hub (Intel + ARM)")
     ap.add_argument("--tag", help="with --push: also push this version tag, e.g. 1.1")
     args = ap.parse_args()
@@ -57,7 +57,7 @@ def main():
         print("Running: http://localhost:8090")
     if args.save:
         run("docker", "save", IMAGE, "-o", "mangavibe.tar")
-        print(f"Wrote {HERE / 'mangavibe.tar'}. Upload it to the NAS (docs/SYNOLOGY.md, step 2).")
+        print(f"Wrote {HERE / 'mangavibe.tar'}. Import it with `docker load -i mangavibe.tar`.")
     if args.push:
         push(sha, args.tag)
     print(f"Built {IMAGE} at version {sha[:7]}.")

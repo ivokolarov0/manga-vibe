@@ -38,7 +38,7 @@ def install(body: ShaBody):
     if latest.get("sha") != body.sha:
         raise HTTPException(409, "A newer version came out meanwhile. Reload the page.")
     if latest.get("needs_image"):
-        raise HTTPException(409, "This version needs a new Docker image. See docs/SYNOLOGY.md → Updating.")
+        raise HTTPException(409, "This version needs a new Docker image. See github.com/ivokolarov0/manga-vibe#updating")
     try:
         updater.install_in_background(body.sha)
     except RuntimeError as e:
