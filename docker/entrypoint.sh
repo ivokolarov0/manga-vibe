@@ -12,6 +12,16 @@ DATA="${DATA_DIR:-/data}"
 # replaced by the one before it (or the built-in code), and remembered in $DATA/code/failed.
 APP_DIR=/app
 CODE="$DATA/code"
+# A downloaded version belongs to the image it was installed on. After pulling a new image, run the
+# image's own code: it is at least as new, and the old download may not work with the new image.
+IMAGE_SHA=$(cat /opt/mangavibe/image/sha 2>/dev/null || true)
+if [ -n "$IMAGE_SHA" ] && [ -f "$CODE/current" ]; then
+  SHA=$(cat "$CODE/current")
+  if [ "$(cat "$CODE/$SHA/.image" 2>/dev/null || true)" != "$IMAGE_SHA" ]; then
+    echo "[mangavibe] New Docker image, so its built-in code is used instead of downloaded version $SHA"
+    rm -f "$CODE/current"
+  fi
+fi
 if [ "${AUTO_UPDATE:-1}" != "0" ] && [ -f "$CODE/current" ]; then
   SHA=$(cat "$CODE/current")
   DIR="$CODE/$SHA"
