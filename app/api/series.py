@@ -55,8 +55,9 @@ def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | No
                 exclude: list[str] = Query(default=[]),
                 pub: str = "", read: str = "", match: str = "", format: str = "",
                 fav: bool = False, year_min: int | None = None, year_max: int | None = None,
-                score_min: int | None = None, db=Depends(get_db)):
-    """Library grid. Multi-value filters are comma-separated (genre=Romance,Comedy)."""
+                score_min: int | None = None, letter: str = "", db=Depends(get_db)):
+    """Library grid. Multi-value filters are comma-separated (genre=Romance,Comedy).
+    letter=a..z keeps titles starting with that letter, letter=# the rest (numbers, symbols, other scripts)."""
     limit = max(1, min(limit, 200))
     lang = title_lang(db)
     agg = reading_aggregates()
@@ -66,7 +67,9 @@ def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | No
         (and_(total_c > 0, agg.c.total_main > 0, agg.c.done_main == agg.c.total_main), "completed"),
         (or_(done_c > 0, func.coalesce(agg.c.started, 0) > 0), "reading"),
         else_="unread")
-    title = func.lower(func.coalesce(*[getattr(Series, f) for f in TITLE_FIELDS.get(lang, TITLE_FIELDS["english"])],
+    # the displayed title (empty fields skipped, like display_title), lower case for sorting
+    title = func.lower(func.coalesce(*[func.nullif(getattr(Series, f), "")
+                                       for f in TITLE_FIELDS.get(lang, TITLE_FIELDS["english"])],
                                      Series.folder_name))
 
     # the same aggregate row gives the card numbers: no second pass over books/progress
@@ -103,6 +106,12 @@ def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | No
         query = query.filter(Series.start_year <= year_max)
     if score_min:
         query = query.filter(Series.average_score >= score_min)
+    letter = letter.strip().lower()
+    first = func.substr(func.ltrim(title), 1, 1)
+    if len(letter) == 1 and "a" <= letter <= "z":
+        query = query.filter(first == letter)
+    elif letter == "#":
+        query = query.filter(~first.between("a", "z"))
 
     sorts = {"title": title, "added": Series.added_at, "updated": Series.updated_at,
              "read": Series.last_read_at, "score": Series.average_score, "year": Series.start_year,

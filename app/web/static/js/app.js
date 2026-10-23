@@ -23,6 +23,8 @@ const FILTER_GROUPS = [
   ["format", "Format", { manga: "Manga", manhwa: "Manhwa", manhua: "Manhua", one_shot: "One-shot", novel: "Novel" }],
 ];
 const LIST_KEYS = ["read", "pub", "match", "format", "genre", "exclude"];
+// first-letter filter (letter=B); "#" is everything else: numbers, symbols, other scripts
+const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Read"],
   ["plan_to_read", "Plan to read"], ["fav", "★ Favorites"]];
 const ATT_TABS = [
@@ -75,7 +77,7 @@ document.addEventListener("alpine:init", () => {
     id: null,            // series id for the series page
     params: {},          // query params of the current route
     query: "",           // raw query string (library filters)
-    sheet: null,         // which bottom sheet is open: "filter" | "sort" | null
+    sheet: null,         // which bottom sheet is open: "filter" | "sort" | "letter" | null
     folderPicker: false,
     fix: { open: false, seriesId: null, onDone: null },
     edit: { open: false, seriesId: null, onDone: null, tab: "info" },
@@ -231,10 +233,6 @@ function topbar() {
         if (document.activeElement !== this.$refs.search) this.q = libParams().get("q") || "";
       });
     },
-    get filterCount() {
-      const p = new URLSearchParams(this.$store.app.query);
-      return LIST_KEYS.reduce((a, k) => a + getList(p, k).length, 0) + (p.get("fav") ? 1 : 0);
-    },
     search() {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => {
@@ -244,11 +242,6 @@ function topbar() {
         q ? p.set("q", q) : p.delete("q");
         navigateLibrary(p);
       }, 300);
-    },
-    get customSort() { return !!new URLSearchParams(this.$store.app.query).get("sort"); },
-    openSheet(kind) {
-      if (this.$store.app.view !== "library") location.hash = "#/";
-      setTimeout(() => (this.$store.app.sheet = kind));  // after the route change closed other sheets
     },
   };
 }
@@ -391,6 +384,14 @@ function library() {
       else p.set("read", v);
       navigateLibrary(p);
     },
+    // toolbar: Filter (with count), Sort, Letter
+    get filterCount() {
+      const p = this.params;
+      return LIST_KEYS.reduce((a, k) => a + getList(p, k).length, 0) + (p.get("fav") ? 1 : 0);
+    },
+    get customSort() { return !!this.params.get("sort"); },
+    get letter() { return this.params.get("letter") || ""; },
+    openSheet(kind) { this.$store.app.sheet = kind; },
     get chips() {
       const p = this.params, out = [], read = getList(p, "read");
       for (const [k, , labels] of FILTER_GROUPS) {
@@ -399,6 +400,7 @@ function library() {
       }
       for (const v of getList(p, "genre")) out.push({ k: "genre", v, label: v });
       for (const v of getList(p, "exclude")) out.push({ k: "exclude", v, label: "not " + v, ex: true });
+      if (p.get("letter")) out.push({ k: "letter", v: p.get("letter"), label: "Starts with " + p.get("letter") });
       const sort = p.get("sort");
       if (sort && sort !== "title") out.push({ k: "sort", v: sort,
         label: "Sort: " + (SORTS.find(([k]) => k === sort)?.[1] || sort) + (p.get("order") === "asc" ? " ↑" : "") });
@@ -407,6 +409,7 @@ function library() {
     removeChip(c) {
       const p = libParams();
       if (c.k === "sort") { p.delete("sort"); p.delete("order"); }
+      else if (c.k === "letter") p.delete("letter");
       else setList(p, c.k, getList(p, c.k).filter((x) => x !== c.v));
       navigateLibrary(p);
     },
@@ -426,10 +429,22 @@ function library() {
 function filterSheet() {
   return {
     tags: [], tagQuery: "", groups: FILTER_GROUPS,
+    open: { read: true },  // which groups are unfolded
     init() {
       this.$watch("$store.app.sheet", async (sheet) => {
-        if (sheet === "filter") this.tags = await api("/api/tags").catch(() => this.tags);
+        if (sheet !== "filter") return;
+        // unfold the groups that have something selected, so nothing chosen is hidden
+        for (const [k] of FILTER_GROUPS) if (this.selected(k)) this.open[k] = true;
+        this.tags = await api("/api/tags").catch(() => this.tags);
+        for (const k of ["genres", "tags"]) if (this.selected(k)) this.open[k] = true;
       });
+    },
+    toggleGroup(k) { this.open[k] = !this.open[k]; },
+    // how many options of a group are on (include and exclude both count)
+    selected(k) {
+      if (k !== "genres" && k !== "tags") return getList(this.p, k).length;
+      const names = new Set(this.tags.filter((t) => (t.kind === "genre") === (k === "genres")).map((t) => t.name));
+      return [...getList(this.p, "genre"), ...getList(this.p, "exclude")].filter((n) => names.has(n)).length;
     },
     get p() { return new URLSearchParams(this.$store.app.query); },
     get genres() { return this.tags.filter((t) => t.kind === "genre"); },
@@ -445,7 +460,7 @@ function filterSheet() {
       this.apply((p) => { const cur = getList(p, k); setList(p, k, cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]); });
     },
     clearAll() {
-      this.apply((p) => { for (const k of [...LIST_KEYS, "fav"]) p.delete(k); });
+      this.apply((p) => { for (const k of [...LIST_KEYS, "fav", "letter"]) p.delete(k); });
     },
     cycleTag(t) {  // include -> exclude -> off
       this.apply((p) => {
@@ -454,6 +469,21 @@ function filterSheet() {
         else if (exc.includes(t)) setList(p, "exclude", exc.filter((x) => x !== t));
         else setList(p, "genre", [...inc, t]);
       });
+    },
+  };
+}
+
+/* ---------------- first-letter sheet ---------------- */
+
+function letterSheet() {
+  return {
+    letters: LETTERS,
+    get letter() { return new URLSearchParams(this.$store.app.query).get("letter") || ""; },
+    pick(l) {  // tap the selected letter again to clear it; like a menu: pick and close
+      const p = libParams();
+      !l || p.get("letter") === l ? p.delete("letter") : p.set("letter", l);
+      navigateLibrary(p);
+      this.$store.app.sheet = null;
     },
   };
 }

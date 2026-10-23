@@ -233,6 +233,15 @@ def test_filters(client):
     client.put(f"/api/books/{book['id']}/progress", json={"page": 2})
     assert sid in ids("read=reading") and sid not in ids("read=unread")
     assert ids("sort=score")[0] == sid
+    # first letter of the displayed title ("The Flower and the Demon" in English, "Hana to Akuma" in Romaji)
+    assert sid in ids("letter=T") and sid not in ids("letter=H") and sid not in ids("letter=%23")
+    client.put("/api/settings", json={"title_language": "romaji"})
+    assert sid in ids("letter=h") and sid not in ids("letter=T")
+    client.put("/api/settings", json={"title_language": "native"})
+    assert sid in ids("letter=%23")          # 花と悪魔: not A-Z
+    client.put("/api/settings", json={"title_language": "english"})
+    assert "Series B" in [s["title"] for s in client.get("/api/series?letter=s").json()["items"]]  # folder name
+    assert ids("letter=T&genre=Romance&read=reading") == [sid]
     tags = {t["name"]: t["count"] for t in client.get("/api/tags").json()}
     assert tags["Romance"] == 1
 
