@@ -28,13 +28,15 @@ const ICONS = {
   mode: svg(`<path d="M4 7h13l-3-3M20 17H7l3 3"/>`),
   fit: svg(`<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>`),
   fullscreen: svg(`<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>`),
+  fullscreenExit: svg(`<path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/>`),
   settings: svg(`<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>`),
   // locked: closed shackle; unlocked: shackle swung open, so the two are easy to tell apart
   lock: svg(`<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>`),
   unlock: svg(`<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>`),
 };
 
-/* the options drawer slides in from the right, or from the left (Settings → Reader, for left-handed use) */
+/* the hand the reader is held in (Settings → Reader): back, fullscreen and the options button sit on
+   that side, and the options drawer slides in from it */
 function drawerSide() { return settings.reader_drawer_side === "left" ? "left" : "right"; }
 
 function setDrawer(open) {
@@ -93,9 +95,13 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
     <div class="chrome top">
       <div class="title"><b>${esc(book.series_title)}</b><span>${esc(book.label)}</span></div>
     </div>
-    <!-- a floating card; back and the options button sit by the thumb (one-handed use) -->
+    <!-- the most used buttons, stacked just above the bottom card on the thumb side (one-handed use) -->
+    <div class="chrome rail">
+      <button id="r-back" class="icon" aria-label="Back" title="Back">${ICONS.back}</button>
+      <button id="r-fs2" class="icon" aria-label="Fullscreen" title="Fullscreen">${ICONS.fullscreen}</button>
+    </div>
+    <!-- a floating card; the options button is at the thumb end -->
     <div class="chrome bottom">
-      <button id="r-back" class="icon b-back" aria-label="Back" title="Back">${ICONS.back}</button>
       <!-- chapter buttons, page numbers and slider follow the reading direction (dir="rtl" mirrors them) -->
       <div class="b-pages" ${R.mode === "rtl" ? 'dir="rtl"' : ""}>
         <button id="r-prev" class="icon" aria-label="Previous chapter"
@@ -143,7 +149,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   $("#r-menu").onclick = () => setDrawer(true);
   $("#r-close").onclick = () => setDrawer(false);
   $("#r-exit").onclick = () => leaveReader();
-  $("#r-fs").onclick = toggleFullscreen;
+  $("#r-fs").onclick = $("#r-fs2").onclick = toggleFullscreen;
+  updateFullscreenButtons();
   if ($("#r-lock")) $("#r-lock").onclick = () => setLocked(!locked());
   $("#r-slider").oninput = (e) => goTo(+e.target.value - 1);
   $("#r-progress").onclick = (e) => { if (e.target.dataset.p) goTo(+e.target.dataset.p); };
@@ -606,6 +613,19 @@ function maybeAutoFullscreen() {
   }
   R.firstTap = false;
 }
+
+/* both fullscreen buttons show what a tap will do; hidden where the browser has no fullscreen (iPhone) */
+function updateFullscreenButtons() {
+  const on = !!document.fullscreenElement, label = on ? "Exit fullscreen" : "Fullscreen";
+  const rail = $("#r-fs2"), opt = $("#r-fs");
+  if (!rail || !opt) return;
+  rail.hidden = opt.hidden = document.fullscreenEnabled === false;
+  rail.innerHTML = on ? ICONS.fullscreenExit : ICONS.fullscreen;
+  rail.title = label;
+  rail.setAttribute("aria-label", label);
+  opt.innerHTML = `${on ? ICONS.fullscreenExit : ICONS.fullscreen}<span>${label}</span>`;
+}
+document.addEventListener("fullscreenchange", updateFullscreenButtons);
 
 function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen();
