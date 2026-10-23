@@ -4,12 +4,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     TZ=UTC PORT=8090 DATA_DIR=/data LIBRARY_PATHS=/manga PUID=1000 PGID=1000 CACHE_MAX_GB=2 \
     MALLOC_ARENA_MAX=2
 
-# unrar (.cbr/.rar) and 7zip-rar live in Debian's non-free section. 7zip reads .7z/.cb7 and
-# ZIPs that Python can't (Deflate64/PPMd); with 7zip-rar it is also the backup RAR reader.
+# 7zip reads .7z/.cb7 and ZIPs that Python can't (Deflate64/PPMd). With 7zip-rar (Debian's
+# non-free section) it also reads .cbr/.rar. unrar is left out: scanners flag it for a WinRAR CVE.
 RUN sed -i 's/^Components: main$/Components: main non-free/' /etc/apt/sources.list.d/debian.sources \
  && apt-get update \
  && apt-get upgrade -y \
- && apt-get install -y --no-install-recommends unrar 7zip 7zip-rar tzdata \
+ && apt-get install -y --no-install-recommends 7zip 7zip-rar tzdata \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

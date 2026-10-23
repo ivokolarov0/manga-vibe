@@ -1,7 +1,7 @@
 """Updates the app's code from the `releases` branch on GitHub, without a new Docker image.
 
 How it works (see DECISIONS.md, "Auto-update"):
-- The Docker image is the base: Python, unrar/7zip and the pip packages from its requirements.txt.
+- The Docker image is the base: Python, 7zip and the pip packages from its requirements.txt.
   It keeps a copy of its Dockerfile, entrypoint and requirements in /opt/mangavibe/image.
 - A new version is downloaded into DATA_DIR/code/<sha>/. New or changed pip packages go into
   DATA_DIR/code/<sha>/deps. If `import app.main` works there, DATA_DIR/code/current is pointed at it
