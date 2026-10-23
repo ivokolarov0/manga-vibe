@@ -479,7 +479,7 @@
                 <span x-show="!upd.available.needs_image && upd.available.failed">This version did not start, so MangaVibe went back</span>
                 <span x-show="!upd.available.needs_image && !upd.available.failed && upd.available.skipped">You skipped this version</span>
                 <span x-show="!upd.available.needs_image && !upd.available.failed && !upd.available.skipped">Ready to install</span>
-                <small x-show="upd.available.needs_image">Files alone are not enough for it. See docs/SYNOLOGY.md → Updating to a new version.</small>
+                <small x-show="upd.available.needs_image">Files alone are not enough for it. See github.com/ivokolarov0/manga-vibe#updating</small>
                 <small x-show="!upd.available.needs_image">Your library, progress and settings are kept. The app restarts by itself.</small>
               </div>
               <div class="btn-row">
@@ -830,8 +830,8 @@
        @click.self="close()" @keydown.escape.window="close()">
     <div>
       <div class="sheet-head"><b>Add a library folder</b><button class="btn small" @click="close()">Cancel</button></div>
-      <p class="muted">These are the folders inside the MangaVibe container. To see another NAS folder here,
-        first add it as a volume in the Docker settings (see docs/SYNOLOGY.md).</p>
+      <p class="muted">These are the folders inside the MangaVibe container. To see another folder here,
+        first mount it into the container as a volume (read-only), then restart it.</p>
       <div class="chips" x-show="crumbs.length">
         <template x-for="c in crumbs" :key="c.path">
           <button class="chip-btn" @click="open(c.path)" x-text="c.name"></button>
@@ -862,7 +862,7 @@
       <div>
         <strong x-text="a.needs_image ? 'A new MangaVibe version needs a new Docker image' : 'A new version of MangaVibe is available'"></strong>
         <small x-text="[a.short, when, a.message].filter(Boolean).join(' · ')"></small>
-        <small x-show="a.needs_image">See docs/SYNOLOGY.md → Updating to a new version.</small>
+        <small x-show="a.needs_image">See github.com/ivokolarov0/manga-vibe#updating</small>
         <div class="btn-row">
           <button class="btn small primary" x-show="!a.needs_image" @click="install()">Update now</button>
           <button class="btn small" @click="skip()">Skip this version</button>

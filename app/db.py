@@ -59,9 +59,9 @@ def ensure_data_dir():
     except OSError as e:
         log.error(
             "Cannot write to the data folder %s (%s).\n"
-            "  Fix on Synology: open File Station, right-click the docker/mangavibe folder ->\n"
-            "  Properties -> Permission -> Create -> User or group: Everyone -> tick Read and Write ->\n"
-            "  tick 'Apply to this folder, sub-folders and files' -> Done -> Save. Then restart the container.",
+            "  Fix: give the user the container runs as (PUID:PGID, or root) read and write access to the\n"
+            "  folder mounted as /data, e.g. `chown -R 1000:1000 <folder>`, or on a NAS in the folder's\n"
+            "  permission settings. Then restart the container.",
             config.DATA_DIR, e)
         sys.exit(1)
 

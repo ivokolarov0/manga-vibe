@@ -185,7 +185,7 @@ Choices made where the spec was open. Newest at the bottom.
   ignored) with copies kept in `/opt/mangavibe/image` and refuses the update with a message.
   GitHub Actions builds `ghcr.io/ivokolarov0/mangavibe` and Docker Hub `ivokolarov/mangavibe`
   (amd64 + arm64) on every push to `releases`, so published images always match a released version.
-  Docker Hub is the install path in docs/SYNOLOGY.md because DSM's Registry searches it by default.
+  Docker Hub is the install path in README.md because most Docker GUIs (e.g. Synology) search it by default.
 - **Safety**: a version is installed only if `import app.main` works in a separate process. After
   install the process re-runs the entrypoint with `exec`, so it works without Docker's auto-restart.
   A version that fails to start 3 times is replaced by the previous one by the entrypoint and
