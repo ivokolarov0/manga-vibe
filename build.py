@@ -3,6 +3,10 @@
     python build.py          build mangavibe:latest
     python build.py --run    build, then (re)start the local container from docker-compose.yml
     python build.py --save   build, then write mangavibe.tar for the Synology (docs/SYNOLOGY.md, steps 2-3)
+    python build.py --push   build, then push ivokolarov/mangavibe:latest to Docker Hub (Intel + ARM)
+    python build.py --push --tag 1.1   also push it as ivokolarov/mangavibe:1.1
+
+--push needs `docker login` once.
 
 The commit (GIT_SHA) tells the app which version is built in, so auto-update doesn't offer the
 same version again. Uncommitted changes are built too, but the app can't know about them.
@@ -15,6 +19,9 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 IMAGE = "mangavibe:latest"
+HUB_REPO = "ivokolarov/mangavibe"
+PLATFORMS = "linux/amd64,linux/arm64"
+BUILDER = "mangavibe-multi"
 
 
 def run(*cmd, env=None):
@@ -31,7 +38,11 @@ def main():
     ap = argparse.ArgumentParser(description="Build the MangaVibe Docker image.")
     ap.add_argument("--run", action="store_true", help="(re)start the local container with docker compose")
     ap.add_argument("--save", action="store_true", help="write mangavibe.tar for the Synology")
+    ap.add_argument("--push", action="store_true", help=f"push {HUB_REPO}:latest to Docker Hub (Intel + ARM)")
+    ap.add_argument("--tag", help="with --push: also push this version tag, e.g. 1.1")
     args = ap.parse_args()
+    if args.tag and not args.push:
+        ap.error("--tag only works with --push")
 
     sha = git("rev-parse", "HEAD")
     if not sha:
@@ -47,7 +58,19 @@ def main():
     if args.save:
         run("docker", "save", IMAGE, "-o", "mangavibe.tar")
         print(f"Wrote {HERE / 'mangavibe.tar'}. Upload it to the NAS (docs/SYNOLOGY.md, step 2).")
+    if args.push:
+        push(sha, args.tag)
     print(f"Built {IMAGE} at version {sha[:7]}.")
+
+
+def push(sha, tag):
+    # The default builder can't build for several platforms at once, so use our own.
+    if subprocess.run(["docker", "buildx", "inspect", BUILDER], cwd=HERE, capture_output=True).returncode != 0:
+        run("docker", "buildx", "create", "--name", BUILDER)
+    tags = ["-t", f"{HUB_REPO}:latest"] + (["-t", f"{HUB_REPO}:{tag}"] if tag else [])
+    run("docker", "buildx", "build", "--builder", BUILDER, "--platform", PLATFORMS,
+        "--build-arg", f"GIT_SHA={sha}", *tags, "--push", ".")
+    print(f"Pushed {HUB_REPO}:latest" + (f" and :{tag}" if tag else "") + " to Docker Hub.")
 
 
 if __name__ == "__main__":
