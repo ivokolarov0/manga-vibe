@@ -8,12 +8,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
 # ZIPs that Python can't (Deflate64/PPMd); with 7zip-rar it is also the backup RAR reader.
 RUN sed -i 's/^Components: main$/Components: main non-free/' /etc/apt/sources.list.d/debian.sources \
  && apt-get update \
+ && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends unrar 7zip 7zip-rar tzdata \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# The base image's pip lags behind; the updater also uses pip at runtime, so keep it current.
+RUN pip install --no-cache-dir --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY examples ./examples
