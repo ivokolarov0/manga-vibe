@@ -14,9 +14,11 @@ RUN sed -i 's/^Components: main$/Components: main non-free/' /etc/apt/sources.li
 
 WORKDIR /app
 COPY requirements.txt .
-# The base image's pip lags behind; the updater also uses pip at runtime, so keep it current.
-RUN pip install --no-cache-dir --upgrade pip \
- && pip install --no-cache-dir -r requirements.txt
+# Packages are installed with uv, and pip is removed: pip bundles its own copies of urllib3,
+# msgpack and setuptools that security scanners flag. The updater uses uv at runtime too.
+RUN pip install --no-cache-dir uv==0.13.5 \
+ && uv pip install --system --no-cache -r requirements.txt \
+ && pip uninstall -y pip
 
 COPY app ./app
 COPY examples ./examples
