@@ -92,6 +92,27 @@ def test_install_switch_and_cleanup(image):
     assert sorted(p.name for p in code.iterdir() if p.is_dir()) == [SHA2, SHA3]  # oldest removed
 
 
+def test_install_remembers_the_image(image):
+    """The entrypoint runs a new image's own code when a download was made for another image."""
+    (config.IMAGE_DIR / "sha").write_text(SHA3 + "\n")
+    d = updater.install(SHA1, downloader=downloader(version_files()))
+    assert (d / ".image").read_text() == SHA3
+
+
+def test_cached_check_is_dropped_after_new_image(image, client):
+    from app import db as database
+    (config.IMAGE_DIR / "sha").write_text(SHA1)
+    old = {"sha": SHA2, "date": None, "message": "Two", "needs_image": True, "image": SHA1}
+    with database.SessionLocal() as s:
+        database.set_setting(s, "update_latest", old)
+        s.commit()
+    updater.load_cached()
+    assert updater.latest == old  # same image: keep it
+    (config.IMAGE_DIR / "sha").write_text(SHA2)
+    updater.load_cached()
+    assert updater.latest is None  # new image: "needs a new image" must be checked again
+
+
 def test_install_refuses_new_image(image):
     with pytest.raises(RuntimeError, match="new Docker image"):
         updater.install(SHA1, downloader=downloader(version_files(dockerfile="FROM node\n")))
