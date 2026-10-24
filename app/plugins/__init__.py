@@ -58,11 +58,15 @@ class Choice:
 
 @dataclass
 class SettingDef:
-    """A text box for the plugin in Settings -> Plugins. The value lands in ctx.settings[key]."""
+    """A text box for the plugin in Settings -> Plugins, or a dropdown when `options` is given
+    ([(value, label)]). The value lands in ctx.settings[key]; ctx.setting(key) falls back to
+    `default` while nothing is saved."""
     key: str
     label: str
     help: str = ""
     secret: bool = False  # never sent back to the browser (shown as "saved")
+    options: list = field(default_factory=list)
+    default: str = ""
 
 
 @dataclass
@@ -212,6 +216,13 @@ class Context:
     def settings(self) -> dict:
         from app.db import get_setting
         return get_setting(self.db, f"plugin:{self.plugin.id}", {}) or {}
+
+    def setting(self, key):
+        """One saved setting, or its SettingDef default while nothing is saved."""
+        value = self.settings.get(key)
+        if value in (None, ""):
+            value = next((f.default for f in self.plugin.settings_fields if f.key == key), None)
+        return value
 
     def save_settings(self, values: dict):
         from app.db import set_setting

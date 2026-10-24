@@ -108,9 +108,39 @@ def test_secret_settings_never_sent_back(client):
         client.put("/api/plugins/secret-test/settings", json={"token": "abc"})
         info = next(p for p in client.get("/api/plugins").json()["plugins"] if p["id"] == "secret-test")
         assert info["settings"][0] == {"key": "token", "label": "Token", "help": "", "secret": True,
-                                       "value": "", "saved": True}
+                                       "options": [], "value": "", "saved": True}
     finally:
         del manager.plugins["secret-test"]
+
+
+def test_dropdown_setting_with_a_default(client):
+    from app.db import SessionLocal
+    from app.plugins import Context, Plugin, SettingDef, manager
+
+    class Modes(Plugin):
+        id = "mode-test"
+        settings_fields = [SettingDef("mode", "Mode", options=[("auto", "Automatic"), ("manual", "Manual")],
+                                      default="auto")]
+
+    manager.plugins["mode-test"] = p = Modes()
+
+    def setting():
+        info = next(x for x in client.get("/api/plugins").json()["plugins"] if x["id"] == "mode-test")
+        with SessionLocal() as db:
+            return info["settings"][0], Context(p, db).setting("mode")
+
+    try:
+        f, value = setting()
+        assert f["options"] == [["auto", "Automatic"], ["manual", "Manual"]]
+        assert (f["value"], f["saved"], value) == ("auto", False, "auto")  # the default
+        client.put("/api/plugins/mode-test/settings", json={"mode": "manual"})
+        f, value = setting()
+        assert (f["value"], f["saved"], value) == ("manual", True, "manual")
+        assert client.put("/api/plugins/mode-test/settings", json={"mode": "sometimes"}).status_code == 400
+        client.put("/api/plugins/mode-test/settings", json={"mode": ""})  # cleared: the default again
+        assert setting()[1] == "auto"
+    finally:
+        del manager.plugins["mode-test"]
 
 
 def test_choices_on_the_series_page(client):
