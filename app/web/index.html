@@ -469,9 +469,17 @@
                   <template x-for="f in p.settings" :key="f.key">
                     <label class="setting-row">
                       <span class="label"><span x-text="f.label"></span><small x-show="f.help" x-text="f.help"></small></span>
-                      <input :type="f.secret ? 'password' : 'text'" x-model="f.value" autocomplete="off"
-                             :placeholder="f.secret && f.saved ? 'Saved (type to replace)' : ''"
-                             @change="savePluginSetting(p, f)">
+                      <template x-if="f.options.length">
+                        <select x-model="f.value" @change="savePluginSetting(p, f)">
+                          <template x-for="[v, label] in f.options" :key="v">
+                            <option :value="v" :selected="f.value === v" x-text="label"></option></template>
+                        </select>
+                      </template>
+                      <template x-if="!f.options.length">
+                        <input :type="f.secret ? 'password' : 'text'" x-model="f.value" autocomplete="off"
+                               :placeholder="f.secret && f.saved ? 'Saved (type to replace)' : ''"
+                               @change="savePluginSetting(p, f)">
+                      </template>
                     </label>
                   </template>
                   <div class="btn-row" x-show="p.global_actions.length">
