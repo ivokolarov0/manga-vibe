@@ -32,29 +32,105 @@ unpacking them. Nothing is uploaded anywhere, and your files are never renamed o
 
 ## Install
 
-The image is on Docker Hub as [`ivokolarov/mangavibe`](https://hub.docker.com/r/ivokolarov/mangavibe)
-(Intel and ARM). You need two folders:
+MangaVibe runs in **Docker**, a free app that runs programs in their own sealed box. You set it
+up once, then MangaVibe updates itself. Open the steps for your system:
+
+<details>
+<summary><b>Windows</b></summary>
+
+1. Install **[Docker Desktop](https://www.docker.com/products/docker-desktop/)** and restart the PC if
+   it asks. Open Docker Desktop and wait until it says **Engine running** (you can skip signing in).
+2. Open **PowerShell** (Start menu → type *PowerShell*). Paste this line, but first change `D:\Manga`
+   to the folder your manga is in, then press Enter:
+
+   ```powershell
+   docker run -d --name mangavibe --restart unless-stopped -p 8090:8090 -v "D:\Manga:/manga:ro" -v "C:\MangaVibe:/data" ivokolarov/mangavibe:latest
+   ```
+
+   To get a folder's path, open it in File Explorer and click the address bar.
+   `C:\MangaVibe` is where MangaVibe keeps its own data; it's created for you.
+3. Open **http://localhost:8090** in your browser. The first scan starts by itself.
+
+So it starts with the PC: Docker Desktop → **Settings** → **General** → turn on
+**Start Docker Desktop when you sign in**.
+
+</details>
+
+<details>
+<summary><b>Mac</b></summary>
+
+1. Install **[Docker Desktop](https://www.docker.com/products/docker-desktop/)**. Pick
+   **Apple Silicon** or **Intel** (Apple menu → **About This Mac** shows which one you have).
+   Open it and wait until it says **Engine running** (you can skip signing in).
+2. Open **Terminal** (Spotlight → type *Terminal*). Paste this and press Enter:
+
+   ```bash
+   docker run -d --name mangavibe --restart unless-stopped -p 8090:8090 -v "$HOME/Manga:/manga:ro" -v "$HOME/MangaVibe:/data" ivokolarov/mangavibe:latest
+   ```
+
+   This expects your manga in a folder called **Manga** in your home folder. If it's somewhere
+   else, change `$HOME/Manga` to that path, e.g. `/Volumes/MyDrive/Manga`.
+3. Open **http://localhost:8090** in your browser. The first scan starts by itself.
+
+So it starts with the Mac: Docker Desktop → **Settings** → **General** → turn on
+**Start Docker Desktop when you sign in**.
+
+</details>
+
+<details>
+<summary><b>Linux</b></summary>
+
+1. Install Docker (skip if you have it):
+
+   ```bash
+   curl -fsSL https://get.docker.com | sudo sh
+   ```
+
+2. Start MangaVibe. Change `$HOME/Manga` if your manga is somewhere else:
+
+   ```bash
+   sudo docker run -d --name mangavibe --restart unless-stopped -p 8090:8090 -v "$HOME/Manga:/manga:ro" -v "$HOME/mangavibe-data:/data" ivokolarov/mangavibe:latest
+   ```
+
+3. Open **http://localhost:8090**. It starts by itself after a reboot.
+
+</details>
+
+<details>
+<summary><b>Synology NAS</b></summary>
+
+Newer NAS (DSM 7.2+) use the **Container Manager** package; older ones use **Docker**. The steps
+are the same; where a button has a different name, the older one is in brackets.
+
+1. **Package Center** → install **Container Manager** (or **Docker**).
+2. **File Station** → open the `docker` shared folder → create a folder named `mangavibe`.
+3. Open **Container Manager** (**Docker**) → **Registry** → search `ivokolarov/mangavibe` →
+   **Download** → tag `latest`. Wait until it shows up under **Image**.
+4. **Image** → select `ivokolarov/mangavibe` → **Run** (**Launch**):
+   - Container name `mangavibe`. Tick **Enable auto-restart** (on older DSM it's in
+     **Advanced Settings**).
+   - **Port Settings**: change the local port from *Auto* to `8090` (container port `8090`).
+   - **Volume Settings** (**Volume**) → **Add Folder**: pick your manga folder, mount path
+     `/manga`, tick **Read-only**.
+   - **Add Folder** again: pick `docker/mangavibe`, mount path `/data`.
+   - **Next** → **Done** (**Apply** → **Next** → **Done**).
+5. Open **http://\<your NAS address\>:8090**, the same address you use for DSM but with `:8090`
+   at the end (e.g. `http://192.168.1.20:8090`).
+
+</details>
+
+<details>
+<summary><b>Other servers (Unraid, Portainer, Docker Compose, …)</b></summary>
+
+The image is [`ivokolarov/mangavibe`](https://hub.docker.com/r/ivokolarov/mangavibe) (Intel and ARM).
+Give it port **8090**, auto-restart, and two folders:
 
 | In the container | What it is | Mode |
 |---|---|---|
 | `/manga` | your manga folder | **read-only** |
 | `/data` | database, covers, cache, plugins (empty to start with) | read-write |
 
-With a Docker GUI (Synology Container Manager, Unraid, Portainer, …): search the registry for
-`ivokolarov/mangavibe`, download the `latest` tag and create a container with the two folders
-above, port **8090** and auto-restart on.
-
-### Docker
-
-```bash
-docker run -d --name mangavibe --restart unless-stopped \
-  -p 8090:8090 \
-  -v /path/to/manga:/manga:ro \
-  -v /path/to/mangavibe-data:/data \
-  ivokolarov/mangavibe:latest
-```
-
-### Docker Compose
+Docker Compose:
 
 ```yaml
 services:
@@ -69,9 +145,7 @@ services:
     restart: unless-stopped
 ```
 
-Then open **http://\<your-server\>:8090**. The first scan starts by itself.
-
-### Settings (environment variables, all optional)
+Optional settings (environment variables):
 
 | Variable | Default | What it does |
 |---|---|---|
@@ -81,6 +155,19 @@ Then open **http://\<your-server\>:8090**. The first scan starts by itself.
 | `CACHE_MAX_GB` | `2` | Space for resized pages and thumbnails |
 | `PUID` / `PGID` | `1000` | User the app runs as, if that user can read your manga folder |
 | `AUTO_UPDATE` | `1` | `0` turns off update checks |
+
+</details>
+
+### Open it on your phone
+
+Your phone must be on the same Wi-Fi. Open **http://\<computer address\>:8090** in its browser, then
+use **Add to Home Screen** so it opens full screen like an app. To find the computer's address:
+
+- **Windows:** Settings → Network & internet → Wi-Fi (or Ethernet if you are on cable) → your network → **IPv4 address**
+- **Mac:** System Settings → Wi-Fi → **Details** next to your network → TCP/IP → **IP address**
+- **Synology:** the address you use for DSM
+
+The computer has to be on (and Docker Desktop running) while you read.
 
 ## Organizing your manga
 
@@ -118,24 +205,25 @@ database changes; the file itself does not.
   Settings icon means something **needs attention**: a series that couldn't be matched, a file that
   can't be read, duplicates or missing chapters.
 
-**On your phone:** open the address in your browser, then use **Add to Home Screen**. It opens
-full screen like an app.
-
 ## Updating
 
 MangaVibe checks for a new version once a day and shows a message. Tap **Update now**, and it
 installs the new version and restarts by itself. You don't have to touch Docker.
 
-Once in a while, a version needs a new image, and the message tells you so. Then pull the new image
-and recreate the container. Your library, progress and settings are kept in `/data`.
+Once in a while, a version needs a new image, and the message tells you so. Your library,
+progress and settings are kept, so this is safe:
 
-```bash
-docker pull ivokolarov/mangavibe:latest
-docker compose up -d          # or: stop, remove and run the container again
-```
+- **Windows, Mac, Linux:** run these, then run the same `docker run` line from the install steps again
+  (on Linux, put `sudo` in front of each):
 
-In a Docker GUI: download the `latest` tag again, then recreate (or "reset") the container with the
-same settings.
+  ```bash
+  docker pull ivokolarov/mangavibe:latest
+  docker rm -f mangavibe
+  ```
+
+- **Synology:** **Registry** → download `ivokolarov/mangavibe` `latest` again. Then **Container** →
+  select `mangavibe` → stop it → **Action** → **Reset** (**Clear**), and start it again.
+- **Docker Compose:** `docker compose pull && docker compose up -d`
 
 If a new version doesn't start 3 times in a row, MangaVibe goes back to the previous one by itself.
 

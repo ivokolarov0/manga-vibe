@@ -62,7 +62,7 @@ FIRST_LIB=$(echo "${LIBRARY_PATHS:-/manga}" | cut -d, -f1)
 if ! setpriv --reuid="$PUID" --regid="$PGID" --clear-groups ls "$FIRST_LIB" >/dev/null 2>&1; then
   echo "[mangavibe] User $PUID:$PGID cannot read $FIRST_LIB, so MangaVibe keeps running as root."
   echo "[mangavibe] That is fine on Synology (the library is mounted read-only). To run as your own"
-  echo "[mangavibe] user instead, set PUID/PGID to your DSM user's id (see docs/SYNOLOGY.md)."
+  echo "[mangavibe] user instead, set PUID/PGID to your DSM user's id."
   exec $CMD
 fi
 
