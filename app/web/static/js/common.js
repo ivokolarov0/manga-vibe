@@ -29,6 +29,12 @@ function toast(msg, ms = 3000, kind = "") {
   toast.timer = setTimeout(() => t.classList.remove("show"), ms);
 }
 
+/* What a plugin button returned: a message, and maybe a page to open (e.g. a website's login). */
+async function showActionResult(r) {
+  if (r.message) toast(r.message, 6000);
+  if (r.open_url) location.href = r.open_url;
+}
+
 /* Descriptions from MangaUpdates use markdown-style **bold** and *italic*.
    Escape everything first (so provider text can never inject HTML), then add only <strong>/<em>. */
 function formatText(text) {

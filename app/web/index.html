@@ -448,10 +448,31 @@
         <section x-show="section === 'plugins'">
           <h2>Plugins</h2>
           <template x-for="p in plugins" :key="p.id">
-            <label class="setting-row">
-              <span class="label"><span x-text="p.name"></span><small x-text="`v${p.version}` + (p.description ? ' · ' + p.description : '')"></small></span>
-              <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)">
-            </label>
+            <div class="plugin-block">
+              <label class="setting-row">
+                <span class="label"><span x-text="p.name"></span><small x-text="`v${p.version}` + (p.description ? ' · ' + p.description : '')"></small>
+                  <small class="plugin-status" x-show="p.enabled && p.status" x-text="p.status"></small></span>
+                <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)">
+              </label>
+              <template x-if="p.enabled && (p.settings.length || p.global_actions.length)">
+                <div class="plugin-extra">
+                  <template x-for="f in p.settings" :key="f.key">
+                    <label class="setting-row">
+                      <span class="label"><span x-text="f.label"></span><small x-show="f.help" x-text="f.help"></small></span>
+                      <input :type="f.secret ? 'password' : 'text'" x-model="f.value" autocomplete="off"
+                             :placeholder="f.secret && f.saved ? 'Saved (type to replace)' : ''"
+                             @change="savePluginSetting(p, f)">
+                    </label>
+                  </template>
+                  <div class="btn-row" x-show="p.global_actions.length">
+                    <template x-for="a in p.global_actions" :key="a.key">
+                      <button class="btn small" :disabled="busyAction === p.id + a.key"
+                              @click="runGlobalAction(p, a)" x-text="a.label"></button>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
           </template>
           <p class="muted" x-show="!plugins.length">No plugins installed.</p>
           <template x-for="[f, e] in Object.entries(pluginErrors)"><p class="err" x-text="`${f}: ${e}`"></p></template>

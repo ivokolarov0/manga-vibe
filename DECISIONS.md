@@ -217,3 +217,23 @@ Choices made where the spec was open. Newest at the bottom.
 - **Filter sheet groups fold** (accordion, not separate modals: one place, fewer taps). Reading status is
   open by default, and any group with something selected opens when the sheet opens. Each heading shows
   how many options are on. Chips say their state with a symbol too (✓ include, ⊘ exclude), not colour only.
+
+
+## Plugin API v2: reading events, plugin settings, callbacks (for tracker sync)
+
+- **Tracker syncs (MyAnimeList, AniList…) are plugins, not built in.** Each lives in its own repo as one
+  `.py` file the owner drops into the plugins folder. The app only gained general hooks, nothing
+  site-specific.
+- **Three reading events**: book started, book completed, series status changed (the status the app
+  shows: manual choice, else worked out from progress). They fire only for the owner's own changes,
+  not scans (a new chapter turning "completed" into "reading" isn't something the owner did) and not
+  `ctx.set_reading_status` (so a pull from a tracker can't push itself back).
+- **Events run on one background thread, after commit**, in order, with a fresh database session per
+  plugin. Reading never waits for a website; a crashing plugin is logged and skipped. No retry queue:
+  a tracker plugin can offer a "Sync all" button to catch up.
+- **Plugin settings are text boxes** declared by the plugin (`SettingDef`), saved in the plugin's own
+  settings. Secret values are never sent back to the browser. Buttons in Settings (`global_actions`) and
+  a status line cover "Connect", "Sync all", "Connected as …".
+- **`/api/plugins/<id>/web/<path>`** lets a plugin answer a GET itself (OAuth callback). `ctx.web_url()`
+  builds the address from the last request's host, because the app doesn't know its own address
+  (NAS IP, Tailscale, domain…).
