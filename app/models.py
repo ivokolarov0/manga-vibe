@@ -169,6 +169,31 @@ class Setting(Base):
     value: Mapped[dict | list | str | int | float | bool | None] = mapped_column(JSON)
 
 
+class PluginPage(Base):
+    """Per-page values written by plugins (e.g. the translated text of one page).
+    Deleted with the book, and when the book's file changes."""
+    __tablename__ = "plugin_page"
+    __table_args__ = (UniqueConstraint("plugin", "book_id", "page"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plugin: Mapped[str] = mapped_column(String)
+    book_id: Mapped[int] = mapped_column(ForeignKey("book.id", ondelete="CASCADE"), index=True)
+    page: Mapped[int] = mapped_column(Integer)
+    value: Mapped[dict | list | str | int | float | bool | None] = mapped_column(JSON)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class OverlayHidden(Base):
+    """An overlay box the owner hid in the reader (e.g. a wrong translation over the art).
+    `box` is the box's position on the page ("x,y"), so it survives the plugin redoing the page."""
+    __tablename__ = "overlay_hidden"
+    __table_args__ = (UniqueConstraint("book_id", "plugin", "page", "box"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    book_id: Mapped[int] = mapped_column(ForeignKey("book.id", ondelete="CASCADE"), index=True)
+    plugin: Mapped[str] = mapped_column(String)
+    page: Mapped[int] = mapped_column(Integer)
+    box: Mapped[str] = mapped_column(String)
+
+
 class PluginField(Base):
     """Extra per-series values written by plugins (e.g. 'translation group')."""
     __tablename__ = "plugin_field"

@@ -14,6 +14,10 @@ What a plugin can do:
 - settings:           declare `settings_fields`, `global_actions` (buttons in Settings) and status()
 - web callback:       handle_web() answers GET /api/plugins/<id>/web/<path> (e.g. an OAuth login)
 - permissions:        list what it uses in `permissions`; an update that adds one asks first
+- page overlays:      set `overlay_label` and implement page_overlay() to draw boxes over reader pages
+- page data:          ctx.set_page_data()/get_page_data() keep a value per page (e.g. a translation)
+- books:              book_badges() labels books in the list; `book_actions` are buttons in the reader
+- long work:          ctx.run_in_thread() runs a worker of the plugin's own; it checks ctx.should_stop()
 
 Plugins get read-only access to books through `ctx`. They must never write to the
 library (it is mounted read-only anyway); their data goes into the database.
@@ -31,7 +35,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 2
+API_VERSION = 3
 
 
 @dataclass
@@ -79,6 +83,30 @@ class OpenUrl:
 
 
 @dataclass
+class Box:
+    """One box drawn over a reader page. x, y, w, h are fractions of the page (0 to 1), so they fit
+    any page size and zoom. `title` is shown when the box is held or hovered (e.g. the original text);
+    `cls` adds CSS classes, which the plugin's `css` can style."""
+    x: float
+    y: float
+    w: float
+    h: float
+    text: str = ""
+    title: str = ""
+    cls: str = ""
+
+
+@dataclass
+class Overlay:
+    """What page_overlay() returns. With `pending`, the reader asks again a few seconds later and
+    shows `message` (e.g. "Translating…") meanwhile; `message` alone is a short status line
+    (e.g. "PC offline")."""
+    boxes: list = field(default_factory=list)  # [Box]
+    pending: bool = False
+    message: str = ""
+
+
+@dataclass
 class Candidate:
     """A search result from a metadata provider."""
     provider_id: str
@@ -109,6 +137,8 @@ class Plugin:
     # What the plugin uses, in short sentences, e.g. "Connects to api.myanimelist.net". Shown in
     # Settings. Not enforced (a plugin is Python); an update that adds one asks the owner first.
     permissions: list[str] = []
+    overlay_label = ""   # e.g. "Translation": a reader toggle that draws page_overlay() over pages
+    book_actions: list[Action] = []  # buttons for the open book, in the reader's options
 
     # --- scan hooks -------------------------------------------------------
     def on_book_scanned(self, ctx, book, parsed):
@@ -166,6 +196,24 @@ class Plugin:
         `params` is a dict of the query string. Return a message (shown on a small page with a
         link back to the app) or OpenUrl to redirect."""
         return None
+
+    # --- reader pages and books ---------------------------------------------
+    def page_overlay(self, ctx, book, page):
+        """Boxes to draw over page `page` (0-based) of `book`, asked for while the owner reads it
+        with the plugin's overlay switched on. Return an Overlay, or None for nothing. Called as
+        pages are shown, so keep it fast: read what was saved (ctx.get_page_data), and do slow work
+        in a thread (ctx.run_in_thread) while returning Overlay(pending=True)."""
+        return None
+
+    def book_badges(self, ctx, books) -> dict:
+        """Short labels for the books in a series list, e.g. {12: "Translated", 13: "4/20"}.
+        Called once for the whole list; keep it fast (no website calls)."""
+        return {}
+
+    def run_book_action(self, ctx, action_key, book):
+        """Run a button from `book_actions` for the book open in the reader. Return a short
+        message, or OpenUrl."""
+        return "Not implemented"
 
     # --- metadata provider (phase 2) --------------------------------------
     def search(self, ctx, query, year=None) -> list[Candidate]:
@@ -275,6 +323,105 @@ class Context:
             return None
         return p.read_bytes()
 
+    # --- page images and per-page data ---------------------------------------
+    def read_page(self, book, index, max_width=None) -> bytes:
+        """Page `index` (0-based) as image bytes, for every book format (PDF and EPUB pages come
+        rendered). With `max_width`, larger pages are shrunk to that width and returned as WebP,
+        e.g. to send less over the network; pages that already fit come back untouched (each
+        re-encoding blurs a little, which text detection notices). Raises IndexError for a page that
+        doesn't exist."""
+        import io
+
+        from PIL import Image
+
+        from app import images
+        from app.scanner import archives
+        data, mime = archives.read_page(book.path, book.format, index)
+        if max_width and mime in archives.WEB_MIME:
+            with Image.open(io.BytesIO(data)) as im:  # reads only the header
+                if im.width <= max_width:
+                    return data
+        if max_width or mime not in archives.WEB_MIME:
+            data = images.resize(data, int(max_width or 100_000), quality=92)
+        return data
+
+    def _page_rows(self, book):
+        from app.models import PluginPage
+        return self.db.query(PluginPage).filter_by(plugin=self.plugin.id, book_id=book.id)
+
+    def set_page_data(self, book, page, value):
+        """Save a value (anything JSON can hold) for one page; None removes it."""
+        from app.models import PluginPage, now
+        row = self._page_rows(book).filter_by(page=page).one_or_none()
+        if value is None:
+            if row:
+                self.db.delete(row)
+            return
+        if row is None:
+            row = PluginPage(plugin=self.plugin.id, book_id=book.id, page=page)
+            self.db.add(row)
+        row.value, row.updated_at = value, now()
+
+    def get_page_data(self, book, page, default=None):
+        row = self._page_rows(book).filter_by(page=page).one_or_none()
+        return default if row is None else row.value
+
+    def page_data(self, book) -> dict:
+        """All saved pages of a book: {page: value}."""
+        return {r.page: r.value for r in self._page_rows(book)}
+
+    def page_data_counts(self, books) -> dict:
+        """How many pages have saved data, per book: {book_id: count} (books with none are left out).
+        One query for a whole list, e.g. for book_badges()."""
+        from sqlalchemy import func
+        from app.models import PluginPage
+        ids = [b.id for b in books]
+        if not ids:
+            return {}
+        rows = (self.db.query(PluginPage.book_id, func.count(PluginPage.id))
+                .filter(PluginPage.plugin == self.plugin.id, PluginPage.book_id.in_(ids))
+                .group_by(PluginPage.book_id))
+        return dict(rows.all())
+
+    def clear_page_data(self, book=None):
+        """Remove the saved pages of one book, or of every book with book=None."""
+        from app.models import PluginPage
+        q = self.db.query(PluginPage).filter_by(plugin=self.plugin.id)
+        if book is not None:
+            q = q.filter_by(book_id=book.id)
+        q.delete(synchronize_session=False)
+
+    # --- a worker thread of the plugin's own -----------------------------------
+    def run_in_thread(self, fn, *args):
+        """Run fn(ctx, *args) in a new thread of its own, with its own database session (committed
+        when fn returns; call ctx.db.commit() yourself to save along the way). Unlike
+        run_in_background(), it doesn't wait behind other plugins' work, so it suits a queue that
+        runs for hours. The loop must check ctx.should_stop() and return when it's True: the plugin
+        was reloaded, updated or switched off. Pass ids, not database rows."""
+        stop = manager.stop_event(self.plugin)
+
+        def run():
+            from app.db import SessionLocal
+            with SessionLocal() as db:
+                ctx = Context(self.plugin, db)
+                ctx._stop = stop
+                try:
+                    fn(ctx, *args)
+                    db.commit()
+                except Exception:
+                    db.rollback()
+                    log.error("Plugin %s failed in its thread:\n%s", self.plugin.id, traceback.format_exc())
+
+        t = threading.Thread(target=run, daemon=True, name=f"plugin-{self.plugin.id}")
+        t.start()
+        return t
+
+    def should_stop(self) -> bool:
+        """True once the plugin was reloaded, updated or switched off: a thread should return."""
+        return (self._stop or manager.stop_event(self.plugin)).is_set()
+
+    _stop = None
+
 
 class PluginManager:
     def __init__(self):
@@ -286,8 +433,31 @@ class PluginManager:
         self._queue = queue.Queue()
         self._worker = None
         self._lock = threading.Lock()
+        self._stops: dict[int, threading.Event] = {}  # id(plugin object) -> its threads' stop signal
+
+    def stop_event(self, plugin) -> threading.Event:
+        """The signal the plugin's current threads (ctx.run_in_thread) watch."""
+        with self._lock:
+            return self._stops.setdefault(id(plugin), threading.Event())
+
+    def stop_threads(self, plugin):
+        """Tell the plugin's threads to finish. Threads it starts later get a new signal."""
+        with self._lock:
+            event = self._stops.pop(id(plugin), None)
+        if event:
+            event.set()
+
+    def set_enabled(self, plugin_id, enabled: bool):
+        if enabled:
+            self.disabled.discard(plugin_id)
+        else:
+            self.disabled.add(plugin_id)
+            if plugin_id in self.plugins:
+                self.stop_threads(self.plugins[plugin_id])
 
     def load(self, folders=None):
+        for p in self.plugins.values():  # the old plugin objects are about to be replaced
+            self.stop_threads(p)
         self.plugins.clear()
         self.errors.clear()
         self.paths.clear()

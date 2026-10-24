@@ -43,6 +43,11 @@ class Hello(Plugin):
 | **A web address of its own** (e.g. an OAuth callback) | `handle_web(ctx, path, params)` answers `GET /api/plugins/<id>/web/<path>`. Return a message (shown on a small page with a link back) or `OpenUrl(url)` to redirect; `None` = 404 |
 | **Updates** from its GitHub releases | `repo = "owner/name"` (see [Updates](#updates)) |
 | **Say what it uses** | `permissions = ["Connects to api.myanimelist.net"]`: shown in Settings; an update that adds one asks first (see [Updates](#updates)) |
+| **Draw over reader pages** (e.g. a translation) | `overlay_label = "Translation"` and `page_overlay(ctx, book, page)` returning `Overlay(boxes=[Box(...)])` (see [Drawing on pages](#drawing-on-pages)) |
+| **Save something per page** | `ctx.set_page_data(book, page, value)`, `ctx.get_page_data(book, page)`, `ctx.page_data(book)` |
+| **Labels on books** in the series list | `book_badges(ctx, books)` returning `{book_id: "Translated"}` |
+| **Buttons for the open book** (in the reader's options) | `book_actions = [Action("all", "Translate this chapter")]` and `run_book_action(ctx, key, book)` |
+| **Work for hours** without holding up other plugins | `ctx.run_in_thread(fn)`; the loop returns when `ctx.should_stop()` |
 
 ## The `ctx` object
 
@@ -62,6 +67,11 @@ class Hello(Plugin):
 | `ctx.http` | the app's HTTP client: `ctx.http.request(method, url, headers=..., data=...)`, `get_json`, `post_json`. Throttled per site, retries, raises `ctx.http.ProviderError` (its `status` is the HTTP code, e.g. `404`, or `None` if the site couldn't be reached) |
 | `ctx.web_url(path)` | full address of this plugin's `handle_web` page, as the browser reaches the app (e.g. `http://192.168.1.5:8080/api/plugins/mal/web/callback`) |
 | `ctx.run_in_background(fn, *args)` | run `fn(ctx, *args)` later with its own database session. Pass ids, not rows. Use it for long work started from a button |
+| `ctx.run_in_thread(fn, *args)` | run `fn(ctx, *args)` now, in a thread of the plugin's own (returns it). For a worker that runs for a long time; it must return once `ctx.should_stop()` is `True` |
+| `ctx.should_stop()` | `True` once the plugin was reloaded, updated or switched off |
+| `ctx.read_page(book, n, max_width=None)` | page `n` (0-based) as image bytes, for every format (PDF and EPUB pages come rendered). `max_width` shrinks larger pages to WebP |
+| `ctx.set_page_data(book, n, value)` / `ctx.get_page_data(book, n)` | the plugin's own value for one page (any JSON value; `None` removes it). Removed with the book, and when its file changes |
+| `ctx.page_data(book)` / `ctx.page_data_counts(books)` / `ctx.clear_page_data(book=None)` | all saved pages of a book `{page: value}`; how many pages have a value per book `{book_id: n}`; forget one book or all |
 
 `book` and `series` are database rows; see `app/models.py` for their fields. A series' online ids
 are on it too, e.g. `series.mal_id`, `series.anilist_id`, and `series.publication_status`
@@ -110,6 +120,55 @@ class Tracker(Plugin):
     def status(self, ctx):
         return "Connected" if ctx.settings.get("token") else "Not connected"
 ```
+
+## Drawing on pages
+
+A plugin with `overlay_label` gets a switch in the reader's options (**Translation: On/Off**),
+remembered per series on each device. While it's on, the reader asks `page_overlay` for the page
+you're on and the next one, and draws the boxes it returns over the page. They move with the page
+when you zoom, pan or swipe, in paged and vertical mode.
+
+```python
+from app.plugins import Box, Overlay, Plugin
+
+class Notes(Plugin):
+    id = "notes"
+    name = "Notes"
+    overlay_label = "Notes"
+    css = ".ov-box.note { background: #ffe680; }"   # boxes are white with black text unless styled
+
+    def page_overlay(self, ctx, book, page):
+        text = ctx.get_page_data(book, page)
+        if text is None:
+            return None                                       # nothing on this page
+        return Overlay(boxes=[Box(0.1, 0.05, 0.4, 0.08, text=text, title="My note", cls="note")])
+```
+
+- **Positions are fractions of the page**: `Box(x, y, w, h)` from 0 to 1, top-left first. They fit
+  any page size and zoom. The text is sized to fill its box. `title` shows when the mouse is over the
+  box (e.g. the original text), `cls` adds CSS classes for the plugin's `css`. Every box also has the
+  classes `ov-box` and `ov-<plugin id>`.
+- **The owner can hide single boxes**: with the reader's controls showing, each box has a ×. MangaVibe
+  remembers it by the box's position (`x,y` to 3 decimals) and leaves it out, so the plugin needs to
+  do nothing. A box that comes back at the same place after the plugin redid the page stays hidden.
+  *Show hidden boxes* in the reader options brings a book's boxes back.
+- **Keep `page_overlay` fast.** It runs as pages are shown. Read what you saved; do slow work in a
+  thread and answer `Overlay(pending=True, message="Translating…")`. The reader shows the message at
+  the top and asks again every few seconds while that page is still being read.
+  `Overlay(message="PC offline")` (without `pending`) shows a status line without asking again.
+- **A worker of your own:** start it with `ctx.run_in_thread(self.work)` the first time there's
+  something to do. It gets its own database session; call `ctx.db.commit()` after each page so the
+  reader can show it. Loop until `ctx.should_stop()`, which turns `True` when the plugin is reloaded,
+  updated or switched off (then a new plugin object starts its own thread when needed).
+- **Pages:** `ctx.read_page(book, n, max_width=1600)` gives the image; `ctx.set_page_data()` keeps the
+  result. Saved pages are deleted when the book's file changes on disk, so they never belong to an
+  older version of the file.
+- **Show progress** with `book_badges` (a label per book in the series list, e.g. `"12/40"`; use
+  `ctx.page_data_counts(books)`), and offer `book_actions` such as "Translate this chapter" in the
+  reader. Series-wide buttons (`actions`) stay on the series page.
+
+`examples/plugins/page_info.py` uses all of it: a queue, its own thread, the next pages prepared
+ahead, badges and book buttons.
 
 ## Dropdowns
 
@@ -197,6 +256,9 @@ edit it with File Station and reload the page.
 `examples/plugins/reading_log.py` uses the reading events, a settings box, Settings buttons, a status
 line and its own web page.
 
-`examples/plugins/translation_groups.py` uses all the other features except providers:
+`examples/plugins/translation_groups.py` uses fields, scan hooks, series buttons and dropdowns:
 it shows scanlation groups from `[Group]` tags, lets a `series.json` file fix chapter numbers,
 and adds a "Find missing chapters" button.
+
+`examples/plugins/page_info.py` draws over reader pages: page overlays, per-page data, its own worker
+thread, book badges and book buttons. A translator plugin is built the same way.

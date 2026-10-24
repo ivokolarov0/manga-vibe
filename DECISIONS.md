@@ -282,3 +282,32 @@ Choices made where the spec was open. Newest at the bottom.
   the status line, and *Update X* when a new version is out, so nothing important hides behind the
   button. **Uses:** (the permissions) is a bullet list, on the plugin's page, or in the row for a
   plugin without a page; joined with dots it was a wall of text.
+
+## Plugin API v3: drawing on reader pages
+
+- **MangaVibe draws, plugins decide what.** The app only knows "boxes with text over a page"; OCR,
+  translation or anything else lives in a plugin (the translator is a separate repo with a server on
+  a PC with a GPU). Nobody gets those models unless they install that plugin.
+- **Boxes are fractions of the page**, not pixels, so they fit every page width the reader asks for
+  and every zoom. In paged mode the overlay layer copies the image's size and transform (watched with
+  a MutationObserver), so zoom, pan, swipe and the page slide move it without being changed.
+- **The reader asks per page, the plugin answers fast.** `page_overlay` reads what the plugin saved;
+  a page that isn't ready answers `pending` and is asked again every 2.5 s while it's still being
+  read. Asking is also the plugin's signal of what you're reading, so it can work on that page (and
+  the next ones) first. No push channel: polling one page every few seconds costs nothing.
+- **A switch per series, on the device.** Translation is wanted for the raw Japanese series, not for
+  the rest, and it's a reading preference like the zoom lock, so it lives in localStorage.
+- **Per-page data in its own table** (`plugin_page`), deleted with the book and when its file changes
+  on disk (a forced re-read of an unchanged file keeps it), so a translation never belongs to an older
+  version of the file.
+- **Threads of the plugin's own** (`ctx.run_in_thread`). The shared plugin worker runs events one at a
+  time; a translation queue that runs for an hour would hold up every tracker sync behind it. The
+  thread watches `ctx.should_stop()`, which a reload, update or switch-off sets, so old plugin objects
+  don't keep working after their file was replaced.
+- **Book buttons sit in the reader**, not on every row of the book list: "translate this chapter" is
+  something you want while reading it. Badges on the book list show how far a plugin got.
+- **Hiding a box is the app's job, not the plugin's.** A wrong translation over the art should go away
+  whatever plugin drew it. The × only shows while the reader's controls do, so it never sits on the
+  text while reading, and it goes to the box corner away from the nearer bar (title bar at the top,
+  controls card at the bottom) so the bar can't swallow the tap. Hidden boxes are kept on the server
+  (all devices), keyed by position, so they stay hidden when the plugin redoes the page.

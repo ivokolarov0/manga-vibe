@@ -8,7 +8,7 @@ from pathlib import Path
 
 from app import images
 from app.db import SessionLocal
-from app.models import Book, Library, Series
+from app.models import Book, Library, PluginPage, Series
 from app.plugins import manager as plugins
 from app.scanner import archives
 from app.scanner.parser import Parsed, natural_key, order_parsed, parse
@@ -160,6 +160,10 @@ def scan_series(db, lib, folder: Path) -> Series | None:
             series.books.append(book)
             status["new_books"] += 1
         before = (book.file_size, book.mtime, book.missing_since, book.error, book.page_count, book.format)
+        if book.id is not None and before[1] != -1 and (book.file_size, book.mtime) != (size, mtime):
+            # the file was replaced: what plugins saved per page (e.g. translations) belongs to the old one.
+            # mtime -1 is a forced re-read of an unchanged file (see below), which keeps them.
+            db.query(PluginPage).filter_by(book_id=book.id).delete(synchronize_session=False)
         book.missing_since = None
         book.file_size, book.mtime = size, mtime
         db.flush()  # need book.id for thumbnail file names

@@ -1,5 +1,8 @@
-"""Book info, page images, thumbnails and reading progress."""
-from fastapi import APIRouter, Depends, HTTPException, Request
+"""Book info, page images, thumbnails, reading progress and plugin overlays."""
+import logging
+import traceback
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
@@ -7,11 +10,13 @@ from app import images
 from app.api.common import (book_dict, display_title, emit_reading_events, ensure_inside_library,
                             get_or_404, now, status_of, title_lang, visible_books_query)
 from app.db import get_db
-from app.models import Book, Progress, Series
+from app.models import Book, OverlayHidden, Progress, Series
+from app.plugins import Box, Context, Overlay, action_result, implements, manager as plugins
 from app.scanner import archives
 from app.scanner.walker import apply_order
 
 router = APIRouter(prefix="/api/books")
+log = logging.getLogger("mangavibe.plugins")
 IMMUTABLE = "private, max-age=31536000, immutable"  # URLs carry ?v=<mtime>
 
 
@@ -28,7 +33,105 @@ def get_book(book_id: int, db=Depends(get_db)):
     return {**book_dict(b, p), "series_title": display_title(s, title_lang(db)),
             "reader_mode": s.reader_mode,
             "next": {"id": nxt.id, "label": book_dict(nxt)["label"]} if nxt else None,
-            "prev": {"id": prev.id, "label": book_dict(prev)["label"]} if prev else None}
+            "prev": {"id": prev.id, "label": book_dict(prev)["label"]} if prev else None,
+            # reader toggles for plugins that draw over pages, and their buttons for this book
+            "overlays": [{"plugin": p.id, "label": p.overlay_label} for p in overlay_plugins()],
+            "hidden_boxes": db.query(OverlayHidden).filter_by(book_id=b.id).count(),
+            "actions": [{"plugin": p.id, "key": a.key, "label": a.label, "confirm": a.confirm}
+                        for p in plugins.enabled() for a in p.book_actions]}
+
+
+def overlay_plugins():
+    return [p for p in plugins.enabled() if p.overlay_label and implements(p, "page_overlay")]
+
+
+def _box_dict(b):
+    if isinstance(b, dict):
+        b = Box(**{k: b[k] for k in ("x", "y", "w", "h", "text", "title", "cls") if k in b})
+    clamp = lambda v: max(0.0, min(1.0, float(v)))  # noqa: E731
+    x, y = clamp(b.x), clamp(b.y)
+    return {"id": f"{x:.3f},{y:.3f}",  # where it is: what the owner's "hide" remembers
+            "x": x, "y": y, "w": clamp(b.w), "h": clamp(b.h),
+            "text": str(b.text or ""), "title": str(b.title or ""), "cls": str(b.cls or "")}
+
+
+@router.get("/{book_id}/overlays/{n}")
+def page_overlays(book_id: int, n: int, plugins_: str = Query("", alias="plugins"), db=Depends(get_db)):
+    """What the plugins draw over page n. `plugins` (comma-separated ids) limits it to the
+    overlays the reader has switched on. A plugin that fails gives a layer with only a message."""
+    b = get_or_404(db, Book, book_id)
+    if not 0 <= n < b.page_count:
+        raise HTTPException(404, "No such page")
+    wanted = {x for x in plugins_.split(",") if x}
+    hidden = {(h.plugin, h.box) for h in db.query(OverlayHidden).filter_by(book_id=b.id, page=n)}
+    layers = []
+    for p in overlay_plugins():
+        if wanted and p.id not in wanted:
+            continue
+        try:
+            result = p.page_overlay(Context(p, db), b, n)
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            log.error("Plugin %s failed in page_overlay:\n%s", p.id, traceback.format_exc())
+            result = Overlay(message=f"{p.name or p.id} failed: {type(e).__name__}")
+        if result is None:
+            continue
+        try:
+            boxes = [_box_dict(x) for x in result.boxes]
+        except (TypeError, ValueError, KeyError, AttributeError):
+            log.error("Plugin %s returned a broken box:\n%s", p.id, traceback.format_exc())
+            boxes = []
+        for box in boxes:
+            box["hidden"] = (p.id, box["id"]) in hidden
+        layers.append({"plugin": p.id, "pending": bool(result.pending),
+                       "message": str(result.message or ""), "boxes": boxes})
+    return {"page": n, "layers": layers}
+
+
+class HideBody(BaseModel):
+    plugin: str
+    box: str
+    hidden: bool = True
+
+
+@router.put("/{book_id}/overlays/{n}/hidden")
+def hide_box(book_id: int, n: int, body: HideBody, db=Depends(get_db)):
+    """Hide (or show again) one overlay box on page n. Returns how many are hidden in the book."""
+    b = get_or_404(db, Book, book_id)
+    if not 0 <= n < b.page_count:
+        raise HTTPException(404, "No such page")
+    row = db.query(OverlayHidden).filter_by(book_id=b.id, plugin=body.plugin, page=n, box=body.box).one_or_none()
+    if body.hidden and row is None:
+        db.add(OverlayHidden(book_id=b.id, plugin=body.plugin, page=n, box=body.box))
+    elif not body.hidden and row is not None:
+        db.delete(row)
+    db.commit()
+    return {"hidden_boxes": db.query(OverlayHidden).filter_by(book_id=b.id).count()}
+
+
+@router.delete("/{book_id}/overlays/hidden")
+def show_hidden_boxes(book_id: int, db=Depends(get_db)):
+    """Show every hidden box of the book again."""
+    b = get_or_404(db, Book, book_id)
+    count = db.query(OverlayHidden).filter_by(book_id=b.id).delete()
+    db.commit()
+    return {"shown": count, "hidden_boxes": 0}
+
+
+@router.post("/{book_id}/actions/{plugin_id}/{action_key}")
+def run_book_action(book_id: int, plugin_id: str, action_key: str, db=Depends(get_db)):
+    b = get_or_404(db, Book, book_id)
+    p = plugins.get(plugin_id)
+    if p is None or action_key not in {a.key for a in p.book_actions}:
+        raise HTTPException(404, "Action not found")
+    try:
+        result = p.run_book_action(Context(p, db), action_key, b)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Plugin error: {type(e).__name__}: {e}")
+    return action_result(result)
 
 
 @router.get("/{book_id}/thumbnail")
