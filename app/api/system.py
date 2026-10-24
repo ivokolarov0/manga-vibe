@@ -34,6 +34,8 @@ DEFAULT_SETTINGS = {
     "reader_drawer_side": "right", # right | left: which side the reader options slide in from
     "reader_tap_layout": "default",  # default | one-handed | off: what tapping the page does
     "reader_tap_invert": False,    # swap the tap sides; swipe and page order keep the reading direction
+    "overlay_opacity": 100,        # plugin overlay boxes: background opacity in %, 0 = see-through
+    "overlay_outline": "off",      # off | thin | thick: a white outline around overlay text
     "auto_match": True,            # match new series automatically
     "match_threshold": 90,         # auto-accept score (0-100)
     "include_adult": False,        # include adult results from AniList

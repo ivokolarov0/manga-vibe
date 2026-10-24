@@ -109,6 +109,14 @@ def test_path_safety(client):
             assert e.status_code == 403
 
 
+def test_overlay_look_settings(client):
+    s = client.get("/api/settings").json()
+    assert s["overlay_opacity"] == 100 and s["overlay_outline"] == "off"
+    client.put("/api/settings", json={"overlay_opacity": 25, "overlay_outline": "thick"})
+    s = client.get("/api/settings").json()
+    assert s["overlay_opacity"] == 25 and s["overlay_outline"] == "thick"
+
+
 def test_settings(client):
     assert client.get("/api/settings").json()["reader_mode"] == "rtl"
     client.put("/api/settings", json={"reader_mode": "vertical", "bogus": 1})

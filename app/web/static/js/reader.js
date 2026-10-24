@@ -12,6 +12,10 @@ const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left/right); the mi
 const TAP_EDGE = 0.2;   // one-handed layout: the narrow "previous" strip; the rest turns forward
 const MODES = { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" };
 const FITS = { screen: "Fit screen", width: "Fit width", height: "Fit height", original: "Original size" };
+// plugin overlay boxes: background opacity in % and the outline around the text (reader settings)
+const OV_OPACITY = { 100: "Solid", 75: "75%", 50: "50%", 25: "25%", 0: "See-through" };
+const OV_OUTLINE = { off: "Off", thin: "Thin", thick: "Thick" };
+const OV_STROKE = { off: "0px", thin: "0.12em", thick: "0.22em" };
 
 /* the value after `cur` in a {value: label} list, wrapping around */
 function cycle(list, cur) {
@@ -150,7 +154,9 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
       </div>
       ${book.overlays.map((o) => `<button class="d-opt d-toggle" data-ov="${esc(o.plugin)}">${ICONS.overlay}
         <span>${esc(o.label)}</span><b></b></button>`).join("")}
-      ${book.overlays.length ? `<button class="d-opt" id="r-ov-unhide" hidden>${ICONS.overlay}<span></span></button>` : ""}
+      ${book.overlays.length ? `<button class="d-opt" id="r-ov-unhide" hidden>${ICONS.overlay}<span></span></button>
+        <button class="d-opt d-toggle" id="r-ov-opacity" hidden>${ICONS.overlay}<span>Box background</span><b></b></button>
+        <button class="d-opt d-toggle" id="r-ov-outline" hidden>${ICONS.overlay}<span>Text outline</span><b></b></button>` : ""}
       ${book.actions.map((a, i) => `<button class="d-opt" data-act="${i}">${ICONS.plugin}<span>${esc(a.label)}</span></button>`).join("")}
       <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
       <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>Reader settings</span></a>
@@ -186,6 +192,14 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   el.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = () => ovToggle(b.dataset.ov)));
   el.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => ovAction(book.actions[+b.dataset.act])));
   if ($("#r-ov-unhide")) $("#r-ov-unhide").onclick = ovShowHidden;
+  if ($("#r-ov-opacity")) {
+    // from solid down to see-through (the keys of OV_OPACITY are in number order, the other way)
+    const steps = [100, 75, 50, 25, 0];
+    $("#r-ov-opacity").onclick = () =>
+      ovSetStyle({ overlay_opacity: steps[(steps.indexOf(ovOpacity()) + 1) % steps.length] });
+    $("#r-ov-outline").onclick = () => ovSetStyle({ overlay_outline: cycle(OV_OUTLINE, ovOutline()) });
+  }
+  ovApplyStyle();
   ovUpdateButtons();
 
   if (R.mode === "vertical") setupVertical(); else setupPaged();
@@ -637,6 +651,39 @@ function ovUpdateButtons() {
     unhide.hidden = !n || !R.ov.on.length;
     unhide.querySelector("span").textContent = `Show ${n} hidden ${n === 1 ? "box" : "boxes"}`;
   }
+  // how the boxes look: only while an overlay is on
+  const opacity = $("#r-ov-opacity"), outline = $("#r-ov-outline");
+  if (opacity) {
+    opacity.hidden = outline.hidden = !R.ov.on.length;
+    opacity.querySelector("b").textContent = OV_OPACITY[ovOpacity()];
+    outline.querySelector("b").textContent = OV_OUTLINE[ovOutline()];
+  }
+}
+
+/* the box look from the reader settings, kept to the values the reader knows */
+function ovOpacity() {
+  const v = +settings.overlay_opacity;
+  return v in OV_OPACITY ? v : 100;
+}
+function ovOutline() { return settings.overlay_outline in OV_OUTLINE ? settings.overlay_outline : "off"; }
+
+/* CSS variables on the reader, which reader.css uses for every overlay box */
+function ovApplyStyle() {
+  const el = $("#reader");
+  el.style.setProperty("--ov-bg-opacity", ovOpacity() / 100);
+  el.style.setProperty("--ov-text-stroke", OV_STROKE[ovOutline()]);
+}
+
+/* the drawer changed the look: saved as a reader setting, applied at once (the outline changes
+   how much text fits, so the boxes are fitted again) */
+async function ovSetStyle(change) {
+  Object.assign(settings, change);
+  ovApplyStyle();
+  ovUpdateButtons();
+  $("#reader").querySelectorAll(".ov-layer").forEach(ovFit);
+  restartHideTimer();
+  try { await api("/api/settings", { method: "PUT", body: change }); }
+  catch (e) { toast(e.message, 6000, "error"); }
 }
 
 async function ovAction(a) {

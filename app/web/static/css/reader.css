@@ -9,6 +9,10 @@
     color: #fff;
     touch-action: pan-y pinch-zoom;
     user-select: none;
+    /* plugin overlay boxes, from the reader settings (reader.js sets them). A plugin's css that sets
+       --ov-bg (and --ov-outline) instead of background keeps these working. */
+    --ov-bg-opacity: 1;      /* box background: 0 = see-through, 1 = solid */
+    --ov-text-stroke: 0px;   /* width of the outline around the letters */
 
     /* paged mode: zoom/pan/swipe are handled in reader.js with a transform on the image */
     & .stage {
@@ -96,7 +100,7 @@
       justify-content: center;
       overflow: visible;  /* the × sits on the corner, half outside; the text is sized to fit inside */
       padding: 0;
-      background: #fff;
+      background: color-mix(in srgb, var(--ov-bg, #fff) calc(var(--ov-bg-opacity) * 100%), transparent);
       border-radius: 0.5em;
       color: #111;
       font-family: var(--overlay-font, "Comic Neue", "Comic Sans MS", "Segoe Print", system-ui, sans-serif);
@@ -109,7 +113,10 @@
 
       & span {
         max-width: 100%;
-        padding: 0 0.15em;
+        /* half the outline lies outside the letters: room for it, so it isn't cut off */
+        padding: calc(var(--ov-text-stroke) / 2) calc(0.15em + var(--ov-text-stroke) / 2);
+        -webkit-text-stroke: var(--ov-text-stroke) var(--ov-outline, #fff);
+        paint-order: stroke fill;  /* the outline goes behind the letters, so they keep their shape */
       }
 
       /* × to hide a box: only while the reader's controls are showing, so it never covers the text
