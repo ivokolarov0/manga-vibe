@@ -329,6 +329,12 @@
       opacity: 0.5;
     }
 
+    /* dropped: greyed out, so it doesn't look like something to read next */
+    &.dropped .poster img {
+      opacity: 0.45;
+      filter: grayscale(1);
+    }
+
     /* hover zooms the image inside the poster, not the poster itself: the card has
        paint containment (content-visibility), so a bigger poster would be clipped */
     & .poster {
@@ -409,6 +415,11 @@
       background: var(--ok);
     }
 
+    &.dropped {
+      background: var(--danger);
+      color: #fff;
+    }
+
     &.status {
       right: auto;
       left: 4px;
@@ -452,6 +463,10 @@
 
     &.reading {
       color: var(--accent);
+    }
+
+    &.dropped {
+      color: var(--danger);
     }
   }
 

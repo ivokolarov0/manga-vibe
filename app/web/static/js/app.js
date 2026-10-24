@@ -64,6 +64,7 @@ const kindOf = (s) => s.format === "NOVEL" ? "Novel" : s.format === "ONE_SHOT" ?
 function cardSub(s) {
   const st = s.reading_status, read = s.book_count - s.unread_count;
   if (st === "completed") return "✓ Completed";
+  if (st === "dropped") return "✕ Dropped";
   if (st === "reading") return `Reading · ${read}/${s.book_count}`;
   if (st === "unread") return `Unread · ${s.book_count} ${s.book_count === 1 ? "book" : "books"}`;
   return STATUS_LABELS[st] || st;
