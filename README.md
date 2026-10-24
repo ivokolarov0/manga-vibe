@@ -399,6 +399,9 @@ from AniList and MangaUpdates, the way any tracker app shows them.
 Plugins are made by others and run their own code; the [Plugins](#plugins) section says what to watch
 for. This project is provided as is, without any warranty.
 
+**Licence:** [AGPL-3.0](LICENSE). In short: you may use, change and share MangaVibe; if you share a
+changed version, or run one for other people, you must share its source code under the same licence.
+
 ---
 
 ## For developers
