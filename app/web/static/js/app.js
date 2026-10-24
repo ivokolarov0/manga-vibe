@@ -118,10 +118,10 @@ document.addEventListener("alpine:init", () => {
     // all pages share one document: start new pages at the top, give the library its old position back
     const newId = parts[1] && /^\d+$/.test(parts[1]) ? +parts[1] : null;
     const newSub = parts[1] || null;
+    let scrollTarget = null;
     if (view !== lastView || newId !== app.id || (view === "settings" && newSub !== app.sub)) {
       if (lastView === "library") libraryScroll = scrollY;
-      const y = view === "library" ? libraryScroll : 0;
-      Alpine.nextTick(() => requestAnimationFrame(() => scrollTo(0, y)));  // after Alpine shows the page
+      scrollTarget = view === "library" ? libraryScroll : 0;
     }
     app.view = view;
     app.id = newId;
@@ -130,6 +130,13 @@ document.addEventListener("alpine:init", () => {
     app.params = Object.fromEntries(params);
     app.query = view === "library" ? params.toString() : app.query;
     lastView = view;
+    if (scrollTarget !== null) {
+      // Alpine updates the page in a microtask queued by the changes above; this one runs right after
+      // it, before the page is painted (Alpine.nextTick waits for a timer, so the new page showed at
+      // the old position for a frame). Once more on the next frame in case the layout grew.
+      const y = scrollTarget;
+      queueMicrotask(() => { scrollTo(0, y); requestAnimationFrame(() => scrollTo(0, y)); });
+    }
   }
   window.addEventListener("hashchange", route);
 

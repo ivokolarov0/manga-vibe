@@ -8,6 +8,13 @@
 > and keep backups of anything you care about. Your manga folder is mounted read-only, so the app
 > can't change your files.
 
+<p align="center">
+  <img src="docs/media/desktop.webp" width="74%" alt="MangaVibe on a computer: the library grid, a genre filter, a series page with its books in order and the files behind them, and the Needs attention lists">
+  &nbsp;
+  <img src="docs/media/mobile.webp" width="23%" alt="MangaVibe on a phone: opening a series and reading it right to left with swipes, taps, pinch zoom, the page slider and vertical mode">
+</p>
+<p align="center"><sub>The series and art shown are made up for the demo.</sub></p>
+
 ## What is this?
 
 MangaVibe is a self-hosted manga server that runs anywhere Docker does: a NAS, a home server or your PC.
