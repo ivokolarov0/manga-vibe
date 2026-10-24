@@ -1,8 +1,10 @@
-"""Updates the app's code from the `releases` branch on GitHub, without a new Docker image.
+"""Updates the app's code from the newest GitHub release, without a new Docker image.
 
 How it works (see DECISIONS.md, "Auto-update"):
 - The Docker image is the base: Python, 7zip and the pip packages from its requirements.txt.
   It keeps a copy of its Dockerfile, entrypoint and requirements in /opt/mangavibe/image.
+- The newest published release (not a draft or pre-release) is the version on offer. It is
+  stored by the commit its tag points to; the tag (e.g. v1.4.0) is what the user sees.
 - A new version is downloaded into DATA_DIR/code/<sha>/. New or changed pip packages go into
   DATA_DIR/code/<sha>/deps. If `import app.main` works there, DATA_DIR/code/current is pointed at it
   and the app restarts. docker/entrypoint.sh starts the app from that folder.
@@ -24,6 +26,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 import httpx
 
@@ -36,7 +39,7 @@ IMAGE_FILES = {"Dockerfile": "Dockerfile", "docker/entrypoint.sh": "entrypoint.s
 KEEP_FILES = ("app/", "examples/", "requirements.txt", "Dockerfile", "docker/entrypoint.sh")
 
 lock = threading.Lock()
-latest = None   # last check result: {sha, date, message, needs_image, checked_at} or None
+latest = None   # last check result: {sha, version, date, message, url, needs_image, checked_at} or None
 status = {"state": "idle", "message": "", "error": None, "checked_at": None}  # state: idle|checking|installing|restarting|error
 
 
@@ -63,13 +66,16 @@ def running_dir():
 
 
 def current():
-    """{sha, date, message, builtin} of the running code."""
+    """{sha, version, date, message, builtin} of the running code."""
     d = running_dir()
     if d is not None:
         info = _read_json(d / ".info.json") or {}
-        return {"sha": d.name, "date": info.get("date"), "message": info.get("message"), "builtin": False}
+        return {"sha": d.name, "version": info.get("version"), "date": info.get("date"),
+                "message": info.get("message"), "builtin": False}
     sha = image_sha()
-    return {"sha": sha or None, "date": None, "message": None, "builtin": True}
+    known = latest if sha and latest and latest.get("sha") == sha else {}  # the image is the newest release
+    return {"sha": sha or None, "version": known.get("version"), "date": known.get("date"),
+            "message": known.get("message"), "builtin": True}
 
 
 def mark_started():
@@ -87,8 +93,7 @@ def _why(e):
     if isinstance(e, httpx.HTTPStatusError):
         code = e.response.status_code
         if code == 404:
-            return (f"GitHub answered 404. Is {config.UPDATE_REPO} public, "
-                    f"and does it have a '{config.UPDATE_BRANCH}' branch?")
+            return f"GitHub answered 404. Is {config.UPDATE_REPO} public, and does it have a published release?"
         if code in (403, 429):
             return "GitHub's request limit was reached. Try again in an hour."
         return f"GitHub answered {code}"
@@ -110,14 +115,16 @@ def _client():
 
 
 def fetch_latest():
-    """Newest commit on the release branch, and whether it needs a new Docker image."""
+    """Newest published release (its tag's commit), and whether it needs a new Docker image."""
+    api = f"https://api.github.com/repos/{config.UPDATE_REPO}"
     with _client() as c:
-        r = c.get(f"https://api.github.com/repos/{config.UPDATE_REPO}/commits/{config.UPDATE_BRANCH}")
+        r = c.get(f"{api}/releases/latest")  # GitHub leaves out drafts and pre-releases
         r.raise_for_status()
-        data = r.json()
-        sha = data["sha"]
-        info = {"sha": sha, "date": data["commit"]["committer"]["date"],
-                "message": data["commit"]["message"].split("\n")[0][:200]}
+        rel = r.json()
+        r = c.get(f"{api}/commits/{quote(rel['tag_name'], safe='')}")
+        r.raise_for_status()
+        info = release_info(rel, r.json()["sha"])
+        sha = info["sha"]
         info["image"] = image_sha()
         if latest and latest.get("sha") == sha and latest.get("image") == info["image"]:
             info["needs_image"] = latest["needs_image"]
@@ -129,6 +136,13 @@ def fetch_latest():
                 files[path] = f.text
             info["needs_image"] = needs_new_image(files)
     return info
+
+
+def release_info(rel, sha):
+    """What the app keeps of a GitHub release. The tag is the version; a title other than the tag is the message."""
+    tag, name = rel["tag_name"], (rel.get("name") or "").strip()
+    return {"sha": sha, "version": tag[:50], "date": rel.get("published_at"),
+            "message": name[:200] if name and name != tag else None, "url": rel.get("html_url")}
 
 
 def needs_new_image(files):
@@ -183,14 +197,19 @@ def load_cached():
         latest = None  # checked with another image: "needs a new image" may no longer be true
 
 
+def _short(v):
+    """How a version is shown: its tag, or the start of its commit for versions from before releases."""
+    return v.get("version") or (v.get("sha") or "")[:7]
+
+
 def info(skipped=None):
     cur = current()
     avail = None
     if latest and latest["sha"] != cur["sha"]:
-        avail = {**latest, "short": latest["sha"][:7], "skipped": latest["sha"] == skipped,
+        avail = {**latest, "short": _short(latest), "skipped": latest["sha"] == skipped,
                  "failed": latest["sha"] == failed_sha()}
-    return {"supported": supported(), "current": {**cur, "short": (cur["sha"] or "")[:7]},
-            "available": avail, "status": status, "repo": config.UPDATE_REPO, "branch": config.UPDATE_BRANCH}
+    return {"supported": supported(), "current": {**cur, "short": _short(cur)},
+            "available": avail, "status": status, "repo": config.UPDATE_REPO}
 
 
 def daily_loop():
@@ -292,7 +311,7 @@ def install(sha=None, downloader=_download):
                    "PYTHONPATH": os.pathsep.join([str(staging / "deps"), str(staging)])}
             _run([sys.executable, "-c", "import app.main"], cwd=staging, env=env, timeout=120)
         meta = latest if latest and latest.get("sha") == sha else {"sha": sha}
-        (staging / ".info.json").write_text(json.dumps({k: meta.get(k) for k in ("sha", "date", "message")}))
+        (staging / ".info.json").write_text(json.dumps({k: meta.get(k) for k in ("sha", "version", "date", "message")}))
         (staging / ".image").write_text(image_sha())  # a newer image runs its own code (entrypoint.sh)
         final = code / sha
         if final.exists():

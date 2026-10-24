@@ -238,8 +238,10 @@ browser and prints a LAN address for testing on a phone. Several worktrees can r
 
 - `python build.py` builds `mangavibe:latest` locally, `--run` starts it with `docker-compose.yml`,
   `--save` writes `mangavibe.tar` (import it elsewhere with `docker load -i mangavibe.tar`).
-- Releases: merging into `releases` makes GitHub Actions publish the image to Docker Hub and
-  ghcr.io (`.github/workflows/image.yml`), and running apps pick up the new code through auto-update.
+- Releases: publish a GitHub release from `main`, e.g. `gh release create v1.4.0 --generate-notes`.
+  GitHub Actions publishes the image to Docker Hub and ghcr.io (`.github/workflows/image.yml`), and
+  running apps pick up the new code through auto-update. A pre-release (`--prerelease`) gets an
+  image but is not offered to running apps. The old `releases` branch is no longer used.
 
 ### Layout
 
@@ -250,7 +252,7 @@ app/models.py, db.py    SQLite tables, first start, migrations
 app/scanner/            parser.py (file names), archives.py (reading), walker.py (scanning)
 app/api/                series.py, books.py, system.py
 app/plugins/            plugin system
-app/updater.py          auto-update from the releases branch
+app/updater.py          auto-update from the newest GitHub release
 app/images.py           thumbnails, resized page cache
 app/web/index.html      the page: Alpine templates for every view
 app/web/static/css/     styles: main.css imports one file per feature (CSS layers)
