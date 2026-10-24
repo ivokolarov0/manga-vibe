@@ -387,6 +387,18 @@ It makes updating easier, and if someone wants a quick and dirty solution, here 
 - **Going back to the code in the image:** stop the container, delete `code/current` in the data
   folder, start it again.
 
+## Legal
+
+MangaVibe is a reader for manga **you own**, on your own server. It doesn't include, download or
+share any manga: it only shows the files you put in your library, to you. Covers and details come
+from AniList and MangaUpdates, the way any tracker app shows them.
+
+- Don't use it to share or publish manga or translated pages.
+- Please support the creators: buy the manga you read.
+
+Plugins are made by others and run their own code; the [Plugins](#plugins) section says what to watch
+for. This project is provided as is, without any warranty.
+
 ---
 
 ## For developers
