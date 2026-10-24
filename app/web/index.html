@@ -472,6 +472,24 @@
                   </div>
                 </div>
               </template>
+              <!-- updates from the plugin's GitHub releases -->
+              <template x-if="p.update.supported">
+                <div class="plugin-extra">
+                  <label class="setting-row">
+                    <span class="label"><span>Updates</span><small x-text="pluginUpdateText(p)"></small></span>
+                    <select :value="p.update.mode" @change="setPluginUpdateMode(p, $event.target.value)">
+                      <option value="manual">Manual</option><option value="auto">Automatic</option></select>
+                  </label>
+                  <div class="btn-row">
+                    <button class="btn small" :disabled="busyAction === p.id + ':update'"
+                            @click="checkPluginUpdate(p)">Check for updates</button>
+                    <button class="btn small primary" x-show="p.update.available" :disabled="busyAction === p.id + ':update'"
+                            @click="installPluginUpdate(p)" x-text="`Update to ${p.update.latest}`"></button>
+                    <a class="btn small" x-show="p.update.available && p.update.url" :href="p.update.url"
+                       target="_blank" rel="noopener noreferrer">What's new ↗</a>
+                  </div>
+                </div>
+              </template>
             </div>
           </template>
           <p class="muted" x-show="!plugins.length">No plugins installed.</p>

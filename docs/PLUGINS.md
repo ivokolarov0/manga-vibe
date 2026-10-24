@@ -40,6 +40,7 @@ class Hello(Plugin):
 | **Status line** under the plugin in Settings | `status(ctx)` returning a short text, e.g. `"Connected as Ivo"` |
 | **Open a page** (e.g. a login) from a button | return `OpenUrl(url, message="")` from `run_action` or `run_global_action` |
 | **A web address of its own** (e.g. an OAuth callback) | `handle_web(ctx, path, params)` answers `GET /api/plugins/<id>/web/<path>`. Return a message (shown on a small page with a link back) or `OpenUrl(url)` to redirect; `None` = 404 |
+| **Updates** from its GitHub releases | `repo = "owner/name"` (see [Updates](#updates)) |
 
 ## The `ctx` object
 
@@ -106,6 +107,33 @@ class Tracker(Plugin):
     def status(self, ctx):
         return "Connected" if ctx.settings.get("token") else "Not connected"
 ```
+
+## Updates
+
+A plugin that names its GitHub repo gets an **Updates** row in Settings → Plugins:
+
+```python
+class Tracker(Plugin):
+    id = "tracker"
+    version = "1.1.0"
+    repo = "your-name/mangavibe-tracker"
+```
+
+- **Where updates come from:** the repo's newest **published release** (drafts and pre-releases are
+  left out). MangaVibe downloads the file with the same name as the installed one (e.g.
+  `tracker.py`) at the release's tag. The tag is the version (`v1.2.0` or `1.2.0`) and is compared
+  with `version`, so keep the two the same.
+- **To publish an update:** raise `version` in the file, merge it, then create a release with the
+  tag `v<version>`. Nothing reaches users before the release.
+- **Manual or Automatic**, chosen per plugin in Settings. Manual (the default) shows that a new
+  version is available, and the owner presses **Update to vX**. Automatic installs it in the daily
+  update check. Both follow Settings → Updates → *Check for updates every day*, and
+  `AUTO_UPDATE=0` turns them off.
+- **Safe swap:** the new file must load on its own and define a plugin with the same `id`, or
+  nothing changes. The old file is kept in `plugins/.backup/`. A failed automatic update is tried
+  again only when a newer release comes out.
+- Only single-file plugins in the `plugins` folder can be updated. A plugin's settings and data are
+  kept, since they're in the database, not in the file.
 
 ## Styling: plugins and your own custom.css
 

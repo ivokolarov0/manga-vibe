@@ -1008,6 +1008,41 @@ Your files are not touched. `
         toast("Saved");
       } catch (e) { toast(e.message, 6000, "error"); }
     },
+    pluginUpdateText(p) {
+      const u = p.update;
+      if (u.error) return u.error;
+      const when = u.checked_at ? ` · last checked ${new Date(u.checked_at * 1000).toLocaleString()}` : "";
+      if (u.available) {
+        return `Version ${u.latest} is available` + (u.mode === "auto" ? ", it installs at the next daily check" : "") + when;
+      }
+      const how = u.mode === "auto" ? "New versions install by themselves" : "You press Update to install a new version";
+      return `${how}, from github.com/${u.repo}` + (u.checked_at ? when : " · not checked yet");
+    },
+    async setPluginUpdateMode(p, mode) {
+      try {
+        Object.assign(p, await api(`/api/plugins/${p.id}/updates`, { method: "PUT", body: { mode } }));
+        toast(mode === "auto" ? `${p.name} updates automatically` : `${p.name} updates when you press Update`);
+      } catch (e) { toast(e.message, 6000, "error"); this.refreshPlugins(); }
+    },
+    async checkPluginUpdate(p) {
+      this.busyAction = p.id + ":update";
+      try {
+        Object.assign(p, await api(`/api/plugins/${p.id}/updates/check`, { method: "POST" }));
+        if (p.update.error) toast(p.update.error, 6000, "error");
+        else toast(p.update.available ? `Version ${p.update.latest} is available` : `${p.name} is up to date`);
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.busyAction = ""; }
+    },
+    async installPluginUpdate(p) {
+      if (!confirm(`Install ${p.name} ${p.update.latest} from github.com/${p.update.repo}?`)) return;
+      this.busyAction = p.id + ":update";
+      try {
+        const r = await api(`/api/plugins/${p.id}/updates/install`, { method: "POST" });
+        this.plugins = r.plugins;
+        this.pluginErrors = r.errors;
+        toast(r.message);
+        this.loadProviders();
+      } catch (e) { toast(e.message, 8000, "error"); } finally { this.busyAction = ""; }
+    },
     busyAction: "",
     async runGlobalAction(p, a) {
       if (a.confirm && !confirm(a.confirm)) return;

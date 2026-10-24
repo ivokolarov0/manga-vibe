@@ -237,3 +237,20 @@ Choices made where the spec was open. Newest at the bottom.
 - **`/api/plugins/<id>/web/<path>`** lets a plugin answer a GET itself (OAuth callback). `ctx.web_url()`
   builds the address from the last request's host, because the app doesn't know its own address
   (NAS IP, Tailscale, domain…).
+
+
+## Plugin updates from GitHub releases
+
+- **A plugin names its repo** (`repo = "owner/name"`) and is updated from that repo's newest published
+  release: the file with the installed file's name, at the release's tag. Releases, not the main
+  branch, so a merge doesn't reach users until the author publishes it, the same as the app itself.
+- **Manual by default, Automatic per plugin.** A plugin is code with full access to MangaVibe's data,
+  so installing new code by itself is something the owner turns on. Both follow the app's
+  "Check for updates every day" setting and `AUTO_UPDATE=0`.
+- **The new file is loaded on its own first** and must define a plugin with the same id; otherwise
+  nothing changes. It's compiled from its text, not from a cached .pyc, which could belong to an
+  earlier download of the same size and time. The old file goes to `plugins/.backup/`.
+- **A failed automatic update isn't retried every hour**; it's tried again when a newer release comes
+  out (Update can still be pressed by hand).
+- **Only single-file plugins in the plugins folder** are updated. Built-in plugins come with the app;
+  package folders would need a different download.

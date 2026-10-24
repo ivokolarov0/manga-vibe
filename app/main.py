@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app import config, db as database, updater
+from app import config, db as database, plugin_updates, updater
 from app.api import attention, books, edit, series, system, update
 from app.metadata import worker as metadata_worker
 from app.plugins import manager as plugins
@@ -47,6 +47,8 @@ async def lifespan(app):
     updater.load_cached()
     if updater.supported():
         threading.Thread(target=updater.daily_loop, daemon=True, name="update-check").start()
+    if config.AUTO_UPDATE and config.START_WORKERS:  # AUTO_UPDATE=0 turns off all update checks
+        threading.Thread(target=plugin_updates.daily_loop, daemon=True, name="plugin-updates").start()
     updater.mark_started()
     yield
 

@@ -299,8 +299,17 @@ a single `.py` file.
 3. In MangaVibe: **Settings → Plugins → Reload plugins**. The plugin appears in the list, with its
    own settings and buttons if it has any.
 
-To update a plugin, replace the file and press **Reload plugins** again. To remove it, delete the
-file. Switch a plugin off with its toggle in **Settings → Plugins**.
+**Updating a plugin.** Plugins that publish releases on GitHub (like MyAnimeList sync) have an
+**Updates** row in **Settings → Plugins**:
+
+- **Manual** (the default): MangaVibe checks once a day and shows *Version X is available*. Press
+  **Update to X** to install it. **Check for updates** looks right away.
+- **Automatic**: new versions install by themselves in the daily check.
+
+The new version is checked before it replaces the old one, and your plugin settings are kept. For
+other plugins, replace the file and press **Reload plugins**.
+
+To remove a plugin, delete its file. Switch a plugin off with its toggle in **Settings → Plugins**.
 
 > [!WARNING]
 > **Only install plugins you trust.** A plugin is code that runs inside MangaVibe with full access
