@@ -59,7 +59,7 @@ class Choice:
 
 @dataclass
 class SettingDef:
-    """A text box for the plugin in Settings -> Plugins, or a dropdown when `options` is given
+    """A text box on the plugin's page (Settings -> Plugins -> Settings), or a dropdown when `options` is given
     ([(value, label)]). The value lands in ctx.settings[key]; ctx.setting(key) falls back to
     `default` while nothing is saved."""
     key: str
@@ -103,8 +103,8 @@ class Plugin:
     is_provider = False  # True for metadata providers
     url = ""             # optional: the site a provider gets its data from (shown in Settings)
     css = ""             # extra CSS for the web app (loaded after the built-in styles, so it wins)
-    settings_fields: list[SettingDef] = []  # text boxes in Settings -> Plugins
-    global_actions: list[Action] = []       # buttons in Settings -> Plugins (not tied to a series)
+    settings_fields: list[SettingDef] = []  # text boxes on the plugin's page in Settings -> Plugins
+    global_actions: list[Action] = []       # buttons on the plugin's page (not tied to a series)
     repo = ""  # "owner/name" on GitHub: its releases update this plugin (see app/plugin_updates.py)
     # What the plugin uses, in short sentences, e.g. "Connects to api.myanimelist.net". Shown in
     # Settings. Not enforced (a plugin is Python); an update that adds one asks the owner first.
@@ -151,7 +151,7 @@ class Plugin:
         return "Not implemented"
 
     def run_global_action(self, ctx, action_key):
-        """Run a button from Settings -> Plugins. Return a short message, or OpenUrl.
+        """Run a button from the plugin's page in Settings. Return a short message, or OpenUrl.
         For long work, start it with ctx.run_in_background() and return right away."""
         return "Not implemented"
 

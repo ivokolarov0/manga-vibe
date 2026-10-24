@@ -296,11 +296,12 @@ a single `.py` file.
 1. Download the plugin's `.py` file (on GitHub: open the file → **Download raw file**).
 2. Put it in the `plugins` folder of your data folder: `docker/mangavibe/plugins` on a Synology,
    or `plugins` inside the folder you mounted as `/data` (create it if it isn't there).
-3. In MangaVibe: **Settings → Plugins → Reload plugins**. The plugin appears in the list, with its
-   own settings and buttons if it has any.
+3. In MangaVibe: **Settings → Plugins → Reload plugins**. The plugin appears in the list. If it has
+   settings, buttons or updates, its **Settings** button opens a page with them.
 
 **Updating a plugin.** Plugins that publish releases on GitHub (like MyAnimeList sync) have an
-**Updates** row in **Settings → Plugins**:
+**Updates** part on their page (**Settings → Plugins → Settings** next to the plugin). The list shows
+*Update X* next to a plugin with a new version:
 
 - MangaVibe checks once a day and shows *Version X is available*. **Check for updates** looks right away.
 - Press **Update to X** to install it, or **Skip this version** if you don't want it. A skipped version

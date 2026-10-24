@@ -349,7 +349,7 @@
       <nav class="settings-nav">
         <h4>Settings</h4>
         <template x-for="[k, label, icon] in nav" :key="k">
-          <button :class="{ active: section === k }" @click="go(k)">
+          <button :class="{ active: section === k || (k === 'plugins' && section === 'plugin') }" @click="go(k)">
             <span class="ico" x-text="icon"></span><span x-text="label"></span></button>
         </template>
         <h4>Needs attention</h4>
@@ -455,65 +455,22 @@
             <select x-model="st.include_adult" @change="save('include_adult')"><option value="false">No</option><option value="true">Yes</option></select></label>
         </section>
 
-        <!-- plugins -->
+        <!-- plugins: one row each; a plugin with settings, buttons or updates opens its own page -->
         <section x-show="section === 'plugins'">
           <h2>Plugins</h2>
           <template x-for="p in plugins" :key="p.id">
-            <div class="plugin-block">
-              <label class="setting-row">
-                <span class="label"><span x-text="p.name"></span><small x-text="`v${p.version}` + (p.description ? ' · ' + p.description : '')"></small>
-                  <small class="plugin-status" x-show="p.enabled && p.status" x-text="p.status"></small>
-                  <small x-show="p.permissions.length" x-text="'Uses: ' + p.permissions.join(' · ')"></small></span>
-                <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)">
-              </label>
-              <template x-if="p.enabled && (p.settings.length || p.global_actions.length)">
-                <div class="plugin-extra">
-                  <template x-for="f in p.settings" :key="f.key">
-                    <label class="setting-row">
-                      <span class="label"><span x-text="f.label"></span><small x-show="f.help" x-text="f.help"></small></span>
-                      <template x-if="f.options.length">
-                        <select x-model="f.value" @change="savePluginSetting(p, f)">
-                          <template x-for="[v, label] in f.options" :key="v">
-                            <option :value="v" :selected="f.value === v" x-text="label"></option></template>
-                        </select>
-                      </template>
-                      <template x-if="!f.options.length">
-                        <input :type="f.secret ? 'password' : 'text'" x-model="f.value" autocomplete="off"
-                               :placeholder="f.secret && f.saved ? 'Saved (type to replace)' : ''"
-                               @change="savePluginSetting(p, f)">
-                      </template>
-                    </label>
-                  </template>
-                  <div class="btn-row" x-show="p.global_actions.length">
-                    <template x-for="a in p.global_actions" :key="a.key">
-                      <button class="btn small" :disabled="busyAction === p.id + a.key"
-                              @click="runGlobalAction(p, a)" x-text="a.label"></button>
-                    </template>
-                  </div>
-                </div>
-              </template>
-              <!-- updates from the plugin's GitHub releases -->
-              <template x-if="p.update.supported">
-                <div class="plugin-extra">
-                  <div class="setting-row">
-                    <div class="label"><span>Updates</span><small x-text="pluginUpdateText(p)"></small></div>
-                  </div>
-                  <div class="btn-row">
-                    <button class="btn small" :disabled="busyAction === p.id + ':update'"
-                            @click="checkPluginUpdate(p)">Check for updates</button>
-                    <template x-if="p.update.available && !p.update.skipped">
-                      <span class="btn-row">
-                        <button class="btn small primary" :disabled="busyAction === p.id + ':update'"
-                                @click="installPluginUpdate(p)" x-text="`Update to ${p.update.latest}`"></button>
-                        <button class="btn small" @click="skipPluginUpdate(p, true)">Skip this version</button>
-                      </span>
-                    </template>
-                    <button class="btn small" x-show="p.update.skipped" @click="skipPluginUpdate(p, false)">Show it again</button>
-                    <a class="btn small" x-show="p.update.available && p.update.url" :href="p.update.url"
-                       target="_blank" rel="noopener noreferrer">What's new ↗</a>
-                  </div>
-                </div>
-              </template>
+            <div class="setting-row plugin-row">
+              <span class="label"><span x-text="p.name"></span><small x-text="`v${p.version}` + (p.description ? ' · ' + p.description : '')"></small>
+                <small class="plugin-status" x-show="p.enabled && p.status" x-text="p.status"></small>
+                <template x-if="p.permissions.length && !hasPluginPage(p)">
+                  <div class="plugin-uses"><small>Uses:</small>
+                    <ul><template x-for="x in p.permissions"><li x-text="x"></li></template></ul></div>
+                </template></span>
+              <span class="row-buttons">
+                <span class="chip warn" x-show="p.update.available && !p.update.skipped" x-text="`Update ${p.update.latest}`"></span>
+                <a class="btn small" x-show="hasPluginPage(p)" :href="`#/settings/plugin-${p.id}`">Settings</a>
+                <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" :aria-label="`${p.name} on`">
+              </span>
             </div>
           </template>
           <p class="muted" x-show="!plugins.length">No plugins installed.</p>
@@ -523,6 +480,78 @@
               <small>Plugin .py files go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css</small></div>
             <button class="btn small" @click="reloadPlugins()">Reload plugins</button>
           </div>
+        </section>
+
+        <!-- one plugin's page (#/settings/plugin-<id>) -->
+        <section class="plugin-page" x-show="section === 'plugin'">
+          <a class="back-link" href="#/settings/plugins">← Plugins</a>
+          <template x-if="!plugin">
+            <p class="muted" x-text="plugins.length ? 'This plugin is not installed.' : 'Loading…'"></p>
+          </template>
+          <template x-if="plugin">
+            <div>
+              <h2 x-text="plugin.name"></h2>
+              <div class="plugin-about">
+                <small x-text="`v${plugin.version}` + (plugin.description ? ' · ' + plugin.description : '')"></small>
+                <small class="plugin-status" x-show="plugin.enabled && plugin.status" x-text="plugin.status"></small>
+              </div>
+              <template x-if="plugin.permissions.length">
+                <div class="plugin-uses"><small>Uses:</small>
+                  <ul><template x-for="x in plugin.permissions"><li x-text="x"></li></template></ul></div>
+              </template>
+              <label class="setting-row">
+                <span class="label"><span>On</span></span>
+                <input type="checkbox" x-model="plugin.enabled" @change="togglePlugin(plugin)">
+              </label>
+              <p class="muted" x-show="!plugin.enabled && (plugin.settings.length || plugin.global_actions.length)">
+                Switch the plugin on to change its settings.</p>
+              <template x-if="plugin.enabled">
+                <div>
+                  <template x-for="f in plugin.settings" :key="f.key">
+                    <label class="setting-row">
+                      <span class="label"><span x-text="f.label"></span><small x-show="f.help" x-text="f.help"></small></span>
+                      <template x-if="f.options.length">
+                        <select x-model="f.value" @change="savePluginSetting(plugin, f)">
+                          <template x-for="[v, label] in f.options" :key="v">
+                            <option :value="v" :selected="f.value === v" x-text="label"></option></template>
+                        </select>
+                      </template>
+                      <template x-if="!f.options.length">
+                        <input :type="f.secret ? 'password' : 'text'" x-model="f.value" autocomplete="off"
+                               :placeholder="f.secret && f.saved ? 'Saved (type to replace)' : ''"
+                               @change="savePluginSetting(plugin, f)">
+                      </template>
+                    </label>
+                  </template>
+                  <div class="btn-row plugin-actions" x-show="plugin.global_actions.length">
+                    <template x-for="a in plugin.global_actions" :key="a.key">
+                      <button class="btn small" :disabled="busyAction === plugin.id + a.key"
+                              @click="runGlobalAction(plugin, a)" x-text="a.label"></button>
+                    </template>
+                  </div>
+                </div>
+              </template>
+              <!-- updates from the plugin's GitHub releases -->
+              <template x-if="plugin.update.supported">
+                <div>
+                  <h3>Updates</h3>
+                  <p class="muted" x-text="pluginUpdateText(plugin)"></p>
+                  <div class="btn-row plugin-actions">
+                    <button class="btn small" :disabled="busyAction === plugin.id + ':update'"
+                            @click="checkPluginUpdate(plugin)">Check for updates</button>
+                    <button class="btn small primary" x-show="plugin.update.available && !plugin.update.skipped"
+                            :disabled="busyAction === plugin.id + ':update'"
+                            @click="installPluginUpdate(plugin)" x-text="`Update to ${plugin.update.latest}`"></button>
+                    <button class="btn small" x-show="plugin.update.available && !plugin.update.skipped"
+                            @click="skipPluginUpdate(plugin, true)">Skip this version</button>
+                    <button class="btn small" x-show="plugin.update.skipped" @click="skipPluginUpdate(plugin, false)">Show it again</button>
+                    <a class="btn small" x-show="plugin.update.available && plugin.update.url" :href="plugin.update.url"
+                       target="_blank" rel="noopener noreferrer">What's new ↗</a>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
         </section>
 
         <!-- updates -->
