@@ -56,16 +56,17 @@
       </div>
       <div class="grid" :class="{ loading: paged && loading }">
         <template x-for="s in items" :key="s.id">
-          <a class="card" :class="{ done: s.reading_status === 'completed' }" :href="'#/series/' + s.id">
+          <a class="card" :class="{ done: s.reading_status === 'completed', dropped: s.reading_status === 'dropped' }" :href="'#/series/' + s.id">
             <div class="poster">
               <img :src="s.poster" loading="lazy" alt="">
               <span class="badge done" x-show="s.reading_status === 'completed'">✓</span>
+              <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="Dropped" aria-label="Dropped">✕</span>
               <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"></span>
               <span class="badge status" x-show="s.favorite">★</span>
               <div class="bar" x-show="s.reading_status === 'reading'"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
             </div>
             <div class="card-title" x-text="s.title"></div>
-            <div class="card-sub" :class="{ read: s.reading_status === 'completed', reading: s.reading_status === 'reading' }"
+            <div class="card-sub" :class="{ read: s.reading_status === 'completed', reading: s.reading_status === 'reading', dropped: s.reading_status === 'dropped' }"
                  x-text="cardSub(s)"></div>
           </a>
         </template>
