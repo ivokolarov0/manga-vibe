@@ -323,6 +323,24 @@ To remove a plugin, delete its file. Switch a plugin off with its toggle in **Se
 See [docs/PLUGINS.md](docs/PLUGINS.md) for how plugins work, the events they can react to, and an
 example in [examples/plugins](examples/plugins).
 
+## Requests that are declined
+
+> [!IMPORTANT]
+> Issues and pull requests asking for any of these are closed without discussion. You are free to
+> code a solution for yourself (in a fork or a plugin), but please don't ask for it here.
+
+- **Connecting to pirate sites to read their contents.** MangaVibe reads the files you own, nothing else.
+- **Crawling or scraping pirate sites**, including downloaders and "find the raws" features.
+- **Changing library files**: renaming, converting, optimizing, tagging, moving or deleting them. The
+  library is read-only on purpose (see [Q&A](#qa)).
+- **A mobile app.** The reader runs in your phone's browser.
+- **Tying it to an existing mobile app**, such as making it a source or extension for another reader app.
+- **An executable or installer** (`.exe`, `.dmg`, `.apk`, …). MangaVibe runs in Docker.
+- **A public access option**: opening it to the internet, share links, or anything else that makes it
+  reachable from outside your home. See [Reading away from home](#reading-away-from-home).
+- **Support for devices other than the ones in [Install](#install)** (Windows, Mac, Linux, Synology
+  NAS and other Docker servers). For example, no running the server on a phone.
+
 ## Q&A
 
 **Why another manga server?**
@@ -353,7 +371,8 @@ Again, I don't want the app to have access to your files. Rename and optimize th
 app; I don't want to be responsible if something important disappears.
 
 **Do you accept feature requests and changes?**
-Not sure. Small things like "this icon isn't centered" or "there's no hover here": no. This was
+Some things are never accepted: see [Requests that are declined](#requests-that-are-declined).
+For the rest, not sure. Small things like "this icon isn't centered" or "there's no hover here": no. This was
 mainly meant as a personal project. If people like it and want to add features, pull requests are
 welcome, but I work 9 to 6 every day, so I don't know how much time I'll have to review them. I'm
 not saying no for now, but it may be easier to fork it and change it yourself without waiting for me.
