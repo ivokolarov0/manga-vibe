@@ -8,6 +8,7 @@ What a plugin can do:
 - extra fields:       declare `fields` and call ctx.set_field(series, key, value)
 - scan hooks:         on_book_scanned() can change parsed values; on_series_scanned()
 - custom actions:     declare `actions` and implement run_action()
+- dropdowns:          declare `choices`, implement get_choice() and set_choice()
 - styling:            set `css` to change how the app looks (see examples/plugins/sakura_theme.py)
 - reading events:     on_book_started(), on_book_completed(), on_series_status_changed()
 - settings:           declare `settings_fields`, `global_actions` (buttons in Settings) and status()
@@ -43,6 +44,16 @@ class Action:
     key: str
     label: str
     confirm: str | None = None  # optional "Are you sure?" text
+
+
+@dataclass
+class Choice:
+    """A dropdown on the series page, e.g. a status on a tracker site. `options` is a list of
+    (value, label); a value may be "". A plugin field with the same key is hidden while the
+    dropdown shows, so the plugin can keep its value there."""
+    key: str
+    label: str
+    options: list = field(default_factory=list)
 
 
 @dataclass
@@ -83,6 +94,7 @@ class Plugin:
     description = ""
     fields: list[FieldDef] = []
     actions: list[Action] = []
+    choices: list[Choice] = []  # dropdowns on the series page
     is_provider = False  # True for metadata providers
     url = ""             # optional: the site a provider gets its data from (shown in Settings)
     css = ""             # extra CSS for the web app (loaded after the built-in styles, so it wins)
@@ -115,6 +127,19 @@ class Plugin:
     # --- custom actions ---------------------------------------------------
     def run_action(self, ctx, action_key, series):
         """Run a button action on the series page. Return a short message, or OpenUrl."""
+        return "Not implemented"
+
+    # --- dropdowns on the series page --------------------------------------
+    def get_choice(self, ctx, key, series):
+        """The selected value of dropdown `key` for this series: one of its option values,
+        None when it isn't known yet, or False to hide the dropdown for this series.
+        Called each time the series page opens, so keep it fast (no website calls).
+        By default it's the plugin field with the same key."""
+        return ctx.get_field(series, key)
+
+    def set_choice(self, ctx, key, series, value):
+        """The owner picked `value` (always one of the option values). Return a short message,
+        or OpenUrl. Raise or return an error message if it couldn't be done."""
         return "Not implemented"
 
     def run_global_action(self, ctx, action_key):
