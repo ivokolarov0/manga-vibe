@@ -69,11 +69,10 @@ before the user answers.
 Release the exact commit that was reviewed, not whatever `main` is by then:
 
 ```
-gh release create vX.Y.Z --target <origin/main sha> --title "<title>" --generate-notes [--notes "<notes>"]
+gh release create vX.Y.Z --target <origin/main sha> --title "vX.Y.Z" --generate-notes [--notes "<notes>"]
 ```
 
-- `--title`: a short summary of the biggest change, in plain words, at most 60 characters, without
-  the version number (the app shows it next to the tag, e.g. "v1.2.0 · Reader tap zones").
+- `--title`: the version, exactly the tag (e.g. `v1.2.0`). Don't make up a name or summary for it.
 - `--notes` is added above the generated list of PRs. Use it when the version needs a new Docker
   image: "This version needs a new Docker image: pull `ivokolarov/mangavibe:latest` and recreate the
   container. Your library, progress and settings are kept." Leave it out otherwise.
