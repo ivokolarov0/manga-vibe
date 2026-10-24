@@ -25,7 +25,7 @@ const FILTER_GROUPS = [
 const LIST_KEYS = ["read", "pub", "match", "format", "genre", "exclude"];
 // first-letter filter (letter=B); "#" is everything else: numbers, symbols, other scripts
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
-const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Read"],
+const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Completed"],
   ["plan_to_read", "Plan to read"], ["fav", "★ Favorites"]];
 const ATT_TABS = [
   ["unreadable", "Errors", "These files could not be opened. The message says why."],
@@ -63,7 +63,7 @@ const kindOf = (s) => s.format === "NOVEL" ? "Novel" : s.format === "ONE_SHOT" ?
 
 function cardSub(s) {
   const st = s.reading_status, read = s.book_count - s.unread_count;
-  if (st === "completed") return "✓ Read";
+  if (st === "completed") return "✓ Completed";
   if (st === "reading") return `Reading · ${read}/${s.book_count}`;
   if (st === "unread") return `Unread · ${s.book_count} ${s.book_count === 1 ? "book" : "books"}`;
   return STATUS_LABELS[st] || st;
