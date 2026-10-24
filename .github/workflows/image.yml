@@ -1,7 +1,9 @@
-# Builds the Docker image when something is merged into `releases` and publishes it as
-# ghcr.io/<owner>/mangavibe:latest and, when the Docker Hub secrets are set, as
-# <DOCKERHUB_USERNAME>/mangavibe:latest (Intel and ARM). Only needed when the Dockerfile or the
-# entrypoint changed; code and pip packages update by themselves (see app/updater.py).
+# Builds the Docker image when a GitHub release is published (Intel and ARM) and publishes it as
+# ghcr.io/<owner>/mangavibe and, when the Docker Hub secrets are set, as <DOCKERHUB_USERNAME>/mangavibe.
+# Tags: the version without its "v" (v1.4.0 -> 1.4.0), the commit, and `latest` (not for pre-releases).
+# Running apps take new code and pip packages from the release by themselves (see app/updater.py);
+# the image is only needed by new installs and when the Dockerfile or the entrypoint changed.
+# Run by hand (workflow_dispatch), it builds the chosen branch or tag as `latest`.
 #
 # Docker Hub: add the repository secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN (an access token
 # with Read & Write, from Docker Hub → Account settings → Personal access tokens). Without them
@@ -9,8 +11,8 @@
 name: Docker image
 
 on:
-  push:
-    branches: [releases]
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -22,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       HUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+      VERSION: ${{ github.event.release.tag_name }}
+      PRERELEASE: ${{ github.event.release.prerelease }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,7 +36,11 @@ jobs:
           if [ -n "$HUB_USER" ]; then images="$images ${HUB_USER,,}/mangavibe"; fi
           {
             echo "tags<<EOF"
-            for i in $images; do echo "$i:latest"; echo "$i:${GITHUB_SHA}"; done
+            for i in $images; do
+              echo "$i:${GITHUB_SHA}"
+              if [ -n "$VERSION" ]; then echo "$i:${VERSION#v}"; fi
+              if [ "$PRERELEASE" != "true" ]; then echo "$i:latest"; fi
+            done
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 

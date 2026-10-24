@@ -174,10 +174,16 @@ Choices made where the spec was open. Newest at the bottom.
 ## Auto-update
 
 - **Code updates without a new image** (issue #5). The image is the base (Python, unrar/7zip, pip
-  packages); the app's code is downloaded from the `releases` branch on GitHub into
+  packages); the app's code is downloaded from the newest GitHub release into
   `/data/code/<commit>/` and `docker/entrypoint.sh` starts it from there (`/data/code/current`).
-  It survives a container Reset because it lives in `/data`. Repo and branch: `UPDATE_REPO`,
-  `UPDATE_BRANCH`; `AUTO_UPDATE=0` turns it all off.
+  It survives a container Reset because it lives in `/data`. Repo: `UPDATE_REPO`;
+  `AUTO_UPDATE=0` turns it all off.
+- **GitHub releases, not a `releases` branch.** Releasing used to be a PR from `main` into
+  `releases`; now it is one `gh release create`. The tag (e.g. `v1.4.0`) is what users see, the
+  release page is the "What's new" link, and pre-releases are not offered. Versions are still
+  stored by commit (`/data/code/<commit>/`), so the entrypoint and older installs work unchanged.
+  The `releases` branch is kept, frozen at the first version that reads releases: installs from
+  before that still poll the branch, update to that version, and from then on follow releases.
 - **New pip packages are installed by the app** with `uv pip install --target /data/code/<commit>/deps`,
   only the lines that differ from the image's `requirements.txt`. uv picks the right wheel for Intel
   or ARM by itself. The image has uv instead of pip: pip bundles old copies of urllib3, msgpack and
@@ -185,13 +191,14 @@ Choices made where the spec was open. Newest at the bottom.
 - **A changed Dockerfile or entrypoint needs a new image**: the app compares them (line endings
   ignored) with copies kept in `/opt/mangavibe/image` and refuses the update with a message.
   GitHub Actions builds `ghcr.io/ivokolarov0/mangavibe` and Docker Hub `ivokolarov/mangavibe`
-  (amd64 + arm64) on every push to `releases`, so published images always match a released version.
+  (amd64 + arm64) for every published release, tagged `latest`, the version (`1.4.0`) and the
+  commit, so published images always match a released version. Pre-releases don't get `latest`.
   Docker Hub is the install path in README.md because most Docker GUIs (e.g. Synology) search it by default.
 - **Safety**: a version is installed only if `import app.main` works in a separate process. After
   install the process re-runs the entrypoint with `exec`, so it works without Docker's auto-restart.
   A version that fails to start 3 times is replaced by the previous one by the entrypoint and
   remembered as failed. Database migrations only go forward, so going back is a last resort.
-- **Daily check, user decides**: the server asks GitHub once a day (unauthenticated API, 3 requests);
+- **Daily check, user decides**: the server asks GitHub once a day (unauthenticated API, 4 requests);
   the page shows a toast that stays until **Update now**, **Skip this version** (stored on the server,
   for all devices) or **Later** (this browser, one day).
 

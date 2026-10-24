@@ -471,12 +471,13 @@
           <div class="setting-row">
             <div class="label"><span>Running version</span><small x-text="versionText(upd?.current)"></small></div>
           </div>
-          <label class="setting-row"><span class="label">Check for updates every day<small x-text="`Asks GitHub (${upd?.repo || ''}, branch ${upd?.branch || ''}) and shows a message when a new version is out`"></small></span>
+          <label class="setting-row"><span class="label">Check for updates every day<small x-text="`Asks GitHub (${upd?.repo || ''}) for its newest release and shows a message when one is out`"></small></span>
             <select x-model="st.auto_update" @change="save('auto_update')"><option value="true">On</option><option value="false">Off</option></select></label>
           <div class="setting-row">
             <div class="label">
               <span x-text="upd?.available ? 'New version: ' + upd.available.short : 'You have the newest version'"></span>
               <small x-show="upd?.available" x-text="versionText(upd?.available)"></small>
+              <small x-show="upd?.available?.url"><a :href="upd?.available?.url" target="_blank" rel="noopener">What's new</a></small>
               <small x-text="checkedText"></small>
             </div>
             <button class="btn small" :disabled="checking || !upd?.supported" @click="checkUpdate()"
@@ -908,6 +909,7 @@
       <div>
         <strong x-text="a.needs_image ? 'A new MangaVibe version needs a new Docker image' : 'A new version of MangaVibe is available'"></strong>
         <small x-text="[a.short, when, a.message].filter(Boolean).join(' · ')"></small>
+        <small x-show="a.url"><a :href="a.url" target="_blank" rel="noopener">What's new</a></small>
         <small x-show="a.needs_image">See github.com/ivokolarov0/manga-vibe#updating</small>
         <div class="btn-row">
           <button class="btn small primary" x-show="!a.needs_image" @click="install()">Update now</button>

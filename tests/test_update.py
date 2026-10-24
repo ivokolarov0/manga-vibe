@@ -1,8 +1,10 @@
 """Auto-update: image checks, requirements diff, install/switch/rollback files, API. No network, no real pip."""
 import io
+import json
 import tarfile
 from pathlib import Path
 
+import httpx
 import pytest
 
 from app import config, updater
@@ -74,12 +76,14 @@ def test_new_requirements(image):
 
 def test_install_switch_and_cleanup(image):
     code = config.DATA_DIR / "code"
-    updater.latest = {"sha": SHA1, "date": "2026-10-01T10:00:00Z", "message": "First", "needs_image": False}
+    updater.latest = {"sha": SHA1, "version": "v1.0.0", "date": "2026-10-01T10:00:00Z", "message": "First",
+                      "needs_image": False}
     d1 = updater.install(SHA1, downloader=downloader(version_files()))
     assert d1 == code / SHA1 and (d1 / "app" / "main.py").exists()
     assert not (d1 / "README.md").exists()  # only the files the app needs
     assert (code / "current").read_text() == SHA1 and not (code / "previous").exists()
-    assert '"First"' in (d1 / ".info.json").read_text()
+    assert json.loads((d1 / ".info.json").read_text()) == {
+        "sha": SHA1, "version": "v1.0.0", "date": "2026-10-01T10:00:00Z", "message": "First"}
     assert image == []  # same packages as the image: pip is not run
 
     updater.install(SHA2, downloader=downloader(version_files(req=BASE_REQ + "natsort==8.4.0\n")))
@@ -136,14 +140,61 @@ def test_install_rejects_bad_sha(image):
 
 def test_current_version(image, monkeypatch):
     (config.IMAGE_DIR / "sha").write_text(SHA1 + "\n")
-    assert updater.current() == {"sha": SHA1, "date": None, "message": None, "builtin": True}
+    assert updater.current() == {"sha": SHA1, "version": None, "date": None, "message": None, "builtin": True}
+    updater.latest = {"sha": SHA1, "version": "v1.0.0", "date": "2026-10-01T00:00:00Z", "message": None}
+    assert updater.current()["version"] == "v1.0.0"  # the image is the newest release: show its tag
     d = config.DATA_DIR / "code" / SHA2
     (d / "app").mkdir(parents=True)
-    (d / ".info.json").write_text('{"date": "2026-10-02T00:00:00Z", "message": "Two"}')
+    (d / ".info.json").write_text('{"version": "v1.1.0", "date": "2026-10-02T00:00:00Z", "message": "Two"}')
     monkeypatch.setattr(updater, "__file__", str(d / "app" / "updater.py"))
-    assert updater.current() == {"sha": SHA2, "date": "2026-10-02T00:00:00Z", "message": "Two", "builtin": False}
+    assert updater.current() == {"sha": SHA2, "version": "v1.1.0", "date": "2026-10-02T00:00:00Z",
+                                 "message": "Two", "builtin": False}
     updater.mark_started()
     assert (d / ".ok").exists()
+
+
+def github(monkeypatch, release, dockerfile="FROM python\nRUN x\n"):
+    """Answer the updater's GitHub requests from memory. Returns the requested URLs."""
+    seen = []
+
+    def handler(req):
+        url = str(req.url)
+        seen.append(url)
+        if url.endswith("/releases/latest"):
+            return httpx.Response(200, json=release) if release else httpx.Response(404, json={})
+        if "/commits/" in url:
+            return httpx.Response(200, json={"sha": SHA2})
+        if url.endswith("/Dockerfile"):
+            return httpx.Response(200, text=dockerfile)
+        if url.endswith("/docker/entrypoint.sh"):
+            return httpx.Response(200, text="#!/bin/sh\nexec app\n")
+        return httpx.Response(404)
+
+    monkeypatch.setattr(updater, "_client", lambda: httpx.Client(transport=httpx.MockTransport(handler)))
+    return seen
+
+
+RELEASE = {"tag_name": "v1.4.0", "name": "v1.4.0", "published_at": "2026-10-20T08:00:00Z",
+           "html_url": "https://github.com/ivokolarov0/manga-vibe/releases/tag/v1.4.0", "body": "notes"}
+
+
+def test_fetch_latest_release(image, monkeypatch):
+    seen = github(monkeypatch, RELEASE)
+    info = updater.fetch_latest()
+    assert info == {"sha": SHA2, "version": "v1.4.0", "date": "2026-10-20T08:00:00Z", "message": None,
+                    "url": RELEASE["html_url"], "image": "", "needs_image": False}
+    assert seen[1].endswith("/commits/v1.4.0")  # the tag's commit is what gets installed
+    assert f"/{SHA2}/Dockerfile" in seen[2]
+
+    github(monkeypatch, {**RELEASE, "name": "Reader tap zones"}, dockerfile="FROM node\n")
+    info = updater.fetch_latest()
+    assert info["message"] == "Reader tap zones" and info["needs_image"]
+
+
+def test_no_release_yet(image, monkeypatch):
+    github(monkeypatch, None)
+    assert updater.check(force=True) is None
+    assert "published release" in updater.status["error"]
 
 
 def test_update_api(client, image, monkeypatch):
@@ -152,7 +203,7 @@ def test_update_api(client, image, monkeypatch):
     monkeypatch.setattr(updater, "fetch_latest", lambda: {"sha": SHA2, "date": "2026-10-02T00:00:00Z",
                                                            "message": "Two", "needs_image": False})
     info = client.post("/api/update/check").json()
-    assert info["available"]["short"] == "2222222" and not info["available"]["skipped"]
+    assert info["available"]["short"] == "2222222" and not info["available"]["skipped"]  # no tag: commit
     assert client.post("/api/update/skip", json={"sha": SHA2}).json()["available"]["skipped"]
     assert not client.delete("/api/update/skip").json()["available"]["skipped"]
     assert client.post("/api/update/install", json={"sha": SHA3}).status_code == 409  # not the newest
@@ -164,6 +215,9 @@ def test_update_api(client, image, monkeypatch):
 
     updater.latest["needs_image"] = True
     assert client.post("/api/update/install", json={"sha": SHA2}).status_code == 409
+
+    updater.latest["version"] = "v1.4.0"
+    assert client.get("/api/update").json()["available"]["short"] == "v1.4.0"
 
 
 def test_update_api_outside_docker(client):
