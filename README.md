@@ -32,6 +32,12 @@ unpacking them. Nothing is uploaded anywhere, and your files are never renamed o
 
 ## Install
 
+> [!CAUTION]
+> **Never make MangaVibe reachable from the internet.** Don't forward port 8090 in your router, and
+> don't put it behind a public address or reverse proxy. MangaVibe has **no login**: anyone who
+> finds it can read, download and change everything in it. To read away from home, use a VPN
+> instead. See [Reading away from home](#reading-away-from-home).
+
 MangaVibe runs in **Docker**, a free app that runs programs in their own sealed box. You set it
 up once, then MangaVibe updates itself. Open the steps for your system:
 
@@ -167,7 +173,8 @@ use **Add to Home Screen** so it opens full screen like an app. To find the comp
 - **Mac:** System Settings → Wi-Fi → **Details** next to your network → TCP/IP → **IP address**
 - **Synology:** the address you use for DSM
 
-The computer has to be on (and Docker Desktop running) while you read.
+The computer has to be on (and Docker Desktop running) while you read. To read away from home, use
+a VPN, never an open port: see [Reading away from home](#reading-away-from-home).
 
 ## Organizing your manga
 
@@ -229,8 +236,44 @@ If a new version doesn't start 3 times in a row, MangaVibe goes back to the prev
 
 ## Reading away from home
 
-Don't open port 8090 to the internet; the app has no login yet. Use a VPN such as **Tailscale**
-or your router's or NAS's VPN server, then open the same address as at home.
+> [!CAUTION]
+> **Do not open port 8090 to the internet.** It's the easy way to read outside your home, and it's
+> unsafe. MangaVibe is made for your home network only and has **no password or login**.
+
+**What "opening the port" means.** You make MangaVibe reachable from anywhere through your home's
+internet address. People usually do this by:
+
+- adding a **port forwarding** rule for 8090 in their router
+- putting the NAS or PC in the router's **DMZ**, or leaving **UPnP** on so apps open ports by themselves
+- setting up a **reverse proxy** with a public address: Synology's *Login Portal → Reverse Proxy*,
+  Nginx Proxy Manager, a Cloudflare tunnel without a login in front, or similar
+
+**What happens if you do.** Bots scan the whole internet for open ports all the time, so it will be
+found within days, even if you never share the address. Anyone who finds it can:
+
+- read and download your whole library, and see what you've been reading
+- change or wipe reading progress, statuses, titles, descriptions, posters and matches
+- disconnect plugins or break them, for example the MyAnimeList sync
+- slow down or overload your NAS or PC by starting scans over and over
+- reach any bug in MangaVibe or the packages it uses, straight from the internet
+
+Your manga files themselves stay safe, because they're mounted read-only. The login details plugins
+save, such as MyAnimeList's, are never sent to the browser. **Everything else is open to anyone.**
+
+**Do this instead: use a VPN.** A VPN lets your phone join your home network from anywhere, so
+MangaVibe stays private:
+
+1. **Tailscale** (free, easiest). Install it on the NAS or PC that runs MangaVibe (on a Synology:
+   **Package Center → Tailscale**) and on your phone, and sign in to the same account on both. Then
+   open `http://<the NAS or PC's Tailscale name or address>:8090` on your phone, from anywhere.
+   Nothing on your router changes.
+2. **Your NAS's or router's VPN server**, for example Synology's **VPN Server** package (WireGuard
+   or OpenVPN) or the VPN built into many routers. Connect to it on your phone, then open the same
+   address you use at home.
+
+**Not sure if you opened it by accident?** Check your router's *Port forwarding* (or *Virtual
+server*) list for 8090 and remove it, turn UPnP off if you don't need it, and remove any reverse
+proxy rule that points at port 8090.
 
 ## Customizing
 
