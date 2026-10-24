@@ -1052,14 +1052,9 @@ Your files are not touched. `
           if (e.status !== 409 || !e.detail.permissions) throw e;
           // the new version asks for permissions the installed one doesn't have
           const perms = e.detail.permissions;
-          if (!confirm(`${p.name} ${p.update.latest} asks for new permissions:
-
-` +
-                       perms.map((x) => `• ${x}`).join("
-") +
-                       "
-
-Allow them and install the update?")) { toast("Update not installed"); return; }
+          if (!confirm(`${p.name} ${p.update.latest} asks for new permissions:\n\n` +
+                       perms.map((x) => `• ${x}`).join("\n") +
+                       "\n\nAllow them and install the update?")) { toast("Update not installed"); return; }
           r = await install(perms);
         }
         this.plugins = r.plugins;
