@@ -272,3 +272,13 @@ Choices made where the spec was open. Newest at the bottom.
   anything.
 - **Only single-file plugins in the plugins folder** are updated. Built-in plugins come with the app;
   package folders would need a different download.
+
+## A page per plugin
+
+- **Settings → Plugins is a list; each plugin's settings are on its own page** (`#/settings/plugin-<id>`).
+  With the settings, buttons and updates of every plugin under it, the list got too long to scan. A
+  plugin gets a page (and a **Settings** button) only if it has settings, buttons or updates; the
+  built-in metadata plugins have nothing to set, so they stay one row with a toggle. The row still shows
+  the status line, and *Update X* when a new version is out, so nothing important hides behind the
+  button. **Uses:** (the permissions) is a bullet list, on the plugin's page, or in the row for a
+  plugin without a page; joined with dots it was a wall of text.

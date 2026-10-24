@@ -4,7 +4,8 @@
    Routes use the URL hash:
      #/?genre=..&read=..  library (filters in the URL)   #/series/12?tab=files  series page
      #/continue           continue reading               #/attention?tab=..     needs attention
-     #/settings           settings                       #/read/34?page=5       reader          */
+     #/settings           settings                       #/read/34?page=5       reader
+     #/settings/plugin-mal_profile_sync  one plugin's settings page                                   */
 "use strict";
 
 const STATUS_LABELS = { unread: "Unread", reading: "Reading", completed: "Completed",
@@ -920,7 +921,17 @@ function settingsView() {
   return {
     nav: SETTINGS_NAV,
     attNav: ATT_TABS,
-    get section() { return this.$store.app.sub || "library"; },
+    get section() {
+      const s = this.$store.app.sub || "library";
+      return s.startsWith("plugin-") ? "plugin" : s;
+    },
+    // the plugin whose page is open (#/settings/plugin-<id>)
+    get plugin() {
+      const s = this.$store.app.sub || "";
+      return s.startsWith("plugin-") ? this.plugins.find((p) => p.id === s.slice(7)) || null : null;
+    },
+    // only plugins with something to set up, run or update get a page
+    hasPluginPage(p) { return !!(p.settings.length || p.global_actions.length || p.update.supported); },
     go(sec) { location.replace(`#/settings/${sec}`); },
     attCount(k) { return this.$store.app.att?.[k]?.filter((x) => !x.ignored).length || 0; },
     st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, scan: {}, scanText: "", metaText: "", timers: [],

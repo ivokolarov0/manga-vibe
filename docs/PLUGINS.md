@@ -36,8 +36,8 @@ class Hello(Plugin):
 | **Change how the app looks** | `css = """ :root { --accent: #ff6fa8; } """` (loaded after the built-in styles, so it wins) |
 | **Metadata provider** | `is_provider = True`, implement `search(ctx, query, year)` → `list[Candidate]` and `fetch(ctx, provider_id)` → dict of series fields. Optional `url = "https://..."` links the site on the Metadata settings page |
 | **React to reading** | `on_book_started(ctx, book, series)`, `on_book_completed(ctx, book, series)`, `on_series_status_changed(ctx, series, old, new)` (see [Reading events](#reading-events)) |
-| **Settings boxes** in Settings → Plugins | `settings_fields = [SettingDef("client_id", "Client ID", help="...", secret=False)]`; the value is in `ctx.settings["client_id"]`. `secret=True` values are never sent back to the browser. With `options=[("auto", "Automatic"), ("manual", "Manual")]` and `default="auto"` it's a dropdown instead; `ctx.setting("key")` gives the saved value or the default |
-| **Buttons in Settings → Plugins** | `global_actions = [Action("sync", "Sync all")]` and `run_global_action(ctx, key)` returning a message |
+| **Settings boxes** on the plugin's page (Settings → Plugins → Settings) | `settings_fields = [SettingDef("client_id", "Client ID", help="...", secret=False)]`; the value is in `ctx.settings["client_id"]`. `secret=True` values are never sent back to the browser. With `options=[("auto", "Automatic"), ("manual", "Manual")]` and `default="auto"` it's a dropdown instead; `ctx.setting("key")` gives the saved value or the default |
+| **Buttons on the plugin's page** (Settings → Plugins → Settings) | `global_actions = [Action("sync", "Sync all")]` and `run_global_action(ctx, key)` returning a message |
 | **Status line** under the plugin in Settings | `status(ctx)` returning a short text, e.g. `"Connected as Ivo"` |
 | **Open a page** (e.g. a login) from a button | return `OpenUrl(url, message="")` from `run_action` or `run_global_action` |
 | **A web address of its own** (e.g. an OAuth callback) | `handle_web(ctx, path, params)` answers `GET /api/plugins/<id>/web/<path>`. Return a message (shown on a small page with a link back) or `OpenUrl(url)` to redirect; `None` = 404 |
@@ -148,7 +148,7 @@ class Tracker(Plugin):
 
 ## Updates
 
-A plugin that names its GitHub repo gets an **Updates** row in Settings → Plugins:
+A plugin that names its GitHub repo gets an **Updates** part on its page in Settings → Plugins:
 
 ```python
 class Tracker(Plugin):
