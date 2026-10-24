@@ -285,7 +285,8 @@
                           <span class="done-mark" x-show="b.completed">✓</span></a>
                         <a class="info" :href="'#/read/' + b.id">
                           <div class="label"><span x-text="b.label"></span>
-                            <span class="manual-mark" x-show="b.manual" title="Numbers set by you">✎</span></div>
+                            <span class="manual-mark" x-show="b.manual" title="Numbers set by you">✎</span>
+                            <template x-for="g in b.badges || []"><span class="book-badge" :title="g.name" x-text="g.text"></span></template></div>
                           <div class="err" x-show="b.error" x-text="b.error"></div>
                           <div class="meta" x-show="!b.error" x-text="bookState(b)"></div>
                           <div class="book-progress" x-show="!b.completed && b.page > 0"><i :style="`width:${progressPct(b)}%`"></i></div>

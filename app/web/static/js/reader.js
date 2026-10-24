@@ -5,7 +5,8 @@
 const Reader = (() => {
 
 const R = { book: null, page: 0, mode: "rtl", ui: false, saveTimer: null, wake: null, firstTap: true,
-  preloaded: new Map(), cameFromApp: false, hideTimer: null, sliding: false, hovering: false, drawer: false };
+  preloaded: new Map(), cameFromApp: false, hideTimer: null, sliding: false, hovering: false, drawer: false,
+  ov: null };  // plugin overlays (see "plugin overlays" below)
 const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
 const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left/right); the middle toggles the controls
 const TAP_EDGE = 0.2;   // one-handed layout: the narrow "previous" strip; the rest turns forward
@@ -34,6 +35,8 @@ const ICONS = {
   // locked: closed shackle; unlocked: shackle swung open, so the two are easy to tell apart
   lock: svg(`<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>`),
   unlock: svg(`<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>`),
+  overlay: svg(`<path d="M4 5h16v10H9l-5 4V5z"/><path d="M8 9h8M8 12h5"/>`),
+  plugin: svg(`<path d="M9 3v4M15 3v4M7 7h10v5a5 5 0 0 1-10 0V7zM12 17v4"/>`),
 };
 
 /* the hand the reader is held in (Settings → Reader): back, fullscreen and the options button sit on
@@ -85,8 +88,10 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   el.className = `fit-${settings.reader_fit || "screen"} ui-hidden ${R.mode} drawer-${drawerSide()}`
     + (R.drawer ? " drawer-open" : "");
   const paged = R.mode !== "vertical";
+  ovReset(book);
   el.innerHTML = `
-    ${paged ? `<div class="stage"><img alt=""></div>` : `<div class="vertical"></div>`}
+    ${paged ? `<div class="stage"><img alt=""><div class="ov-layer" id="r-ov"></div></div>` : `<div class="vertical"></div>`}
+    <div class="ov-status" id="r-ov-status" hidden></div>
     <div class="read-progress" id="r-progress">
       <span id="rp-cur"></span>
       <div class="rp-track">${Array.from({ length: book.page_count },
@@ -143,6 +148,10 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
         <button class="d-opt" id="r-fit">${ICONS.fit}<span>${FITS[settings.reader_fit || "screen"]}</span></button>
         ${paged ? `<button id="r-lock" class="icon"></button>` : ""}
       </div>
+      ${book.overlays.map((o) => `<button class="d-opt d-toggle" data-ov="${esc(o.plugin)}">${ICONS.overlay}
+        <span>${esc(o.label)}</span><b></b></button>`).join("")}
+      ${book.overlays.length ? `<button class="d-opt" id="r-ov-unhide" hidden>${ICONS.overlay}<span></span></button>` : ""}
+      ${book.actions.map((a, i) => `<button class="d-opt" data-act="${i}">${ICONS.plugin}<span>${esc(a.label)}</span></button>`).join("")}
       <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
       <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>Reader settings</span></a>
     </aside>`;
@@ -174,6 +183,10 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   const toNext = () => location.replace(`#/read/${book.next.id}?page=0`);
   if (book.prev) $("#r-prev").onclick = $("#r-cprev").onclick = toPrev;
   if (book.next) $("#r-next").onclick = $("#r-cnext").onclick = toNext;
+  el.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = () => ovToggle(b.dataset.ov)));
+  el.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => ovAction(book.actions[+b.dataset.act])));
+  if ($("#r-ov-unhide")) $("#r-ov-unhide").onclick = ovShowHidden;
+  ovUpdateButtons();
 
   if (R.mode === "vertical") setupVertical(); else setupPaged();
   requestWakeLock();
@@ -267,6 +280,7 @@ function setupPaged() {
   const stage = $("#reader .stage");
   img().onerror = () => toast("Could not load page " + (R.page + 1), 3000, "error");
   updateLockButton();
+  ovFollowImage();
   showPage(0);
 
   let start = null, lastTap = { t: 0, x: 0, y: 0 }, tapTimer = null;
@@ -457,6 +471,7 @@ function showPage(fromDir = 0) {
   updatePageUi();
   preload();
   saveProgress();
+  ovShow();
 }
 
 function preload() {
@@ -494,6 +509,7 @@ function goTo(i) {
     $("#reader .vertical").children[R.page]?.scrollIntoView();
     updatePageUi();
     saveProgress();
+    ovShow();
   } else showPage();
 }
 
@@ -525,12 +541,17 @@ function showEndCard() {
 
 function setupVertical() {
   const box = $("#reader .vertical");
+  // each page in a box of its own, so a plugin overlay can sit on top of it
   box.innerHTML = Array.from({ length: R.book.page_count }, (_, i) =>
-    `<img data-i="${i}" loading="lazy" src="${pageUrl(i)}" alt="">`).join("") +
+    `<div class="vpage" data-p="${i}"><img data-i="${i}" loading="lazy" src="${pageUrl(i)}" alt="">`
+    + `<div class="ov-layer"></div></div>`).join("") +
     `<div style="padding:40px 20px;text-align:center">
       ${R.book.next ? `<button class="btn primary" id="v-next">Next: ${esc(R.book.next.label)}</button>`
         : `<p class="muted">End of the series.</p>`}</div>`;
-  box.querySelectorAll("img").forEach((im) => (im.onload = () => im.classList.add("loaded")));
+  box.querySelectorAll("img").forEach((im) => (im.onload = () => {
+    im.classList.add("loaded");
+    ovFit(im.nextElementSibling);  // overlay boxes drawn before the image had a size
+  }));
   $("#v-next")?.addEventListener("click", () => location.replace(`#/read/${R.book.next.id}?page=0`));
   // current page = the image in the middle of the screen (robust to images loading late)
   let ticking = false;
@@ -539,16 +560,19 @@ function setupVertical() {
     ticking = true;
     requestAnimationFrame(() => {
       ticking = false;
-      const el = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
-      if (el?.dataset?.i !== undefined && +el.dataset.i !== R.page) {
-        R.page = +el.dataset.i;
+      // the middle of the screen may be over an overlay box: its page box says which page it is
+      const p = document.elementFromPoint(innerWidth / 2, innerHeight / 2)?.closest?.(".vpage")?.dataset.p;
+      if (p !== undefined && +p !== R.page) {
+        R.page = +p;
         updatePageUi();
         saveProgress();
+        ovShow();
       }
     });
   }, { passive: true });
   box.children[R.page]?.scrollIntoView();
   updatePageUi();
+  ovShow();
   box.addEventListener("click", (e) => {
     if (e.target.closest("button")) return;
     if (R.drawer) return setDrawer(false);
@@ -556,6 +580,215 @@ function setupVertical() {
     toggleUi();
   });
 }
+
+/* ---------------- plugin overlays ----------------
+   A plugin with an overlay (e.g. a translator) draws boxes over pages. Each one is a toggle in the
+   drawer, remembered per series on this device. The server answers per page with layers of boxes
+   whose positions are fractions of the page; a layer still `pending` is asked for again a little
+   later, while that page is still being read. In paged mode the layer copies the image's size and
+   transform (zoom, pan, swipe, slide), so it moves with the page without touching that code. */
+
+const OV_RETRY_MS = 2500;
+
+function ovReset(book) {
+  if (R.ov) {
+    R.ov.observers.forEach((o) => o.disconnect());
+    R.ov.timers.forEach((t) => clearTimeout(t));
+  }
+  R.ov = !book ? null : {
+    on: book.overlays.map((o) => o.plugin).filter((p) => ovSaved(book, p)),
+    pages: new Map(),     // page -> {layers, done}
+    loading: new Set(), timers: new Map(), observers: [],
+  };
+}
+
+function ovKey(book, plugin) { return `overlay:${plugin}:${book.series_id}`; }
+function ovSaved(book, plugin) {
+  try { return localStorage.getItem(ovKey(book, plugin)) === "1"; } catch { return false; }
+}
+
+function ovToggle(plugin) {
+  const on = !R.ov.on.includes(plugin);
+  try { localStorage.setItem(ovKey(R.book, plugin), on ? "1" : "0"); } catch {}
+  R.ov.on = on ? [...R.ov.on, plugin] : R.ov.on.filter((p) => p !== plugin);
+  ovForget();
+  ovUpdateButtons();
+}
+
+/* drop what was loaded (the toggles changed, or a plugin button may have changed the pages) */
+function ovForget() {
+  R.ov.timers.forEach((t) => clearTimeout(t));
+  R.ov.timers.clear();
+  R.ov.pages.clear();
+  $("#reader").querySelectorAll(".ov-layer").forEach((l) => (l.innerHTML = ""));
+  ovShow();
+}
+
+function ovUpdateButtons() {
+  $("#reader").querySelectorAll("[data-ov]").forEach((b) => {
+    const on = R.ov.on.includes(b.dataset.ov);
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on);
+    b.querySelector("b").textContent = on ? "On" : "Off";
+  });
+  const unhide = $("#r-ov-unhide");
+  if (unhide) {
+    const n = R.book.hidden_boxes || 0;
+    unhide.hidden = !n || !R.ov.on.length;
+    unhide.querySelector("span").textContent = `Show ${n} hidden ${n === 1 ? "box" : "boxes"}`;
+  }
+}
+
+async function ovAction(a) {
+  if (a.confirm && !confirm(a.confirm)) return;
+  try {
+    await showActionResult(await api(`/api/books/${R.book.id}/actions/${a.plugin}/${a.key}`, { method: "POST" }));
+  } catch (e) { toast(e.message, 6000, "error"); }
+  if (R.ov) ovForget();
+}
+
+/* pages whose overlay is wanted now: the page being read and the next one (vertical: also the previous) */
+function ovWanted(i) {
+  return R.mode === "vertical" ? Math.abs(i - R.page) <= 1 : i === R.page || i === R.page + 1;
+}
+
+function ovShow() {
+  if (!R.ov) return;
+  ovStatus();
+  if (!R.ov.on.length) return;
+  for (let i = R.page - 1; i <= R.page + 1; i++) {
+    if (i >= 0 && i < R.book.page_count && ovWanted(i)) ovLoad(i);
+  }
+  if (R.mode !== "vertical") ovDraw(R.page);  // the layer may still show the previous page
+}
+
+async function ovLoad(i) {
+  const ov = R.ov, book = R.book;
+  if (ov.pages.get(i)?.done) return ovDraw(i);
+  if (ov.loading.has(i)) return;
+  ov.loading.add(i);
+  let data = null;
+  try { data = await api(`/api/books/${book.id}/overlays/${i}?plugins=${encodeURIComponent(ov.on.join(","))}`); }
+  catch {}
+  ov.loading.delete(i);
+  if (R.ov !== ov) return;  // another book, or the toggles changed meanwhile
+  const layers = data ? data.layers : [{ pending: true, message: "Can't reach MangaVibe", boxes: [] }];
+  const done = layers.every((l) => !l.pending);
+  ov.pages.set(i, { layers, done });
+  ovDraw(i);
+  if (i === R.page) ovStatus();
+  if (!done) {
+    clearTimeout(ov.timers.get(i));
+    ov.timers.set(i, setTimeout(() => {
+      ov.timers.delete(i);
+      if (R.ov === ov && ovWanted(i)) ovLoad(i);
+    }, OV_RETRY_MS));
+  }
+}
+
+function ovLayer(i) {
+  if (R.mode === "vertical") return $(`#reader .vpage[data-p="${i}"] .ov-layer`);
+  return i === R.page ? $("#r-ov") : null;
+}
+
+function ovDraw(i) {
+  const layer = ovLayer(i);
+  if (!layer) return;
+  const layers = R.ov?.pages.get(i)?.layers || [];
+  const pct = (v) => `${(v * 100).toFixed(3)}%`;
+  // only plain class names from plugins: letters, digits, - and _
+  const cls = (s) => s.split(/\s+/).filter((c) => /^[\w-]+$/.test(c)).join(" ");
+  layer.innerHTML = layers.flatMap((l) => l.boxes.filter((b) => !b.hidden).map((b) =>
+    `<div class="ov-box ov-${esc(l.plugin)} ${cls(b.cls)}" style="left:${pct(b.x)};top:${pct(b.y)};`
+    + `width:${pct(b.w)};height:${pct(b.h)}"${b.title ? ` title="${esc(b.title)}"` : ""}>`
+    + `<span>${esc(b.text)}</span>`
+    // the × goes to the corner away from the nearer screen edge: the title bar is at the top, the
+    // controls card at the bottom, and either would cover it
+    + `<button class="ov-hide${b.y + b.h / 2 < 0.5 ? " low" : ""}" data-plugin="${esc(l.plugin)}" data-box="${esc(b.id)}" `
+    + `aria-label="Hide this box" title="Hide this box">×</button></div>`)).join("");
+  // the × must not count as a tap on the page (turning it or toggling the controls)
+  layer.querySelectorAll(".ov-hide").forEach((btn) => {
+    for (const type of ["pointerdown", "pointerup"]) btn.addEventListener(type, (e) => e.stopPropagation());
+    btn.onclick = (e) => { e.stopPropagation(); ovHide(i, btn.dataset.plugin, btn.dataset.box); };
+  });
+  ovFit(layer);
+}
+
+/* the owner hid one box: gone at once, remembered on the server (all devices) */
+async function ovHide(i, plugin, box) {
+  const entry = R.ov.pages.get(i);
+  const b = entry?.layers.find((l) => l.plugin === plugin)?.boxes.find((x) => x.id === box);
+  if (b) b.hidden = true;
+  ovDraw(i);
+  restartHideTimer();
+  try {
+    const r = await api(`/api/books/${R.book.id}/overlays/${i}/hidden`, { method: "PUT", body: { plugin, box, hidden: true } });
+    R.book.hidden_boxes = r.hidden_boxes;
+    ovUpdateButtons();
+    toast("Box hidden. Reader options → Show hidden boxes brings it back.");
+  } catch (e) {
+    if (b) b.hidden = false;
+    ovDraw(i);
+    toast(e.message, 6000, "error");
+  }
+}
+
+async function ovShowHidden() {
+  try {
+    await api(`/api/books/${R.book.id}/overlays/hidden`, { method: "DELETE" });
+    R.book.hidden_boxes = 0;
+    ovUpdateButtons();
+    ovForget();
+  } catch (e) { toast(e.message, 6000, "error"); }
+}
+
+/* the largest font size at which each box's text fits inside it */
+function ovFit(layer) {
+  for (const box of layer.children) {
+    const span = box.firstChild;
+    const h = box.clientHeight, w = box.clientWidth;
+    if (!h || !w) continue;  // not laid out yet (image still loading): the resize watcher calls again
+    let lo = 5, hi = Math.max(6, Math.min(h * 0.6, 64));
+    for (let n = 0; n < 7; n++) {
+      const mid = (lo + hi) / 2;
+      box.style.fontSize = `${mid}px`;
+      if (span.offsetHeight <= h && span.scrollWidth <= w) lo = mid; else hi = mid;
+    }
+    box.style.fontSize = `${lo}px`;
+  }
+}
+
+/* paged mode: keep the layer exactly over the image: same box, same transform, same fade */
+function ovFollowImage() {
+  const el = img(), layer = $("#r-ov");
+  if (!el || !layer) return;
+  const follow = () => {
+    Object.assign(layer.style, { left: `${el.offsetLeft}px`, top: `${el.offsetTop}px`,
+      width: `${el.offsetWidth}px`, height: `${el.offsetHeight}px`,
+      transform: el.style.transform, transition: el.style.transition, opacity: el.style.opacity });
+  };
+  const mo = new MutationObserver(follow);
+  mo.observe(el, { attributes: true, attributeFilter: ["style", "src"] });
+  const ro = new ResizeObserver(() => { follow(); ovFit(layer); });
+  ro.observe(el);
+  R.ov.observers.push(mo, ro);
+  follow();
+}
+
+/* the small line at the top: what the overlay of the current page is doing */
+function ovStatus() {
+  const el = $("#r-ov-status");
+  if (!el) return;
+  const entry = R.ov?.on.length ? R.ov.pages.get(R.page) : null;
+  const msg = entry ? entry.layers.map((l) => l.message || (l.pending ? "Working…" : "")).filter(Boolean)[0] : "";
+  el.hidden = !msg;
+  el.textContent = msg || "";
+  el.classList.toggle("busy", !!entry && !entry.done);
+}
+
+addEventListener("resize", () => {
+  if (R.ov && R.mode === "vertical") $("#reader").querySelectorAll(".ov-layer").forEach(ovFit);
+});
 
 /* ---------------- controls: show/hide, auto-hide after a few seconds ----------------
    Tap/click toggles the bars. Once shown, they hide on their own after `reader_autohide`
@@ -671,6 +904,7 @@ function closeReader() {
   if ($("#reader").hidden) return;
   const saved = saveProgress(true);
   R.wake?.release?.().catch(() => {});
+  ovReset(null);
   R.book = null;
   R.firstTap = true;
   clearTimeout(R.hideTimer);

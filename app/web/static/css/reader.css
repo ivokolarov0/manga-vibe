@@ -59,16 +59,115 @@
       overflow-x: hidden;
       overflow-y: auto;
 
+      /* one box per page, holding the image and its plugin overlay */
+      & .vpage {
+        position: relative;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
       & img {
         display: block;
         width: 100%;
-        max-width: 900px;
         min-height: 40vh;
-        margin: 0 auto;
 
         &.loaded {
           min-height: 0;
         }
+      }
+
+      & .ov-layer {
+        inset: 0;
+      }
+    }
+
+    /* plugin overlays (e.g. translations): boxes placed in % of the page. In paged mode reader.js
+       keeps the layer on the image (size and transform); in vertical mode it fills its page box. */
+    & .ov-layer {
+      position: absolute;
+      transform-origin: center center;
+      pointer-events: none;
+    }
+
+    & .ov-box {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;  /* the × sits on the corner, half outside; the text is sized to fit inside */
+      padding: 0;
+      background: #fff;
+      border-radius: 0.5em;
+      color: #111;
+      font-family: var(--overlay-font, "Comic Neue", "Comic Sans MS", "Segoe Print", system-ui, sans-serif);
+      font-weight: 600;
+      line-height: 1.12;
+      text-align: center;
+      /* words stay whole: one that doesn't fit makes reader.js pick a smaller font instead */
+      overflow-wrap: normal;
+      pointer-events: auto;  /* a box's title (e.g. the original text) shows on hover */
+
+      & span {
+        max-width: 100%;
+        padding: 0 0.15em;
+      }
+
+      /* × to hide a box: only while the reader's controls are showing, so it never covers the text
+         while reading */
+      & .ov-hide {
+        position: absolute;
+        top: -9px;
+        right: -9px;
+        z-index: 1;
+        display: none;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        background: rgba(20, 21, 26, 0.85);
+        border: 0;
+        border-radius: 50%;
+        color: #fff;
+        font: 600 15px/1 system-ui, sans-serif;
+        cursor: pointer;
+
+        &.low {
+          top: auto;
+          bottom: -9px;
+        }
+      }
+    }
+
+    &:not(.ui-hidden) .ov-box .ov-hide {
+      display: grid;
+    }
+
+    & .ov-status {
+      position: absolute;
+      top: calc(10px + env(safe-area-inset-top, 0px));
+      left: 50%;
+      z-index: 2;
+      max-width: 80vw;
+      padding: 4px 12px;
+      overflow: hidden;
+      background: rgba(20, 21, 26, 0.85);
+      border-radius: 999px;
+      color: #e6e7ea;
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      pointer-events: none;
+      transform: translateX(-50%);
+
+      &.busy::before {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 8px;
+        background: var(--accent);
+        border-radius: 50%;
+        content: "";
+        animation: ov-pulse 1s ease-in-out infinite alternate;
       }
     }
 
@@ -570,6 +669,23 @@
       text-decoration: none;
     }
 
+    /* a plugin overlay switch: "Translation      On" */
+    & .d-toggle {
+      & span {
+        flex: 1;
+      }
+
+      & b {
+        color: #9aa0ab;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      &.on b {
+        color: var(--accent);
+      }
+    }
+
     & .endcard {
       position: absolute;
       inset: 0;
@@ -594,5 +710,10 @@
       color: #888;
       transform: translate(-50%, -50%);
     }
+  }
+
+  @keyframes ov-pulse {
+    from { opacity: 0.35; }
+    to { opacity: 1; }
   }
 }

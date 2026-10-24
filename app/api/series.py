@@ -15,7 +15,7 @@ from app.db import get_db
 from app.metadata import service as metadata, worker as metadata_worker
 from app.metadata.http import ProviderError
 from app.models import Book, Link, PluginField, Progress, Series, SeriesTag, Tag
-from app.plugins import Context, action_result, manager as plugins
+from app.plugins import Context, action_result, implements, manager as plugins
 
 router = APIRouter(prefix="/api")
 log = logging.getLogger("mangavibe.plugins")
@@ -220,7 +220,25 @@ def series_books(series_id: int, all: bool = False, db=Depends(get_db)):
         q = q.filter(Book.hidden.is_(False))
     books = q.order_by(Book.sort_index).all()
     prog = {p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]))}
-    return [book_dict(b, prog.get(b.id)) for b in books]
+    badges = _book_badges(db, books)
+    return [{**book_dict(b, prog.get(b.id)), "badges": badges.get(b.id, [])} for b in books]
+
+
+def _book_badges(db, books):
+    """{book_id: [{"plugin", "text"}]} from the plugins' book_badges(). A broken one shows no badges."""
+    out = {}
+    for p in plugins.enabled():
+        if not implements(p, "book_badges"):
+            continue
+        try:
+            labels = p.book_badges(Context(p, db), books) or {}
+        except Exception:
+            log.error("Plugin %s failed in book_badges:\n%s", p.id, traceback.format_exc())
+            continue
+        for book_id, text in labels.items():
+            if text:
+                out.setdefault(book_id, []).append({"plugin": p.id, "name": p.name, "text": str(text)})
+    return out
 
 
 @router.get("/series/{series_id}/poster")

@@ -273,7 +273,7 @@ class PluginToggle(BaseModel):
 def toggle_plugin(plugin_id: str, body: PluginToggle, db=Depends(get_db)):
     if plugin_id not in plugins.plugins:
         raise HTTPException(404, "Plugin not found")
-    (plugins.disabled.discard if body.enabled else plugins.disabled.add)(plugin_id)
+    plugins.set_enabled(plugin_id, body.enabled)
     set_setting(db, "plugins_disabled", sorted(plugins.disabled))
     db.commit()
     return {"ok": True}
