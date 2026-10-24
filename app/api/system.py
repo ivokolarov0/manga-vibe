@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from sqlalchemy import func
 
-from app import config
+from app import config, plugin_updates
 from app.api.common import get_or_404
 from app.db import get_db, get_setting, set_setting
 from app.models import Library, Series
@@ -187,7 +187,7 @@ def _plugin_dict(p, db):
                           "saved": bool(saved.get(f.key))} for f in p.settings_fields],
             "global_actions": [{"key": a.key, "label": a.label, "confirm": a.confirm}
                                for a in p.global_actions],
-            "status": _plugin_status(p, db)}
+            "status": _plugin_status(p, db), "update": plugin_updates.info(db, p)}
 
 
 @router.get("/plugins")
@@ -276,6 +276,47 @@ def toggle_plugin(plugin_id: str, body: PluginToggle, db=Depends(get_db)):
     set_setting(db, "plugins_disabled", sorted(plugins.disabled))
     db.commit()
     return {"ok": True}
+
+
+def _installed_plugin(plugin_id):
+    p = plugins.plugins.get(plugin_id)  # switched-off plugins can be updated too
+    if p is None:
+        raise HTTPException(404, "Plugin not found")
+    if not plugin_updates.path_of(p):
+        raise HTTPException(400, "MangaVibe can't update this plugin: it doesn't name a GitHub repo, "
+                                 "or it isn't a single file in the plugins folder")
+    return p
+
+
+@router.post("/plugins/{plugin_id}/updates/skip")
+def skip_plugin_update(plugin_id: str, db=Depends(get_db)):
+    p = _installed_plugin(plugin_id)
+    plugin_updates.skip(db, p.id)
+    return _plugin_dict(p, db)
+
+
+@router.delete("/plugins/{plugin_id}/updates/skip")
+def unskip_plugin_update(plugin_id: str, db=Depends(get_db)):
+    p = _installed_plugin(plugin_id)
+    plugin_updates.unskip(db, p.id)
+    return _plugin_dict(p, db)
+
+
+@router.post("/plugins/{plugin_id}/updates/check")
+def check_plugin_update(plugin_id: str, db=Depends(get_db)):
+    p = _installed_plugin(plugin_id)
+    plugin_updates.check(db, p)
+    return _plugin_dict(p, db)
+
+
+@router.post("/plugins/{plugin_id}/updates/install")
+def install_plugin_update(plugin_id: str, db=Depends(get_db)):
+    _installed_plugin(plugin_id)
+    try:
+        message = plugin_updates.install(db, plugin_id)
+    except plugin_updates.UpdateError as e:
+        raise HTTPException(400, str(e))
+    return {"message": message, **list_plugins(db)}
 
 
 @router.post("/plugins/reload")

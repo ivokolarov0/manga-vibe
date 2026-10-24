@@ -490,6 +490,28 @@
                   </div>
                 </div>
               </template>
+              <!-- updates from the plugin's GitHub releases -->
+              <template x-if="p.update.supported">
+                <div class="plugin-extra">
+                  <div class="setting-row">
+                    <div class="label"><span>Updates</span><small x-text="pluginUpdateText(p)"></small></div>
+                  </div>
+                  <div class="btn-row">
+                    <button class="btn small" :disabled="busyAction === p.id + ':update'"
+                            @click="checkPluginUpdate(p)">Check for updates</button>
+                    <template x-if="p.update.available && !p.update.skipped">
+                      <span class="btn-row">
+                        <button class="btn small primary" :disabled="busyAction === p.id + ':update'"
+                                @click="installPluginUpdate(p)" x-text="`Update to ${p.update.latest}`"></button>
+                        <button class="btn small" @click="skipPluginUpdate(p, true)">Skip this version</button>
+                      </span>
+                    </template>
+                    <button class="btn small" x-show="p.update.skipped" @click="skipPluginUpdate(p, false)">Show it again</button>
+                    <a class="btn small" x-show="p.update.available && p.update.url" :href="p.update.url"
+                       target="_blank" rel="noopener noreferrer">What's new ↗</a>
+                  </div>
+                </div>
+              </template>
             </div>
           </template>
           <p class="muted" x-show="!plugins.length">No plugins installed.</p>

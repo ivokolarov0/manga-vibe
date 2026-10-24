@@ -104,6 +104,7 @@ class Plugin:
     css = ""             # extra CSS for the web app (loaded after the built-in styles, so it wins)
     settings_fields: list[SettingDef] = []  # text boxes in Settings -> Plugins
     global_actions: list[Action] = []       # buttons in Settings -> Plugins (not tied to a series)
+    repo = ""  # "owner/name" on GitHub: its releases update this plugin (see app/plugin_updates.py)
 
     # --- scan hooks -------------------------------------------------------
     def on_book_scanned(self, ctx, book, parsed):
@@ -275,6 +276,7 @@ class PluginManager:
     def __init__(self):
         self.plugins: dict[str, Plugin] = {}
         self.errors: dict[str, str] = {}   # file name -> error text
+        self.paths: dict[str, Path] = {}   # plugin id -> the file it was loaded from
         self.disabled: set[str] = set()
         self.base_url = "http://localhost:8080"  # updated from each request (see main.py)
         self._queue = queue.Queue()
@@ -284,6 +286,7 @@ class PluginManager:
     def load(self, folders=None):
         self.plugins.clear()
         self.errors.clear()
+        self.paths.clear()
         folders = folders if folders is not None else [Path(__file__).parent / "builtin",
                                                        config.PLUGINS_DIR]
         for folder in folders:
@@ -317,6 +320,7 @@ class PluginManager:
                 if p.id in self.plugins:
                     raise ValueError(f"duplicate plugin id '{p.id}'")
                 self.plugins[p.id] = p
+                self.paths[p.id] = path
         except Exception as e:  # a broken plugin must never stop the app
             self.errors[path.name] = f"{type(e).__name__}: {e}"
             log.error("Could not load plugin %s:\n%s", path, traceback.format_exc())

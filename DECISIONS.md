@@ -251,3 +251,19 @@ Choices made where the spec was open. Newest at the bottom.
   `None` for "unknown". A crashing `get_choice` only hides its dropdown; the page still opens.
 - **`ProviderError.status`** carries the HTTP code, so a plugin can tell "not found" (e.g. removing
   something that's already gone) from a real failure.
+
+
+## Plugin updates from GitHub releases
+
+- **A plugin names its repo** (`repo = "owner/name"`) and is updated from that repo's newest published
+  release: the file with the installed file's name, at the release's tag. Releases, not the main
+  branch, so a merge doesn't reach users until the author publishes it, the same as the app itself.
+- **Never installed by itself: Update or Skip.** A plugin is code with full access to MangaVibe's data,
+  so new code only goes in when the owner presses Update. The daily check (which follows the app's
+  "Check for updates every day" setting and `AUTO_UPDATE=0`) only looks. A skipped version isn't
+  offered again; a newer release is.
+- **The new file is loaded on its own first** and must define a plugin with the same id; otherwise
+  nothing changes. It's compiled from its text, not from a cached .pyc, which could belong to an
+  earlier download of the same size and time. The old file goes to `plugins/.backup/`.
+- **Only single-file plugins in the plugins folder** are updated. Built-in plugins come with the app;
+  package folders would need a different download.
