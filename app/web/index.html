@@ -426,6 +426,10 @@
             <select x-model="st.reader_tap_layout" @change="save('reader_tap_layout')"><option value="default">Left and right sides</option><option value="one-handed">One-handed</option><option value="off">Off (swipe only)</option></select></label>
           <label class="setting-row" x-show="st.reader_tap_layout !== 'off'"><span class="label">Invert tap zones<small>In right to left, tap the right side for the next page. Swiping stays the same</small></span>
             <select x-model="st.reader_tap_invert" @change="save('reader_tap_invert')"><option value="false">Off</option><option value="true">On</option></select></label>
+          <label class="setting-row"><span class="label">Overlay box background<small>Plugin boxes over the page, e.g. translations. Lower shows the art underneath</small></span>
+            <select x-model="st.overlay_opacity" @change="save('overlay_opacity')"><option value="100">Solid</option><option value="75">75%</option><option value="50">50%</option><option value="25">25%</option><option value="0">See-through</option></select></label>
+          <label class="setting-row"><span class="label">Overlay text outline<small>A white outline around the letters, so they stay readable over the art</small></span>
+            <select x-model="st.overlay_outline" @change="save('overlay_outline')"><option value="off">Off</option><option value="thin">Thin</option><option value="thick">Thick</option></select></label>
         </section>
 
         <!-- metadata -->

@@ -135,7 +135,7 @@ class Notes(Plugin):
     id = "notes"
     name = "Notes"
     overlay_label = "Notes"
-    css = ".ov-box.note { background: #ffe680; }"   # boxes are white with black text unless styled
+    css = ".ov-box.note { --ov-bg: #ffe680; }"   # boxes are white with black text unless styled
 
     def page_overlay(self, ctx, book, page):
         text = ctx.get_page_data(book, page)
@@ -148,6 +148,11 @@ class Notes(Plugin):
   any page size and zoom. The text is sized to fill its box. `title` shows when the mouse is over the
   box (e.g. the original text), `cls` adds CSS classes for the plugin's `css`. Every box also has the
   classes `ov-box` and `ov-<plugin id>`.
+- **The reader chooses how see-through boxes are, and a white outline around the text** (Settings →
+  Reader, and in the reader options while an overlay is on). To keep these working, give a box its
+  colour with `--ov-bg` rather than `background`, and change the outline colour with `--ov-outline`
+  if your text is light (e.g. `--ov-bg: #000; --ov-outline: #000; color: #fff`). A plugin that sets
+  `--ov-bg-opacity` or `--ov-text-stroke` on its boxes overrides the reader's choice.
 - **The owner can hide single boxes**: with the reader's controls showing, each box has a ×. MangaVibe
   remembers it by the box's position (`x,y` to 3 decimals) and leaves it out, so the plugin needs to
   do nothing. A box that comes back at the same place after the plugin redid the page stays hidden.

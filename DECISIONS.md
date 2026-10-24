@@ -311,3 +311,10 @@ Choices made where the spec was open. Newest at the bottom.
   text while reading, and it goes to the box corner away from the nearer bar (title bar at the top,
   controls card at the bottom) so the bar can't swallow the tap. Hidden boxes are kept on the server
   (all devices), keyed by position, so they stay hidden when the plugin redoes the page.
+- **How boxes look is a reader setting, not a plugin one** (issue #78). Box opacity and a white outline
+  around the text apply to every overlay plugin, so they're two reader settings (Settings → Reader,
+  and quick switches in the reader options while an overlay is on), set as CSS variables on the
+  reader (`--ov-bg-opacity`, `--ov-text-stroke`). The background is `color-mix()` of `--ov-bg` with
+  transparent, so a plugin that colours its boxes with `--ov-bg` keeps the opacity setting. The outline
+  is `-webkit-text-stroke` with `paint-order: stroke fill`, so it sits behind the letters, and the
+  text gets padding of half the stroke so the fitted text isn't cut off at the box edge.

@@ -31,7 +31,8 @@ class PageInfo(Plugin):
     overlay_label = "Page info"
     book_actions = [Action("all", "Prepare every page"), Action("clear", "Forget this book")]
     permissions = ["Reads page images"]
-    css = ".ov-box.page-info { background: rgba(0, 0, 0, .7); color: #fff; border-radius: 4px; }"
+    # --ov-bg rather than background, so the reader's box opacity setting still applies
+    css = ".ov-box.page-info { --ov-bg: rgb(0 0 0 / .7); --ov-outline: #000; color: #fff; border-radius: 4px; }"
 
     def __init__(self):
         self.jobs = queue.Queue()
