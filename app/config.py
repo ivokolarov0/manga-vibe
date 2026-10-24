@@ -27,9 +27,8 @@ CUSTOM_CSS = DATA_DIR / "custom.css"
 WEB_DIR = Path(__file__).parent / "web"
 STATIC_DIR = WEB_DIR / "static"   # css/, js/, icons/, manifest.json
 
-# auto-update (app/updater.py): the code comes from this GitHub branch; AUTO_UPDATE=0 turns it off
+# auto-update (app/updater.py): the code comes from this repo's newest GitHub release; AUTO_UPDATE=0 turns it off
 UPDATE_REPO = _env("UPDATE_REPO", "ivokolarov0/manga-vibe")
-UPDATE_BRANCH = _env("UPDATE_BRANCH", "releases")
 AUTO_UPDATE = _env("AUTO_UPDATE", "1") != "0"
 IMAGE_DIR = Path(_env("IMAGE_DIR", "/opt/mangavibe/image"))  # copies of the files the image was built from
 ENTRYPOINT = Path(_env("ENTRYPOINT", "/entrypoint.sh"))
