@@ -4,14 +4,15 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import String, and_, case, cast, exists, func, or_, select
 
-from app.api.common import (TITLE_FIELDS, book_dict, continue_target, get_or_404, now, series_card,
-                            series_counts, title_lang, visible_books_query)
+from app.api.common import (READING_STATUSES, TITLE_FIELDS, book_dict, continue_target,
+                            emit_reading_events, get_or_404, now, series_card, series_counts,
+                            status_of, title_lang, visible_books_query)
 from app import config
 from app.db import get_db
 from app.metadata import service as metadata, worker as metadata_worker
 from app.metadata.http import ProviderError
 from app.models import Book, Link, PluginField, Progress, Series, SeriesTag, Tag
-from app.plugins import Context, manager as plugins
+from app.plugins import Context, action_result, manager as plugins
 
 router = APIRouter(prefix="/api")
 
@@ -178,13 +179,13 @@ class SeriesPatch(BaseModel):
     clear_reading_status: bool = False
 
 
-READING_STATUSES = {"plan_to_read", "reading", "completed", "on_hold", "dropped"}
 READER_MODES = {"rtl", "ltr", "vertical"}
 
 
 @router.patch("/series/{series_id}")
 def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
+    old_status = status_of(db, s)
     if body.reading_status is not None:
         if body.reading_status not in READING_STATUSES:
             raise HTTPException(400, "Unknown reading status")
@@ -200,6 +201,7 @@ def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db)):
     if body.favorite is not None:
         s.favorite = body.favorite
     db.commit()
+    emit_reading_events(db, s, old_status)
     return {"ok": True}
 
 
@@ -230,6 +232,9 @@ def series_poster(series_id: int, size: str = "", db=Depends(get_db)):
 
 
 def _set_read(db, series_id, completed: bool, up_to_book: int | None = None):
+    series = get_or_404(db, Series, series_id)
+    old_status = status_of(db, series)
+    newly_read = []
     books = visible_books_query(db, series_id).all()
     if up_to_book is not None:
         idx = next((i for i, b in enumerate(books) if b.id == up_to_book), None)
@@ -242,10 +247,13 @@ def _set_read(db, series_id, completed: bool, up_to_book: int | None = None):
             if p is None:
                 p = Progress(book_id=b.id)
                 db.add(p)
+            if not p.completed:
+                newly_read.append(b.id)
             p.completed, p.page, p.updated_at = True, max(b.page_count - 1, 0), now()
         elif p is not None:
             db.delete(p)
     db.commit()
+    emit_reading_events(db, series, old_status, completed=newly_read)
     return {"ok": True, "count": len(books)}
 
 
@@ -290,12 +298,12 @@ def run_action(series_id: int, plugin_id: str, action_key: str, db=Depends(get_d
     if p is None or action_key not in {a.key for a in p.actions}:
         raise HTTPException(404, "Action not found")
     try:
-        msg = p.run_action(Context(p, db), action_key, s)
+        result = p.run_action(Context(p, db), action_key, s)
         db.commit()
     except Exception as e:
         db.rollback()
         raise HTTPException(500, f"Plugin error: {type(e).__name__}: {e}")
-    return {"message": str(msg or "Done")}
+    return action_result(result)
 
 
 # ---------------------------------------------------------------- metadata matching

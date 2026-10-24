@@ -654,8 +654,9 @@ function seriesView() {
     editInfo(tab = "info") { this.$store.app.openEdit(this.s.id, () => this.reload(), tab); },
     async runAction(a) {
       if (a.confirm && !confirm(a.confirm)) return;
-      try { toast((await api(`/api/series/${this.s.id}/actions/${a.plugin}/${a.key}`, { method: "POST" })).message, 6000); }
+      try { await showActionResult(await api(`/api/series/${this.s.id}/actions/${a.plugin}/${a.key}`, { method: "POST" })); }
       catch (e) { toast(e.message, 6000, "error"); }
+      this.reload();  // the plugin may have changed the status or its fields
     },
     setTab(t) { location.replace(`#/series/${this.s.id}${t ? "?tab=" + t : ""}`); },
 
@@ -994,6 +995,27 @@ Your files are not touched. `
     async togglePlugin(p) {
       await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } });
       if (p.provider) this.loadProviders();
+      this.refreshPlugins();  // a switched-on plugin shows its settings and status
+    },
+    async refreshPlugins() {
+      const r = await api("/api/plugins").catch(() => null);
+      if (r) { this.plugins = r.plugins; this.pluginErrors = r.errors; }
+    },
+    async savePluginSetting(p, f) {
+      try {
+        const fresh = await api(`/api/plugins/${p.id}/settings`, { method: "PUT", body: { [f.key]: f.value } });
+        Object.assign(p, fresh);
+        toast("Saved");
+      } catch (e) { toast(e.message, 6000, "error"); }
+    },
+    busyAction: "",
+    async runGlobalAction(p, a) {
+      if (a.confirm && !confirm(a.confirm)) return;
+      this.busyAction = p.id + a.key;
+      try { await showActionResult(await api(`/api/plugins/${p.id}/actions/${a.key}`, { method: "POST" })); }
+      catch (e) { toast(e.message, 6000, "error"); }
+      finally { this.busyAction = ""; }
+      this.refreshPlugins();
     },
     async reloadPlugins() {
       const r = await api("/api/plugins/reload", { method: "POST" });

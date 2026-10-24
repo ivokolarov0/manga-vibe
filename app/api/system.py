@@ -1,9 +1,11 @@
 """Health, libraries, scanning, settings and plugins."""
+import html
 import os
 import string
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
 from sqlalchemy import func
@@ -12,7 +14,7 @@ from app import config
 from app.api.common import get_or_404
 from app.db import get_db, get_setting, set_setting
 from app.models import Library, Series
-from app.plugins import manager as plugins
+from app.plugins import Context, OpenUrl, action_result, implements, manager as plugins
 from app.scanner import walker
 from app.scanner.parser import natural_key
 
@@ -163,16 +165,99 @@ def put_settings(body: dict, db=Depends(get_db)):
     return get_settings(db)
 
 
+def _plugin_status(p, db):
+    if p.id in plugins.disabled or not implements(p, "status"):
+        return ""
+    try:
+        return str(p.status(Context(p, db)) or "")
+    except Exception as e:  # a broken status line must not break the Settings page
+        return f"Error: {type(e).__name__}: {e}"
+
+
+def _plugin_dict(p, db):
+    saved = Context(p, db).settings
+    return {"id": p.id, "name": p.name, "version": p.version,
+            "description": p.description, "enabled": p.id not in plugins.disabled,
+            "provider": p.is_provider, "fields": [f.label for f in p.fields],
+            "actions": [a.label for a in p.actions],
+            "settings": [{"key": f.key, "label": f.label, "help": f.help, "secret": f.secret,
+                          "value": "" if f.secret else str(saved.get(f.key) or ""),
+                          "saved": bool(saved.get(f.key))} for f in p.settings_fields],
+            "global_actions": [{"key": a.key, "label": a.label, "confirm": a.confirm}
+                               for a in p.global_actions],
+            "status": _plugin_status(p, db)}
+
+
 @router.get("/plugins")
-def list_plugins():
-    return {
-        "plugins": [{"id": p.id, "name": p.name, "version": p.version,
-                     "description": p.description, "enabled": p.id not in plugins.disabled,
-                     "provider": p.is_provider, "fields": [f.label for f in p.fields],
-                     "actions": [a.label for a in p.actions]}
-                    for p in plugins.plugins.values()],
-        "errors": plugins.errors,
-    }
+def list_plugins(db=Depends(get_db)):
+    return {"plugins": [_plugin_dict(p, db) for p in plugins.plugins.values()],
+            "errors": plugins.errors}
+
+
+def _enabled_plugin(plugin_id):
+    p = plugins.get(plugin_id)
+    if p is None:
+        raise HTTPException(404, "Plugin not found or switched off")
+    return p
+
+
+@router.put("/plugins/{plugin_id}/settings")
+def save_plugin_settings(plugin_id: str, body: dict, db=Depends(get_db)):
+    """Save the plugin's Settings text boxes. Only the keys it declared; "" clears a value."""
+    p = _enabled_plugin(plugin_id)
+    ctx = Context(p, db)
+    values = ctx.settings
+    for f in p.settings_fields:
+        if f.key in body:
+            v = str(body[f.key] or "").strip()
+            if v:
+                values[f.key] = v
+            else:
+                values.pop(f.key, None)
+    ctx.save_settings(values)
+    db.commit()
+    return _plugin_dict(p, db)
+
+
+@router.post("/plugins/{plugin_id}/actions/{action_key}")
+def run_global_action(plugin_id: str, action_key: str, db=Depends(get_db)):
+    p = _enabled_plugin(plugin_id)
+    if action_key not in {a.key for a in p.global_actions}:
+        raise HTTPException(404, "Action not found")
+    try:
+        result = p.run_global_action(Context(p, db), action_key)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Plugin error: {type(e).__name__}: {e}")
+    return action_result(result)
+
+
+@router.get("/plugins/{plugin_id}/web/{path:path}")
+def plugin_web(plugin_id: str, path: str, request: Request, db=Depends(get_db)):
+    """A page a plugin answers itself, e.g. where a website sends you back after logging in."""
+    p = _enabled_plugin(plugin_id)
+    if not implements(p, "handle_web"):
+        raise HTTPException(404, "This plugin has no web pages")
+    try:
+        result = p.handle_web(Context(p, db), path, dict(request.query_params))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        result = f"{p.name} failed: {type(e).__name__}: {e}"
+    if isinstance(result, OpenUrl):
+        return RedirectResponse(result.url, status_code=303)
+    if result is None:
+        raise HTTPException(404, "Not found")
+    return HTMLResponse(_message_page(p.name, str(result)))
+
+
+def _message_page(title, message):
+    t, m = html.escape(title), html.escape(message)
+    return (f"<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'>"
+            f"<title>{t}</title><body style='font:16px system-ui;max-width:32rem;margin:3rem auto;"
+            f"padding:0 1rem'><h1 style='font-size:1.3rem'>{t}</h1><p>{m}</p>"
+            f"<p><a href='/#/settings/plugins'>Back to MangaVibe</a></p></body>")
 
 
 class PluginToggle(BaseModel):
@@ -193,4 +278,4 @@ def toggle_plugin(plugin_id: str, body: PluginToggle, db=Depends(get_db)):
 def reload_plugins(db=Depends(get_db)):
     plugins.load()
     plugins.disabled = set(get_setting(db, "plugins_disabled", []) or [])
-    return list_plugins()
+    return list_plugins(db)

@@ -9,6 +9,9 @@ What a plugin can do:
 - scan hooks:         on_book_scanned() can change parsed values; on_series_scanned()
 - custom actions:     declare `actions` and implement run_action()
 - styling:            set `css` to change how the app looks (see examples/plugins/sakura_theme.py)
+- reading events:     on_book_started(), on_book_completed(), on_series_status_changed()
+- settings:           declare `settings_fields`, `global_actions` (buttons in Settings) and status()
+- web callback:       handle_web() answers GET /api/plugins/<id>/web/<path> (e.g. an OAuth login)
 
 Plugins get read-only access to books through `ctx`. They must never write to the
 library (it is mounted read-only anyway); their data goes into the database.
@@ -16,7 +19,9 @@ See docs/PLUGINS.md and examples/plugins/.
 """
 import importlib.util
 import logging
+import queue
 import sys
+import threading
 import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,7 +29,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 1
+API_VERSION = 2
 
 
 @dataclass
@@ -38,6 +43,23 @@ class Action:
     key: str
     label: str
     confirm: str | None = None  # optional "Are you sure?" text
+
+
+@dataclass
+class SettingDef:
+    """A text box for the plugin in Settings -> Plugins. The value lands in ctx.settings[key]."""
+    key: str
+    label: str
+    help: str = ""
+    secret: bool = False  # never sent back to the browser (shown as "saved")
+
+
+@dataclass
+class OpenUrl:
+    """Return this from an action or handle_web() to send the browser to `url`
+    (for example a login page). `message` is shown as a toast first."""
+    url: str
+    message: str = ""
 
 
 @dataclass
@@ -64,6 +86,8 @@ class Plugin:
     is_provider = False  # True for metadata providers
     url = ""             # optional: the site a provider gets its data from (shown in Settings)
     css = ""             # extra CSS for the web app (loaded after the built-in styles, so it wins)
+    settings_fields: list[SettingDef] = []  # text boxes in Settings -> Plugins
+    global_actions: list[Action] = []       # buttons in Settings -> Plugins (not tied to a series)
 
     # --- scan hooks -------------------------------------------------------
     def on_book_scanned(self, ctx, book, parsed):
@@ -73,10 +97,41 @@ class Plugin:
     def on_series_scanned(self, ctx, series, books):
         """Called after a series was scanned and ordered."""
 
+    # --- reading events ---------------------------------------------------
+    # Called in the background after the change is saved, one event at a time, so a slow
+    # website never slows the reader. Only changes made by the owner fire them (reading,
+    # the Read/Unread buttons, picking a status), not scans and not other plugins.
+    def on_book_started(self, ctx, book, series):
+        """The owner opened a book for the first time (or again after marking it unread)."""
+
+    def on_book_completed(self, ctx, book, series):
+        """A book became read: its last page was reached or it was marked read."""
+
+    def on_series_status_changed(self, ctx, series, old, new):
+        """The series' reading status changed. Values: unread, reading, completed,
+        plan_to_read, on_hold, dropped. `series.publication_status` says whether it has ended."""
+
     # --- custom actions ---------------------------------------------------
     def run_action(self, ctx, action_key, series):
-        """Run a button action. Return a short message string shown to the owner."""
+        """Run a button action on the series page. Return a short message, or OpenUrl."""
         return "Not implemented"
+
+    def run_global_action(self, ctx, action_key):
+        """Run a button from Settings -> Plugins. Return a short message, or OpenUrl.
+        For long work, start it with ctx.run_in_background() and return right away."""
+        return "Not implemented"
+
+    # --- settings page ------------------------------------------------------
+    def status(self, ctx) -> str:
+        """A short line shown under the plugin in Settings, e.g. "Connected as Ivo"."""
+        return ""
+
+    # --- web callback -------------------------------------------------------
+    def handle_web(self, ctx, path, params):
+        """Answer GET /api/plugins/<id>/web/<path> (ctx.web_url(path) builds the full address).
+        `params` is a dict of the query string. Return a message (shown on a small page with a
+        link back to the app) or OpenUrl to redirect."""
+        return None
 
     # --- metadata provider (phase 2) --------------------------------------
     def search(self, ctx, query, year=None) -> list[Candidate]:
@@ -87,13 +142,44 @@ class Plugin:
         return {}
 
 
+def implements(plugin, hook):
+    """True when the plugin overrides `hook` (the base class versions do nothing)."""
+    fn = getattr(plugin, hook, None)
+    return fn is not None and getattr(fn, "__func__", None) is not getattr(Plugin, hook, None)
+
+
 class Context:
     """What plugins may use. Read-only for library files."""
 
     def __init__(self, plugin, db):
+        from app.metadata import http
         self.plugin = plugin
         self.db = db
         self.log = logging.getLogger(f"mangavibe.plugin.{plugin.id}")
+        self.http = http  # http.request/get_json/...: throttled, retries; raises http.ProviderError
+
+    def web_url(self, path=""):
+        """Full address of this plugin's handle_web() page as the browser reaches the app
+        (taken from the last request), e.g. for an OAuth redirect address."""
+        return f"{manager.base_url}/api/plugins/{self.plugin.id}/web/{path.lstrip('/')}"
+
+    def run_in_background(self, fn, *args):
+        """Run fn(ctx, *args) later on the plugin worker, with its own database session that
+        is committed afterwards. Pass ids, not database rows."""
+        manager.submit(self.plugin, fn, args)
+
+    # reading status: what the app shows (manual choice, else worked out from progress)
+    def reading_status(self, series):
+        from app.api.common import derived_status, series_counts
+        return derived_status(series, series_counts(self.db, [series.id])[series.id])
+
+    def set_reading_status(self, series, status):
+        """Set the series' status by hand (None = work it out from progress again).
+        Does not fire on_series_status_changed, so a sync can't loop back to itself."""
+        from app.api.common import READING_STATUSES
+        if status is not None and status not in READING_STATUSES:
+            raise ValueError(f"unknown reading status {status!r}")
+        series.reading_status = status
 
     # settings stored in the DB under "plugin:<id>"
     @property
@@ -154,6 +240,10 @@ class PluginManager:
         self.plugins: dict[str, Plugin] = {}
         self.errors: dict[str, str] = {}   # file name -> error text
         self.disabled: set[str] = set()
+        self.base_url = "http://localhost:8080"  # updated from each request (see main.py)
+        self._queue = queue.Queue()
+        self._worker = None
+        self._lock = threading.Lock()
 
     def load(self, folders=None):
         self.plugins.clear()
@@ -201,16 +291,97 @@ class PluginManager:
     def providers(self):
         return [p for p in self.enabled() if p.is_provider]
 
+    def get(self, plugin_id):
+        """An enabled plugin by id, or None."""
+        p = self.plugins.get(plugin_id)
+        return p if p is not None and plugin_id not in self.disabled else None
+
     def run_hook(self, db, hook, *args):
         """Call a hook on every enabled plugin; errors are logged, not raised."""
         for p in self.enabled():
-            fn = getattr(p, hook)
-            if getattr(fn, "__func__", None) is getattr(Plugin, hook):
-                continue  # plugin doesn't implement it
+            if not implements(p, hook):
+                continue
             try:
-                fn(Context(p, db), *args)
+                getattr(p, hook)(Context(p, db), *args)
             except Exception:
                 log.error("Plugin %s failed in %s:\n%s", p.id, hook, traceback.format_exc())
+
+
+    # --- background worker for reading events and run_in_background() ------
+    def emit(self, event, *args):
+        """Queue a reading event: (book_id) for book events, (series_id, old, new) for status.
+        The worker loads fresh rows. Costs nothing when no plugin listens."""
+        if any(implements(p, event) for p in self.enabled()):
+            self._put(("event", event, args))
+
+    def submit(self, plugin, fn, args):
+        self._put(("job", plugin, fn, args))
+
+    def _put(self, item):
+        with self._lock:
+            if self._worker is None or not self._worker.is_alive():
+                self._worker = threading.Thread(target=self._work, daemon=True, name="plugin-events")
+                self._worker.start()
+        self._queue.put(item)
+
+    def wait_idle(self):
+        """Block until every queued event and job has run (used by tests)."""
+        self._queue.join()
+
+    def _work(self):
+        while True:
+            item = self._queue.get()
+            try:
+                if item[0] == "event":
+                    self._run_event(item[1], item[2])
+                else:
+                    self._run_job(*item[1:])
+            except Exception:
+                log.error("Plugin worker failed:\n%s", traceback.format_exc())
+            finally:
+                self._queue.task_done()
+
+    def _run_event(self, event, args):
+        from app.db import SessionLocal
+        from app.models import Book, Series
+        for p in self.enabled():
+            if not implements(p, event):
+                continue
+            with SessionLocal() as db:
+                if event == "on_series_status_changed":
+                    series_id, old, new = args
+                    series = db.get(Series, series_id)
+                    if series is None:
+                        return
+                    hook_args = (series, old, new)
+                else:
+                    book = db.get(Book, args[0])
+                    if book is None:
+                        return
+                    hook_args = (book, db.get(Series, book.series_id))
+                try:
+                    getattr(p, event)(Context(p, db), *hook_args)
+                    db.commit()
+                except Exception:
+                    db.rollback()
+                    log.error("Plugin %s failed in %s:\n%s", p.id, event, traceback.format_exc())
+
+    def _run_job(self, plugin, fn, args):
+        from app.db import SessionLocal
+        with SessionLocal() as db:
+            try:
+                fn(Context(plugin, db), *args)
+                db.commit()
+            except Exception:
+                db.rollback()
+                log.error("Plugin %s failed in a background job:\n%s", plugin.id, traceback.format_exc())
+
+
+def action_result(result):
+    """What an action returned -> the JSON the web app expects."""
+    if isinstance(result, OpenUrl):
+        return {"message": result.message, "open_url": result.url}
+    return {"message": str(result or "Done")}
 
 
 manager = PluginManager()

@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from app.db import get_setting
 from app.models import Book, Library, Progress
 
+READING_STATUSES = {"plan_to_read", "reading", "completed", "on_hold", "dropped"}  # manual choices
 TITLE_FIELDS = {"english": ["title_english", "title_romaji", "title_native"],
                 "romaji": ["title_romaji", "title_english", "title_native"],
                 "native": ["title_native", "title_romaji", "title_english"]}
@@ -67,6 +68,23 @@ def derived_status(series, counts):
     if done or started:
         return "reading"
     return "unread"
+
+
+def status_of(db, series):
+    """The reading status the app shows for one series."""
+    return derived_status(series, series_counts(db, [series.id])[series.id])
+
+
+def emit_reading_events(db, series, old_status, started=(), completed=()):
+    """Tell plugins what the owner just changed. Call after commit; plugins run in the background."""
+    from app.plugins import manager as plugins
+    for book_id in started:
+        plugins.emit("on_book_started", book_id)
+    for book_id in completed:
+        plugins.emit("on_book_completed", book_id)
+    new = status_of(db, series)
+    if new != old_status:
+        plugins.emit("on_series_status_changed", series.id, old_status, new)
 
 
 def poster_version(series):

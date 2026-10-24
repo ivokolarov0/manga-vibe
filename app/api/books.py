@@ -4,8 +4,8 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 
 from app import images
-from app.api.common import (book_dict, display_title, ensure_inside_library, get_or_404, now,
-                            title_lang, visible_books_query)
+from app.api.common import (book_dict, display_title, emit_reading_events, ensure_inside_library,
+                            get_or_404, now, status_of, title_lang, visible_books_query)
 from app.db import get_db
 from app.models import Book, Progress, Series
 from app.scanner import archives
@@ -84,6 +84,8 @@ def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
     b = get_or_404(db, Book, book_id)
     page = max(0, min(body.page, max(b.page_count - 1, 0)))
     p = db.query(Progress).filter_by(book_id=book_id).one_or_none()
+    series = db.get(Series, b.series_id)
+    old_status = status_of(db, series)
     if body.completed is False and page == 0:
         # "mark unread": forget the book entirely, so Continue doesn't jump to it
         if p is not None:
@@ -93,9 +95,11 @@ def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
             others = (db.query(Progress.id).join(Book, Book.id == Progress.book_id)
                       .filter(Book.series_id == b.series_id).first())
             if others is None:
-                db.get(Series, b.series_id).last_read_at = None
+                series.last_read_at = None
             db.commit()
+            emit_reading_events(db, series, old_status)
         return {"page": 0, "completed": False}
+    started, was_completed = p is None, bool(p and p.completed)
     if p is None:
         p = Progress(book_id=book_id)
         db.add(p)
@@ -105,8 +109,10 @@ def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
     elif b.page_count and page >= b.page_count - 1:
         p.completed = True  # reaching the last page marks the book read
     p.updated_at = now()
-    db.get(Series, b.series_id).last_read_at = p.updated_at
+    series.last_read_at = p.updated_at
     db.commit()
+    emit_reading_events(db, series, old_status, started=[b.id] if started else [],
+                        completed=[b.id] if p.completed and not was_completed else [])
     return {"page": p.page, "completed": p.completed}
 
 
