@@ -213,6 +213,11 @@
     }
   }
 
+  /* the whole row opens the plugin's page, when it has one */
+  .plugin-row.has-page {
+    cursor: pointer;
+  }
+
   .plugin-row .row-buttons {
     align-items: center;
 

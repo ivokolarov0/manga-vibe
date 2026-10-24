@@ -464,7 +464,8 @@
         <section x-show="section === 'plugins'">
           <h2>Plugins</h2>
           <template x-for="p in plugins" :key="p.id">
-            <div class="setting-row plugin-row">
+            <div class="setting-row plugin-row" :class="{ 'has-page': hasPluginPage(p) }"
+                 @click="hasPluginPage(p) && (location.hash = `#/settings/plugin-${p.id}`)">
               <span class="label"><span x-text="p.name"></span><small x-text="`v${p.version}` + (p.description ? ' · ' + p.description : '')"></small>
                 <small class="plugin-status" x-show="p.enabled && p.status" x-text="p.status"></small>
                 <template x-if="p.permissions.length && !hasPluginPage(p)">
@@ -473,8 +474,8 @@
                 </template></span>
               <span class="row-buttons">
                 <span class="chip warn" x-show="p.update.available && !p.update.skipped" x-text="`Update ${p.update.latest}`"></span>
-                <a class="btn small" x-show="hasPluginPage(p)" :href="`#/settings/plugin-${p.id}`">Settings</a>
-                <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" :aria-label="`${p.name} on`">
+                <a class="btn small" x-show="hasPluginPage(p)" :href="`#/settings/plugin-${p.id}`" @click.stop>Settings</a>
+                <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" @click.stop :aria-label="`${p.name} on`">
               </span>
             </div>
           </template>
