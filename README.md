@@ -278,8 +278,39 @@ proxy rule that points at port 8090.
 ## Customizing
 
 - **Look:** edit `custom.css` in your data folder (created on first start, with examples), then reload the page.
-- **Plugins:** put plugin `.py` files in `plugins/` in your data folder, then **Settings** → **Reload plugins**.
-  See [docs/PLUGINS.md](docs/PLUGINS.md).
+- **Plugins:** add features with plugins, see [Plugins](#plugins) below.
+
+## Plugins
+
+Plugins add features without changing the app, such as syncing with a tracker site. A plugin is
+a single `.py` file.
+
+### Available plugins
+
+| Plugin | What it does |
+|---|---|
+| [MyAnimeList sync](https://github.com/ivokolarov0/manga-vibe-ext-mal-profile-sync) | Sends Reading / Completed to your MyAnimeList list as you read, and pulls them back with **Sync all**. Its README shows how to connect your account step by step. |
+
+### Install a plugin
+
+1. Download the plugin's `.py` file (on GitHub: open the file → **Download raw file**).
+2. Put it in the `plugins` folder of your data folder: `docker/mangavibe/plugins` on a Synology,
+   or `plugins` inside the folder you mounted as `/data` (create it if it isn't there).
+3. In MangaVibe: **Settings → Plugins → Reload plugins**. The plugin appears in the list, with its
+   own settings and buttons if it has any.
+
+To update a plugin, replace the file and press **Reload plugins** again. To remove it, delete the
+file. Switch a plugin off with its toggle in **Settings → Plugins**.
+
+> [!WARNING]
+> **Only install plugins you trust.** A plugin is code that runs inside MangaVibe with full access
+> to its data, including the logins other plugins save. Install plugins from this list or ones whose
+> code you've read.
+
+### Write your own
+
+See [docs/PLUGINS.md](docs/PLUGINS.md) for how plugins work, the events they can react to, and an
+example in [examples/plugins](examples/plugins).
 
 ## Q&A
 
