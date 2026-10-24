@@ -42,6 +42,7 @@ class Hello(Plugin):
 | **Open a page** (e.g. a login) from a button | return `OpenUrl(url, message="")` from `run_action` or `run_global_action` |
 | **A web address of its own** (e.g. an OAuth callback) | `handle_web(ctx, path, params)` answers `GET /api/plugins/<id>/web/<path>`. Return a message (shown on a small page with a link back) or `OpenUrl(url)` to redirect; `None` = 404 |
 | **Updates** from its GitHub releases | `repo = "owner/name"` (see [Updates](#updates)) |
+| **Say what it uses** | `permissions = ["Connects to api.myanimelist.net"]`: shown in Settings; an update that adds one asks first (see [Updates](#updates)) |
 
 ## The `ctx` object
 
@@ -166,6 +167,13 @@ class Tracker(Plugin):
   the new version with **Update to vX** and **Skip this version**. It never installs by itself. A
   skipped version isn't offered again; a newer one is. The daily check follows Settings → Updates →
   *Check for updates every day*, and `AUTO_UPDATE=0` turns it off.
+- **New permissions are asked for:** list what the plugin uses in `permissions`, e.g.
+  `permissions = ["Connects to api.myanimelist.net", "Reads book files"]`. They're shown in
+  Settings → Plugins. When a new version has an entry the installed one doesn't, **Update** lists
+  those entries and installs only after the owner agrees. Entries are compared as text, so rewording
+  one counts as new. They aren't enforced (a plugin is Python and can do anything the app can); they
+  tell the owner what changed. Built-in plugins aren't updated this way (they come with the app),
+  but they list their permissions too, and a test checks that each one does.
 - **Safe swap:** the new file must load on its own and define a plugin with the same `id`, or
   nothing changes. The old file is kept in `plugins/.backup/`.
 - Only single-file plugins in the `plugins` folder can be updated. A plugin's settings and data are

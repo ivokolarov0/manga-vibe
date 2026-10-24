@@ -10,6 +10,9 @@ Only single-file plugins in the data folder's plugins/ are updated; built-in one
 
 Before a new file replaces the old one, it must load on its own and define a plugin with the same
 id. The old file is kept in plugins/.backup/ (the loader skips folders that start with a dot).
+
+When the new version lists permissions the installed one doesn't, nothing is installed until the
+owner approves exactly those (Update asks, then sends them back as `accepted`).
 """
 import importlib.util
 import logging
@@ -38,6 +41,31 @@ _lock = threading.Lock()  # one install at a time
 
 class UpdateError(Exception):
     pass
+
+
+class NeedsApproval(UpdateError):
+    """The new version asks for permissions the installed one didn't have."""
+
+    def __init__(self, name, version, permissions):
+        self.permissions = permissions
+        super().__init__(f"{name} {version} asks for new permissions")
+
+
+def permissions_of(p_or_cls):
+    """The plugin's permissions, cleaned up: strings, trimmed, no blanks or repeats, in order."""
+    raw = getattr(p_or_cls, "permissions", None) or []
+    if isinstance(raw, str):
+        raw = [raw]
+    out = []
+    for x in raw:
+        x = str(x).strip()
+        if x and x not in out:
+            out.append(x)
+    return out
+
+
+def new_permissions(old, new):
+    return [x for x in new if x not in old]
 
 
 # ---------------- what's saved ----------------
@@ -141,7 +169,7 @@ def check(db, p):
 # ---------------- install ----------------
 
 def _plugins_in(file):
-    """Load a downloaded file on its own: [(id, version)] of the plugins it defines."""
+    """Load a downloaded file on its own: [(id, version, permissions)] of the plugins it defines."""
     name = f"mangavibe_plugin_update_check_{file.stem}"
     try:
         # compiled from the text itself: a cached .pyc of an earlier download with the same size
@@ -150,7 +178,7 @@ def _plugins_in(file):
         module.__file__ = str(file)
         sys.modules[name] = module
         exec(compile(file.read_bytes(), str(file), "exec"), module.__dict__)
-        return [(cls.id, cls.version) for cls in vars(module).values()
+        return [(cls.id, cls.version, permissions_of(cls)) for cls in vars(module).values()
                 if isinstance(cls, type) and issubclass(cls, Plugin) and cls is not Plugin
                 and cls.__module__ == name]
     finally:
@@ -163,9 +191,11 @@ def reload_plugins(db):
     manager.disabled = set(get_setting(db, "plugins_disabled", []) or [])
 
 
-def install(db, plugin_id):
+def install(db, plugin_id, accepted=None):
     """Download the newest release's file, check it, swap it in and reload the plugins.
-    Returns a message; raises UpdateError when nothing was changed."""
+    `accepted` is the list of new permissions the owner approved.
+    Returns a message; raises UpdateError (NeedsApproval for unapproved new permissions) when
+    nothing was changed."""
     with _lock:
         p = manager.plugins.get(plugin_id)
         path = path_of(p) if p else None
@@ -195,10 +225,15 @@ def install(db, plugin_id):
             new.unlink(missing_ok=True)
             raise UpdateError(f"{p.name} {latest} doesn't load, so it wasn't installed: "
                               f"{type(e).__name__}: {e}") from e
-        new_version = next((v for pid, v in found if pid == p.id), None)
-        if new_version is None:
+        match = next(((v, perms) for pid, v, perms in found if pid == p.id), None)
+        if match is None:
             new.unlink(missing_ok=True)
             raise UpdateError(f"{path.name} {latest} has no plugin '{p.id}', so it wasn't installed")
+        new_version, perms = match
+        added = new_permissions(permissions_of(p), perms)
+        if any(x not in (accepted or []) for x in added):
+            new.unlink(missing_ok=True)
+            raise NeedsApproval(p.name, latest, added)
 
         backup = config.PLUGINS_DIR / ".backup"
         backup.mkdir(exist_ok=True)

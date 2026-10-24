@@ -76,6 +76,7 @@ class AniList(Plugin):
     description = "Built-in metadata provider: titles, description, tags, cover, links."
     is_provider = True
     url = "https://anilist.co"
+    permissions = ["Connects to graphql.anilist.co", "Fills in series metadata and covers"]
 
     def search(self, ctx, query, year=None):
         adult = None if get_setting(ctx.db, "include_adult", False) else False

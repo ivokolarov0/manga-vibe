@@ -13,6 +13,7 @@ What a plugin can do:
 - reading events:     on_book_started(), on_book_completed(), on_series_status_changed()
 - settings:           declare `settings_fields`, `global_actions` (buttons in Settings) and status()
 - web callback:       handle_web() answers GET /api/plugins/<id>/web/<path> (e.g. an OAuth login)
+- permissions:        list what it uses in `permissions`; an update that adds one asks first
 
 Plugins get read-only access to books through `ctx`. They must never write to the
 library (it is mounted read-only anyway); their data goes into the database.
@@ -105,6 +106,9 @@ class Plugin:
     settings_fields: list[SettingDef] = []  # text boxes in Settings -> Plugins
     global_actions: list[Action] = []       # buttons in Settings -> Plugins (not tied to a series)
     repo = ""  # "owner/name" on GitHub: its releases update this plugin (see app/plugin_updates.py)
+    # What the plugin uses, in short sentences, e.g. "Connects to api.myanimelist.net". Shown in
+    # Settings. Not enforced (a plugin is Python); an update that adds one asks the owner first.
+    permissions: list[str] = []
 
     # --- scan hooks -------------------------------------------------------
     def on_book_scanned(self, ctx, book, parsed):

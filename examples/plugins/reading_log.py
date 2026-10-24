@@ -13,6 +13,7 @@ class ReadingLog(Plugin):
     name = "Reading log"
     version = "1.0"
     description = "Example: keeps a log of what you start and finish."
+    permissions = ["Sees what you start and finish reading", "Has its own web page"]
     fields = [FieldDef("last_event", "Last reading event")]
     settings_fields = [SettingDef("prefix", "Log prefix", help="Put in front of every log line")]
     global_actions = [Action("clear", "Clear the log", confirm="Clear the reading log?"),

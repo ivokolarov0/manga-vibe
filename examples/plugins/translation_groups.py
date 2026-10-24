@@ -19,6 +19,7 @@ class TranslationGroups(Plugin):
     name = "Translation groups"
     version = "1.0"
     description = "Shows scanlation groups from file names and finds missing chapters."
+    permissions = ["Reads series.json in series folders", "Changes chapter ordering during scans"]
     fields = [FieldDef("groups", "Translation groups")]
     actions = [Action("gaps", "Find missing chapters")]
 

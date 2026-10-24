@@ -1044,8 +1044,24 @@ Your files are not touched. `
     async installPluginUpdate(p) {
       if (!confirm(`Install ${p.name} ${p.update.latest} from github.com/${p.update.repo}?`)) return;
       this.busyAction = p.id + ":update";
+      const install = (accept) => api(`/api/plugins/${p.id}/updates/install`,
+                                      { method: "POST", body: { accept_permissions: accept } });
       try {
-        const r = await api(`/api/plugins/${p.id}/updates/install`, { method: "POST" });
+        let r;
+        try { r = await install([]); } catch (e) {
+          if (e.status !== 409 || !e.detail.permissions) throw e;
+          // the new version asks for permissions the installed one doesn't have
+          const perms = e.detail.permissions;
+          if (!confirm(`${p.name} ${p.update.latest} asks for new permissions:
+
+` +
+                       perms.map((x) => `• ${x}`).join("
+") +
+                       "
+
+Allow them and install the update?")) { toast("Update not installed"); return; }
+          r = await install(perms);
+        }
         this.plugins = r.plugins;
         this.pluginErrors = r.errors;
         toast(r.message);

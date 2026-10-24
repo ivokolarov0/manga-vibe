@@ -12,9 +12,13 @@ async function api(path, opts = {}) {
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
   if (!res.ok) {
-    let msg = res.statusText;
-    try { msg = (await res.json()).detail || msg; } catch {}
-    throw new Error(msg);
+    let detail = res.statusText;
+    try { detail = (await res.json()).detail || detail; } catch {}
+    // detail is usually text; some answers send an object with a message and more (e.err.detail)
+    const err = new Error(typeof detail === "string" ? detail : detail.message || res.statusText);
+    err.status = res.status;
+    err.detail = detail;
+    throw err;
   }
   return res.json();
 }
