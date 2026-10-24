@@ -32,6 +32,7 @@ class Hello(Plugin):
 | **Fix ordering / parsing** | `on_book_scanned(ctx, book, parsed)`: change `parsed.volume`, `.chapter`, `.chapter_end`, `.extra`, `.extra_index`, `.version` |
 | **Do something after a series scan** | `on_series_scanned(ctx, series, books)` |
 | **Buttons on the series page** | `actions = [Action("key", "Label", confirm=None)]` and `run_action(ctx, key, series)` returning a message |
+| **Dropdowns on the series page** | `choices = [Choice("key", "Label", options=[("value", "Label"), ...])]`, `get_choice(ctx, key, series)` and `set_choice(ctx, key, series, value)` (see [Dropdowns](#dropdowns)) |
 | **Change how the app looks** | `css = """ :root { --accent: #ff6fa8; } """` (loaded after the built-in styles, so it wins) |
 | **Metadata provider** | `is_provider = True`, implement `search(ctx, query, year)` → `list[Candidate]` and `fetch(ctx, provider_id)` → dict of series fields. Optional `url = "https://..."` links the site on the Metadata settings page |
 | **React to reading** | `on_book_started(ctx, book, series)`, `on_book_completed(ctx, book, series)`, `on_series_status_changed(ctx, series, old, new)` (see [Reading events](#reading-events)) |
@@ -55,7 +56,7 @@ class Hello(Plugin):
 | `ctx.db` | the database session (advanced; MangaVibe commits after hooks) |
 | `ctx.reading_status(series)` | the status the app shows: `unread`, `reading`, `completed`, `plan_to_read`, `on_hold`, `dropped` |
 | `ctx.set_reading_status(series, status)` | set it by hand (`None` = work it out from progress again). Does **not** fire `on_series_status_changed`, so a sync can't loop |
-| `ctx.http` | the app's HTTP client: `ctx.http.request(method, url, headers=..., data=...)`, `get_json`, `post_json`. Throttled per site, retries, raises `ctx.http.ProviderError` |
+| `ctx.http` | the app's HTTP client: `ctx.http.request(method, url, headers=..., data=...)`, `get_json`, `post_json`. Throttled per site, retries, raises `ctx.http.ProviderError` (its `status` is the HTTP code, e.g. `404`, or `None` if the site couldn't be reached) |
 | `ctx.web_url(path)` | full address of this plugin's `handle_web` page, as the browser reaches the app (e.g. `http://192.168.1.5:8080/api/plugins/mal/web/callback`) |
 | `ctx.run_in_background(fn, *args)` | run `fn(ctx, *args)` later with its own database session. Pass ids, not rows. Use it for long work started from a button |
 
@@ -106,6 +107,41 @@ class Tracker(Plugin):
     def status(self, ctx):
         return "Connected" if ctx.settings.get("token") else "Not connected"
 ```
+
+## Dropdowns
+
+A dropdown sits under the reading status on the series page, e.g. the series' status on a tracker
+site, which the owner can change from there:
+
+```python
+from app.plugins import Choice, FieldDef, Plugin
+
+class Tracker(Plugin):
+    id = "tracker"
+    fields = [FieldDef("site_status", "Tracker")]
+    choices = [Choice("site_status", "Tracker", options=[
+        ("reading", "Reading"), ("completed", "Completed"), ("", "Not on my list")])]
+
+    def get_choice(self, ctx, key, series):
+        if not series.mal_id:
+            return False                      # no dropdown for this series
+        return ctx.get_field(series, key)     # None = not known yet
+
+    def set_choice(self, ctx, key, series, value):
+        ...  # tell the website
+        ctx.set_field(series, key, value)
+        return "Saved on the tracker"
+```
+
+- `get_choice` returns the selected option value, `None` when it isn't known yet (the dropdown says
+  "unknown"), or `False` to hide the dropdown for that series. It runs every time the series page
+  opens, so read what you saved instead of asking a website. Without it, the value is the plugin
+  field with the same key.
+- `set_choice` runs when the owner picks an option; `value` is always one of the option values.
+  Return a message (shown as a toast) or `OpenUrl`. The page reloads afterwards, so a changed
+  reading status shows at once.
+- While the dropdown shows, the plugin field with the same key is left out of the series details,
+  so the value isn't shown twice.
 
 ## Styling: plugins and your own custom.css
 

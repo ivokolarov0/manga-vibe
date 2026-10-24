@@ -156,6 +156,16 @@
                   <option :value="k" :selected="s.manual_reading_status === k" x-text="statusLabels[k]"></option>
                 </template>
               </select>
+              <!-- plugin dropdowns, e.g. the status on MyAnimeList -->
+              <template x-for="c in s.choices" :key="c.plugin + '/' + c.key">
+                <select class="ctl" :aria-label="c.label" :disabled="choiceBusy" @change="setChoice(c, $event.target.value)">
+                  <option value="" disabled hidden :selected="c.value === null" x-text="c.label + ': unknown'"></option>
+                  <template x-for="[v, label] in c.options" :key="v">
+                    <option :value="'=' + v" :selected="c.value === v"
+                            x-text="(c.value === v ? c.label + ': ' : '') + label"></option>
+                  </template>
+                </select>
+              </template>
             </div>
 
             <!-- reading direction for this series (from the ⋯ menu) -->

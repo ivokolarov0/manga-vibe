@@ -658,6 +658,17 @@ function seriesView() {
       catch (e) { toast(e.message, 6000, "error"); }
       this.reload();  // the plugin may have changed the status or its fields
     },
+    choiceBusy: false,
+    async setChoice(c, v) {  // option values carry a "=" prefix, so an option may be "" itself
+      this.choiceBusy = true;
+      try {
+        await showActionResult(await api(`/api/series/${this.s.id}/choices/${c.plugin}/${c.key}`,
+          { method: "PUT", body: { value: v.slice(1) } }));
+        this.$store.app.libraryDirty++;
+      } catch (e) { toast(e.message, 6000, "error"); }
+      this.choiceBusy = false;
+      this.reload();  // shows what was saved (or puts the old value back), and any status change
+    },
     setTab(t) { location.replace(`#/series/${this.s.id}${t ? "?tab=" + t : ""}`); },
 
     bookState(b) {
