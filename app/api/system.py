@@ -187,6 +187,7 @@ def _plugin_dict(p, db):
                           "saved": bool(saved.get(f.key))} for f in p.settings_fields],
             "global_actions": [{"key": a.key, "label": a.label, "confirm": a.confirm}
                                for a in p.global_actions],
+            "permissions": plugin_updates.permissions_of(p),
             "status": _plugin_status(p, db), "update": plugin_updates.info(db, p)}
 
 
@@ -310,10 +311,16 @@ def check_plugin_update(plugin_id: str, db=Depends(get_db)):
 
 
 @router.post("/plugins/{plugin_id}/updates/install")
-def install_plugin_update(plugin_id: str, db=Depends(get_db)):
+def install_plugin_update(plugin_id: str, body: dict | None = None, db=Depends(get_db)):
     _installed_plugin(plugin_id)
+    accepted = (body or {}).get("accept_permissions") or []
+    if not isinstance(accepted, list):
+        raise HTTPException(400, "accept_permissions must be a list")
     try:
-        message = plugin_updates.install(db, plugin_id)
+        message = plugin_updates.install(db, plugin_id, [str(x) for x in accepted])
+    except plugin_updates.NeedsApproval as e:
+        # 409: the browser shows the list and sends it back once the owner agrees
+        raise HTTPException(409, {"message": str(e), "permissions": e.permissions})
     except plugin_updates.UpdateError as e:
         raise HTTPException(400, str(e))
     return {"message": message, **list_plugins(db)}

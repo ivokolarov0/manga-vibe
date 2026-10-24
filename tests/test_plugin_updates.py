@@ -8,14 +8,15 @@ PLUGINS = TMP / "data" / "plugins"
 REPO = "someone/mv-hello"
 
 
-def plugin_file(version, plugin_id="hello", broken=False):
+def plugin_file(version, plugin_id="hello", broken=False, permissions=None):
     return (f'from app.plugins import Plugin\n'
             f'{"raise RuntimeError(\"boom\")" if broken else ""}\n'
             f'class Hello(Plugin):\n'
             f'    id = "{plugin_id}"\n'
             f'    name = "Hello"\n'
             f'    version = "{version}"\n'
-            f'    repo = "{REPO}"\n')
+            f'    repo = "{REPO}"\n'
+            + (f'    permissions = {permissions!r}\n' if permissions is not None else ''))
 
 
 class FakeGitHub:
@@ -77,6 +78,39 @@ def test_manual_check_and_update(client, gh):
     assert (PLUGINS / ".backup" / "hello-1.0.0.py").read_text() == plugin_file("1.0.0")
     # nothing newer: Install refuses
     assert client.post("/api/plugins/hello/updates/install").status_code == 400
+
+
+def test_new_permissions_need_approval(client, gh):
+    (PLUGINS / "hello.py").write_text(plugin_file("1.0.0", permissions=["Connects to a.example"]))
+    client.post("/api/plugins/reload")
+    assert info(client)["permissions"] == ["Connects to a.example"]
+    client.post("/api/plugins/hello/updates/check")
+    gh.files["v1.1.0"] = plugin_file("1.1.0", permissions=["Connects to a.example",
+                                                            "Connects to b.example", "Reads book files"])
+    # not approved: nothing changes, and the answer names only what's new
+    r = client.post("/api/plugins/hello/updates/install")
+    assert r.status_code == 409
+    assert r.json()["detail"]["permissions"] == ["Connects to b.example", "Reads book files"]
+    assert info(client)["version"] == "1.0.0"
+    assert not list((PLUGINS / ".staging").glob("*.py"))
+    # approving only part of it isn't enough
+    r = client.post("/api/plugins/hello/updates/install",
+                    json={"accept_permissions": ["Connects to b.example"]})
+    assert r.status_code == 409 and info(client)["version"] == "1.0.0"
+    # approved
+    r = client.post("/api/plugins/hello/updates/install",
+                    json={"accept_permissions": ["Connects to b.example", "Reads book files"]})
+    assert r.status_code == 200 and info(client)["version"] == "1.1.0"
+    assert info(client)["permissions"][-1] == "Reads book files"
+
+
+def test_same_or_fewer_permissions_install_directly(client, gh):
+    (PLUGINS / "hello.py").write_text(plugin_file("1.0.0", permissions=["A", "B"]))
+    client.post("/api/plugins/reload")
+    client.post("/api/plugins/hello/updates/check")
+    gh.files["v1.1.0"] = plugin_file("1.1.0", permissions=["B"])
+    assert client.post("/api/plugins/hello/updates/install").status_code == 200
+    assert info(client)["permissions"] == ["B"]
 
 
 def test_bad_downloads_change_nothing(client, gh):
@@ -159,3 +193,16 @@ def test_version_compare():
     assert version_tuple("v1.2.0") == version_tuple("1.2") == (1, 2)
     assert version_tuple("v1.10.0") > version_tuple("1.9.9")
     assert version_tuple("1.0.1") > version_tuple("1.0")
+
+
+def test_built_in_plugins_list_their_permissions(client):
+    """Built-in plugins aren't updated from GitHub, but they still say what they use."""
+    from app.plugin_updates import permissions_of
+    from app.plugins import manager
+    builtin = [p for p in manager.plugins.values()
+               if manager.paths.get(p.id) and "builtin" in manager.paths[p.id].parts]
+    assert {p.id for p in builtin} >= {"anilist", "mangaupdates"}
+    for p in builtin:
+        assert permissions_of(p), f"built-in plugin {p.id} has no permissions"
+    shown = {p["id"]: p["permissions"] for p in client.get("/api/plugins").json()["plugins"]}
+    assert "Connects to graphql.anilist.co" in shown["anilist"]

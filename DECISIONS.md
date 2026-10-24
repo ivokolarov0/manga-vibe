@@ -265,5 +265,10 @@ Choices made where the spec was open. Newest at the bottom.
 - **The new file is loaded on its own first** and must define a plugin with the same id; otherwise
   nothing changes. It's compiled from its text, not from a cached .pyc, which could belong to an
   earlier download of the same size and time. The old file goes to `plugins/.backup/`.
+- **Permissions are declared, not enforced.** A plugin lists what it uses in `permissions` (short
+  sentences). An update that adds an entry is installed only after the owner approves exactly the new
+  ones (the install answers 409 with the list; the browser asks and sends them back). Python code in
+  the same process can't be fenced in, so they tell the owner what changed rather than claim to stop
+  anything.
 - **Only single-file plugins in the plugins folder** are updated. Built-in plugins come with the app;
   package folders would need a different download.

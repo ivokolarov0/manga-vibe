@@ -11,6 +11,7 @@ class SakuraTheme(Plugin):
     name = "Sakura theme"
     version = "1.0"
     description = "Pink accent colour and rounder corners."
+    permissions = ["Changes how the app looks"]
     css = """
     :root {
       --accent: #ff6fa8;
