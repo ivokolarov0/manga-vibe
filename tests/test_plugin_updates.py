@@ -63,7 +63,7 @@ def gh(client):
 
 def test_manual_check_and_update(client, gh):
     u = info(client)["update"]
-    assert u["supported"] and u["mode"] == "manual" and u["repo"] == REPO
+    assert u["supported"] and u["repo"] == REPO and not u["skipped"]
     assert u["latest"] is None and not u["available"]
 
     u = client.post("/api/plugins/hello/updates/check").json()["update"]
@@ -102,34 +102,38 @@ def test_github_errors_are_shown(client, gh):
     assert "request limit" in client.post("/api/plugins/hello/updates/check").json()["update"]["error"]
 
 
-def test_automatic_mode_installs_in_the_daily_check(client, gh):
+def test_daily_check_only_looks(client, gh):
     from app import plugin_updates
     from app.db import SessionLocal
     gh.files["v1.1.0"] = plugin_file("1.1.0")
-    assert client.put("/api/plugins/hello/updates", json={"mode": "sometimes"}).status_code == 400
-
-    with SessionLocal() as db:  # Manual: the daily check only looks
+    with SessionLocal() as db:
         plugin_updates.run_daily(db)
     assert info(client)["version"] == "1.0.0" and info(client)["update"]["available"]
-
-    assert client.put("/api/plugins/hello/updates", json={"mode": "auto"}).json()["update"]["mode"] == "auto"
-    with SessionLocal() as db:  # checked less than a day ago: no new request, but it installs
+    assert not [u for u in gh.requests if "raw.githubusercontent.com" in u]  # nothing downloaded
+    with SessionLocal() as db:  # checked less than a day ago: GitHub isn't asked again
         before = len(gh.requests)
         plugin_updates.run_daily(db)
-    assert info(client)["version"] == "1.1.0"
-    assert [u for u in gh.requests[before:] if "api.github.com" in u] == []
+    assert gh.requests[before:] == []
 
-    # a release that doesn't load is tried once, not every hour
-    gh.tag, gh.files["v1.2.0"] = "v1.2.0", plugin_file("1.2.0", broken=True)
-    with SessionLocal() as db:
-        plugin_updates.check(db, plugin_updates.manager.plugins["hello"])
-        plugin_updates.run_daily(db)
-        downloads = [u for u in gh.requests if u.endswith("/v1.2.0/hello.py")]
-        plugin_updates.run_daily(db)
-    assert len(downloads) == 1
-    assert [u for u in gh.requests if u.endswith("/v1.2.0/hello.py")] == downloads
-    assert "doesn't load" in info(client)["update"]["error"]
-    assert info(client)["version"] == "1.1.0"
+
+def test_skip_a_version(client, gh):
+    client.post("/api/plugins/hello/updates/check")
+    u = client.post("/api/plugins/hello/updates/skip").json()["update"]
+    assert u["available"] and u["skipped"] and u["latest"] == "v1.1.0"
+    # checking again doesn't bring the skipped version back
+    assert client.post("/api/plugins/hello/updates/check").json()["update"]["skipped"]
+    # "Show it again"
+    assert not client.delete("/api/plugins/hello/updates/skip").json()["update"]["skipped"]
+    client.post("/api/plugins/hello/updates/skip")
+    # a newer release is offered again
+    gh.tag = "v1.2.0"
+    u = client.post("/api/plugins/hello/updates/check").json()["update"]
+    assert u["latest"] == "v1.2.0" and u["available"] and not u["skipped"]
+    # a skipped version can still be installed: nothing stops the owner from changing their mind
+    gh.files["v1.2.0"] = plugin_file("1.2.0")
+    client.post("/api/plugins/hello/updates/skip")
+    assert client.post("/api/plugins/hello/updates/install").status_code == 200
+    assert info(client)["version"] == "1.2.0" and not info(client)["update"]["skipped"]
 
 
 def test_only_plugins_with_a_repo_in_the_plugins_folder(client, gh):

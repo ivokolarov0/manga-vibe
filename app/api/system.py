@@ -288,16 +288,17 @@ def _installed_plugin(plugin_id):
     return p
 
 
-class PluginUpdateMode(BaseModel):
-    mode: str
-
-
-@router.put("/plugins/{plugin_id}/updates")
-def set_plugin_update_mode(plugin_id: str, body: PluginUpdateMode, db=Depends(get_db)):
+@router.post("/plugins/{plugin_id}/updates/skip")
+def skip_plugin_update(plugin_id: str, db=Depends(get_db)):
     p = _installed_plugin(plugin_id)
-    if body.mode not in plugin_updates.MODES:
-        raise HTTPException(400, "Mode must be manual or auto")
-    plugin_updates.set_mode(db, p.id, body.mode)
+    plugin_updates.skip(db, p.id)
+    return _plugin_dict(p, db)
+
+
+@router.delete("/plugins/{plugin_id}/updates/skip")
+def unskip_plugin_update(plugin_id: str, db=Depends(get_db)):
+    p = _installed_plugin(plugin_id)
+    plugin_updates.unskip(db, p.id)
     return _plugin_dict(p, db)
 
 

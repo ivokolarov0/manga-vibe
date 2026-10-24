@@ -4,9 +4,9 @@ A plugin that sets `repo = "owner/name"` is updated from that repo's newest rele
 pre-releases are left out): the file with the same name as the installed one, at the release's tag.
 The tag is the version (v1.2.0 or 1.2.0) and is compared with the plugin's `version`.
 
-Each plugin is Manual (Settings shows the update and the owner presses Update) or Automatic (the
-daily check installs it). A plugin is Manual until the owner switches it. Only single-file plugins
-in the data folder's plugins/ are updated; built-in ones come with the app.
+A new version is never installed by itself: the daily check (or Check for updates) only looks, and
+Settings shows it with Update and Skip. A skipped version isn't offered again; a newer one is.
+Only single-file plugins in the data folder's plugins/ are updated; built-in ones come with the app.
 
 Before a new file replaces the old one, it must load on its own and define a plugin with the same
 id. The old file is kept in plugins/.backup/ (the loader skips folders that start with a dot).
@@ -32,9 +32,8 @@ log = logging.getLogger("mangavibe.plugin_updates")
 CHECK_EVERY = 24 * 3600
 MAX_SIZE = 1_000_000  # a plugin is one .py file; anything bigger isn't one
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
-MODES = ("manual", "auto")
 transport = None  # tests put an httpx.MockTransport here
-_lock = threading.Lock()  # one install at a time (a button and the daily check)
+_lock = threading.Lock()  # one install at a time
 
 
 class UpdateError(Exception):
@@ -60,10 +59,13 @@ def _update_state(db, plugin_id, **values):
     _save(db, states)
 
 
-def set_mode(db, plugin_id, mode):
-    if mode not in MODES:
-        raise ValueError(f"unknown update mode {mode!r}")
-    _update_state(db, plugin_id, mode=mode)
+def skip(db, plugin_id):
+    """Stop offering the version that's out now (a newer one is offered again)."""
+    _update_state(db, plugin_id, skipped=_states(db).get(plugin_id, {}).get("latest"))
+
+
+def unskip(db, plugin_id):
+    _update_state(db, plugin_id, skipped=None)
 
 
 # ---------------- which plugins, which versions ----------------
@@ -94,10 +96,11 @@ def info(db, p):
     st = _states(db).get(p.id, {})
     supported = path_of(p) is not None
     latest = st.get("latest")
-    return {"supported": supported, "repo": p.repo or None, "mode": st.get("mode", "manual"),
+    newer = bool(supported and latest and version_tuple(latest) > version_tuple(p.version))
+    return {"supported": supported, "repo": p.repo or None,
             "latest": latest, "url": st.get("url"), "checked_at": st.get("checked_at"),
             "error": st.get("error"),
-            "available": bool(supported and latest and version_tuple(latest) > version_tuple(p.version))}
+            "available": newer, "skipped": newer and st.get("skipped") == latest}
 
 
 # ---------------- GitHub ----------------
@@ -204,7 +207,7 @@ def install(db, plugin_id):
         os.replace(new, path)
         Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)  # see _plugins_in
         reload_plugins(db)
-        _update_state(db, plugin_id, error=None, failed=None)
+        _update_state(db, plugin_id, error=None, skipped=None)
         log.info("Plugin %s updated from %s to %s", plugin_id, old_version, new_version)
         return f"{name} updated from {old_version} to {new_version}"
 
@@ -212,21 +215,12 @@ def install(db, plugin_id):
 # ---------------- daily ----------------
 
 def run_daily(db):
-    """Check each updatable plugin (once a day each), and install updates for Automatic ones."""
-    for plugin_id in list(manager.plugins):
-        p = manager.plugins.get(plugin_id)
-        if p is None or path_of(p) is None:
+    """Check each updatable plugin, once a day each. Only looks: installing is always a button."""
+    for p in list(manager.plugins.values()):
+        if path_of(p) is None:
             continue
-        if time.time() - (_states(db).get(plugin_id, {}).get("checked_at") or 0) >= CHECK_EVERY:
+        if time.time() - (_states(db).get(p.id, {}).get("checked_at") or 0) >= CHECK_EVERY:
             check(db, p)
-        u = info(db, p)
-        failed = _states(db).get(plugin_id, {}).get("failed")
-        if u["mode"] == "auto" and u["available"] and failed != u["latest"]:  # not again every hour
-            try:
-                install(db, plugin_id)
-            except UpdateError as e:
-                log.warning("Automatic update of %s failed: %s", plugin_id, e)
-                _update_state(db, plugin_id, error=str(e), failed=u["latest"])
 
 
 def daily_loop():

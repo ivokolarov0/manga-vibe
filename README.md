@@ -302,11 +302,11 @@ a single `.py` file.
 **Updating a plugin.** Plugins that publish releases on GitHub (like MyAnimeList sync) have an
 **Updates** row in **Settings → Plugins**:
 
-- **Manual** (the default): MangaVibe checks once a day and shows *Version X is available*. Press
-  **Update to X** to install it. **Check for updates** looks right away.
-- **Automatic**: new versions install by themselves in the daily check.
+- MangaVibe checks once a day and shows *Version X is available*. **Check for updates** looks right away.
+- Press **Update to X** to install it, or **Skip this version** if you don't want it. A skipped version
+  isn't offered again, but a newer one is. **Show it again** brings it back.
 
-The new version is checked before it replaces the old one, and your plugin settings are kept. For
+Plugins never update by themselves. The new version is checked before it replaces the old one, and your plugin settings are kept. For
 other plugins, replace the file and press **Reload plugins**.
 
 To remove a plugin, delete its file. Switch a plugin off with its toggle in **Settings → Plugins**.

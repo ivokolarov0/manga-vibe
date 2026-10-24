@@ -1022,18 +1022,15 @@ Your files are not touched. `
     pluginUpdateText(p) {
       const u = p.update;
       if (u.error) return u.error;
-      const when = u.checked_at ? ` · last checked ${new Date(u.checked_at * 1000).toLocaleString()}` : "";
-      if (u.available) {
-        return `Version ${u.latest} is available` + (u.mode === "auto" ? ", it installs at the next daily check" : "") + when;
-      }
-      const how = u.mode === "auto" ? "New versions install by themselves" : "You press Update to install a new version";
-      return `${how}, from github.com/${u.repo}` + (u.checked_at ? when : " · not checked yet");
+      const when = u.checked_at ? ` · last checked ${new Date(u.checked_at * 1000).toLocaleString()}` : " · not checked yet";
+      if (u.skipped) return `You skipped version ${u.latest}. A newer one will show here` + when;
+      if (u.available) return `Version ${u.latest} is available (you have ${p.version})` + when;
+      return `Up to date. New versions come from github.com/${u.repo}` + when;
     },
-    async setPluginUpdateMode(p, mode) {
+    async skipPluginUpdate(p, on) {
       try {
-        Object.assign(p, await api(`/api/plugins/${p.id}/updates`, { method: "PUT", body: { mode } }));
-        toast(mode === "auto" ? `${p.name} updates automatically` : `${p.name} updates when you press Update`);
-      } catch (e) { toast(e.message, 6000, "error"); this.refreshPlugins(); }
+        Object.assign(p, await api(`/api/plugins/${p.id}/updates/skip`, { method: on ? "POST" : "DELETE" }));
+      } catch (e) { toast(e.message, 6000, "error"); }
     },
     async checkPluginUpdate(p) {
       this.busyAction = p.id + ":update";

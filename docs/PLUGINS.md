@@ -162,13 +162,12 @@ class Tracker(Plugin):
   with `version`, so keep the two the same.
 - **To publish an update:** raise `version` in the file, merge it, then create a release with the
   tag `v<version>`. Nothing reaches users before the release.
-- **Manual or Automatic**, chosen per plugin in Settings. Manual (the default) shows that a new
-  version is available, and the owner presses **Update to vX**. Automatic installs it in the daily
-  update check. Both follow Settings → Updates → *Check for updates every day*, and
-  `AUTO_UPDATE=0` turns them off.
+- **Always the owner's choice:** MangaVibe checks once a day (or on **Check for updates**) and shows
+  the new version with **Update to vX** and **Skip this version**. It never installs by itself. A
+  skipped version isn't offered again; a newer one is. The daily check follows Settings → Updates →
+  *Check for updates every day*, and `AUTO_UPDATE=0` turns it off.
 - **Safe swap:** the new file must load on its own and define a plugin with the same `id`, or
-  nothing changes. The old file is kept in `plugins/.backup/`. A failed automatic update is tried
-  again only when a newer release comes out.
+  nothing changes. The old file is kept in `plugins/.backup/`.
 - Only single-file plugins in the `plugins` folder can be updated. A plugin's settings and data are
   kept, since they're in the database, not in the file.
 
