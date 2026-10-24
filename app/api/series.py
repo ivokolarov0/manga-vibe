@@ -1,4 +1,7 @@
 """Library grid, series details, continue reading, plugin actions."""
+import logging
+import traceback
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
@@ -15,6 +18,7 @@ from app.models import Book, Link, PluginField, Progress, Series, SeriesTag, Tag
 from app.plugins import Context, action_result, manager as plugins
 
 router = APIRouter(prefix="/api")
+log = logging.getLogger("mangavibe.plugins")
 
 # 1x1 transparent PNG for series without any readable page
 BLANK_PNG = bytes.fromhex("89504e470d0a1a0a0000000d4948445200000001000000010806000000"
@@ -147,7 +151,9 @@ def get_series(series_id: int, db=Depends(get_db)):
     book, page = continue_target(db, s.id)
     tags = (db.query(Tag, SeriesTag).join(SeriesTag, SeriesTag.tag_id == Tag.id)
             .filter(SeriesTag.series_id == s.id).order_by(SeriesTag.rank.desc().nulls_last()).all())
-    fields = db.query(PluginField).filter_by(series_id=s.id).all()
+    choices = _series_choices(db, s)
+    shown = {(c["plugin"], c["key"]) for c in choices}  # a dropdown replaces the field with its key
+    fields = [f for f in db.query(PluginField).filter_by(series_id=s.id) if (f.plugin, f.key) not in shown]
     return {
         **series_card(s, counts, lang),
         "folder_name": s.folder_name, "folder_path": s.folder_path,
@@ -167,6 +173,7 @@ def get_series(series_id: int, db=Depends(get_db)):
                           for f in fields],
         "actions": [{"plugin": p.id, "key": a.key, "label": a.label, "confirm": a.confirm}
                     for p in plugins.enabled() for a in p.actions],
+        "choices": choices,
         "continue": {"book_id": book.id, "page": page, "label": book_dict(book)["label"],
                      "started": bool(counts[1] or counts[2])} if book else None,
     }
@@ -289,6 +296,46 @@ def continue_reading(limit: int = 30, db=Depends(get_db)):
         if len(out) >= limit:
             break
     return out
+
+
+def _series_choices(db, series):
+    """The plugins' dropdowns for the series page. A broken get_choice() only hides its dropdown."""
+    out = []
+    for p in plugins.enabled():
+        for c in p.choices:
+            try:
+                value = p.get_choice(Context(p, db), c.key, series)
+            except Exception:
+                log.error("Plugin %s failed in get_choice:\n%s", p.id, traceback.format_exc())
+                continue
+            if value is False:
+                continue
+            out.append({"plugin": p.id, "key": c.key, "label": c.label,
+                        "options": [[str(v), str(label)] for v, label in c.options],
+                        "value": None if value is None else str(value)})
+    return out
+
+
+class ChoiceBody(BaseModel):
+    value: str
+
+
+@router.put("/series/{series_id}/choices/{plugin_id}/{key}")
+def set_choice(series_id: int, plugin_id: str, key: str, body: ChoiceBody, db=Depends(get_db)):
+    s = get_or_404(db, Series, series_id)
+    p = plugins.get(plugin_id)
+    c = next((c for c in p.choices if c.key == key), None) if p else None
+    if c is None:
+        raise HTTPException(404, "Dropdown not found")
+    if body.value not in {str(v) for v, _ in c.options}:
+        raise HTTPException(400, "Not one of the options")
+    try:
+        result = p.set_choice(Context(p, db), key, s, body.value)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(500, f"Plugin error: {type(e).__name__}: {e}")
+    return action_result(result)
 
 
 @router.post("/series/{series_id}/actions/{plugin_id}/{action_key}")

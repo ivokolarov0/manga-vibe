@@ -175,13 +175,15 @@ def _plugin_status(p, db):
 
 
 def _plugin_dict(p, db):
-    saved = Context(p, db).settings
+    ctx = Context(p, db)
+    saved = ctx.settings
     return {"id": p.id, "name": p.name, "version": p.version,
             "description": p.description, "enabled": p.id not in plugins.disabled,
             "provider": p.is_provider, "fields": [f.label for f in p.fields],
             "actions": [a.label for a in p.actions],
             "settings": [{"key": f.key, "label": f.label, "help": f.help, "secret": f.secret,
-                          "value": "" if f.secret else str(saved.get(f.key) or ""),
+                          "options": [[str(v), str(label)] for v, label in f.options],
+                          "value": "" if f.secret else str(ctx.setting(f.key) or ""),
                           "saved": bool(saved.get(f.key))} for f in p.settings_fields],
             "global_actions": [{"key": a.key, "label": a.label, "confirm": a.confirm}
                                for a in p.global_actions],
@@ -203,13 +205,15 @@ def _enabled_plugin(plugin_id):
 
 @router.put("/plugins/{plugin_id}/settings")
 def save_plugin_settings(plugin_id: str, body: dict, db=Depends(get_db)):
-    """Save the plugin's Settings text boxes. Only the keys it declared; "" clears a value."""
+    """Save the plugin's Settings boxes. Only the keys it declared; "" clears a value."""
     p = _enabled_plugin(plugin_id)
     ctx = Context(p, db)
     values = ctx.settings
     for f in p.settings_fields:
         if f.key in body:
             v = str(body[f.key] or "").strip()
+            if v and f.options and v not in {str(o) for o, _ in f.options}:
+                raise HTTPException(400, f"{f.label}: not one of the options")
             if v:
                 values[f.key] = v
             else:

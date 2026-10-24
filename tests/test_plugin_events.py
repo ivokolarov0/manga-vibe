@@ -108,9 +108,107 @@ def test_secret_settings_never_sent_back(client):
         client.put("/api/plugins/secret-test/settings", json={"token": "abc"})
         info = next(p for p in client.get("/api/plugins").json()["plugins"] if p["id"] == "secret-test")
         assert info["settings"][0] == {"key": "token", "label": "Token", "help": "", "secret": True,
-                                       "value": "", "saved": True}
+                                       "options": [], "value": "", "saved": True}
     finally:
         del manager.plugins["secret-test"]
+
+
+def test_dropdown_setting_with_a_default(client):
+    from app.db import SessionLocal
+    from app.plugins import Context, Plugin, SettingDef, manager
+
+    class Modes(Plugin):
+        id = "mode-test"
+        settings_fields = [SettingDef("mode", "Mode", options=[("auto", "Automatic"), ("manual", "Manual")],
+                                      default="auto")]
+
+    manager.plugins["mode-test"] = p = Modes()
+
+    def setting():
+        info = next(x for x in client.get("/api/plugins").json()["plugins"] if x["id"] == "mode-test")
+        with SessionLocal() as db:
+            return info["settings"][0], Context(p, db).setting("mode")
+
+    try:
+        f, value = setting()
+        assert f["options"] == [["auto", "Automatic"], ["manual", "Manual"]]
+        assert (f["value"], f["saved"], value) == ("auto", False, "auto")  # the default
+        client.put("/api/plugins/mode-test/settings", json={"mode": "manual"})
+        f, value = setting()
+        assert (f["value"], f["saved"], value) == ("manual", True, "manual")
+        assert client.put("/api/plugins/mode-test/settings", json={"mode": "sometimes"}).status_code == 400
+        client.put("/api/plugins/mode-test/settings", json={"mode": ""})  # cleared: the default again
+        assert setting()[1] == "auto"
+    finally:
+        del manager.plugins["mode-test"]
+
+
+def test_choices_on_the_series_page(client):
+    from app.plugins import Choice, FieldDef, Plugin, manager
+
+    class Tracker(Plugin):
+        id = "choice-test"
+        fields = [FieldDef("site", "Site")]
+        choices = [Choice("site", "Site", options=[("reading", "Reading"), ("", "Not on my list")])]
+        picked = []
+
+        def set_choice(self, ctx, key, series, value):
+            self.picked.append((key, series.id, value))
+            ctx.set_field(series, key, value)
+            ctx.set_reading_status(series, value or None)
+            return f"Set to {value or 'nothing'}"
+
+    class Hidden(Plugin):
+        id = "choice-hidden"
+        choices = [Choice("x", "X", options=[("a", "A")])]
+
+        def get_choice(self, ctx, key, series):
+            return False
+
+    class Broken(Plugin):
+        id = "choice-broken"
+        choices = [Choice("x", "X", options=[("a", "A")])]
+
+        def get_choice(self, ctx, key, series):
+            raise RuntimeError("boom")
+
+    for p in (Tracker(), Hidden(), Broken()):
+        manager.plugins[p.id] = p
+    sid = series_id(client, "Series B")
+    try:
+        s = client.get(f"/api/series/{sid}").json()  # hidden and broken ones are left out
+        assert s["choices"] == [{"plugin": "choice-test", "key": "site", "label": "Site",
+                                 "options": [["reading", "Reading"], ["", "Not on my list"]], "value": None}]
+
+        url = f"/api/series/{sid}/choices/choice-test/site"
+        assert client.put(url, json={"value": "reading"}).json()["message"] == "Set to reading"
+        s = client.get(f"/api/series/{sid}").json()
+        assert s["choices"][0]["value"] == "reading" and s["manual_reading_status"] == "reading"
+        assert not [f for f in s["plugin_fields"] if f["plugin"] == "choice-test"]  # not shown twice
+
+        assert client.put(url, json={"value": ""}).json()["message"] == "Set to nothing"
+        assert client.get(f"/api/series/{sid}").json()["choices"][0]["value"] == ""
+        assert client.put(url, json={"value": "dropped"}).status_code == 400
+        assert client.put(f"/api/series/{sid}/choices/choice-test/nope", json={"value": ""}).status_code == 404
+        assert client.put(f"/api/series/{sid}/choices/missing/site", json={"value": ""}).status_code == 404
+        assert Tracker.picked == [("site", sid, "reading"), ("site", sid, "")]
+    finally:
+        for pid in ("choice-test", "choice-hidden", "choice-broken"):
+            del manager.plugins[pid]
+        client.patch(f"/api/series/{sid}", json={"clear_reading_status": True})
+
+
+def test_provider_error_has_the_status_code():
+    import httpx
+    from app.metadata import http
+    old = http.transport
+    http.transport = httpx.MockTransport(lambda req: httpx.Response(404, json={"error": "not_found"}))
+    try:
+        with pytest.raises(http.ProviderError) as e:
+            http.request("DELETE", "https://api.example/x", retries=0)
+        assert e.value.status == 404
+    finally:
+        http.transport = old
 
 
 def test_broken_event_hook_is_contained(client):

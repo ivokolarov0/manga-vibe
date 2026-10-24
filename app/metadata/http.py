@@ -19,7 +19,9 @@ transport = None  # tests put an httpx.MockTransport here
 
 
 class ProviderError(Exception):
-    pass
+    def __init__(self, message, status=None):
+        super().__init__(message)
+        self.status = status  # the HTTP status code, or None when the site couldn't be reached
 
 
 def _wait_turn(host):
@@ -47,7 +49,7 @@ def request(method, url, retries=4, **kw):
         else:
             if r.status_code == 429 or r.status_code >= 500:
                 if attempt == retries:
-                    raise ProviderError(f"{host} answered {r.status_code}")
+                    raise ProviderError(f"{host} answered {r.status_code}", r.status_code)
                 try:
                     wait = int(r.headers.get("Retry-After", delay)) if r.status_code == 429 else delay
                 except ValueError:  # Retry-After given as a date
@@ -58,7 +60,7 @@ def request(method, url, retries=4, **kw):
                 delay = min(delay * 2, 120)
                 continue
             if r.status_code >= 400:
-                raise ProviderError(f"{host} answered {r.status_code}: {_short_error(r)}")
+                raise ProviderError(f"{host} answered {r.status_code}: {_short_error(r)}", r.status_code)
             return r
         if transport is None:
             time.sleep(delay)

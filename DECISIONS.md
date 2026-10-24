@@ -237,3 +237,17 @@ Choices made where the spec was open. Newest at the bottom.
 - **`/api/plugins/<id>/web/<path>`** lets a plugin answer a GET itself (OAuth callback). `ctx.web_url()`
   builds the address from the last request's host, because the app doesn't know its own address
   (NAS IP, Tailscale, domain…).
+
+
+## Plugin dropdowns on the series page
+
+- **A plugin can show a dropdown** (`Choice`) under the reading status, e.g. the status on a tracker
+  site, so the owner can change it there without opening the website. The plugin says which option is
+  selected (`get_choice`) and is called when the owner picks one (`set_choice`).
+- **`get_choice` must not call a website.** It runs every time the series page opens; it reads what the
+  plugin saved. By default it's the plugin field with the same key, and that field is hidden while the
+  dropdown shows, so the value isn't listed twice.
+- **`get_choice` can return `False`** to hide the dropdown for one series (e.g. no MyAnimeList id), and
+  `None` for "unknown". A crashing `get_choice` only hides its dropdown; the page still opens.
+- **`ProviderError.status`** carries the HTTP code, so a plugin can tell "not found" (e.g. removing
+  something that's already gone) from a real failure.
