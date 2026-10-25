@@ -322,6 +322,14 @@ Choices made where the spec was open. Newest at the bottom.
   transparent, so a plugin that colours its boxes with `--ov-bg` keeps the opacity setting. The outline
   is `-webkit-text-stroke` with `paint-order: stroke fill`, so it sits behind the letters, and the
   text gets padding of half the stroke so the fitted text isn't cut off at the box edge.
+- **Per-series data of the plugin's own** (`plugin_series`, plugin API 4). A translator keeps notes on
+  the characters and the story from chapter to chapter; `PluginField` would show them on the series
+  page, and the plugin's settings are one blob the owner's Save rewrites. So a separate table, keyed
+  by plugin, series and key, never shown, deleted with the series.
+- **A page note in the top bar** (`Overlay.note`, plugin API 4), e.g. "Full context · Haruka, Taro".
+  `message` is a status pill over the page, right for "Translating…" but too much for a line that's
+  there on every page. The note sits under the chapter's name in the top bar, so it only shows while
+  the controls do.
 
 ## Android app
 

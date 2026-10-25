@@ -85,7 +85,8 @@ def page_overlays(book_id: int, n: int, plugins_: str = Query("", alias="plugins
         for box in boxes:
             box["hidden"] = (p.id, box["id"]) in hidden
         layers.append({"plugin": p.id, "pending": bool(result.pending),
-                       "message": str(result.message or ""), "boxes": boxes})
+                       "message": str(result.message or ""), "note": str(getattr(result, "note", "") or ""),
+                       "boxes": boxes})
     return {"page": n, "layers": layers}
 
 

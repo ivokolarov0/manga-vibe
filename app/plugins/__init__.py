@@ -16,6 +16,7 @@ What a plugin can do:
 - permissions:        list what it uses in `permissions`; an update that adds one asks first
 - page overlays:      set `overlay_label` and implement page_overlay() to draw boxes over reader pages
 - page data:          ctx.set_page_data()/get_page_data() keep a value per page (e.g. a translation)
+- series data:        ctx.set_series_data()/get_series_data() keep values per series, never shown
 - books:              book_badges() labels books in the list; `book_actions` are buttons in the reader
 - long work:          ctx.run_in_thread() runs a worker of the plugin's own; it checks ctx.should_stop()
 
@@ -35,7 +36,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 3
+API_VERSION = 4
 
 
 @dataclass
@@ -100,10 +101,12 @@ class Box:
 class Overlay:
     """What page_overlay() returns. With `pending`, the reader asks again a few seconds later and
     shows `message` (e.g. "Translating…") meanwhile; `message` alone is a short status line
-    (e.g. "PC offline")."""
+    (e.g. "PC offline"), shown over the page. `note` is a quiet line about the page (e.g.
+    "Full context · Haruka, Taro"), shown in the reader's top bar only while the controls are open."""
     boxes: list = field(default_factory=list)  # [Box]
     pending: bool = False
     message: str = ""
+    note: str = ""
 
 
 @dataclass
@@ -389,6 +392,41 @@ class Context:
         q = self.db.query(PluginPage).filter_by(plugin=self.plugin.id)
         if book is not None:
             q = q.filter_by(book_id=book.id)
+        q.delete(synchronize_session=False)
+
+    # --- per-series data (never shown in the app) --------------------------------
+    def _series_rows(self, series):
+        from app.models import PluginSeriesData
+        series_id = getattr(series, "id", series)  # a Series or its id (e.g. book.series_id)
+        return self.db.query(PluginSeriesData).filter_by(plugin=self.plugin.id, series_id=series_id)
+
+    def set_series_data(self, series, key, value):
+        """Save a value (anything JSON can hold) under `key` for a series (a Series or its id);
+        None removes it. For the plugin's own use: unlike set_field(), nothing is shown."""
+        from app.models import PluginSeriesData, now
+        row = self._series_rows(series).filter_by(key=key).one_or_none()
+        if value is None:
+            if row:
+                self.db.delete(row)
+            return
+        if row is None:
+            row = PluginSeriesData(plugin=self.plugin.id, series_id=getattr(series, "id", series), key=key)
+            self.db.add(row)
+        row.value, row.updated_at = value, now()
+
+    def get_series_data(self, series, key, default=None):
+        row = self._series_rows(series).filter_by(key=key).one_or_none()
+        return default if row is None else row.value
+
+    def series_data(self, series) -> dict:
+        """All saved values of a series: {key: value}."""
+        return {r.key: r.value for r in self._series_rows(series)}
+
+    def clear_series_data(self, series, key=None):
+        """Remove one key of a series, or all of them with key=None."""
+        q = self._series_rows(series)
+        if key is not None:
+            q = q.filter_by(key=key)
         q.delete(synchronize_session=False)
 
     # --- a worker thread of the plugin's own -----------------------------------

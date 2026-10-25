@@ -182,6 +182,19 @@ class PluginPage(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class PluginSeriesData(Base):
+    """Per-series values a plugin keeps for itself (e.g. a translator's notes on the characters).
+    Unlike PluginField, never shown in the app. Deleted with the series."""
+    __tablename__ = "plugin_series"
+    __table_args__ = (UniqueConstraint("plugin", "series_id", "key"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    plugin: Mapped[str] = mapped_column(String)
+    series_id: Mapped[int] = mapped_column(ForeignKey("series.id", ondelete="CASCADE"), index=True)
+    key: Mapped[str] = mapped_column(String)
+    value: Mapped[dict | list | str | int | float | bool | None] = mapped_column(JSON)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 class OverlayHidden(Base):
     """An overlay box the owner hid in the reader (e.g. a wrong translation over the art).
     `box` is the box's position on the page ("x,y"), so it survives the plugin redoing the page."""
