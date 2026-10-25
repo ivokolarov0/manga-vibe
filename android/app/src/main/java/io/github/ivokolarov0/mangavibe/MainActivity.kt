@@ -288,7 +288,12 @@ class MainActivity : Activity() {
                     max(insets.systemWindowInsetRight, cut?.safeInsetRight ?: 0),
                     max(insets.systemWindowInsetBottom, cut?.safeInsetBottom ?: 0))
             }
-            insets
+            // the padding already keeps the page clear: the WebView mustn't see the bars too, or the
+            // page adds its own env(safe-area-inset-*) space on top (an empty row above the nav bar)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) WindowInsets.CONSUMED
+            else insets.consumeSystemWindowInsets().let {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) it.consumeDisplayCutout() else it
+            }
         }
     }
 
