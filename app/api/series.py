@@ -12,7 +12,7 @@ from app.api.common import (READING_STATUSES, TITLE_FIELDS, book_dict, continue_
                             status_of, title_lang, visible_books_query)
 from app import config
 from app.db import get_db
-from app.direction import reading_direction
+from app.direction import MODES, reading_direction
 from app.metadata import service as metadata, worker as metadata_worker
 from app.metadata.http import ProviderError
 from app.models import Book, Link, PluginField, Progress, Series, SeriesTag, Tag
@@ -167,7 +167,7 @@ def get_series(series_id: int, db=Depends(get_db)):
         "publication_status": s.publication_status, "country_of_origin": s.country_of_origin,
         "banner_url": s.banner_url, "has_duplicates": s.has_duplicates,
         "reader_mode": s.reader_mode, "manual_reading_status": s.reading_status,
-        # the direction the reader uses, and what decided it: series, metadata, library or default
+        # the reading mode the reader uses, and what decided it: series, library or default
         "direction": dict(zip(("mode", "source"), reading_direction(db, s))),
         "tags": [{"name": t.name, "kind": t.kind, "spoiler": st.is_spoiler} for t, st in tags],
         "links": [{"id": l.id, "site": l.site, "url": l.url} for l in db.query(Link).filter_by(series_id=s.id)],
@@ -189,7 +189,7 @@ class SeriesPatch(BaseModel):
     clear_reading_status: bool = False
 
 
-READER_MODES = {"rtl", "ltr", "vertical"}
+READER_MODES = set(MODES)
 
 
 @router.patch("/series/{series_id}")

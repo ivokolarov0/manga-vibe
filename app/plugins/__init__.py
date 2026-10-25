@@ -258,8 +258,8 @@ class Context:
 
     # reading status: what the app shows (manual choice, else worked out from progress)
     def reading_direction(self, series):
-        """rtl (manga), ltr (comics) or vertical (webtoons): the way the reader shows the series
-        (its own setting, its metadata, its library's default, then Settings → Reader). Plugin API 5."""
+        """paged or vertical (webtoons): the way the reader shows the series (its own setting, its
+        library's default, then Settings → Reader). Paged always turns forward to the right. Plugin API 5."""
         from app.direction import reading_direction
         return reading_direction(self.db, series)[0]
 

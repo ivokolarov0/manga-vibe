@@ -254,8 +254,8 @@ The owner can edit any metadata field by hand (titles, description, tags, status
 ### 7.5 Reader
 - Opens a book at the saved page.
 - **Fullscreen:** button that calls the Fullscreen API; also enter fullscreen automatically on first tap if the setting is enabled. Hide UI chrome while reading; tap the centre to show/hide controls.
-- Modes (per-series setting with a global default): **Right-to-left** (manga default), **Left-to-right**, **Vertical/webtoon** (continuous scroll, no gaps).
-- Paged modes: tap zones (left/right quarters; can be inverted or switched to a one-handed layout) and swipe to turn pages; volume keys are not available in browsers, ignore.
+- Modes (per-series setting, then the library folder's, then a global default): **Pages** (default; the next page is always on the right, like every digital reader) and **Vertical/webtoon** (continuous scroll, no gaps).
+- Pages: tap zones (left quarter back, right quarter forward; or a one-handed layout) and swipe to turn pages; volume keys are not available in browsers, ignore.
 - Fit: fit width, fit height, fit screen, original. Pinch-zoom and double-tap zoom in paged mode.
 - Double-page spread on landscape/desktop (nice to have, phase 5).
 - Bottom slider to jump to a page, with page number.
@@ -276,7 +276,7 @@ A list of: series with failed/low-confidence matches (with "Fix match"), series 
 ### 7.8 Settings
 - Library roots (add/remove, rescan now).
 - Title language, theme, card size.
-- Reader defaults (direction, fit, auto-fullscreen, preload count).
+- Reader defaults (mode, fit, auto-fullscreen, preload count).
 - Metadata: include adult results, auto-match on/off, auto-accept threshold, refresh schedule.
 - Optional single password (see 10).
 
@@ -418,7 +418,7 @@ Each phase ends with: tests passing, app running locally, short note in `README.
 - Scanner: series folders, books (zip/cbz, rar/cbr, image folders), page counts, thumbnails.
 - Filename parser + ordering + revisions/duplicates (all tests in 4.5).
 - Library grid with infinite scroll, series page with book list.
-- Reader: RTL/LTR/vertical, tap/swipe, fullscreen, preload, progress saving, next-book.
+- Reader: pages/vertical, tap/swipe, fullscreen, preload, progress saving, next-book.
 - Continue Reading.
 - Dockerfile + `docs/SYNOLOGY.md`. **The owner deploys this to the NAS before phase 2.**
 

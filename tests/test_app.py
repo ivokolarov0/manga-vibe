@@ -127,7 +127,7 @@ def test_page_look_settings(client):
 
 
 def test_settings(client):
-    assert client.get("/api/settings").json()["reader_mode"] == "rtl"
+    assert client.get("/api/settings").json()["reader_mode"] == "paged"
     client.put("/api/settings", json={"reader_mode": "vertical", "bogus": 1})
     s = client.get("/api/settings").json()
     assert s["reader_mode"] == "vertical" and "bogus" not in s
@@ -137,10 +137,10 @@ def test_settings(client):
     assert s["reader_drawer_side"] == "right"
     client.put("/api/settings", json={"reader_drawer_side": "left"})
     assert client.get("/api/settings").json()["reader_drawer_side"] == "left"
-    assert s["reader_tap_layout"] == "default" and s["reader_tap_invert"] is True
-    client.put("/api/settings", json={"reader_tap_layout": "one-handed", "reader_tap_invert": False})
+    assert s["reader_tap_layout"] == "default" and "reader_tap_invert" not in s
+    client.put("/api/settings", json={"reader_tap_layout": "one-handed"})
     s = client.get("/api/settings").json()
-    assert s["reader_tap_layout"] == "one-handed" and s["reader_tap_invert"] is False
+    assert s["reader_tap_layout"] == "one-handed"
     assert s["reader_volume_keys"] is True
     client.put("/api/settings", json={"reader_volume_keys": False})
     assert client.get("/api/settings").json()["reader_volume_keys"] is False
