@@ -192,6 +192,10 @@ Haruka says: Hey!")`
 - **Show progress** with `book_badges` (a label per book in the series list, e.g. `"12/40"`; use
   `ctx.page_data_counts(books)`), and offer `book_actions` such as "Translate this chapter" in the
   reader. Series-wide buttons (`actions`) stay on the series page.
+- **Progress shows live:** while the series page is open it asks for `book_badges` again every few
+  seconds, and Settings does the same for `status()` while a plugins page is open (both slow down
+  after a minute without a change). So a label like "Translated 12/40" or "Queue: 30 pages" counts
+  up on its own; keep both quick (no website calls).
 
 `examples/plugins/page_info.py` uses all of it: a queue, its own thread, the next pages prepared
 ahead, badges and book buttons.

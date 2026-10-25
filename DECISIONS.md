@@ -330,6 +330,11 @@ Choices made where the spec was open. Newest at the bottom.
   `message` is a status pill over the page, right for "Translating…" but too much for a line that's
   there on every page. The note sits under the chapter's name in the top bar, so it only shows while
   the controls do.
+- **Live progress by asking, not pushing.** A translation queue changes the book labels and the plugin's
+  status line for minutes. The series page asks a labels-only endpoint (`/api/series/<id>/badges`)
+  every 3 s, and Settings asks for the status lines; after a minute without a change it's every 30 s
+  (15 s in Settings), and nothing while the tab is hidden. Same reasoning as the reader's overlays: no
+  push channel to keep alive, and a small query every few seconds costs nothing.
 
 ## Accessibility: read aloud, screen readers, page look (plugin API 5)
 

@@ -65,6 +65,8 @@ def wait_ready(client, book_id, page, timeout=15):
 
 def test_no_overlays_without_plugins(client):
     book = first_book(client)
+    # no plugin labels books: the series page has nothing to keep asking for
+    assert client.get(f"/api/series/{series_id('Series B')}/badges").json() == {"live": False, "badges": {}}
     info = client.get(f"/api/books/{book['id']}").json()
     assert info["overlays"] == [] and info["actions"] == []
     assert client.get(f"/api/books/{book['id']}/overlays/0").json()["layers"] == []
@@ -129,8 +131,14 @@ def test_badges_and_book_actions(client, page_info):
     badges = first_book(client)["badges"]
     assert badges == [{"plugin": "page-info", "name": "Page info", "text": "Info ✓"}]
 
+    # the series page keeps them live with a cheap call that has only the labels
+    sid = series_id("Series B")
+    live = client.get(f"/api/series/{sid}/badges").json()
+    assert live == {"live": True, "badges": {str(book["id"]): badges}}
+
     client.post(f"/api/books/{book['id']}/actions/page-info/clear")
     assert first_book(client)["badges"] == []
+    assert client.get(f"/api/series/{sid}/badges").json() == {"live": True, "badges": {}}
     assert client.post(f"/api/books/{book['id']}/actions/page-info/nope").status_code == 404
 
 

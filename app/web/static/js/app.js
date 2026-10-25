@@ -603,7 +603,7 @@ function continueView() {
 
 function seriesView() {
   return {
-    s: null, books: [], tab: "", loadedFor: null,
+    s: null, books: [], tab: "", loadedFor: null, badgeTimer: null, badgeSame: 0,
     showAllTags: false, showSpoilers: false, descLong: false, descOpen: false,
     statusLabels: STATUS_LABELS, pubLabels: PUB_LABELS,
     init() {
@@ -612,6 +612,7 @@ function seriesView() {
         if (app.view !== "series") return;
         const key = `${app.id}|${app.params.tab || ""}`;
         if (key !== this.loadedFor) this.load();
+        else if (!this.badgeTimer) this.watchBadges(true);  // back on the same series: labels may have moved on
       };
       this.$watch("$store.app.view", check);
       this.$watch("$store.app.id", check);
@@ -627,6 +628,7 @@ function seriesView() {
       if (this.loadedFor !== `${id}|${tab}`) return;
       const sameSeries = this.s?.id === s.id;
       Object.assign(this, { s, books, tab });
+      this.watchBadges(true);
       if (!sameSeries) {  // reloading the same series keeps "show more", tags, … as they were: no jumping
         Object.assign(this, { showAllTags: false, showSpoilers: false, descOpen: false });
       }
@@ -642,6 +644,30 @@ function seriesView() {
       const app = this.$store.app;
       if (app.seriesBack) history.back();
       else location.replace("#/" + (app.query ? "?" + app.query : ""));
+    },
+    // the plugins' labels on the books (e.g. "Translated 12/40") stay live while the page is open:
+    // asked every 3 s, every 30 s after a minute without a change; a load (e.g. after a plugin
+    // button) makes it quick again. Nothing is asked while the tab is hidden or no plugin labels books.
+    watchBadges(quick) {
+      clearTimeout(this.badgeTimer);
+      if (quick) this.badgeSame = 0;
+      this.badgeTimer = setTimeout(() => this.pollBadges(), this.badgeSame >= 20 ? 30000 : 3000);
+    },
+    async pollBadges() {
+      const app = this.$store.app, key = this.loadedFor;
+      this.badgeTimer = null;
+      if (app.view !== "series" || !this.s) return;  // left the page: coming back starts it again
+      if (document.hidden) return this.watchBadges();
+      const r = await api(`/api/series/${this.s.id}/badges${this.tab === "files" ? "?all=1" : ""}`).catch(() => null);
+      if (this.loadedFor !== key || app.view !== "series" || this.badgeTimer) return;  // another load took over
+      if (r && !r.live) return;
+      let changed = false;
+      for (const b of r ? this.books : []) {
+        const fresh = r.badges[b.id] || [];
+        if (JSON.stringify(fresh) !== JSON.stringify(b.badges || [])) { b.badges = fresh; changed = true; }
+      }
+      this.badgeSame = changed ? 0 : this.badgeSame + 1;
+      this.watchBadges();
     },
 
     get alt() {
@@ -1040,8 +1066,29 @@ function settingsView() {
       this.stop();
       this.pollScan();
       this.pollMeta();
+      this.pollPluginStatus();
     },
-    stop() { this.timers.forEach(clearTimeout); this.timers = []; },
+    stop() { this.timers.forEach(clearTimeout); this.timers = []; clearTimeout(this.statusTimer); },
+    // the plugins' status lines (e.g. "Queue: 12 pages") stay live while a plugins page is open: asked
+    // every 3 s, every 15 s after a minute without a change. Only the status changes, so a setting
+    // being typed isn't touched.
+    statusTimer: null, statusSame: 0,
+    async pollPluginStatus() {
+      const app = this.$store.app;
+      if (app.view !== "settings") return;
+      if (!document.hidden && (this.section === "plugins" || this.section === "plugin")) {
+        const r = await api("/api/plugins").catch(() => null);
+        if (app.view !== "settings") return;
+        let changed = false;
+        for (const fresh of r?.plugins || []) {
+          const p = this.plugins.find((x) => x.id === fresh.id);
+          if (p && p.status !== fresh.status) { p.status = fresh.status; changed = true; }
+        }
+        this.statusSame = changed ? 0 : this.statusSame + 1;
+      }
+      clearTimeout(this.statusTimer);
+      this.statusTimer = setTimeout(() => this.pollPluginStatus(), this.statusSame >= 20 ? 15000 : 3000);
+    },
     async save(key) {
       let v = this.st[key];
       if (v === "true" || v === "false") v = v === "true";
@@ -1175,6 +1222,7 @@ Your files are not touched. `
       catch (e) { toast(e.message, 6000, "error"); }
       finally { this.busyAction = ""; }
       this.refreshPlugins();
+      this.statusSame = 0;  // a button was pressed: watch its status closely again
     },
     async reloadPlugins() {
       const r = await api("/api/plugins/reload", { method: "POST" });

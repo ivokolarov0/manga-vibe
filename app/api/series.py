@@ -227,6 +227,20 @@ def series_books(series_id: int, all: bool = False, db=Depends(get_db)):
     return [{**book_dict(b, prog.get(b.id)), "badges": badges.get(b.id, [])} for b in books]
 
 
+@router.get("/series/{series_id}/badges")
+def series_badges(series_id: int, all: bool = False, db=Depends(get_db)):
+    """Only the plugins' labels on the books, so the series page can keep them live (e.g. a translation
+    going "Translated 12/40", "13/40", …) without reloading the whole list. `live` is False when no
+    plugin labels books, so there's nothing to keep asking for."""
+    get_or_404(db, Series, series_id)
+    q = db.query(Book).filter(Book.series_id == series_id, Book.missing_since.is_(None))
+    if not all:
+        q = q.filter(Book.hidden.is_(False))
+    live = any(implements(p, "book_badges") for p in plugins.enabled())
+    badges = _book_badges(db, q.all()) if live else {}
+    return {"live": live, "badges": {str(k): v for k, v in badges.items()}}
+
+
 def _book_badges(db, books):
     """{book_id: [{"plugin", "text"}]} from the plugins' book_badges(). A broken one shows no badges."""
     out = {}
