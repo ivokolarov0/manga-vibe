@@ -45,6 +45,7 @@ class Hello(Plugin):
 | **Say what it uses** | `permissions = ["Connects to api.myanimelist.net"]`: shown in Settings; an update that adds one asks first (see [Updates](#updates)) |
 | **Draw over reader pages** (e.g. a translation) | `overlay_label = "Translation"` and `page_overlay(ctx, book, page)` returning `Overlay(boxes=[Box(...)])` (see [Drawing on pages](#drawing-on-pages)) |
 | **Save something per page** | `ctx.set_page_data(book, page, value)`, `ctx.get_page_data(book, page)`, `ctx.page_data(book)` |
+| **Keep something per series** for the plugin itself (e.g. notes on the characters) | `ctx.set_series_data(series, key, value)`, `ctx.get_series_data(series, key)`; never shown in the app |
 | **Labels on books** in the series list | `book_badges(ctx, books)` returning `{book_id: "Translated"}` |
 | **Buttons for the open book** (in the reader's options) | `book_actions = [Action("all", "Translate this chapter")]` and `run_book_action(ctx, key, book)` |
 | **Work for hours** without holding up other plugins | `ctx.run_in_thread(fn)`; the loop returns when `ctx.should_stop()` |
@@ -72,6 +73,8 @@ class Hello(Plugin):
 | `ctx.read_page(book, n, max_width=None)` | page `n` (0-based) as image bytes, for every format (PDF and EPUB pages come rendered). `max_width` shrinks larger pages to WebP |
 | `ctx.set_page_data(book, n, value)` / `ctx.get_page_data(book, n)` | the plugin's own value for one page (any JSON value; `None` removes it). Removed with the book, and when its file changes |
 | `ctx.page_data(book)` / `ctx.page_data_counts(books)` / `ctx.clear_page_data(book=None)` | all saved pages of a book `{page: value}`; how many pages have a value per book `{book_id: n}`; forget one book or all |
+| `ctx.set_series_data(series, key, value)` / `ctx.get_series_data(series, key)` | the plugin's own value under `key` for a series (a `Series` or its id, e.g. `book.series_id`; any JSON value; `None` removes it). Unlike `set_field()`, nothing is shown. Removed with the series |
+| `ctx.series_data(series)` / `ctx.clear_series_data(series, key=None)` | all saved values of a series `{key: value}`; forget one key or all |
 
 `book` and `series` are database rows; see `app/models.py` for their fields. A series' online ids
 are on it too, e.g. `series.mal_id`, `series.anilist_id`, and `series.publication_status`
@@ -161,6 +164,11 @@ class Notes(Plugin):
   thread and answer `Overlay(pending=True, message="Translating…")`. The reader shows the message at
   the top and asks again every few seconds while that page is still being read.
   `Overlay(message="PC offline")` (without `pending`) shows a status line without asking again.
+- **A quiet line about the page:** `Overlay(boxes=..., note="Full context · Haruka, Taro")` shows the
+  note in the reader's top bar, under the chapter's name, only while the controls are open. Unlike
+  `message`, it never covers the page. Added in plugin API 4 (with series data): a plugin that should
+  also run on older MangaVibe can check `"note" in Overlay.__dataclass_fields__` and
+  `hasattr(ctx, "set_series_data")` first.
 - **A worker of your own:** start it with `ctx.run_in_thread(self.work)` the first time there's
   something to do. It gets its own database session; call `ctx.db.commit()` after each page so the
   reader can show it. Loop until `ctx.should_stop()`, which turns `True` when the plugin is reloaded,

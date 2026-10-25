@@ -349,6 +349,12 @@
           color: #c8cad0;
           font-size: 12px;
         }
+
+        /* a plugin's line about the page (Overlay.note), e.g. "Full context · Haruka, Taro" */
+        & .ov-note {
+          color: var(--accent);
+          font-size: 11px;
+        }
       }
 
       & button.icon {

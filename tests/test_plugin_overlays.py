@@ -1,4 +1,5 @@
-"""Plugin API v3: page overlays, per-page data, book badges and buttons, plugin threads."""
+"""Plugin API v3/v4: page overlays and notes, per-page and per-series data, book badges and buttons,
+plugin threads."""
 import io
 import os
 import shutil
@@ -215,8 +216,64 @@ def test_a_broken_plugin_does_not_break_the_reader(client):
         book = first_book(client)
         layers = client.get(f"/api/books/{book['id']}/overlays/0").json()["layers"]
         assert layers == [{"plugin": "broken-overlay", "pending": False,
-                           "message": "broken-overlay failed: RuntimeError", "boxes": []}]
+                           "message": "broken-overlay failed: RuntimeError", "note": "", "boxes": []}]
         assert first_book(client)["badges"] == []
     finally:
         dest.unlink()
         client.post("/api/plugins/reload")
+
+
+NOTED = '''
+from app.plugins import Box, Overlay, Plugin
+
+class Noted(Plugin):
+    id = "noted-overlay"
+    overlay_label = "Noted"
+
+    def page_overlay(self, ctx, book, page):
+        return Overlay(boxes=[Box(0.1, 0.1, 0.2, 0.1, text="Hi")], note=f"Full context · page {page + 1}")
+'''
+
+
+def test_overlay_note(client):
+    dest = PLUGINS_DIR / "noted_overlay.py"
+    dest.write_text(NOTED, encoding="utf-8")
+    client.post("/api/plugins/reload")
+    try:
+        book = first_book(client)
+        layer = client.get(f"/api/books/{book['id']}/overlays/1").json()["layers"][0]
+        assert layer["note"] == "Full context · page 2" and layer["message"] == "" and layer["boxes"]
+    finally:
+        dest.unlink()
+        client.post("/api/plugins/reload")
+
+
+def test_series_data(client, page_info):
+    from app.db import SessionLocal
+    from app.models import PluginSeriesData, Series
+    from app.plugins import Context
+    sid = series_id("Series B")
+    with SessionLocal() as db:
+        ctx = Context(page_info, db)
+        series = db.get(Series, sid)
+        ctx.clear_series_data(series)
+        ctx.set_series_data(series, "notes", {"characters": ["Haruka"]})
+        ctx.set_series_data(sid, "count", 1)          # the id works too (e.g. book.series_id)
+        ctx.set_series_data(series, "count", 2)       # replaces
+        db.commit()
+        assert ctx.get_series_data(series, "notes") == {"characters": ["Haruka"]}
+        assert ctx.series_data(sid) == {"notes": {"characters": ["Haruka"]}, "count": 2}
+        assert ctx.get_series_data(series, "nope", "default") == "default"
+        # another plugin's values are its own
+        other = Context(type("Other", (), {"id": "other"})(), db)
+        assert other.series_data(series) == {}
+        # never shown on the series page
+        assert all(f["plugin"] != "page-info" for f in client.get(f"/api/series/{sid}").json()["plugin_fields"])
+
+        ctx.set_series_data(series, "count", None)
+        db.commit()
+        assert ctx.series_data(series) == {"notes": {"characters": ["Haruka"]}}
+        ctx.clear_series_data(series, "notes")
+        db.commit()
+        assert ctx.series_data(series) == {}
+        assert db.query(PluginSeriesData).filter_by(series_id=sid).count() == 0

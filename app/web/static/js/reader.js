@@ -103,7 +103,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
       <span>${book.page_count}</span>
     </div>
     <div class="chrome top">
-      <div class="title"><b>${esc(book.series_title)}</b><span>${esc(book.label)}</span></div>
+      <div class="title"><b>${esc(book.series_title)}</b><span>${esc(book.label)}</span>
+        <span class="ov-note" id="r-ov-note" hidden></span></div>
     </div>
     <!-- the most used buttons, stacked just above the bottom card on the thumb side (one-handed use) -->
     <div class="chrome rail">
@@ -832,6 +833,13 @@ function ovStatus() {
   el.hidden = !msg;
   el.textContent = msg || "";
   el.classList.toggle("busy", !!entry && !entry.done);
+  // the plugins' quiet line about the page: in the top bar, so it only shows with the controls
+  const note = $("#r-ov-note");
+  if (note) {
+    const text = entry ? entry.layers.map((l) => l.note).filter(Boolean).join(" · ") : "";
+    note.hidden = !text;
+    note.textContent = text;
+  }
 }
 
 addEventListener("resize", () => {
