@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the web app's dark theme (app/web/static/css/tokens.css) -->
+    <color name="bg">#111318</color>
+    <color name="surface">#1b1e25</color>
+    <color name="text">#e8e9ec</color>
+    <color name="muted">#9aa0ab</color>
+    <color name="accent">#ff7a59</color>
+    <color name="error">#ff6b6b</color>
+</resources>

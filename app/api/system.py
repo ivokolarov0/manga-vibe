@@ -33,7 +33,8 @@ DEFAULT_SETTINGS = {
     "reader_autohide": 5,          # seconds until the reader controls hide; 0 = never
     "reader_drawer_side": "right", # right | left: which side the reader options slide in from
     "reader_tap_layout": "default",  # default | one-handed | off: what tapping the page does
-    "reader_tap_invert": False,    # swap the tap sides; swipe and page order keep the reading direction
+    "reader_tap_invert": True,     # RTL: tap right for next (off: left, like a paper book); swipe and page order keep the direction
+    "reader_volume_keys": True,    # Android app: the volume keys turn pages in the reader
     "overlay_opacity": 100,        # plugin overlay boxes: background opacity in %, 0 = see-through
     "overlay_outline": "off",      # off | thin | thick: a white outline around overlay text
     "auto_match": True,            # match new series automatically

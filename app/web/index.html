@@ -20,6 +20,15 @@
   </header>
 
   <main>
+    <!-- ============ Android browser: offer the app (android/) ============ -->
+    <div class="app-banner" x-data x-show="$store.app.appBanner && $store.app.view === 'library'" x-cloak>
+      <img src="/static/icons/icon-192.png" alt="">
+      <div class="label"><b>MangaVibe for Android</b>
+        <small>Fullscreen, the screen stays on, volume buttons turn pages</small></div>
+      <button class="btn small primary" @click="openAndroidApp()">Open app</button>
+      <button class="icon" aria-label="Don't show again" title="Don't show again" @click="dismissAppBanner()">✕</button>
+    </div>
+
     <!-- ============ library ============ -->
     <section class="view" x-data="library()" x-show="$store.app.view === 'library'">
       <div class="lib-head">
@@ -414,7 +423,8 @@
             <select x-model="st.reader_mode" @change="save('reader_mode')"><option value="rtl">Right to left</option><option value="ltr">Left to right</option><option value="vertical">Vertical</option></select></label>
           <label class="setting-row"><span class="label">Fit</span>
             <select x-model="st.reader_fit" @change="save('reader_fit')"><option value="screen">Fit screen</option><option value="width">Fit width</option><option value="height">Fit height</option><option value="original">Original</option></select></label>
-          <label class="setting-row"><span class="label">Fullscreen on first tap</span>
+          <!-- the Android app is always fullscreen -->
+          <label class="setting-row" x-show="!$store.app.inApp"><span class="label">Fullscreen on first tap</span>
             <select x-model="st.auto_fullscreen" @change="save('auto_fullscreen')"><option value="true">On</option><option value="false">Off</option></select></label>
           <label class="setting-row"><span class="label">Pages to preload<small>More = smoother, uses more data</small></span>
             <select x-model="st.preload" @change="save('preload')"><option>2</option><option>3</option><option>4</option><option>5</option><option>8</option></select></label>
@@ -430,6 +440,43 @@
             <select x-model="st.overlay_opacity" @change="save('overlay_opacity')"><option value="100">Solid</option><option value="75">75%</option><option value="50">50%</option><option value="25">25%</option><option value="0">See-through</option></select></label>
           <label class="setting-row"><span class="label">Overlay text outline<small>A white outline around the letters, so they stay readable over the art</small></span>
             <select x-model="st.overlay_outline" @change="save('overlay_outline')"><option value="off">Off</option><option value="thin">Thin</option><option value="thick">Thick</option></select></label>
+        </section>
+
+        <!-- Android app (only on Android: see SETTINGS_NAV) -->
+        <section x-show="section === 'app'">
+          <h2>Android app</h2>
+          <template x-if="$store.app.inApp">
+            <div>
+              <div class="setting-row">
+                <div class="label"><span>Server</span><small x-text="appServer"></small></div>
+                <button class="btn small" @click="changeServer()">Change server</button>
+              </div>
+              <label class="setting-row"><span class="label">Volume buttons turn pages<small>In the reader: volume down goes to the next page, volume up goes back</small></span>
+                <select x-model="st.reader_volume_keys" @change="save('reader_volume_keys')"><option value="true">On</option><option value="false">Off</option></select></label>
+              <div class="setting-row">
+                <div class="label"><span>App version</span><small x-text="appVersion"></small></div>
+                <a class="btn small" :href="apkUrl()">Download newest</a>
+              </div>
+            </div>
+          </template>
+          <template x-if="!$store.app.inApp">
+            <div>
+              <p class="muted">Read in the MangaVibe app instead of the browser: fullscreen without browser bars,
+                the screen stays on while you read, and the volume buttons turn pages. It shows this same
+                MangaVibe, so your library, progress and settings are the same.</p>
+              <div class="setting-row">
+                <div class="label"><span>Open in the app</span>
+                  <small>Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead</small></div>
+                <button class="btn small primary" @click="openAndroidApp(location.origin + '/')">Open app</button>
+              </div>
+              <div class="setting-row">
+                <div class="label"><span>Install the app</span>
+                  <small>Open the downloaded MangaVibe.apk and allow installing apps from your browser when Android asks.
+                    Then come back here and tap Open app</small></div>
+                <a class="btn small" :href="apkUrl()">Download</a>
+              </div>
+            </div>
+          </template>
         </section>
 
         <!-- metadata -->

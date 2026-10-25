@@ -6,7 +6,8 @@ description: Publish a new MangaVibe version as a GitHub release. Finds the last
 # Release a new version
 
 A GitHub release is what running apps update to (`app/updater.py`), and publishing it builds the
-Docker image (`.github/workflows/image.yml`). The `releases` branch is no longer used: never push or
+Docker image (`.github/workflows/image.yml`) and the Android app, attached to the release as
+`MangaVibe.apk` (`.github/workflows/android.yml`; it fails if the `ANDROID_KEYSTORE_*` secrets are missing). The `releases` branch is no longer used: never push or
 merge into it.
 
 ## 1. Check where we are

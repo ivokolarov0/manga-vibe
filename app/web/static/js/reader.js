@@ -204,6 +204,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
 
   if (R.mode === "vertical") setupVertical(); else setupPaged();
   requestWakeLock();
+  androidApp?.readerState(true, settings.reader_volume_keys !== false);  // keeps the screen on, takes the volume keys
 }
 
 /* ---------------- paged mode: zoom, pan, swipe, page animations ----------------
@@ -424,8 +425,8 @@ function setupPaged() {
 function tapAction(x, y) {
   const layout = settings.reader_tap_layout || "default";
   if (layout === "off") return "ui";
-  // forward sits on the left in RTL, on the right in LTR; "Invert tap zones" swaps the sides
-  const nextOnLeft = (R.mode === "rtl") !== !!settings.reader_tap_invert;
+  // forward is on the right, except in RTL with "Invert tap zones" off (left, like a paper book)
+  const nextOnLeft = R.mode === "rtl" && !settings.reader_tap_invert;
   const d = nextOnLeft ? x : 1 - x;  // 0 at the "next" edge, 1 at the "previous" edge
   if (layout === "one-handed") {
     if (d > 1 - TAP_EDGE) return "prev";
@@ -912,18 +913,19 @@ function saveProgress(now = false) {
 }
 
 function maybeAutoFullscreen() {
-  if (R.firstTap && settings.auto_fullscreen && !document.fullscreenElement) {
+  if (R.firstTap && settings.auto_fullscreen && !document.fullscreenElement && !androidApp) {
     document.documentElement.requestFullscreen?.().catch(() => {});
   }
   R.firstTap = false;
 }
 
-/* both fullscreen buttons show what a tap will do; hidden where the browser has no fullscreen (iPhone) */
+/* both fullscreen buttons show what a tap will do; hidden where the browser has no fullscreen (iPhone)
+   and in the Android app, which is always fullscreen */
 function updateFullscreenButtons() {
   const on = !!document.fullscreenElement, label = on ? "Exit fullscreen" : "Fullscreen";
   const rail = $("#r-fs2"), opt = $("#r-fs");
   if (!rail || !opt) return;
-  rail.hidden = opt.hidden = document.fullscreenEnabled === false;
+  rail.hidden = opt.hidden = document.fullscreenEnabled === false || !!androidApp;
   rail.innerHTML = on ? ICONS.fullscreenExit : ICONS.fullscreen;
   rail.title = label;
   rail.setAttribute("aria-label", label);
@@ -937,6 +939,7 @@ function toggleFullscreen() {
 }
 
 async function requestWakeLock() {
+  if (androidApp) return;  // the app keeps the screen on itself (readerState)
   try { R.wake = await navigator.wakeLock?.request("screen"); } catch {}  // needs HTTPS; ignore if unavailable
 }
 
@@ -951,6 +954,7 @@ function closeReader() {
   if ($("#reader").hidden) return;
   const saved = saveProgress(true);
   R.wake?.release?.().catch(() => {});
+  androidApp?.readerState(false, false);
   ovReset(null);
   R.book = null;
   R.firstTap = true;
@@ -976,9 +980,30 @@ document.addEventListener("visibilitychange", () => {
   else if (!$("#reader").hidden) requestWakeLock();
 });
 
+/* the Android app's volume keys (Settings → Android app): down = next page, up = previous.
+   Vertical mode scrolls most of a screen instead. */
+function volumeKey(dir) {
+  if ($("#reader").hidden || !R.book) return;
+  const forward = dir === "next";
+  if (R.mode === "vertical") {
+    $("#reader .vertical")?.scrollBy({ top: (forward ? 1 : -1) * innerHeight * 0.85, behavior: "smooth" });
+  } else if (forward) next();
+  else prev();
+}
+
+/* the Android back button: closes the options drawer, then leaves the reader */
+function back() {
+  if ($("#reader").hidden) return false;
+  if (R.drawer) setDrawer(false);
+  else leaveReader();
+  return true;
+}
+
 return {
   open: openReader,
   close: closeReader,
+  volumeKey,
+  back,
   get isOpen() { return !$("#reader").hidden; },
 };
 })();

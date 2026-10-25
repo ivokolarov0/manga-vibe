@@ -214,4 +214,47 @@
       margin-top: 10px;
     }
   }
+
+  /* Android browser: "MangaVibe for Android" above the library (index.html, app.js) */
+  .app-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 10px 6px 10px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+
+    & img {
+      width: 40px;
+      height: 40px;
+      border-radius: 9px;
+      flex: none;
+    }
+    & .label {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    & small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    & .btn {
+      flex: none;
+    }
+    & .icon {
+      flex: none;
+      width: 32px;
+      height: 32px;
+      border: 0;
+      background: none;
+      color: var(--muted);
+      font-size: 15px;
+      cursor: pointer;
+    }
+  }
 }

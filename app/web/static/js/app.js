@@ -93,6 +93,8 @@ document.addEventListener("alpine:init", () => {
     progressDirty: 0,    // bumped after the reader closes and its last progress save is done
     update: null,        // GET /api/update: running version, newest version on GitHub
     updating: null,      // an install in progress: { state, message, error }
+    inApp: !!androidApp, // running inside the Android app (android/)
+    appBanner: ANDROID && !androidApp && !appBannerDismissed(),  // "Read in the app" on the library
     openFix(seriesId, onDone) { this.fix = { open: true, seriesId, onDone }; },
     openEdit(seriesId, onDone, tab = "info") { this.edit = { open: true, seriesId, onDone, tab }; },
   });
@@ -165,6 +167,49 @@ document.addEventListener("alpine:init", () => {
   });
   window.refreshAttentionCount = refreshAttentionCount;
 });
+
+/* ---------------- Android app (android/) ----------------
+   In the browser: a banner and Settings → Android app offer the app. In the app: the app sends the
+   volume and back keys here (window.MangaVibeApp), and Settings → Android app changes the server. */
+
+const ANDROID_PACKAGE = "io.github.ivokolarov0.mangavibe";
+
+/* the APK attached to the newest release (built by .github/workflows/android.yml) */
+function apkUrl() {
+  const repo = Alpine.store("app").update?.repo || "ivokolarov0/manga-vibe";
+  return `https://github.com/${repo}/releases/latest/download/MangaVibe.apk`;
+}
+
+/* Chrome opens the app at this page if it's installed (which also connects it to this server);
+   if not, it downloads the APK instead */
+function androidAppLink(url) {
+  const enc = encodeURIComponent;
+  return `intent://open#Intent;scheme=mangavibe;package=${ANDROID_PACKAGE};`
+    + `S.url=${enc(url)};S.browser_fallback_url=${enc(apkUrl())};end`;
+}
+
+function openAndroidApp(url = location.href) { location.href = androidAppLink(url); }
+
+function appBannerDismissed() {
+  try { return localStorage.getItem("app-banner") === "dismissed"; } catch { return false; }
+}
+
+function dismissAppBanner() {
+  try { localStorage.setItem("app-banner", "dismissed"); } catch {}
+  Alpine.store("app").appBanner = false;
+}
+
+window.MangaVibeApp = {
+  volumeKey: (dir) => Reader.volumeKey(dir),
+  /* the back button: true if the page handled it, false lets the app go back in history (or close) */
+  back() {
+    if (Reader.isOpen) return Reader.back();
+    // every sheet and dialog closes on Escape
+    const open = [...document.querySelectorAll(".modal, .sheet")].some((el) => el.getClientRects().length);
+    if (open) dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    return open;
+  },
+};
 
 /* ---------------- updates (toast + Settings → Updates) ---------------- */
 
@@ -916,6 +961,9 @@ function attentionView() {
 
 const SETTINGS_NAV = [["library", "Library folders", "📁"], ["display", "Display", "🎨"],
   ["reader", "Reader", "📖"], ["metadata", "Metadata", "🏷"], ["plugins", "Plugins", "🧩"], ["updates", "Updates", "⟳"]];
+const ANDROID = /Android/i.test(navigator.userAgent);
+// on Android phones (in the app or the browser) Settings gets an "Android app" page
+if (ANDROID) SETTINGS_NAV.splice(3, 0, ["app", "Android app", "📱"]);
 
 function settingsView() {
   return {
@@ -933,6 +981,12 @@ function settingsView() {
     // only plugins with something to set up, run or update get a page
     hasPluginPage(p) { return !!(p.settings.length || p.global_actions.length || p.update.supported); },
     go(sec) { location.replace(`#/settings/${sec}`); },
+    // Settings → Android app
+    appServer: androidApp?.server() || "",
+    appVersion: androidApp?.version() || "",
+    apkUrl,
+    openAndroidApp,
+    changeServer() { androidApp?.changeServer(); },
     attCount(k) { return this.$store.app.att?.[k]?.filter((x) => !x.ignored).length || 0; },
     st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, scan: {}, scanText: "", metaText: "", timers: [],
     init() {
