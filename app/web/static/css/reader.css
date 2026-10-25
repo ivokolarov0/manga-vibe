@@ -179,7 +179,7 @@
     }
 
     /* always-visible reading progress: a thin line on the bottom edge, one segment per page.
-       On desktop, hovering the bottom edge grows it into a clickable bar (jump to any page). */
+       On desktop, the mouse on the bottom edge brings up the full controls (reader.js). */
     & .read-progress {
       position: absolute;
       right: 0;
@@ -227,43 +227,10 @@
     }
 
     @media (hover: hover) and (pointer: fine) {
-      /* an invisible strip along the bottom edge catches the mouse */
+      /* an invisible strip along the bottom edge catches the mouse and shows the controls */
       &.ui-hidden .read-progress {
         min-height: 36px;
         pointer-events: auto;
-      }
-
-      &.ui-hidden .read-progress:hover {
-        align-items: center;
-        padding: 12px 14px;
-        background: rgba(15, 15, 18, 0.92);
-
-        & > span {
-          display: block;
-        }
-
-        & .rp-track {
-          height: 14px;
-          border-radius: 7px;
-          background: #4a4d55;
-          cursor: pointer;
-
-          & i + i {
-            box-shadow: inset 1px 0 rgba(0, 0, 0, 0.35);
-          }
-
-          & i.read {
-            background: color-mix(in srgb, var(--accent) 75%, #000);
-          }
-
-          & i.cur {
-            background: var(--accent);
-          }
-
-          & i:hover {
-            background: #fff;
-          }
-        }
       }
     }
 
