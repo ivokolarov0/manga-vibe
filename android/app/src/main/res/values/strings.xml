@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MangaVibe</string>
+    <string name="setup_title">Connect to your MangaVibe</string>
+    <string name="setup_text">Type the address you open MangaVibe at in your browser, for example 192.168.1.20:8090.</string>
+    <string name="setup_tip">Tip: open MangaVibe in your phone\'s browser and tap \"Open app\". The app then connects by itself.</string>
+    <string name="setup_hint">192.168.1.20:8090</string>
+    <string name="setup_connect">Connect</string>
+    <string name="setup_checking">Checking…</string>
+    <string name="setup_cancel">Cancel</string>
+    <string name="setup_bad_address">That doesn\'t look like an address.</string>
+    <string name="setup_no_answer">No MangaVibe answered at %1$s. Is the server running, and is your phone on the same network?</string>
+    <string name="error_title">Can\'t reach MangaVibe</string>
+    <string name="error_text">%1$s didn\'t answer. Is the server running, and is your phone on the same network?</string>
+    <string name="error_retry">Try again</string>
+    <string name="error_change">Change server</string>
+    <string name="switch_title">Switch server?</string>
+    <string name="switch_text">This link is for %1$s. The app is connected to %2$s.</string>
+    <string name="switch_yes">Switch</string>
+    <string name="switch_no">Keep current</string>
+    <string name="no_app_for_link">No app can open this link.</string>
+</resources>

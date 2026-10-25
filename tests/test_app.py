@@ -128,10 +128,13 @@ def test_settings(client):
     assert s["reader_drawer_side"] == "right"
     client.put("/api/settings", json={"reader_drawer_side": "left"})
     assert client.get("/api/settings").json()["reader_drawer_side"] == "left"
-    assert s["reader_tap_layout"] == "default" and s["reader_tap_invert"] is False
-    client.put("/api/settings", json={"reader_tap_layout": "one-handed", "reader_tap_invert": True})
+    assert s["reader_tap_layout"] == "default" and s["reader_tap_invert"] is True
+    client.put("/api/settings", json={"reader_tap_layout": "one-handed", "reader_tap_invert": False})
     s = client.get("/api/settings").json()
-    assert s["reader_tap_layout"] == "one-handed" and s["reader_tap_invert"] is True
+    assert s["reader_tap_layout"] == "one-handed" and s["reader_tap_invert"] is False
+    assert s["reader_volume_keys"] is True
+    client.put("/api/settings", json={"reader_volume_keys": False})
+    assert client.get("/api/settings").json()["reader_volume_keys"] is False
 
 
 def test_example_plugin(client):

@@ -176,6 +176,23 @@ use **Add to Home Screen** so it opens full screen like an app. To find the comp
 The computer has to be on (and Docker Desktop running) while you read. To read away from home, use
 a VPN, never an open port: see [Reading away from home](#reading-away-from-home).
 
+### Android app
+
+On Android you can read in the MangaVibe app instead of the browser. It shows the same MangaVibe
+(same library, progress and settings), but:
+
+- it's fullscreen, without browser bars
+- the screen stays on while you read
+- the volume buttons turn pages (switch it off in Settings → Android app)
+
+To install it, open MangaVibe in your phone's browser and tap **Open app** on the banner (or in
+Settings → Android app). The first time, this downloads `MangaVibe.apk`: open it and allow installing
+apps from your browser when Android asks. Then tap **Open app** again: the app opens and connects to
+your server by itself. You can also type the server's address in the app (e.g. `192.168.1.20:8090`).
+
+The app isn't on the Play Store. It comes from this project's [releases](../../releases/latest), and
+works over plain HTTP on your home network. More in [android/README.md](android/README.md).
+
 ## Organizing your manga
 
 Each folder directly inside your library is one series. Files inside it can be named almost
@@ -333,9 +350,11 @@ example in [examples/plugins](examples/plugins).
 - **Crawling or scraping pirate sites**, including downloaders and "find the raws" features.
 - **Changing library files**: renaming, converting, optimizing, tagging, moving or deleting them. The
   library is read-only on purpose (see [Q&A](#qa)).
-- **A mobile app.** The reader runs in your phone's browser.
+- **More mobile apps**: an iPhone app, a Play Store listing, or a native reader. The [Android app](#android-app)
+  is a window onto the web app, and that's as far as it goes.
 - **Tying it to an existing mobile app**, such as making it a source or extension for another reader app.
-- **An executable or installer** (`.exe`, `.dmg`, `.apk`, …). MangaVibe runs in Docker.
+- **An executable or installer** (`.exe`, `.dmg`, …). MangaVibe runs in Docker. (The Android app's
+  `.apk` is the one exception, and it only shows the server running in Docker.)
 - **A public access option**: opening it to the internet, share links, or anything else that makes it
   reachable from outside your home. See [Reading away from home](#reading-away-from-home).
 - **Support for devices other than the ones in [Install](#install)** (Windows, Mac, Linux, Synology
@@ -348,7 +367,8 @@ I tried the popular options and didn't like them. I wanted an easy way to get me
 turned out I had to run an extra Docker container and install a browser extension that needed
 access to all domains (it didn't work when I limited it to specific ones). After all that,
 identify still didn't work. So I said f*ck it, I'll vibe code my own: extensible, with metadata
-and match % built in from the start. I didn't feel like making a mobile app, so the browser is enough.
+and match % built in from the start. I didn't feel like making a mobile app, so the browser is enough
+(well, that changed: turns out I'm too lazy to open the browser, so now there's an [Android app](#android-app)).
 
 **Why is the manga folder read-only?**
 The code was written almost entirely with Claude, and it may have gaps. I don't want to be
@@ -473,6 +493,7 @@ app/web/static/css/     styles: main.css imports one file per feature (CSS layer
 app/web/static/js/      app.js (Alpine data), reader.js (plain-JS reader), common.js,
                         vendor/alpine.min.js
 app/web/static/icons/   app icons; manifest.json next to them
+android/                the Android app: MangaVibe in a fullscreen WebView (android/README.md)
 examples/plugins/       example plugin
 docker/entrypoint.sh    container start script
 ```

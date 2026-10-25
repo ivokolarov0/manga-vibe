@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The book from app/web/static/icons/icon.svg, centred in the 108dp adaptive icon canvas -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#ff7a59"
+        android:pathData="M36.4,29.8h35.2a4.4,4.4 0,0 1,4.4 4.4v39.6a4.4,4.4 0,0 1,-4.4 4.4h-35.2a4.4,4.4 0,0 1,-4.4 -4.4v-39.6a4.4,4.4 0,0 1,4.4 -4.4z" />
+    <path
+        android:fillColor="#111318"
+        android:pathData="M52.35,29.8h3.3v48.4h-3.3z" />
+</vector>

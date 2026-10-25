@@ -57,3 +57,7 @@ async function loadSettings() {
   document.documentElement.dataset.card = settings.card_size;
   return settings;
 }
+
+/* The MangaVibe Android app (android/) puts the page in a WebView and adds window.MangaVibeAndroid:
+   readerState(open, volumeKeys), changeServer(), server(), version(). Null in a browser. */
+const androidApp = window.MangaVibeAndroid || null;

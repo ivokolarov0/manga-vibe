@@ -125,6 +125,10 @@ Choices made where the spec was open. Newest at the bottom.
   narrow "previous" edge and a middle box for the controls) or turn tapping off. Arrow keys don't
   follow the invert: they point at the page on that side. Vertical mode has no tap paging, so
   nothing changes there.
+- **Inverted taps are the default** (owner's choice, with the Android app): in right to left, tapping
+  the right side turns forward, which is where the thumb is. Off gives the paper-book layout (left = next).
+  The switch only applies to right to left: left to right always turns forward on the right (with
+  the old "swap both ways", an inverted default would have sent LTR books backwards on a right tap).
 - **Manual numbers per file** (Files tab → Edit): volume, chapter, "to chapter" (a range in one file),
   extra, hidden. Stored in the database next to the file's path (`override_*`, new column
   `override_chapter_end` via migration 2), never in the file. Only values that differ from the file
@@ -318,3 +322,33 @@ Choices made where the spec was open. Newest at the bottom.
   transparent, so a plugin that colours its boxes with `--ov-bg` keeps the opacity setting. The outline
   is `-webkit-text-stroke` with `paint-order: stroke fill`, so it sits behind the letters, and the
   text gets padding of half the stroke so the fitted text isn't cut off at the box edge.
+
+## Android app
+
+- **A WebView wrapper, not a native reader.** The reader is the web app; the app (`android/`) only
+  shows the server fullscreen and adds what a browser can't do over plain HTTP: no browser bars,
+  the screen kept on (`FLAG_KEEP_SCREEN_ON`, where the browser's Wake Lock needs HTTPS) and the
+  volume keys. New MangaVibe versions reach the app without updating it.
+- **Android only.** An iPhone app needs a Mac and a paid Apple developer account, and the App Store
+  turns down apps that are only a web view.
+- **In this repo, released with the server.** `.github/workflows/android.yml` attaches
+  `MangaVibe.apk` to every release, signed with one key from the repository secrets (Android refuses
+  an update signed with another key). Not in the Docker image: running apps update their code from
+  GitHub without a new image, so a bundled APK would go stale.
+- **No Chrome install prompt, an intent link instead.** Chrome's own "install app" banner and
+  `getInstalledRelatedApps()` need HTTPS, a Play Store listing and a fixed web address. The banner
+  (Android browsers, library page, dismissible) and Settings → Android app use
+  `intent://open#Intent;scheme=mangavibe;package=…;S.url=<page>;S.browser_fallback_url=<APK>;end`:
+  Chrome opens the app if it's installed, and downloads the APK if not. The page goes along, so the
+  app connects to that server by itself on its first start. A link for another server asks first.
+- **The page and the app talk through two objects.** The app adds `window.MangaVibeAndroid`
+  (`readerState(open, volumeKeys)`, `changeServer()`, `server()`, `version()`), and only answers the
+  server's own page. The page adds `window.MangaVibeApp` (`volumeKey(dir)`, `back()`). Links to other
+  sites open in the browser.
+- **Volume down = next page**, one page per press (holding doesn't repeat). Vertical mode scrolls
+  85% of a screen. It's a server setting like the other reader settings (`reader_volume_keys`), shown
+  only in the app.
+- **Back closes what's open first:** the reader's options, then the reader (as its back button does),
+  then any sheet or dialog (they all close on Escape), and only then goes back in history.
+- **Plain HTTP is allowed for every address**, since the server is at an address only the user
+  knows, usually without HTTPS.
