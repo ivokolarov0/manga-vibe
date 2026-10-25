@@ -10,6 +10,7 @@ from app import images
 from app.api.common import (book_dict, display_title, emit_reading_events, ensure_inside_library,
                             get_or_404, now, status_of, title_lang, visible_books_query)
 from app.db import get_db
+from app.direction import reading_direction
 from app.models import Book, OverlayHidden, Progress, Series
 from app.plugins import Box, Context, Overlay, action_result, implements, manager as plugins
 from app.scanner import archives
@@ -31,13 +32,13 @@ def get_book(book_id: int, db=Depends(get_db)):
     prev = books[i - 1] if i > 0 else None
     p = db.query(Progress).filter_by(book_id=b.id).one_or_none()
     return {**book_dict(b, p), "series_title": display_title(s, title_lang(db)),
-            "reader_mode": s.reader_mode,
+            "reader_mode": reading_direction(db, s)[0],  # the series' own, or worked out (app/direction.py)
             "next": {"id": nxt.id, "label": book_dict(nxt)["label"]} if nxt else None,
             "prev": {"id": prev.id, "label": book_dict(prev)["label"]} if prev else None,
             # reader toggles for plugins that draw over pages, and their buttons for this book
-            "overlays": [{"plugin": p.id, "label": p.overlay_label} for p in overlay_plugins()],
+            "overlays": [{"plugin": p.id, "name": p.name or p.id, "label": p.overlay_label} for p in overlay_plugins()],
             "hidden_boxes": db.query(OverlayHidden).filter_by(book_id=b.id).count(),
-            "actions": [{"plugin": p.id, "key": a.key, "label": a.label, "confirm": a.confirm}
+            "actions": [{"plugin": p.id, "name": p.name or p.id, "key": a.key, "label": a.label, "confirm": a.confirm}
                         for p in plugins.enabled() for a in p.book_actions]}
 
 
@@ -86,7 +87,7 @@ def page_overlays(book_id: int, n: int, plugins_: str = Query("", alias="plugins
             box["hidden"] = (p.id, box["id"]) in hidden
         layers.append({"plugin": p.id, "pending": bool(result.pending),
                        "message": str(result.message or ""), "note": str(getattr(result, "note", "") or ""),
-                       "boxes": boxes})
+                       "speech": str(getattr(result, "speech", "") or ""), "boxes": boxes})
     return {"page": n, "layers": layers}
 
 

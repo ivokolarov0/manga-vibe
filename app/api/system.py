@@ -13,6 +13,7 @@ from sqlalchemy import func
 from app import config, plugin_updates
 from app.api.common import get_or_404
 from app.db import get_db, get_setting, set_setting
+from app.direction import MODES
 from app.models import Library, Series
 from app.plugins import Context, OpenUrl, action_result, implements, manager as plugins
 from app.scanner import walker
@@ -37,6 +38,9 @@ DEFAULT_SETTINGS = {
     "reader_volume_keys": True,    # Android app: the volume keys turn pages in the reader
     "overlay_opacity": 100,        # plugin overlay boxes: background opacity in %, 0 = see-through
     "overlay_outline": "off",      # off | thin | thick: a white outline around overlay text
+    "reader_brightness": 100,      # page brightness in %: 100, 85, 70, 55, 40 (CSS filter on the page images)
+    "reader_contrast": 100,        # page contrast in %: 75, 100, 125, 150
+    "reader_colors": "normal",     # normal | dark (inverted) | warm (sepia) | dark-warm
     "auto_match": True,            # match new series automatically
     "match_threshold": 90,         # auto-accept score (0-100)
     "include_adult": False,        # include adult results from AniList
@@ -54,7 +58,22 @@ def libraries(db=Depends(get_db)):
     counts = dict(db.query(Series.library_id, func.count(Series.id))
                   .filter(Series.missing_since.is_(None)).group_by(Series.library_id).all())
     return [{"id": l.id, "name": l.name, "root_path": l.root_path, "series": counts.get(l.id, 0),
-             "available": Path(l.root_path).is_dir()} for l in db.query(Library)]
+             "available": Path(l.root_path).is_dir(), "reader_mode": l.reader_mode} for l in db.query(Library)]
+
+
+class LibraryPatch(BaseModel):
+    reader_mode: str  # rtl | ltr | vertical, or "default" (Settings → Reader)
+
+
+@router.patch("/libraries/{lib_id}")
+def patch_library(lib_id: int, body: LibraryPatch, db=Depends(get_db)):
+    """The direction of the library's series that aren't matched (app/direction.py)."""
+    lib = get_or_404(db, Library, lib_id)
+    if body.reader_mode != "default" and body.reader_mode not in MODES:
+        raise HTTPException(400, "Unknown reading direction")
+    lib.reader_mode = None if body.reader_mode == "default" else body.reader_mode
+    db.commit()
+    return {"ok": True}
 
 
 class LibraryBody(BaseModel):

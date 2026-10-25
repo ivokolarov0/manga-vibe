@@ -1,4 +1,4 @@
-"""Plugin API v3/v4: page overlays and notes, per-page and per-series data, book badges and buttons,
+"""Plugin API v3-v5: page overlays, notes and speech, per-page and per-series data, book badges and buttons,
 plugin threads."""
 import io
 import os
@@ -75,7 +75,7 @@ def test_overlay_pending_then_ready(client, page_info):
     book = first_book(client)
     client.post(f"/api/books/{book['id']}/actions/page-info/clear")
     info = client.get(f"/api/books/{book['id']}").json()
-    assert info["overlays"] == [{"plugin": "page-info", "label": "Page info"}]
+    assert info["overlays"] == [{"plugin": "page-info", "name": "Page info", "label": "Page info"}]
     assert {a["key"] for a in info["actions"]} == {"all", "clear"}
 
     first = client.get(f"/api/books/{book['id']}/overlays/0").json()
@@ -216,7 +216,8 @@ def test_a_broken_plugin_does_not_break_the_reader(client):
         book = first_book(client)
         layers = client.get(f"/api/books/{book['id']}/overlays/0").json()["layers"]
         assert layers == [{"plugin": "broken-overlay", "pending": False,
-                           "message": "broken-overlay failed: RuntimeError", "note": "", "boxes": []}]
+                           "message": "broken-overlay failed: RuntimeError", "note": "", "speech": "",
+                           "boxes": []}]
         assert first_book(client)["badges"] == []
     finally:
         dest.unlink()
@@ -231,7 +232,8 @@ class Noted(Plugin):
     overlay_label = "Noted"
 
     def page_overlay(self, ctx, book, page):
-        return Overlay(boxes=[Box(0.1, 0.1, 0.2, 0.1, text="Hi")], note=f"Full context · page {page + 1}")
+        return Overlay(boxes=[Box(0.1, 0.1, 0.2, 0.1, text="Hi")], note=f"Full context · page {page + 1}",
+                       speech=f"Page {page + 1}. Haruka says: Hi.")
 '''
 
 
@@ -243,6 +245,8 @@ def test_overlay_note(client):
         book = first_book(client)
         layer = client.get(f"/api/books/{book['id']}/overlays/1").json()["layers"][0]
         assert layer["note"] == "Full context · page 2" and layer["message"] == "" and layer["boxes"]
+        # API 5: the text read aloud and handed to screen readers
+        assert layer["speech"] == "Page 2. Haruka says: Hi."
     finally:
         dest.unlink()
         client.post("/api/plugins/reload")

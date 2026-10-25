@@ -44,10 +44,11 @@ class Hello(Plugin):
 | **Updates** from its GitHub releases | `repo = "owner/name"` (see [Updates](#updates)) |
 | **Say what it uses** | `permissions = ["Connects to api.myanimelist.net"]`: shown in Settings; an update that adds one asks first (see [Updates](#updates)) |
 | **Draw over reader pages** (e.g. a translation) | `overlay_label = "Translation"` and `page_overlay(ctx, book, page)` returning `Overlay(boxes=[Box(...)])` (see [Drawing on pages](#drawing-on-pages)) |
+| **Have a page read aloud** (e.g. a description for blind readers) | `Overlay(speech="...")` from `page_overlay` (see [Drawing on pages](#drawing-on-pages)) |
 | **Save something per page** | `ctx.set_page_data(book, page, value)`, `ctx.get_page_data(book, page)`, `ctx.page_data(book)` |
 | **Keep something per series** for the plugin itself (e.g. notes on the characters) | `ctx.set_series_data(series, key, value)`, `ctx.get_series_data(series, key)`; never shown in the app |
 | **Labels on books** in the series list | `book_badges(ctx, books)` returning `{book_id: "Translated"}` |
-| **Buttons for the open book** (in the reader's options) | `book_actions = [Action("all", "Translate this chapter")]` and `run_book_action(ctx, key, book)` |
+| **Buttons for the open book** (in the plugin's panel in the reader's options) | `book_actions = [Action("all", "Translate this chapter")]` and `run_book_action(ctx, key, book)` |
 | **Work for hours** without holding up other plugins | `ctx.run_in_thread(fn)`; the loop returns when `ctx.should_stop()` |
 
 ## The `ctx` object
@@ -63,6 +64,7 @@ class Hello(Plugin):
 | `ctx.read_entry(book, name)` | bytes of one entry, e.g. `"ComicInfo.xml"` |
 | `ctx.read_series_file(series, name)` | bytes of a sidecar file in the series folder (e.g. `series.json`), or `None` |
 | `ctx.db` | the database session (advanced; MangaVibe commits after hooks) |
+| `ctx.reading_direction(series)` | `rtl` (manga), `ltr` (comics) or `vertical` (webtoons): the way the reader shows the series. Set on the series, or worked out: matched as from Japan is `rtl`, matched otherwise `ltr`, not matched follows its library folder, then Settings → Reader. Plugin API 5 |
 | `ctx.reading_status(series)` | the status the app shows: `unread`, `reading`, `completed`, `plan_to_read`, `on_hold`, `dropped` |
 | `ctx.set_reading_status(series, status)` | set it by hand (`None` = work it out from progress again). Does **not** fire `on_series_status_changed`, so a sync can't loop |
 | `ctx.http` | the app's HTTP client: `ctx.http.request(method, url, headers=..., data=...)`, `get_json`, `post_json`. Throttled per site, retries, raises `ctx.http.ProviderError` (its `status` is the HTTP code, e.g. `404`, or `None` if the site couldn't be reached) |
@@ -126,7 +128,10 @@ class Tracker(Plugin):
 
 ## Drawing on pages
 
-A plugin with `overlay_label` gets a switch in the reader's options (**Translation: On/Off**),
+In the reader's options each plugin is one row under **Plugins**; it opens a panel with everything the
+plugin brings (its switch, its book buttons, Read aloud and the look of its boxes), so the options stay
+short however many plugins there are.
+A plugin with `overlay_label` gets a switch in that panel (**Translation: On/Off**),
 remembered per series on each device. While it's on, the reader asks `page_overlay` for the page
 you're on and the next one, and draws the boxes it returns over the page. They move with the page
 when you zoom, pan or swipe, in paged and vertical mode.
@@ -169,6 +174,14 @@ class Notes(Plugin):
   `message`, it never covers the page. Added in plugin API 4 (with series data): a plugin that should
   also run on older MangaVibe can check `"note" in Overlay.__dataclass_fields__` and
   `hasattr(ctx, "set_series_data")` first.
+- **Text to listen to:** `Overlay(boxes=..., speech="Page 5.
+Panel 1. Two boys in the rain.
+Haruka says: Hey!")`
+  is the page as plain text in reading order. The reader's **Read aloud** (in the plugin's panel in the
+  reader options) reads it with the device's voice, and screen readers (TalkBack, NVDA,
+  VoiceOver) get it too. One line per sentence or speaker reads best. Without `speech`, read aloud reads
+  the text of the boxes in their order. Added in plugin API 5: check `"speech" in
+  Overlay.__dataclass_fields__` to also run on older MangaVibe.
 - **A worker of your own:** start it with `ctx.run_in_thread(self.work)` the first time there's
   something to do. It gets its own database session; call `ctx.db.commit()` after each page so the
   reader can show it. Loop until `ctx.should_stop()`, which turns `True` when the plugin is reloaded,

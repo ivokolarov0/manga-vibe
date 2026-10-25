@@ -120,6 +120,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        speech?.shutdown()
         web.destroy()
         super.onDestroy()
     }
@@ -228,6 +229,27 @@ class MainActivity : Activity() {
         this.volumeKeys = volumeKeys
         if (open) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    /* ---------------- reader: read aloud (the WebView has no speech synthesis) ---------------- */
+
+    private var speech: Speech? = null
+
+    fun speak(id: Int, text: String, rate: Float) {
+        val s = speech ?: Speech(
+            this,
+            onStart = { run, part ->
+                web.evaluateJavascript("window.MangaVibeApp && MangaVibeApp.speaking && MangaVibeApp.speaking($run, $part)", null)
+            },
+            onDone = { run ->
+                web.evaluateJavascript("window.MangaVibeApp && MangaVibeApp.spoke && MangaVibeApp.spoke($run)", null)
+            },
+        ).also { speech = it }
+        s.speak(id, text, rate)
+    }
+
+    fun stopSpeaking() {
+        speech?.stop()
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

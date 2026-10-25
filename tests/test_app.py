@@ -117,6 +117,15 @@ def test_overlay_look_settings(client):
     assert s["overlay_opacity"] == 25 and s["overlay_outline"] == "thick"
 
 
+def test_page_look_settings(client):
+    s = client.get("/api/settings").json()
+    assert (s["reader_brightness"], s["reader_contrast"], s["reader_colors"]) == (100, 100, "normal")
+    client.put("/api/settings", json={"reader_brightness": 70, "reader_contrast": 125, "reader_colors": "dark-warm"})
+    s = client.get("/api/settings").json()
+    assert (s["reader_brightness"], s["reader_contrast"], s["reader_colors"]) == (70, 125, "dark-warm")
+    client.put("/api/settings", json={"reader_brightness": 100, "reader_contrast": 100, "reader_colors": "normal"})
+
+
 def test_settings(client):
     assert client.get("/api/settings").json()["reader_mode"] == "rtl"
     client.put("/api/settings", json={"reader_mode": "vertical", "bogus": 1})

@@ -12,6 +12,7 @@ from app.api.common import (READING_STATUSES, TITLE_FIELDS, book_dict, continue_
                             status_of, title_lang, visible_books_query)
 from app import config
 from app.db import get_db
+from app.direction import reading_direction
 from app.metadata import service as metadata, worker as metadata_worker
 from app.metadata.http import ProviderError
 from app.models import Book, Link, PluginField, Progress, Series, SeriesTag, Tag
@@ -166,6 +167,8 @@ def get_series(series_id: int, db=Depends(get_db)):
         "publication_status": s.publication_status, "country_of_origin": s.country_of_origin,
         "banner_url": s.banner_url, "has_duplicates": s.has_duplicates,
         "reader_mode": s.reader_mode, "manual_reading_status": s.reading_status,
+        # the direction the reader uses, and what decided it: series, metadata, library or default
+        "direction": dict(zip(("mode", "source"), reading_direction(db, s))),
         "tags": [{"name": t.name, "kind": t.kind, "spoiler": st.is_spoiler} for t, st in tags],
         "links": [{"id": l.id, "site": l.site, "url": l.url} for l in db.query(Link).filter_by(series_id=s.id)],
         "locked_fields": s.locked_fields or [], "poster_source": s.poster_source,
@@ -200,7 +203,7 @@ def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db)):
     if body.clear_reading_status:
         s.reading_status = None
     if body.reader_mode == "default":
-        s.reader_mode = None  # follow the global setting again
+        s.reader_mode = None  # work it out again (app/direction.py)
     elif body.reader_mode is not None:
         if body.reader_mode not in READER_MODES:
             raise HTTPException(400, "Unknown reader mode")

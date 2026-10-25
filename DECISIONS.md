@@ -331,6 +331,49 @@ Choices made where the spec was open. Newest at the bottom.
   there on every page. The note sits under the chapter's name in the top bar, so it only shows while
   the controls do.
 
+## Accessibility: read aloud, screen readers, page look (plugin API 5)
+
+- **The plugin writes the words, the reader speaks them.** `Overlay.speech` is the page as plain text in
+  reading order (e.g. the Manga Accessibility plugin's "Panel 1. … Haruka says: …"). A plugin is Python on
+  the server and can't make sound on the reader's device, and a voice on the server would mean audio
+  files per page; the device's own voice costs nothing and the reader picks it. Without `speech`, read
+  aloud reads the boxes' text, so a translator gets it for free.
+- **Browser speech synthesis, and Android's TextToSpeech in the app.** The app's WebView has no
+  `speechSynthesis`, so the app adds `speak(id, text, rate)` / `stopSpeaking()` to its bridge and calls
+  `MangaVibeApp.spoke(id)` when done. An older app without them shows no Read aloud switch.
+- **Short parts.** Chrome stops one long utterance after about 15 s, so the text goes as one utterance
+  per line (long lines cut after a sentence). Every stop raises a counter, so an `end` from a reading that
+  was cancelled (Chrome sends one) never turns a page. The part being read is remembered (the browser's
+  `start` event, the app's `MangaVibeApp.speaking`), so a new speed or voice carries on from that line at
+  once; queued utterances keep the speed they were given.
+- **Read once per page; "Turn pages by itself" goes on to the next page and chapter**, so a chapter can be
+  listened to without touching the screen. A page with only a problem message (e.g. "set the server")
+  is said but never turned, or a broken setup would skip through the whole book.
+- **Screen readers get the same text** in a hidden `aria-live` region (TalkBack, NVDA, VoiceOver read it in
+  the owner's own voice and speed). It stays empty while Read aloud is on, or the page would be heard twice.
+- **The reader's options keep one row per thing, each opening a panel.** With plugins, page look and
+  read aloud, the drawer had grown to twenty buttons. Now it has a **Page look** row and, last and after a
+  line (so Fullscreen and Reader settings don't look like plugins), one row per plugin under **Plugins**
+  with its On/Off. A row opens a panel that slides down over the drawer. **Everything a plugin brings is in
+  its panel**: its switch, its book buttons, Read aloud (it reads the plugin's text) and the look of its
+  boxes. Read aloud and the box look are one setting for all plugins, shown in each panel. The panel is
+  built from what `/api/books/<id>` already lists (overlays and book actions, now with the plugin's
+  `name`), so plugins don't change. The panel's ×, Escape, the Android back button or a tap on the faded
+  drawer go back one step, to the drawer.
+- **Each series has a reading direction, worked out when it isn't set** (`app/direction.py`). It used to be
+  the series' own choice or the global default, so a manhwa read right to left until someone noticed, and
+  a plugin describing pages couldn't tell manga order from comic order. Now, in order: the owner's choice
+  for the series; its metadata, where matched as from Japan is manga (`rtl`) and matched otherwise
+  (manhwa, manhua, OEL, western) is `ltr` (by `country_of_origin`, since both sites call a manhwa
+  `MANGA`); for a series that isn't matched, its library folder's direction (`library.reader_mode`,
+  Settings → Library folders), so a folder of comics can say so; then Settings → Reader (manga unless
+  changed). The reader and plugins (`ctx.reading_direction`) use the same answer, and the series page shows
+  what "Automatic" comes to and why.
+- **Speech settings are per device** (localStorage): voices differ from device to device. **Brightness,
+  contrast and colours are reader settings** like the fit, a CSS `filter` on the page images only, so
+  overlay boxes and controls keep their colours. "Inverted" is `invert(1) hue-rotate(180deg)` (colours keep
+  their hue) and comes first, so lower brightness dims the white lines instead of lifting a black page.
+
 ## Android app
 
 - **A WebView wrapper, not a native reader.** The reader is the web app; the app (`android/`) only

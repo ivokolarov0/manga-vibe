@@ -13,6 +13,7 @@
        --ov-bg (and --ov-outline) instead of background keeps these working. */
     --ov-bg-opacity: 1;      /* box background: 0 = see-through, 1 = solid */
     --ov-text-stroke: 0px;   /* width of the outline around the letters */
+    --page-filter: none;     /* brightness, contrast and colours of the page images (reader.js) */
 
     /* paged mode: zoom/pan/swipe are handled in reader.js with a transform on the image */
     & .stage {
@@ -27,6 +28,7 @@
       & img {
         display: block;
         flex: none;
+        filter: var(--page-filter);
         transform-origin: center center;
         will-change: transform;
         -webkit-user-drag: none;
@@ -74,6 +76,7 @@
         display: block;
         width: 100%;
         min-height: 40vh;
+        filter: var(--page-filter);
 
         &.loaded {
           min-height: 0;
@@ -83,6 +86,16 @@
       & .ov-layer {
         inset: 0;
       }
+    }
+
+    /* there for screen readers only (the page's text from a plugin), not on the screen */
+    & .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: pre-line;
     }
 
     /* plugin overlays (e.g. translations): boxes placed in % of the page. In paged mode reader.js
@@ -481,8 +494,10 @@
       }
     }
 
-    /* reading options: a side drawer (right by default, left in Settings → Reader) */
-    & .drawer {
+    /* reading options: a side drawer (right by default, left in Settings → Reader). Its panels
+       (.d-panel, below) share the look of its buttons. */
+    & .drawer,
+    & .d-panel {
       position: absolute;
       top: 0;
       bottom: 0;
@@ -552,6 +567,81 @@
     &.drawer-open .drawer {
       transform: none;
       visibility: visible;
+    }
+
+    /* a panel of the drawer (Page look, Read aloud, a plugin): slides down from the top, over the
+       drawer, on the same side. reader.js opens one at a time. */
+    & .d-panel {
+      z-index: 4;
+      bottom: auto;
+      max-height: 100%;
+      padding-top: calc(12px + env(safe-area-inset-top, 0px));
+      background: #1d1f26;
+      border-radius: 0 0 14px 14px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65);
+      transform: translateY(-100%);
+
+      &.open {
+        transform: none;
+        visibility: visible;
+        transition: transform 0.2s ease-out, visibility 0s;  /* visible at once, so focus can go into it */
+      }
+    }
+
+    &.drawer-right .d-panel {
+      right: 0;
+    }
+
+    &.drawer-left .d-panel {
+      left: 0;
+    }
+
+    & .d-panel-head {
+      align-items: center;
+
+      & .d-title {
+        flex: 1;
+        min-width: 0;
+        padding-left: 2px;
+      }
+    }
+
+    /* under an open panel the drawer fades back; a tap on it goes to the drawer itself, which closes the panel */
+    & .drawer.under-panel > * {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    /* a row that opens a panel: "Page look    Normal ›" */
+    & .d-more::after {
+      color: #9aa0ab;
+      font-size: 20px;
+      line-height: 1;
+      content: "›";
+    }
+
+    /* a small heading between rows: "Plugins" */
+    & .d-head {
+      margin: 4px 2px -4px;
+      color: #9aa0ab;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* the plugins come last, set apart by a line, so Fullscreen and Reader settings don't look like plugins */
+    & .d-head.d-plugins {
+      margin-top: 4px;
+      padding-top: 12px;
+      border-top: 1px solid #3a3e48;
+    }
+
+    & .d-hint {
+      margin: 0 2px;
+      color: #c8cad0;
+      font-size: 13px;
+      line-height: 1.4;
     }
 
     &.drawer-left .d-foot {
