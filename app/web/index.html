@@ -424,7 +424,7 @@
           <label class="setting-row"><span class="label">Fit</span>
             <select x-model="st.reader_fit" @change="save('reader_fit')"><option value="screen">Fit screen</option><option value="width">Fit width</option><option value="height">Fit height</option><option value="original">Original</option></select></label>
           <!-- no fullscreen in the Android app: it already fills the screen between the phone's bars -->
-          <label class="setting-row" x-show="!$store.app.inApp"><span class="label">Fullscreen on first tap</span>
+          <label class="setting-row" x-show="!$store.app.inApp"><span class="label">Fullscreen on first tap<small>Phones and tablets. With a mouse, use the fullscreen button</small></span>
             <select x-model="st.auto_fullscreen" @change="save('auto_fullscreen')"><option value="true">On</option><option value="false">Off</option></select></label>
           <label class="setting-row"><span class="label">Pages to preload<small>More = smoother, uses more data</small></span>
             <select x-model="st.preload" @change="save('preload')"><option>2</option><option>3</option><option>4</option><option>5</option><option>8</option></select></label>
@@ -434,7 +434,7 @@
             <select x-model="st.reader_drawer_side" @change="save('reader_drawer_side')"><option value="right">Right</option><option value="left">Left</option></select></label>
           <label class="setting-row"><span class="label">Tap zones<small>One-handed: most of the page turns forward, a narrow edge goes back, the middle shows the controls</small></span>
             <select x-model="st.reader_tap_layout" @change="save('reader_tap_layout')"><option value="default">Left and right sides</option><option value="one-handed">One-handed</option><option value="off">Off (swipe only)</option></select></label>
-          <label class="setting-row" x-show="st.reader_tap_layout !== 'off'"><span class="label">Invert tap zones<small>In right to left, tap the right side for the next page. Swiping stays the same</small></span>
+          <label class="setting-row" x-show="st.reader_tap_layout !== 'off'"><span class="label">Invert tap zones<small>In right to left, tap the right side (or press →) for the next page. Swiping stays the same</small></span>
             <select x-model="st.reader_tap_invert" @change="save('reader_tap_invert')"><option value="false">Off</option><option value="true">On</option></select></label>
           <label class="setting-row"><span class="label">Overlay box background<small>Plugin boxes over the page, e.g. translations. Lower shows the art underneath</small></span>
             <select x-model="st.overlay_opacity" @change="save('overlay_opacity')"><option value="100">Solid</option><option value="75">75%</option><option value="50">50%</option><option value="25">25%</option><option value="0">See-through</option></select></label>

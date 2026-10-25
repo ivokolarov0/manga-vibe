@@ -9,6 +9,7 @@ const R = { book: null, page: 0, mode: "rtl", ui: false, saveTimer: null, wake: 
   ov: null };  // plugin overlays (see "plugin overlays" below)
 const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
 const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left/right); the middle toggles the controls
+const CLICK_SIDE = 0.4;  // the same with a mouse: a wide screen leaves only a narrow middle strip for the controls
 const TAP_EDGE = 0.2;   // one-handed layout: the narrow "previous" strip; the rest turns forward
 const MODES = { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" };
 const FITS = { screen: "Fit screen", width: "Fit width", height: "Fit height", original: "Original size" };
@@ -171,6 +172,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   if ($("#r-lock")) $("#r-lock").onclick = () => setLocked(!locked());
   $("#r-slider").oninput = (e) => goTo(+e.target.value - 1);
   $("#r-progress").onclick = (e) => { if (e.target.dataset.p) goTo(+e.target.dataset.p); };
+  // desktop: the mouse on the bottom edge brings up the full controls
+  $("#r-progress").onpointerenter = (e) => { if (e.pointerType === "mouse" && !uiShown()) showUi(); };
   // vertical mode: the wheel over the bottom strip still scrolls the pages
   $("#r-progress").onwheel = (e) => $("#reader .vertical")?.scrollBy(0, e.deltaY);
   $("#r-page").onchange = (e) => goTo(+e.target.value);
@@ -389,7 +392,7 @@ function setupPaged() {
     if (type !== "tap") return;
     if (R.drawer) return setDrawer(false);  // a tap beside the open drawer just closes it
     // tap or double tap
-    maybeAutoFullscreen();
+    maybeAutoFullscreen(e);
     const now = Date.now();
     if (now - lastTap.t < 300 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 40 && !locked()) {
       clearTimeout(tapTimer);
@@ -399,10 +402,10 @@ function setupPaged() {
       return;
     }
     lastTap = { t: now, x: e.clientX, y: e.clientY };
-    const x = e.clientX / innerWidth, y = e.clientY / innerHeight;
+    const x = e.clientX / innerWidth, y = e.clientY / innerHeight, mouse = e.pointerType === "mouse";
     tapTimer = setTimeout(() => {
       if (Z.s > 1.01) return toggleUi();  // zoomed: taps only show/hide the controls
-      const act = tapAction(x, y);
+      const act = tapAction(x, y, mouse);
       if (act === "next") next();
       else if (act === "prev") prev();
       else toggleUi();
@@ -423,19 +426,22 @@ function setupPaged() {
 /* what a tap at (x, y) (fractions of the screen) does: "next", "prev" or "ui" (show/hide controls).
    Tap zones are set apart from the reading direction (Settings → Reader): swipe, page order and the
    slide stay with the direction, only where you tap changes. */
-function tapAction(x, y) {
+function tapAction(x, y, mouse = false) {
   const layout = settings.reader_tap_layout || "default";
   if (layout === "off") return "ui";
-  // forward is on the right, except in RTL with "Invert tap zones" off (left, like a paper book)
-  const nextOnLeft = R.mode === "rtl" && !settings.reader_tap_invert;
-  const d = nextOnLeft ? x : 1 - x;  // 0 at the "next" edge, 1 at the "previous" edge
+  const d = nextOnLeft() ? x : 1 - x;  // 0 at the "next" edge, 1 at the "previous" edge
   if (layout === "one-handed") {
     if (d > 1 - TAP_EDGE) return "prev";
     if (Math.abs(x - 0.5) < 0.2 && Math.abs(y - 0.5) < 0.2) return "ui";  // a box in the middle
     return "next";
   }
-  return d < TAP_SIDE ? "next" : d > 1 - TAP_SIDE ? "prev" : "ui";
+  const side = mouse ? CLICK_SIDE : TAP_SIDE;
+  return d < side ? "next" : d > 1 - side ? "prev" : "ui";
 }
+
+/* forward is on the right (taps, clicks and arrow keys), except in RTL with "Invert tap zones"
+   off: then it's on the left, like a paper book */
+function nextOnLeft() { return R.mode === "rtl" && !settings.reader_tap_invert; }
 
 addEventListener("resize", () => { if (R.book && img()) { clampPan(); applyZoom(); } });
 
@@ -592,7 +598,7 @@ function setupVertical() {
   box.addEventListener("click", (e) => {
     if (e.target.closest("button")) return;
     if (R.drawer) return setDrawer(false);
-    maybeAutoFullscreen();
+    maybeAutoFullscreen(e);
     toggleUi();
   });
 }
@@ -920,7 +926,9 @@ function saveProgress(now = false) {
   R.saveTimer = setTimeout(send, 700);
 }
 
-function maybeAutoFullscreen() {
+/* phones and tablets only: a mouse click never goes fullscreen by itself (the buttons still do) */
+function maybeAutoFullscreen(e) {
+  if (e?.pointerType === "mouse") return;
   if (R.firstTap && settings.auto_fullscreen && !document.fullscreenElement && !androidApp) {
     document.documentElement.requestFullscreen?.().catch(() => {});
   }
@@ -979,8 +987,8 @@ document.addEventListener("keydown", (e) => {
   if ($("#reader").hidden || !R.book) return;
   if (e.key === "Escape") return R.drawer ? setDrawer(false) : leaveReader();
   if (R.mode === "vertical" || e.target.tagName === "SELECT") return;
-  if (e.key === "ArrowRight") R.mode === "rtl" ? prev() : next();
-  else if (e.key === "ArrowLeft") R.mode === "rtl" ? next() : prev();
+  if (e.key === "ArrowRight") nextOnLeft() ? prev() : next();
+  else if (e.key === "ArrowLeft") nextOnLeft() ? next() : prev();
   else if (e.key === " ") next();
 });
 document.addEventListener("visibilitychange", () => {
