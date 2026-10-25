@@ -83,6 +83,7 @@ document.addEventListener("alpine:init", () => {
     folderPicker: false,
     fix: { open: false, seriesId: null, onDone: null },
     edit: { open: false, seriesId: null, onDone: null, tab: "info" },
+    seriesBack: false,   // the series page was opened from inside the app, so its Back button can go back
     attentionCount: 0,
     att: null,           // the Needs attention lists (loaded by refreshAttentionCount)
     showIgnored: false,
@@ -126,6 +127,11 @@ document.addEventListener("alpine:init", () => {
     if (view !== lastView || newId !== app.id || (view === "settings" && newSub !== app.sub)) {
       if (lastView === "library") libraryScroll = scrollY;
       scrollTarget = view === "library" ? libraryScroll : 0;
+    }
+    // a series opened from another page can go back to it; one opened directly (link, fresh tab) has
+    // nowhere to go back to. Coming back from the reader or switching tabs keeps what it was.
+    if (view === "series" && lastView !== "read" && (lastView !== "series" || newId !== app.id)) {
+      app.seriesBack = lastView !== null;
     }
     app.view = view;
     app.id = newId;
@@ -626,6 +632,13 @@ function seriesView() {
       this.descLong = !!d && d.scrollHeight > parseFloat(getComputedStyle(d).lineHeight) * 6.5;
     },
     reload() { this.loadedFor = null; this.load(); },
+    /* back to where the series was opened from (the library keeps its place, search and filters);
+       opened directly, there's no such page, so go to the library */
+    back() {
+      const app = this.$store.app;
+      if (app.seriesBack) history.back();
+      else location.replace("#/" + (app.query ? "?" + app.query : ""));
+    },
 
     get alt() {
       const t = this.s.titles;

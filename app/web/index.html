@@ -116,6 +116,9 @@
       <template x-if="s">
         <div>
           <div class="sp-banner" x-show="s.banner_url" :style="s.banner_url && `background-image:url('${s.banner_url}')`"></div>
+          <button class="sp-back" @click="back()">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+            <span x-text="$store.app.seriesBack ? 'Back' : 'Library'"></span></button>
           <div class="sp">
             <button class="sp-poster" title="Change poster" @click="editInfo('poster')"><img :src="s.poster_large" alt="">
               <span class="poster-hint">✎ Poster</span></button>
