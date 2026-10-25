@@ -326,7 +326,7 @@ Choices made where the spec was open. Newest at the bottom.
 ## Android app
 
 - **A WebView wrapper, not a native reader.** The reader is the web app; the app (`android/`) only
-  shows the server fullscreen and adds what a browser can't do over plain HTTP: no browser bars,
+  shows the server on the whole screen and adds what a browser can't do over plain HTTP: no browser bars,
   the screen kept on (`FLAG_KEEP_SCREEN_ON`, where the browser's Wake Lock needs HTTPS) and the
   volume keys. New MangaVibe versions reach the app without updating it.
 - **Android only.** An iPhone app needs a Mac and a paid Apple developer account, and the App Store

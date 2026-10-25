@@ -1,9 +1,9 @@
 # MangaVibe for Android
 
-A small app that shows your MangaVibe server fullscreen. All the reading happens in the web app;
-the Android app adds what a browser can't do over plain HTTP:
+A small app that shows your MangaVibe server on the whole screen, between the phone's status and
+navigation bars. All the reading happens in the web app; the Android app adds what a browser can't do over plain HTTP:
 
-- fullscreen, without browser bars
+- no browser bars (the phone's own status and navigation bars stay visible)
 - the screen stays on while the reader is open
 - the volume buttons turn pages (Settings → Android app, on by default)
 - the back button closes the reader's options, sheets and dialogs before going back
@@ -15,7 +15,7 @@ If the app isn't installed, the same button downloads it.
 
 ## How it fits together
 
-- `MainActivity.kt`: the WebView, the setup and "can't reach" screens, fullscreen, the volume and back keys.
+- `MainActivity.kt`: the WebView, the setup and "can't reach" screens, the system bars, the volume and back keys.
   Links to other sites (AniList, GitHub) open in the browser.
 - `Bridge.kt`: `window.MangaVibeAndroid` in the page: `readerState(open, volumeKeys)`, `changeServer()`,
   `server()`, `version()`.

@@ -920,7 +920,7 @@ function maybeAutoFullscreen() {
 }
 
 /* both fullscreen buttons show what a tap will do; hidden where the browser has no fullscreen (iPhone)
-   and in the Android app, which is always fullscreen */
+   and in the Android app, which already fills the screen between the phone's bars */
 function updateFullscreenButtons() {
   const on = !!document.fullscreenElement, label = on ? "Exit fullscreen" : "Fullscreen";
   const rail = $("#r-fs2"), opt = $("#r-fs");
