@@ -1,6 +1,7 @@
 # Builds the Android app (android/) when a GitHub release is published, and attaches it to the
 # release as MangaVibe.apk. The web app links to releases/latest/download/MangaVibe.apk.
-# Run by hand (workflow_dispatch), it builds the chosen branch and keeps the APK as a workflow artifact.
+# Run by hand (workflow_dispatch), it builds the chosen branch and keeps the APK as a workflow artifact;
+# with a release tag (e.g. v1.10.0) it attaches the APK to that release instead (to redo a failed build).
 #
 # Signing: Android only installs an update over the app if both are signed with the same key, so
 # every release must use one key. Add these repository secrets (how: android/README.md):
@@ -12,6 +13,10 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release to attach the APK to (e.g. v1.10.0); empty keeps it as a workflow artifact"
+        required: false
 
 permissions:
   contents: write
@@ -20,7 +25,7 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     env:
-      TAG: ${{ github.event.release.tag_name }}
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
       KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +47,13 @@ jobs:
             echo "::warning::No signing key: this APK is signed with a throwaway debug key"
             exit 0
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          # line breaks or spaces sneak in when the secret is pasted or piped: drop them
+          key=$(printf %s "$KEYSTORE_BASE64" | tr -d '[:space:]')
+          if ! printf %s "$key" | base64 -d > "$RUNNER_TEMP/release.jks" 2>/dev/null; then
+            bad=$(printf %s "$key" | tr -d 'A-Za-z0-9+/=' | wc -c)
+            echo "::error::ANDROID_KEYSTORE_BASE64 isn't base64 (${#key} characters, $bad of them not base64). Set it again, see android/README.md"
+            exit 1
+          fi
           echo "MANGAVIBE_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
       - name: Build
