@@ -21,6 +21,8 @@ MIGRATIONS = [
                   ("match_candidates JSON", "metadata_source JSON", "banner_url VARCHAR")],
     # 2: manual chapter ranges per file
     lambda conn: conn.execute(text("ALTER TABLE book ADD COLUMN override_chapter_end FLOAT")),
+    # 3: a reading direction per library folder, for its series that aren't matched
+    lambda conn: conn.execute(text("ALTER TABLE library ADD COLUMN reader_mode VARCHAR")),
 ]
 
 

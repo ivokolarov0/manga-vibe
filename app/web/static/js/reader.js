@@ -17,6 +17,10 @@ const FITS = { screen: "Fit screen", width: "Fit width", height: "Fit height", o
 const OV_OPACITY = { 100: "Solid", 75: "75%", 50: "50%", 25: "25%", 0: "See-through" };
 const OV_OUTLINE = { off: "Off", thin: "Thin", thick: "Thick" };
 const OV_STROKE = { off: "0px", thin: "0.12em", thick: "0.22em" };
+// how the page images look (reader settings): easier on the eyes, e.g. white pages at night
+const BRIGHTNESS = { 100: "Normal", 85: "85%", 70: "70%", 55: "55%", 40: "40%" };
+const CONTRAST = { 100: "Normal", 125: "More", 150: "Most", 75: "Less" };
+const COLORS = { normal: "Normal", dark: "Inverted", warm: "Warm", "dark-warm": "Inverted, warm" };
 
 /* the value after `cur` in a {value: label} list, wrapping around */
 function cycle(list, cur) {
@@ -42,6 +46,12 @@ const ICONS = {
   unlock: svg(`<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>`),
   overlay: svg(`<path d="M4 5h16v10H9l-5 4V5z"/><path d="M8 9h8M8 12h5"/>`),
   plugin: svg(`<path d="M9 3v4M15 3v4M7 7h10v5a5 5 0 0 1-10 0V7zM12 17v4"/>`),
+  sun: svg(`<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>`),
+  contrast: svg(`<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>`),
+  colors: svg(`<path d="M12 3a9 9 0 1 0 9 9c0-1.5-1.5-2-3-2h-2a2 2 0 0 1-2-2c0-1.5 1-2 1-3.5S13.5 3 12 3z"/><circle cx="8" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/>`),
+  speak: svg(`<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>`),
+  speed: svg(`<path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 14l4-5"/>`),
+  autoTurn: svg(`<path d="M5 6l6 6-6 6M13 6l6 6-6 6"/>`),
 };
 
 /* the hand the reader is held in (Settings → Reader): back, fullscreen and the options button sit on
@@ -57,9 +67,51 @@ function setDrawer(open) {
     R.hovering = false;
     clearTimeout(R.hideTimer);
   } else {
+    if (R.panel) openPanel(null);
     if (d.contains(document.activeElement)) document.activeElement.blur();
     restartHideTimer();
   }
+}
+
+/* ---------------- drawer panels ----------------
+   The drawer keeps one row per thing (Page look, each plugin); a row opens a panel of its
+   own that slides down over the drawer, with that thing's switches and buttons. Its × (or Escape, the
+   Android back button, a tap on the drawer below) returns to the drawer. */
+
+/* the plugins with something in the reader: [{id, name, overlay: {label} | null, actions: [index in book.actions]}] */
+function drawerPlugins(book) {
+  const out = new Map();
+  const get = (id, name) => out.get(id) || out.set(id, { id, name: name || id, overlay: null, actions: [] }).get(id);
+  for (const o of book.overlays) get(o.plugin, o.name).overlay = o;
+  book.actions.forEach((a, i) => get(a.plugin, a.name).actions.push(i));
+  return [...out.values()];
+}
+
+function drawerPanel(key, title, body) {
+  return `<aside class="d-panel" data-panel-of="${esc(key)}" aria-label="${esc(title)}" inert>
+    <div class="d-row d-panel-head">
+      <div class="d-title">${esc(title)}</div>
+      <button class="icon" data-panel-close aria-label="Back to the reading options" title="Close">${ICONS.close}</button>
+    </div>${body}</aside>`;
+}
+
+/* open the panel `key` (null: back to the drawer) */
+function openPanel(key) {
+  const was = R.panel;
+  R.panel = key;
+  for (const p of $("#reader").querySelectorAll(".d-panel")) {
+    const on = p.dataset.panelOf === key;
+    p.classList.toggle("open", on);
+    p.inert = !on;
+  }
+  $("#r-drawer")?.classList.toggle("under-panel", !!key);
+  if (key) {
+    sayButtons();  // the voice list may have come since
+    $(`#reader .d-panel.open [data-panel-close]`)?.focus({ preventScroll: true });
+  } else if (was) {
+    $(`#reader [data-panel="${CSS.escape(was)}"]`)?.focus({ preventScroll: true });  // back where you were
+  }
+  restartHideTimer();
 }
 
 function pageWidth() {
@@ -94,9 +146,13 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
     + (R.drawer ? " drawer-open" : "");
   const paged = R.mode !== "vertical";
   ovReset(book);
+  R.panel = null;
+  const plugins = drawerPlugins(book), canSay = book.overlays.length > 0 && canSpeak();
   el.innerHTML = `
     ${paged ? `<div class="stage"><img alt=""><div class="ov-layer" id="r-ov"></div></div>` : `<div class="vertical"></div>`}
     <div class="ov-status" id="r-ov-status" hidden></div>
+    <!-- for screen readers (TalkBack, NVDA, VoiceOver): the plugin's text of the page being read -->
+    <div class="sr-only" id="r-live" aria-live="polite"></div>
     <div class="read-progress" id="r-progress">
       <span id="rp-cur"></span>
       <div class="rp-track">${Array.from({ length: book.page_count },
@@ -154,15 +210,33 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
         <button class="d-opt" id="r-fit">${ICONS.fit}<span>${FITS[settings.reader_fit || "screen"]}</span></button>
         ${paged ? `<button id="r-lock" class="icon"></button>` : ""}
       </div>
-      ${book.overlays.map((o) => `<button class="d-opt d-toggle" data-ov="${esc(o.plugin)}">${ICONS.overlay}
-        <span>${esc(o.label)}</span><b></b></button>`).join("")}
-      ${book.overlays.length ? `<button class="d-opt" id="r-ov-unhide" hidden>${ICONS.overlay}<span></span></button>
-        <button class="d-opt d-toggle" id="r-ov-opacity" hidden>${ICONS.overlay}<span>Box background</span><b></b></button>
-        <button class="d-opt d-toggle" id="r-ov-outline" hidden>${ICONS.overlay}<span>Text outline</span><b></b></button>` : ""}
-      ${book.actions.map((a, i) => `<button class="d-opt" data-act="${i}">${ICONS.plugin}<span>${esc(a.label)}</span></button>`).join("")}
+      <!-- a row with › opens a panel of its own over the drawer (see "drawer panels" below) -->
+      <button class="d-opt d-toggle d-more" data-panel="look">${ICONS.sun}<span>Page look</span><b id="r-look-state"></b></button>
       <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
       <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>Reader settings</span></a>
-    </aside>`;
+      <!-- last, after a line: everything a plugin adds, one row per plugin -->
+      ${plugins.length ? `<div class="d-head d-plugins">Plugins</div>` : ""}
+      ${plugins.map((p) => `<button class="d-opt d-toggle d-more" data-panel="plugin:${esc(p.id)}">${ICONS.plugin}
+        <span>${esc(p.name)}</span><b data-ov-state="${p.overlay ? esc(p.id) : ""}"></b></button>`).join("")}
+    </aside>
+    ${drawerPanel("look", "Page look", `
+      <button class="d-opt d-toggle" id="r-bright">${ICONS.sun}<span>Brightness</span><b></b></button>
+      <button class="d-opt d-toggle" id="r-contrast">${ICONS.contrast}<span>Contrast</span><b></b></button>
+      <button class="d-opt d-toggle" id="r-colors">${ICONS.colors}<span>Page colours</span><b></b></button>`)}
+    ${plugins.map((p) => drawerPanel(`plugin:${p.id}`, p.name, `
+      ${p.overlay ? `<button class="d-opt d-toggle" data-ov="${esc(p.id)}">${ICONS.overlay}<span>${esc(p.overlay.label)}</span><b></b></button>` : ""}
+      ${p.actions.map((i) => `<button class="d-opt" data-act="${i}">${ICONS.plugin}<span>${esc(book.actions[i].label)}</span></button>`).join("")}
+      ${p.overlay && canSay ? `<div class="d-head">Read aloud</div>
+        <button class="d-opt d-toggle" data-say="on">${ICONS.speak}<span>Read aloud</span><b></b></button>
+        <p class="d-hint" data-say="hint" hidden>Switch ${esc(p.overlay.label)} on above to hear its text.</p>
+        <button class="d-opt d-toggle" data-say="rate">${ICONS.speed}<span>Reading speed</span><b></b></button>
+        <button class="d-opt d-toggle" data-say="turn">${ICONS.autoTurn}<span>Turn pages by itself</span><b></b></button>
+        <div class="d-row" data-say="voice"><label class="d-field pick"><small>Voice</small><span></span>
+          <select aria-label="Voice"></select></label></div>` : ""}
+      ${p.overlay ? `<div class="d-head" data-ov-look-head hidden>Boxes on the page</div>
+        <button class="d-opt d-toggle" data-ov-look="opacity" hidden>${ICONS.overlay}<span>Box background</span><b></b></button>
+        <button class="d-opt d-toggle" data-ov-look="outline" hidden>${ICONS.overlay}<span>Text outline</span><b></b></button>
+        <button class="d-opt" data-ov-unhide hidden>${ICONS.overlay}<span></span></button>` : ""}`)).join("")}`;
   $("#r-back").onclick = () => leaveReader();
   $("#r-menu").onclick = () => setDrawer(true);
   $("#r-close").onclick = () => setDrawer(false);
@@ -193,18 +267,25 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   const toNext = () => location.replace(`#/read/${book.next.id}?page=0`);
   if (book.prev) $("#r-prev").onclick = $("#r-cprev").onclick = toPrev;
   if (book.next) $("#r-next").onclick = $("#r-cnext").onclick = toNext;
+  el.querySelectorAll("[data-panel]").forEach((b) => (b.onclick = () => openPanel(b.dataset.panel)));
+  el.querySelectorAll("[data-panel-close]").forEach((b) => (b.onclick = () => openPanel(null)));
+  // a tap on the drawer under an open panel closes the panel (reader.css lets the taps through to it)
+  $("#r-drawer").addEventListener("click", (e) => { if (R.panel) { e.preventDefault(); openPanel(null); } }, true);
   el.querySelectorAll("[data-ov]").forEach((b) => (b.onclick = () => ovToggle(b.dataset.ov)));
   el.querySelectorAll("[data-act]").forEach((b) => (b.onclick = () => ovAction(book.actions[+b.dataset.act])));
-  if ($("#r-ov-unhide")) $("#r-ov-unhide").onclick = ovShowHidden;
-  if ($("#r-ov-opacity")) {
-    // from solid down to see-through (the keys of OV_OPACITY are in number order, the other way)
-    const steps = [100, 75, 50, 25, 0];
-    $("#r-ov-opacity").onclick = () =>
-      ovSetStyle({ overlay_opacity: steps[(steps.indexOf(ovOpacity()) + 1) % steps.length] });
-    $("#r-ov-outline").onclick = () => ovSetStyle({ overlay_outline: cycle(OV_OUTLINE, ovOutline()) });
-  }
+  el.querySelectorAll("[data-ov-unhide]").forEach((b) => (b.onclick = ovShowHidden));
+  // number keys of an object come in number order, so the steps are spelled out
+  const step = (steps, cur) => steps[(steps.indexOf(cur) + 1) % steps.length];
+  el.querySelectorAll("[data-ov-look]").forEach((b) => (b.onclick = () => (b.dataset.ovLook === "opacity"
+    ? ovSetStyle({ overlay_opacity: step([100, 75, 50, 25, 0], ovOpacity()) })  // from solid to see-through
+    : ovSetStyle({ overlay_outline: cycle(OV_OUTLINE, ovOutline()) }))));
   ovApplyStyle();
   ovUpdateButtons();
+  $("#r-bright").onclick = () => setLook({ reader_brightness: step([100, 85, 70, 55, 40], brightness()) });
+  $("#r-contrast").onclick = () => setLook({ reader_contrast: step([100, 125, 150, 75], contrast()) });
+  $("#r-colors").onclick = () => setLook({ reader_colors: cycle(COLORS, colors()) });
+  applyLook();
+  saySetup();
 
   if (R.mode === "vertical") setupVertical(); else setupPaged();
   requestWakeLock();
@@ -523,6 +604,8 @@ function updatePageUi() {
     seg.className = i < R.page ? "read" : i === R.page ? "read cur" : "";
   }
   $("#rp-cur").textContent = R.page + 1;
+  const im = img();
+  if (im) im.alt = `Page ${R.page + 1} of ${R.book.page_count}`;
 }
 
 function goTo(i) {
@@ -565,7 +648,7 @@ function setupVertical() {
   const box = $("#reader .vertical");
   // each page in a box of its own, so a plugin overlay can sit on top of it
   box.innerHTML = Array.from({ length: R.book.page_count }, (_, i) =>
-    `<div class="vpage" data-p="${i}"><img data-i="${i}" loading="lazy" src="${pageUrl(i)}" alt="">`
+    `<div class="vpage" data-p="${i}"><img data-i="${i}" loading="lazy" src="${pageUrl(i)}" alt="Page ${i + 1}">`
     + `<div class="ov-layer"></div></div>`).join("") +
     `<div style="padding:40px 20px;text-align:center">
       ${R.book.next ? `<button class="btn primary" id="v-next">Next: ${esc(R.book.next.label)}</button>`
@@ -647,25 +730,32 @@ function ovForget() {
 }
 
 function ovUpdateButtons() {
-  $("#reader").querySelectorAll("[data-ov]").forEach((b) => {
+  const el = $("#reader");
+  el.querySelectorAll("[data-ov]").forEach((b) => {
     const on = R.ov.on.includes(b.dataset.ov);
     b.classList.toggle("on", on);
     b.setAttribute("aria-pressed", on);
     b.querySelector("b").textContent = on ? "On" : "Off";
   });
-  const unhide = $("#r-ov-unhide");
-  if (unhide) {
-    const n = R.book.hidden_boxes || 0;
-    unhide.hidden = !n || !R.ov.on.length;
-    unhide.querySelector("span").textContent = `Show ${n} hidden ${n === 1 ? "box" : "boxes"}`;
-  }
-  // how the boxes look: only while an overlay is on
-  const opacity = $("#r-ov-opacity"), outline = $("#r-ov-outline");
-  if (opacity) {
-    opacity.hidden = outline.hidden = !R.ov.on.length;
-    opacity.querySelector("b").textContent = OV_OPACITY[ovOpacity()];
-    outline.querySelector("b").textContent = OV_OUTLINE[ovOutline()];
-  }
+  // the plugin's row in the drawer says whether its overlay is on
+  el.querySelectorAll("[data-ov-state]").forEach((b) => {
+    if (!b.dataset.ovState) return;
+    const on = R.ov.on.includes(b.dataset.ovState);
+    b.textContent = on ? "On" : "Off";
+    b.parentElement.classList.toggle("on", on);
+  });
+  // how the boxes look, and hidden boxes: only while an overlay is on (the settings are for all of them)
+  const any = R.ov.on.length > 0, n = R.book.hidden_boxes || 0;
+  el.querySelectorAll("[data-ov-look-head]").forEach((h) => (h.hidden = !any));
+  el.querySelectorAll("[data-ov-look]").forEach((b) => {
+    b.hidden = !any;
+    b.querySelector("b").textContent = b.dataset.ovLook === "opacity" ? OV_OPACITY[ovOpacity()] : OV_OUTLINE[ovOutline()];
+  });
+  el.querySelectorAll("[data-ov-unhide]").forEach((b) => {
+    b.hidden = !n || !any;
+    b.querySelector("span").textContent = `Show ${n} hidden ${n === 1 ? "box" : "boxes"}`;
+  });
+  sayButtons();
 }
 
 /* the box look from the reader settings, kept to the values the reader knows */
@@ -846,11 +936,294 @@ function ovStatus() {
     note.hidden = !text;
     note.textContent = text;
   }
+  // screen readers announce the page's text once it's there (not while read aloud speaks it already)
+  const live = $("#r-live"), said = entry?.done && !S.on ? pageText(entry) : "";
+  if (live && live.textContent !== said) live.textContent = said;
+  sayUpdate();
 }
 
 addEventListener("resize", () => {
   if (R.ov && R.mode === "vertical") $("#reader").querySelectorAll(".ov-layer").forEach(ovFit);
 });
+
+/* ---------------- page look: brightness, contrast, colours ----------------
+   A CSS filter on the page images only (overlay boxes and the controls stay as they are). Reader
+   settings like the fit: changed from the drawer or Settings → Reader. */
+
+function brightness() { const v = +settings.reader_brightness; return v in BRIGHTNESS ? v : 100; }
+function contrast() { const v = +settings.reader_contrast; return v in CONTRAST ? v : 100; }
+function colors() { return settings.reader_colors in COLORS ? settings.reader_colors : "normal"; }
+
+/* "Inverted" turns white pages black; the hue turn undoes what inverting does to colours, so a red
+   stays red. It goes first, so lowering the brightness dims the (now white) letters, not a black page. */
+function pageFilter() {
+  const c = colors(), f = [];
+  if (c.startsWith("dark")) f.push("invert(1) hue-rotate(180deg)");
+  if (c.endsWith("warm")) f.push("sepia(0.45)");
+  if (contrast() !== 100) f.push(`contrast(${contrast() / 100})`);
+  if (brightness() !== 100) f.push(`brightness(${brightness() / 100})`);
+  return f.join(" ") || "none";
+}
+
+function applyLook() {
+  $("#reader").style.setProperty("--page-filter", pageFilter());
+  for (const [id, text, changed] of [["#r-bright", BRIGHTNESS[brightness()], brightness() !== 100],
+    ["#r-contrast", CONTRAST[contrast()], contrast() !== 100], ["#r-colors", COLORS[colors()], colors() !== "normal"]]) {
+    const b = $(id);
+    if (!b) continue;
+    b.querySelector("b").textContent = text;
+    b.classList.toggle("on", changed);
+  }
+  // the drawer's row: what isn't normal, e.g. "Inverted · 70%"
+  const state = $("#r-look-state");
+  if (state) {
+    const parts = [colors() !== "normal" && COLORS[colors()], brightness() !== 100 && BRIGHTNESS[brightness()],
+      contrast() !== 100 && `${CONTRAST[contrast()]} contrast`].filter(Boolean);
+    state.textContent = parts.join(" · ") || "Normal";
+    state.parentElement.classList.toggle("on", parts.length > 0);
+  }
+}
+
+/* the drawer changed the look: applied at once, saved as a reader setting */
+async function setLook(change) {
+  Object.assign(settings, change);
+  applyLook();
+  restartHideTimer();
+  try { await api("/api/settings", { method: "PUT", body: change }); }
+  catch (e) { toast(e.message, 6000, "error"); }
+}
+
+/* ---------------- read aloud ----------------
+   Reads the text a plugin gives for the page (its `speech`, or else the text of its boxes) with the
+   device's voice: the browser's speech synthesis, or Android's own text-to-speech in the app (its web
+   view has none). Remembered on this device, and needs an overlay switched on. With "Turn pages by
+   itself", the next page comes once a page is read, and after the last page the next chapter: a book
+   to listen to. Screen reader users can leave it off: #r-live hands them the same text. */
+
+const RATE_STEPS = [0.75, 1, 1.25, 1.5, 2];
+const S = (() => {
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem("reader-speech") || "{}") || {}; } catch {}
+  return { on: !!saved.on, turn: !!saved.turn, voice: String(saved.voice || ""),
+    rate: RATE_STEPS.includes(saved.rate) ? saved.rate : 1,
+    key: null,        // "book:page" being read (or read): each page is read once
+    run: 0,           // goes up with every stop, so callbacks of an older reading are ignored
+    blocked: false,   // the browser wanted a tap first
+    speech: null,     // what is being read: {parts, done, part} (part: the one being read now)
+    turnTimer: null, androidDone: null, androidFrom: 0 };
+})();
+
+function saySave() {
+  try { localStorage.setItem("reader-speech", JSON.stringify({ on: S.on, turn: S.turn, voice: S.voice, rate: S.rate })); } catch {}
+}
+
+/* the app (from the version with a speak() bridge) or a browser with speech synthesis */
+function canSpeak() { return androidApp ? !!androidApp.speak : "speechSynthesis" in window; }
+
+/* the read aloud controls: in the panel of every plugin with an overlay (they're one setting for all) */
+function sayAll(kind) { return [...$("#reader").querySelectorAll(`[data-say="${kind}"]`)]; }
+
+function saySetup() {
+  sayAll("on").forEach((b) => (b.onclick = () => {
+    S.on = !S.on;
+    saySave();
+    sayStop();
+    S.key = null;
+    sayButtons();
+    ovStatus();  // starts reading the page (this tap lets the browser speak)
+    restartHideTimer();
+  }));
+  sayAll("rate").forEach((b) => (b.onclick = () => {
+    S.rate = RATE_STEPS[(RATE_STEPS.indexOf(S.rate) + 1) % RATE_STEPS.length];
+    saySave();
+    sayButtons();
+    restartHideTimer();
+    sayAgain();  // at once, from the line being read
+  }));
+  sayAll("turn").forEach((b) => (b.onclick = () => {
+    S.turn = !S.turn;
+    saySave();
+    sayButtons();
+    restartHideTimer();
+    if (S.turn && S.finished === S.key) sayDone(S.key);  // the page was already read: go on now
+  }));
+  sayAll("voice").forEach((row) => (row.querySelector("select").onchange = (e) => {
+    S.voice = e.target.value;
+    saySave();
+    sayButtons();
+    sayAgain();  // at once, from the line being read
+  }));
+  sayButtons();
+}
+
+function sayButtons() {
+  const toggle = (el, on) => {
+    el.classList.toggle("on", on);
+    el.setAttribute("aria-pressed", on);
+    el.querySelector("b").textContent = on ? "On" : "Off";
+  };
+  sayAll("on").forEach((b) => toggle(b, S.on));
+  // nothing to read while no overlay is on: say how to get some
+  sayAll("hint").forEach((h) => (h.hidden = !S.on || !!R.ov?.on.length));
+  sayAll("rate").forEach((b) => {
+    b.hidden = !S.on;
+    b.querySelector("b").textContent = `${S.rate}×`;
+  });
+  sayAll("turn").forEach((b) => {
+    b.hidden = !S.on;
+    toggle(b, S.turn);
+  });
+  // the app uses the phone's text-to-speech voice (Android settings → Text-to-speech)
+  sayAll("voice").forEach((row) => {
+    row.hidden = !S.on || !!androidApp;
+    if (!row.hidden) sayVoices(row);
+  });
+}
+
+function sayVoices(row) {
+  const sel = row.querySelector("select");
+  const voices = speechSynthesis.getVoices();
+  sel.innerHTML = `<option value="">Device default</option>` + voices.map((v) =>
+    `<option value="${esc(v.voiceURI)}">${esc(v.name)} (${esc(v.lang)})</option>`).join("");
+  sel.value = voices.some((v) => v.voiceURI === S.voice) ? S.voice : "";
+  row.querySelector("span").textContent = sel.selectedOptions[0]?.textContent || "Device default";
+}
+if (!androidApp && "speechSynthesis" in window) {
+  speechSynthesis.addEventListener?.("voiceschanged", () => { if (R.book) sayButtons(); });  // the list comes late
+}
+
+/* the page as text: each overlay's `speech`, or the text of its boxes in their order */
+function pageText(entry) {
+  return (entry?.layers || []).map((l) => l.speech
+    || l.boxes.filter((b) => !b.hidden).map((b) => b.text).filter(Boolean).join("\n")).filter(Boolean).join("\n\n");
+}
+
+/* read the current page if it's there and wasn't read yet (called whenever the page or its overlay changes) */
+function sayUpdate() {
+  if (!S.on || !R.book || !R.ov?.on.length) {
+    if (S.key !== null) { sayStop(); S.key = null; }
+    return;
+  }
+  if (S.blocked) return;
+  const key = `${R.book.id}:${R.page}`;
+  if (S.key === key) return;
+  sayStop();                 // another page: the old one stops at once
+  const entry = R.ov.pages.get(R.page);
+  if (!entry?.done) return;  // still being worked on: called again when it's there
+  S.key = key;
+  const text = pageText(entry);
+  const problem = entry.layers.map((l) => l.message).filter(Boolean).join(". ");
+  if (text) speak(text, () => sayDone(key));
+  else if (problem) speak(problem, () => {});  // e.g. "set the server": said, and the page stays
+  else sayDone(key);         // nothing to read on this page
+}
+
+/* read `text`, then call `done`. It's read in parts (lines), and the part being read is remembered,
+   so a change of speed or voice can carry on from there (sayAgain) */
+function speak(text, done) {
+  S.speech = { parts: sayParts(text), done, part: 0 };
+  speakFrom(0);
+}
+
+function speakFrom(start) {
+  const sp = S.speech, run = S.run;
+  const finish = () => {
+    if (S.run !== run) return;
+    S.speech = null;
+    sp.done();
+  };
+  const parts = sp.parts.slice(start);
+  if (androidApp) {
+    // one line per part: the app reads them in turn, says which one starts (speaking) and when all are done (spoke)
+    S.androidDone = finish;
+    S.androidFrom = start;
+    androidApp.speak(run, parts.join("\n"), S.rate);
+    return;
+  }
+  const voice = speechSynthesis.getVoices().find((v) => v.voiceURI === S.voice);
+  // in short parts: some browsers (Chrome) stop a long utterance after about 15 seconds
+  parts.forEach((part, j) => {
+    const u = new SpeechSynthesisUtterance(part);
+    u.rate = S.rate;
+    if (voice) { u.voice = voice; u.lang = voice.lang; }
+    u.onstart = () => { if (S.run === run) sp.part = start + j; };
+    if (j === parts.length - 1) u.onend = finish;
+    u.onerror = (e) => {
+      if (S.run !== run) return;
+      if (e.error === "not-allowed") {  // no tap on this page yet: wait for one
+        S.blocked = true;
+        S.key = null;
+        toast("Tap the page to start reading aloud");
+      } else if (e.error !== "interrupted" && e.error !== "canceled") {
+        speechSynthesis.cancel();  // the rest of this page too
+        finish();                  // and go on as if it was read (the next page, with Turn pages by itself)
+      }
+    };
+    speechSynthesis.speak(u);
+  });
+}
+
+/* the speed or voice changed: what is being read goes on from the part it was at, the new way */
+function sayAgain() {
+  const sp = S.speech;
+  if (!sp) return;  // nothing being read
+  sayStop();
+  S.speech = sp;
+  speakFrom(sp.part);
+}
+
+/* lines, and long lines cut after a sentence (or a comma) */
+function sayParts(text) {
+  const out = [];
+  for (const line of text.split(/\n+/)) {
+    let rest = line.trim();
+    while (rest.length > 200) {
+      const cut = Math.max(...[". ", "! ", "? ", "; ", ", "].map((s) => rest.lastIndexOf(s, 200)));
+      const at = cut > 40 ? cut + 1 : 200;
+      out.push(rest.slice(0, at));
+      rest = rest.slice(at).trim();
+    }
+    if (rest) out.push(rest);
+  }
+  return out;
+}
+
+/* a page was read to the end: with "Turn pages by itself", on to the next page (or chapter) */
+function sayDone(key) {
+  S.finished = key;
+  if (!S.turn || S.key !== key) return;
+  clearTimeout(S.turnTimer);
+  S.turnTimer = setTimeout(() => {
+    if (!S.on || !S.turn || S.key !== key || !R.book) return;
+    if (R.page < R.book.page_count - 1) R.mode === "vertical" ? goTo(R.page + 1) : next();
+    else if (R.book.next) location.replace(`#/read/${R.book.next.id}?page=0`);
+  }, 900);
+}
+
+function sayStop() {
+  S.run++;
+  S.speech = null;
+  clearTimeout(S.turnTimer);
+  if (androidApp) androidApp.stopSpeaking?.();
+  else if ("speechSynthesis" in window) speechSynthesis.cancel();
+}
+
+/* the Android app finished reading (its text-to-speech calls MangaVibeApp.spoke) */
+function spoke(run) {
+  if (run === S.run) S.androidDone?.();
+}
+
+/* the Android app started part `i` of what it was given (MangaVibeApp.speaking) */
+function speaking(run, i) {
+  if (run === S.run && S.speech) S.speech.part = S.androidFrom + i;
+}
+
+// the browser refused to speak before a tap: the next tap or key starts it
+for (const type of ["pointerup", "keydown"]) {
+  document.addEventListener(type, () => {
+    if (S.blocked && R.book) { S.blocked = false; sayUpdate(); }
+  }, true);
+}
 
 /* ---------------- controls: show/hide, auto-hide after a few seconds ----------------
    Tap/click toggles the bars. Once shown, they hide on their own after `reader_autohide`
@@ -873,7 +1246,7 @@ function hideUi() {
   if (inChrome(document.activeElement)) document.activeElement.blur();
 }
 
-function inChrome(el) { return !!el?.closest?.("#reader .chrome, #reader .drawer"); }
+function inChrome(el) { return !!el?.closest?.("#reader .chrome, #reader .drawer, #reader .d-panel"); }
 
 function restartHideTimer() {
   clearTimeout(R.hideTimer);
@@ -971,6 +1344,8 @@ function closeReader() {
   const saved = saveProgress(true);
   R.wake?.release?.().catch(() => {});
   androidApp?.readerState(false, false);
+  sayStop();
+  S.key = null;
   ovReset(null);
   R.book = null;
   R.firstTap = true;
@@ -985,7 +1360,7 @@ function closeReader() {
 
 document.addEventListener("keydown", (e) => {
   if ($("#reader").hidden || !R.book) return;
-  if (e.key === "Escape") return R.drawer ? setDrawer(false) : leaveReader();
+  if (e.key === "Escape") return R.panel ? openPanel(null) : R.drawer ? setDrawer(false) : leaveReader();
   if (R.mode === "vertical" || e.target.tagName === "SELECT") return;
   if (e.key === "ArrowRight") nextOnLeft() ? prev() : next();
   else if (e.key === "ArrowLeft") nextOnLeft() ? next() : prev();
@@ -1007,10 +1382,11 @@ function volumeKey(dir) {
   else prev();
 }
 
-/* the Android back button: closes the options drawer, then leaves the reader */
+/* the Android back button: closes a drawer panel, then the options drawer, then leaves the reader */
 function back() {
   if ($("#reader").hidden) return false;
-  if (R.drawer) setDrawer(false);
+  if (R.panel) openPanel(null);
+  else if (R.drawer) setDrawer(false);
   else leaveReader();
   return true;
 }
@@ -1020,6 +1396,8 @@ return {
   close: closeReader,
   volumeKey,
   back,
+  spoke,
+  speaking,
   get isOpen() { return !$("#reader").hidden; },
 };
 })();

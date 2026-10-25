@@ -36,7 +36,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 4
+API_VERSION = 5
 
 
 @dataclass
@@ -102,11 +102,14 @@ class Overlay:
     """What page_overlay() returns. With `pending`, the reader asks again a few seconds later and
     shows `message` (e.g. "Translating…") meanwhile; `message` alone is a short status line
     (e.g. "PC offline"), shown over the page. `note` is a quiet line about the page (e.g.
-    "Full context · Haruka, Taro"), shown in the reader's top bar only while the controls are open."""
+    "Full context · Haruka, Taro"), shown in the reader's top bar only while the controls are open.
+    `speech` is the page as plain text in reading order, for listening: the reader's "Read aloud" reads
+    it, and screen readers get it. Without it, read aloud reads the boxes' text (plugin API 5)."""
     boxes: list = field(default_factory=list)  # [Box]
     pending: bool = False
     message: str = ""
     note: str = ""
+    speech: str = ""
 
 
 @dataclass
@@ -254,6 +257,12 @@ class Context:
         manager.submit(self.plugin, fn, args)
 
     # reading status: what the app shows (manual choice, else worked out from progress)
+    def reading_direction(self, series):
+        """rtl (manga), ltr (comics) or vertical (webtoons): the way the reader shows the series
+        (its own setting, its metadata, its library's default, then Settings → Reader). Plugin API 5."""
+        from app.direction import reading_direction
+        return reading_direction(self.db, series)[0]
+
     def reading_status(self, series):
         from app.api.common import derived_status, series_counts
         return derived_status(series, series_counts(self.db, [series.id])[series.id])

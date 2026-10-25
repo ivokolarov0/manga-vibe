@@ -187,13 +187,14 @@
               <div class="small-dialog">
                 <div class="sheet-head"><b>Reading direction</b>
                   <button class="btn small" @click="readerOpen = false">Close</button></div>
-                <p class="muted">Only for this series. “Default” follows Settings → Reader.</p>
+                <p class="muted">Only for this series. “Automatic”: manga from Japan reads right to left, other
+                  matched series left to right, and the rest follow their library folder (Settings → Library folders).</p>
                 <div class="options" role="radiogroup" aria-label="Reading direction">
                   <template x-for="[v, label, hint] in readerModes" :key="v">
                     <button role="radio" :aria-checked="(s.reader_mode || '') === v"
                             :class="{ on: (s.reader_mode || '') === v }" @click="setReader(v)">
                       <span class="radio" aria-hidden="true"></span>
-                      <span class="text"><span x-text="label"></span><small x-text="hint"></small></span>
+                      <span class="text"><span x-text="label"></span><small x-text="v ? hint : autoHint"></small></span>
                     </button>
                   </template>
                 </div>
@@ -384,6 +385,14 @@
                 <span x-text="l.name"></span>
                 <small x-text="l.root_path + ' · ' + l.series + ' series' + (l.available ? '' : ' · not found, check the volume mount')"></small>
                 <small class="scan-progress" x-show="libScanText(l)" x-text="libScanText(l)"></small>
+                <label class="lib-direction"><small>Series that aren't matched read</small>
+                  <select :value="l.reader_mode || 'default'" @change="setLibraryDirection(l, $event.target.value)"
+                          :aria-label="'Reading direction for unmatched series in ' + l.name">
+                    <option value="default">Like Settings → Reader</option>
+                    <option value="rtl">Right to left (manga)</option>
+                    <option value="ltr">Left to right (comics)</option>
+                    <option value="vertical">Vertical (webtoons)</option>
+                  </select></label>
               </div>
               <div class="row-buttons">
                 <button class="btn small" :disabled="scan.running" @click="rescan(l)"
@@ -422,7 +431,9 @@
         <!-- reader -->
         <section x-show="section === 'reader'">
           <h2>Reader</h2>
-          <label class="setting-row"><span class="label">Default direction<small>Each series can override it</small></span>
+          <label class="setting-row"><span class="label">Default direction<small>For series that aren't matched, when their library folder has no
+              direction of its own. Matched series follow their metadata (manga from Japan: right to left, the rest: left
+              to right), and each series can be set by hand</small></span>
             <select x-model="st.reader_mode" @change="save('reader_mode')"><option value="rtl">Right to left</option><option value="ltr">Left to right</option><option value="vertical">Vertical</option></select></label>
           <label class="setting-row"><span class="label">Fit</span>
             <select x-model="st.reader_fit" @change="save('reader_fit')"><option value="screen">Fit screen</option><option value="width">Fit width</option><option value="height">Fit height</option><option value="original">Original</option></select></label>
@@ -443,6 +454,12 @@
             <select x-model="st.overlay_opacity" @change="save('overlay_opacity')"><option value="100">Solid</option><option value="75">75%</option><option value="50">50%</option><option value="25">25%</option><option value="0">See-through</option></select></label>
           <label class="setting-row"><span class="label">Overlay text outline<small>A white outline around the letters, so they stay readable over the art</small></span>
             <select x-model="st.overlay_outline" @change="save('overlay_outline')"><option value="off">Off</option><option value="thin">Thin</option><option value="thick">Thick</option></select></label>
+          <label class="setting-row"><span class="label">Page brightness<small>Darker pages are easier on the eyes, e.g. at night</small></span>
+            <select x-model="st.reader_brightness" @change="save('reader_brightness')"><option value="100">Normal</option><option value="85">85%</option><option value="70">70%</option><option value="55">55%</option><option value="40">40%</option></select></label>
+          <label class="setting-row"><span class="label">Page contrast<small>More makes faint lines and small text stand out</small></span>
+            <select x-model="st.reader_contrast" @change="save('reader_contrast')"><option value="75">Less</option><option value="100">Normal</option><option value="125">More</option><option value="150">Most</option></select></label>
+          <label class="setting-row"><span class="label">Page colours<small>Inverted turns white pages black with white lines. Warm takes out the blue light</small></span>
+            <select x-model="st.reader_colors" @change="save('reader_colors')"><option value="normal">Normal</option><option value="dark">Inverted</option><option value="warm">Warm</option><option value="dark-warm">Inverted, warm</option></select></label>
         </section>
 
         <!-- Android app (only on Android: see SETTINGS_NAV) -->

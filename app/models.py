@@ -19,6 +19,8 @@ class Library(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     root_path: Mapped[str] = mapped_column(String, unique=True)
+    # direction for its series that aren't matched (see app/direction.py); None: Settings → Reader
+    reader_mode: Mapped[str | None] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 

@@ -207,6 +207,10 @@ function dismissAppBanner() {
 
 window.MangaVibeApp = {
   volumeKey: (dir) => Reader.volumeKey(dir),
+  /* the app's text-to-speech finished reading what the reader gave it (read aloud) */
+  spoke: (run) => Reader.spoke(run),
+  /* …and started part i of it (so a change of speed can carry on from there) */
+  speaking: (run, i) => Reader.speaking(run, i),
   /* the back button: true if the page handled it, false lets the app go back in history (or close) */
   back() {
     if (Reader.isOpen) return Reader.back();
@@ -682,14 +686,29 @@ function seriesView() {
     /* ---- ⋯ menu and the reading direction dialog ---- */
     menuOpen: false,
     readerOpen: false,
-    readerModes: [["", "Default", "Follow Settings → Reader"], ["rtl", "Right to left", "Manga"],
+    readerModes: [["", "Automatic", ""], ["rtl", "Right to left", "Manga"],
       ["ltr", "Left to right", "Comics, some manhua"], ["vertical", "Vertical", "Webtoons, long strips"]],
     get readerModeLabel() {
-      return { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" }[this.s?.reader_mode] || "Default";
+      const names = { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" };
+      return this.s?.reader_mode ? names[this.s.reader_mode] : `Automatic: ${names[this.s?.direction?.mode] || "Right to left"}`;
+    },
+    /* what "Automatic" comes to for this series, and why */
+    get autoHint() {
+      const d = this.s?.direction;
+      if (!d) return "";
+      const names = { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" };
+      const why = { metadata: this.s.country_of_origin === "JP" ? "a manga from Japan" : "matched, not from Japan",
+        library: "the library folder's direction", default: "not matched: Settings → Reader" };
+      // with a direction set by hand, "Automatic" would be what the metadata etc. say: not known here
+      return d.source === "series" ? "Work it out from the metadata and the library folder"
+        : `${names[d.mode]} · ${why[d.source] || ""}`;
     },
     async setReader(v) {
       await api(`/api/series/${this.s.id}`, { method: "PATCH", body: { reader_mode: v || "default" } });
       this.s.reader_mode = v || null;
+      // what it comes to now (Automatic is worked out on the server)
+      const fresh = await api(`/api/series/${this.s.id}`).catch(() => null);
+      if (fresh) this.s.direction = fresh.direction;
       this.readerOpen = false;
       toast(`Reading direction: ${this.readerModeLabel}`);
     },
@@ -1044,6 +1063,13 @@ function settingsView() {
       const st = this.scan;
       if (!st.running || (st.library_id != null ? st.library_id !== l.id : st.library !== l.name)) return "";
       return st.library_id != null ? `Scanning ${st.done}/${st.total}…` : "Scanning…";
+    },
+    async setLibraryDirection(l, v) {
+      try {
+        await api(`/api/libraries/${l.id}`, { method: "PATCH", body: { reader_mode: v } });
+        l.reader_mode = v === "default" ? null : v;
+        toast("Saved");
+      } catch (e) { toast(e.message, 6000, "error"); }
     },
     async removeLibrary(l) {
       if (!confirm(`Remove "${l.name}" (${l.root_path}) from MangaVibe?

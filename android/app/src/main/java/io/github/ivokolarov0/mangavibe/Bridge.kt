@@ -21,6 +21,17 @@ class Bridge(private val activity: MainActivity) {
         activity.runOnUiThread { if (activity.showsServer()) activity.showSetup(true) }
     }
 
+    /** Read aloud in the reader: read [text] with the phone's text-to-speech; MangaVibeApp.spoke(id) when done */
+    @JavascriptInterface
+    fun speak(id: Int, text: String, rate: Float) {
+        activity.runOnUiThread { if (activity.showsServer()) activity.speak(id, text, rate) }
+    }
+
+    @JavascriptInterface
+    fun stopSpeaking() {
+        activity.runOnUiThread { activity.stopSpeaking() }
+    }
+
     @JavascriptInterface
     fun server(): String = activity.server ?: ""
 

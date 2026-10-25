@@ -222,7 +222,12 @@ database changes; the file itself does not.
   one), set a reading status, add favorites. If the details are wrong, **Fix match** lets you search
   AniList or MangaUpdates, or paste a link.
 - **Reader**: tap or swipe to turn pages; tap the middle to show the controls (reading direction,
-  fit, page slider, fullscreen). At the end of a book it offers the next one.
+  fit, page slider, fullscreen). The direction is worked out per series: manga from Japan right to left,
+  manhwa and comics left to right (from AniList or MangaUpdates), and unmatched series follow their
+  library folder's direction, manga unless you set it otherwise. At the end of a book it offers the
+  next one. Brightness, contrast and inverted or warm colours make white pages easier on the eyes. With a plugin that has text for
+  the page (like Manga Accessibility below), **Read aloud** reads it with your device's voice and can
+  turn the pages by itself; screen readers (TalkBack, NVDA, VoiceOver) get the same text.
 - **Continue**: everything you're in the middle of, so you can pick up where you left off.
 - **Settings**: look and theme, reader defaults, library folders and **Rescan all**, metadata
   sources and updates. A number on the
@@ -308,6 +313,7 @@ a single `.py` file.
 |---|---|
 | [MyAnimeList sync](https://github.com/ivokolarov0/manga-vibe-ext-mal-profile-sync) | Sends Reading / Completed to your MyAnimeList list as you read, and pulls them back with **Sync all**. Its README shows how to connect your account step by step. |
 | [Manga Translate](https://github.com/ivokolarov0/manga-vibe-ext-translate) | Shows English over the speech bubbles of Japanese manga while you read. Small AI models on your own computer find, read and translate the text: free, private, nothing is sent online. Needs a computer with a graphics card on your network (or the same one). Its README walks through the setup step by step. |
+| [Manga Accessibility](https://github.com/ivokolarov0/manga-vibe-ext-accessibility) | For readers who are blind or have low vision: describes every panel, who says what and the sound effects, and MangaVibe reads it aloud. Needs only Ollama with a model that can see pictures (e.g. gemma4), on a computer on your network. |
 
 ### Install a plugin
 
