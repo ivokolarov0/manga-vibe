@@ -120,6 +120,7 @@ Choices made where the spec was open. Newest at the bottom.
 - **Page turns slide**: on a swipe the page follows the finger, slides out and the next one slides in
   from the other side; taps and arrow keys use the same slide. Short swipes snap back.
 - **Tap zones are separate from the reading direction** (issue #38, like Mihon's "invert tapping").
+  Replaced by "No right to left" below: the invert went with the direction.
   Direction still sets page order, swipe, slide, slider and arrow keys; Settings → Reader can invert
   the tap sides (RTL: tap right for next) or pick a one-handed layout (everything is "next" except a
   narrow "previous" edge and a middle box for the controls) or turn tapping off. Arrow keys don't
@@ -365,7 +366,8 @@ Choices made where the spec was open. Newest at the bottom.
   built from what `/api/books/<id>` already lists (overlays and book actions, now with the plugin's
   `name`), so plugins don't change. The panel's ×, Escape, the Android back button or a tap on the faded
   drawer go back one step, to the drawer.
-- **Each series has a reading direction, worked out when it isn't set** (`app/direction.py`). It used to be
+- **Each series has a reading direction, worked out when it isn't set** (`app/direction.py`). Replaced by
+  "No right to left" below: only the series and library folder choices are left. It used to be
   the series' own choice or the global default, so a manhwa read right to left until someone noticed, and
   a plugin describing pages couldn't tell manga order from comic order. Now, in order: the owner's choice
   for the series; its metadata, where matched as from Japan is manga (`rtl`) and matched otherwise
@@ -408,3 +410,17 @@ Choices made where the spec was open. Newest at the bottom.
   then any sheet or dialog (they all close on Escape), and only then goes back in history.
 - **Plain HTTP is allowed for every address**, since the server is at an address only the user
   knows, usually without HTTPS.
+
+## No right to left: every paged series turns forward to the right
+
+- **Pages or vertical, nothing else.** Digital manga and comics apps all turn forward to the right: → is
+  the next page, a tap on the right goes forward, a swipe to the left brings the next page in. A right to
+  left mode only made the controls disagree with every other reader (and needed an "invert tap zones"
+  setting to undo it), so it's gone. `reader_mode` is `paged` or `vertical`, set on the series, else its
+  library folder, else Settings → Reader; the metadata (from Japan or not) no longer decides anything.
+  Migration 4 turns stored `rtl`/`ltr` into `paged` and drops `reader_tap_invert`. What stays is the
+  reading hand (Settings → Reader): it moves the buttons to the left or right thumb, not the page order.
+  `ctx.reading_direction` keeps its name and returns `paged` or `vertical`.
+- **A tap in the middle opens the menu.** It used to only show the bars, and the options needed a second
+  tap on ☰. Now the bars and the options drawer come up together; a tap beside the drawer closes it and
+  the bars hide on their own. Tapping off ("swipe only") and zoomed-in taps do the same.

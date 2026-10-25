@@ -27,14 +27,13 @@ DEFAULT_SETTINGS = {
     "card_size": "medium",         # small | medium | large
     "library_listing": "lazy",     # lazy (infinite scroll) | paged (numbered pages)
     "library_page_size": 60,       # series per page in paged mode
-    "reader_mode": "rtl",          # rtl | ltr | vertical
+    "reader_mode": "paged",        # paged | vertical
     "reader_fit": "screen",        # width | height | screen | original
     "auto_fullscreen": True,
     "preload": 4,
     "reader_autohide": 5,          # seconds until the reader controls hide; 0 = never
     "reader_drawer_side": "right", # right | left: which side the reader options slide in from
     "reader_tap_layout": "default",  # default | one-handed | off: what tapping the page does
-    "reader_tap_invert": True,     # RTL: tap right for next (off: left, like a paper book); swipe and page order keep the direction
     "reader_volume_keys": True,    # Android app: the volume keys turn pages in the reader
     "overlay_opacity": 100,        # plugin overlay boxes: background opacity in %, 0 = see-through
     "overlay_outline": "off",      # off | thin | thick: a white outline around overlay text
@@ -62,15 +61,15 @@ def libraries(db=Depends(get_db)):
 
 
 class LibraryPatch(BaseModel):
-    reader_mode: str  # rtl | ltr | vertical, or "default" (Settings → Reader)
+    reader_mode: str  # paged | vertical, or "default" (Settings → Reader)
 
 
 @router.patch("/libraries/{lib_id}")
 def patch_library(lib_id: int, body: LibraryPatch, db=Depends(get_db)):
-    """The direction of the library's series that aren't matched (app/direction.py)."""
+    """The reading mode (paged or vertical) of the library's series (app/direction.py)."""
     lib = get_or_404(db, Library, lib_id)
     if body.reader_mode != "default" and body.reader_mode not in MODES:
-        raise HTTPException(400, "Unknown reading direction")
+        raise HTTPException(400, "Unknown reading mode")
     lib.reader_mode = None if body.reader_mode == "default" else body.reader_mode
     db.commit()
     return {"ok": True}

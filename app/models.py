@@ -19,7 +19,7 @@ class Library(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     root_path: Mapped[str] = mapped_column(String, unique=True)
-    # direction for its series that aren't matched (see app/direction.py); None: Settings → Reader
+    # reading mode (paged or vertical) for its series (see app/direction.py); None: Settings → Reader
     reader_mode: Mapped[str | None] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
@@ -61,7 +61,7 @@ class Series(Base):
     banner_url: Mapped[str | None] = mapped_column(String)
 
     reading_status: Mapped[str | None] = mapped_column(String)
-    reader_mode: Mapped[str | None] = mapped_column(String)  # per-series reader direction
+    reader_mode: Mapped[str | None] = mapped_column(String)  # per-series reading mode (paged or vertical)
     favorite: Mapped[bool] = mapped_column(Boolean, default=False)
     has_duplicates: Mapped[bool] = mapped_column(Boolean, default=False)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)

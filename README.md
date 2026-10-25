@@ -11,7 +11,7 @@
 <p align="center">
   <img src="docs/media/desktop.webp" width="74%" alt="MangaVibe on a computer: the library grid, a genre filter, a series page with its books in order and the files behind them, and the Needs attention lists">
   &nbsp;
-  <img src="docs/media/mobile.webp" width="23%" alt="MangaVibe on a phone: opening a series and reading it right to left with swipes, taps, pinch zoom, the page slider and vertical mode">
+  <img src="docs/media/mobile.webp" width="23%" alt="MangaVibe on a phone: opening a series and reading it with swipes, taps, pinch zoom, the page slider and vertical mode">
 </p>
 <p align="center"><sub>The series and art shown are made up for the demo.</sub></p>
 
@@ -63,11 +63,11 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
   favorites. Mark a book read or unread, or everything before it.
 
 ### A reader made for phones
-- **Right to left, left to right, or vertical** (webtoons). Each series reads the right way by
-  itself: manga from Japan right to left, manhwa and comics left to right. Series that aren't
-  matched follow their library folder's direction.
+- **Pages or vertical** (webtoons). Pages turn like every digital reader: the next one is on the
+  right (→, a tap on the right, a swipe to the left). Set per series or per library folder.
 - **Swipe or tap** to turn pages (or the volume buttons, in the Android app). Tap zones can be
-  inverted or one-handed; pinch and double-tap to zoom, with a lock to keep the page fitted.
+  one-handed, and the buttons move to your reading hand; pinch and double-tap to zoom, with a lock
+  to keep the page fitted.
 - **Fit** to screen, width or height, or original size. Pages are resized for your screen and the
   next ones preloaded, so turning is instant.
 - **Progress saved on every page**, and the next book offered at the end.

@@ -1,7 +1,10 @@
-"""Which way a series reads (app/direction.py): the owner's choice, its metadata, its library folder, then
-Settings → Reader."""
+"""How a series reads (app/direction.py): paged or vertical. The owner's choice, its library folder, then
+Settings → Reader. Paged always turns forward to the right, so there is no right to left any more."""
+from sqlalchemy import text
+
+from app import db as appdb
 from app.db import SessionLocal
-from app.models import Series
+from app.models import Library, Series
 
 
 def series_id(folder="Series B"):
@@ -33,39 +36,65 @@ def test_direction_in_order(client):
         old = {k: getattr(s, k) for k in ("country_of_origin", "format", "reader_mode")}
     old_default = client.get("/api/settings").json()["reader_mode"]
     try:
-        set_series(sid, country_of_origin=None, format=None, reader_mode=None)
-        client.put("/api/settings", json={"reader_mode": "rtl"})
-        # not matched, nothing set: Settings → Reader (manga by default)
-        assert direction(client, sid) == ("rtl", "default")
-        client.put("/api/settings", json={"reader_mode": "ltr"})
-        assert direction(client, sid) == ("ltr", "default")
-        client.put("/api/settings", json={"reader_mode": "rtl"})
+        set_series(sid, reader_mode=None)
+        client.put("/api/settings", json={"reader_mode": "paged"})
+        # nothing set: Settings → Reader
+        assert direction(client, sid) == ("paged", "default")
+        client.put("/api/settings", json={"reader_mode": "vertical"})
+        assert direction(client, sid) == ("vertical", "default")
+        client.put("/api/settings", json={"reader_mode": "paged"})
 
-        # the library folder's direction, for its unmatched series
+        # the metadata no longer decides anything: a manga from Japan pages like the rest
+        set_series(sid, country_of_origin="JP", format="MANGA")
+        assert direction(client, sid) == ("paged", "default")
+
+        # the library folder's mode
         for l in client.get("/api/libraries").json():
             assert client.patch(f"/api/libraries/{l['id']}", json={"reader_mode": "vertical"}).status_code == 200
         assert direction(client, sid) == ("vertical", "library")
         assert client.get("/api/libraries").json()[0]["reader_mode"] == "vertical"
-        assert client.patch(f"/api/libraries/{lib}", json={"reader_mode": "sideways"}).status_code == 400
-
-        # matched: from Japan is manga, anything else reads left to right (the library's choice no longer counts)
-        set_series(sid, country_of_origin="JP", format="MANGA")
-        assert direction(client, sid) == ("rtl", "metadata")
-        set_series(sid, country_of_origin="KR", format="MANGA")  # a manhwa
-        assert direction(client, sid) == ("ltr", "metadata")
-        set_series(sid, country_of_origin=None, format="MANGA")  # MangaUpdates' OEL: no country
-        assert direction(client, sid) == ("ltr", "metadata")
+        for bad in ("sideways", "rtl", "ltr"):
+            assert client.patch(f"/api/libraries/{lib}", json={"reader_mode": bad}).status_code == 400
+            assert client.patch(f"/api/series/{sid}", json={"reader_mode": bad}).status_code == 400
 
         # the owner's choice wins; "default" works it out again
-        client.patch(f"/api/series/{sid}", json={"reader_mode": "vertical"})
-        assert direction(client, sid) == ("vertical", "series")
+        client.patch(f"/api/series/{sid}", json={"reader_mode": "paged"})
+        assert direction(client, sid) == ("paged", "series")
         client.patch(f"/api/series/{sid}", json={"reader_mode": "default"})
-        assert direction(client, sid) == ("ltr", "metadata")
+        assert direction(client, sid) == ("vertical", "library")
     finally:
         client.put("/api/settings", json={"reader_mode": old_default})
         for l in client.get("/api/libraries").json():
             client.patch(f"/api/libraries/{l['id']}", json={"reader_mode": "default"})
         set_series(sid, **old)
+
+
+def test_old_directions_become_pages(client):
+    """Migration 4: rtl and ltr (series, library folders, the default) all become paged; vertical stays."""
+    sid, other = series_id(), series_id("Hana to Akuma")
+    lib = client.get("/api/libraries").json()[0]["id"]
+    old_default = client.get("/api/settings").json()["reader_mode"]
+    try:
+        set_series(sid, reader_mode="rtl")
+        set_series(other, reader_mode="vertical")
+        with SessionLocal() as db:
+            db.get(Library, lib).reader_mode = "ltr"
+            db.commit()
+        with appdb.engine.begin() as conn:
+            conn.execute(text("INSERT OR REPLACE INTO setting (key, value) VALUES ('reader_mode', '\"rtl\"')"))
+            conn.execute(text("INSERT OR REPLACE INTO setting (key, value) VALUES ('reader_tap_invert', 'true')"))
+            appdb.MIGRATIONS[3](conn)
+        with SessionLocal() as db:
+            assert db.get(Series, sid).reader_mode == "paged"
+            assert db.get(Series, other).reader_mode == "vertical"
+            assert db.get(Library, lib).reader_mode == "paged"
+            assert appdb.get_setting(db, "reader_mode") == "paged"
+            assert appdb.get_setting(db, "reader_tap_invert") is None
+    finally:
+        client.put("/api/settings", json={"reader_mode": old_default})
+        client.patch(f"/api/libraries/{lib}", json={"reader_mode": "default"})
+        set_series(sid, reader_mode=None)
+        set_series(other, reader_mode=None)
 
 
 def test_plugins_get_the_direction(client):
@@ -74,4 +103,4 @@ def test_plugins_get_the_direction(client):
     with SessionLocal() as db:
         s = db.get(Series, sid)
         ctx = Context(Plugin(), db)
-        assert ctx.reading_direction(s) in ("rtl", "ltr", "vertical")
+        assert ctx.reading_direction(s) in ("paged", "vertical")

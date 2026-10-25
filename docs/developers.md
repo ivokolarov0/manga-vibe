@@ -42,7 +42,7 @@ prints a LAN address for testing on a phone. Several worktrees can run at once.
 app/main.py             startup, routes
 app/config.py           environment variables
 app/models.py, db.py    SQLite tables, first start, migrations
-app/direction.py        which way a series reads (its own, metadata, library folder, default)
+app/direction.py        how a series reads, paged or vertical (its own, library folder, default)
 app/scanner/            parser.py (file names), archives.py (reading), walker.py (scanning)
 app/api/                series.py, books.py, system.py
 app/plugins/            plugin system

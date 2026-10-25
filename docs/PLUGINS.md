@@ -64,7 +64,7 @@ class Hello(Plugin):
 | `ctx.read_entry(book, name)` | bytes of one entry, e.g. `"ComicInfo.xml"` |
 | `ctx.read_series_file(series, name)` | bytes of a sidecar file in the series folder (e.g. `series.json`), or `None` |
 | `ctx.db` | the database session (advanced; MangaVibe commits after hooks) |
-| `ctx.reading_direction(series)` | `rtl` (manga), `ltr` (comics) or `vertical` (webtoons): the way the reader shows the series. Set on the series, or worked out: matched as from Japan is `rtl`, matched otherwise `ltr`, not matched follows its library folder, then Settings → Reader. Plugin API 5 |
+| `ctx.reading_direction(series)` | `paged` or `vertical` (webtoons): the way the reader shows the series. Paged always turns forward to the right (there is no right to left). Set on the series, else its library folder, else Settings → Reader. Plugin API 5 |
 | `ctx.reading_status(series)` | the status the app shows: `unread`, `reading`, `completed`, `plan_to_read`, `on_hold`, `dropped` |
 | `ctx.set_reading_status(series, status)` | set it by hand (`None` = work it out from progress again). Does **not** fire `on_series_status_changed`, so a sync can't loop |
 | `ctx.http` | the app's HTTP client: `ctx.http.request(method, url, headers=..., data=...)`, `get_json`, `post_json`. Throttled per site, retries, raises `ctx.http.ProviderError` (its `status` is the HTTP code, e.g. `404`, or `None` if the site couldn't be reached) |

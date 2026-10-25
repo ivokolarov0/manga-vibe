@@ -23,6 +23,12 @@ MIGRATIONS = [
     lambda conn: conn.execute(text("ALTER TABLE book ADD COLUMN override_chapter_end FLOAT")),
     # 3: a reading direction per library folder, for its series that aren't matched
     lambda conn: conn.execute(text("ALTER TABLE library ADD COLUMN reader_mode VARCHAR")),
+    # 4: no more right to left: every paged series reads like a digital comic (next page on the right)
+    lambda conn: [conn.execute(text(q)) for q in (
+        "UPDATE series SET reader_mode='paged' WHERE reader_mode IN ('rtl', 'ltr')",
+        "UPDATE library SET reader_mode='paged' WHERE reader_mode IN ('rtl', 'ltr')",
+        "UPDATE setting SET value='\"paged\"' WHERE key='reader_mode' AND value IN ('\"rtl\"', '\"ltr\"')",
+        "DELETE FROM setting WHERE key='reader_tap_invert'")],
 ]
 
 

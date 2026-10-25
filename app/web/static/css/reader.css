@@ -233,12 +233,6 @@
       }
     }
 
-    /* right to left: the bar fills from the right edge, like the pages */
-    &.rtl .read-progress,
-    &.rtl .rp-track {
-      flex-direction: row-reverse;
-    }
-
     @media (hover: hover) and (pointer: fine) {
       /* an invisible strip along the bottom edge catches the mouse and shows the controls */
       &.ui-hidden .read-progress {
@@ -391,6 +385,21 @@
       &:hover {
         background: color-mix(in srgb, var(--accent) 35%, transparent);
       }
+
+      /* ☰ → ×: the top and bottom lines slide to the middle and turn, the middle one shrinks away */
+      & .bl {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform 0.25s ease, opacity 0.2s ease;
+      }
+
+      &.open .bl-1 { transform: translateY(6px) rotate(45deg); }
+      &.open .bl-2 { opacity: 0; transform: scaleX(0); }
+      &.open .bl-3 { transform: translateY(-6px) rotate(-45deg); }
+
+      @media (prefers-reduced-motion: reduce) {
+        & .bl { transition: none; }
+      }
     }
 
     /* left-handed: the options button moves to the left end, the back/fullscreen stack to the left */
@@ -403,7 +412,7 @@
       }
     }
 
-    /* page numbers around the slider; dir="rtl" swaps them for right-to-left reading */
+    /* page numbers around the slider */
     & .b-pages {
       display: flex;
       flex: 1;
@@ -422,9 +431,6 @@
       & #r-num {
         color: #fff;
         font-weight: 600;
-      }
-      &[dir="rtl"] button svg {
-        transform: scaleX(-1);
       }
     }
 
@@ -480,17 +486,6 @@
 
       &:active::-webkit-slider-thumb {
         transform: scale(1.25);
-      }
-    }
-
-    /* right to left: the track fills from the right */
-    & .b-pages[dir="rtl"] input[type="range"] {
-      &::-webkit-slider-runnable-track {
-        background: linear-gradient(to left, var(--accent) var(--fill), rgba(255, 255, 255, 0.18) var(--fill));
-      }
-
-      &::-moz-range-track {
-        background: linear-gradient(to left, var(--accent) var(--fill), rgba(255, 255, 255, 0.18) var(--fill));
       }
     }
 

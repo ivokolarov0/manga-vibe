@@ -4,14 +4,14 @@
 
 const Reader = (() => {
 
-const R = { book: null, page: 0, mode: "rtl", ui: false, saveTimer: null, wake: null, firstTap: true,
+const R = { book: null, page: 0, mode: "paged", ui: false, saveTimer: null, wake: null, firstTap: true,
   preloaded: new Map(), cameFromApp: false, hideTimer: null, sliding: false, hovering: false, drawer: false,
   ov: null };  // plugin overlays (see "plugin overlays" below)
 const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
-const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left/right); the middle toggles the controls
+const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left: back, right: forward); the middle toggles the controls
 const CLICK_SIDE = 0.4;  // the same with a mouse: a wide screen leaves only a narrow middle strip for the controls
 const TAP_EDGE = 0.2;   // one-handed layout: the narrow "previous" strip; the rest turns forward
-const MODES = { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" };
+const MODES = { paged: "Pages", vertical: "Vertical" };
 const FITS = { screen: "Fit screen", width: "Fit width", height: "Fit height", original: "Original size" };
 // plugin overlay boxes: background opacity in % and the outline around the text (reader settings)
 const OV_OPACITY = { 100: "Solid", 75: "75%", 50: "50%", 25: "25%", 0: "See-through" };
@@ -32,6 +32,8 @@ const svg = (body) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="non
   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 const ICONS = {
   menu: svg(`<path d="M4 6h16M4 12h16M4 18h16"/>`),
+  // three lines that fold into an × (reader.css animates them when the drawer is open)
+  burger: svg(`<path class="bl bl-1" d="M4 6h16"/><path class="bl bl-2" d="M4 12h16"/><path class="bl bl-3" d="M4 18h16"/>`),
   back: svg(`<path d="M19 12H5M11 6l-6 6 6 6"/>`),
   chPrev: svg(`<path d="M18 6l-7 6 7 6V6zM6 6v12"/>`),
   chNext: svg(`<path d="M6 6l7 6-7 6V6zM18 6v12"/>`),
@@ -58,9 +60,21 @@ const ICONS = {
    that side, and the options drawer slides in from it */
 function drawerSide() { return settings.reader_drawer_side === "left" ? "left" : "right"; }
 
+/* the ☰ button by the slider opens the drawer and folds into × to close it again */
+function menuButton() {
+  const b = $("#r-menu");
+  if (!b) return;
+  const label = R.drawer ? "Close options" : "Reading options";
+  b.classList.toggle("open", R.drawer);
+  b.title = label;
+  b.setAttribute("aria-label", label);
+  b.setAttribute("aria-expanded", R.drawer);
+}
+
 function setDrawer(open) {
   R.drawer = open;
   $("#reader").classList.toggle("drawer-open", open);
+  menuButton();
   const d = $("#r-drawer");
   d.inert = !open;
   if (open) {
@@ -134,7 +148,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   const book = await api(`/api/books/${bookId}`);
   if (book.error) { el.innerHTML = `<div class="endcard"><p>${esc(book.error)}</p>
     <a class="btn" href="#/series/${book.series_id}">Back</a></div>`; return; }
-  Object.assign(R, { book, mode: book.reader_mode || settings.reader_mode || "rtl",
+  Object.assign(R, { book, mode: book.reader_mode === "vertical" ? "vertical" : "paged",
     page: startPage !== null ? +startPage : (book.completed ? 0 : book.page) });
   R.page = Math.max(0, Math.min(R.page, book.page_count - 1));
   R.preloaded.clear();
@@ -170,17 +184,18 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
     </div>
     <!-- a floating card; the options button is at the thumb end -->
     <div class="chrome bottom">
-      <!-- chapter buttons, page numbers and slider follow the reading direction (dir="rtl" mirrors them) -->
-      <div class="b-pages" ${R.mode === "rtl" ? 'dir="rtl"' : ""}>
-        <button id="r-prev" class="icon" aria-label="Previous chapter"
-          ${book.prev ? `title="${esc(book.prev.label)}"` : "disabled"}>${ICONS.chPrev}</button>
+      <!-- chapter buttons (only when there is one to go to), page numbers and slider: back on the left,
+           forward on the right -->
+      <div class="b-pages">
+        ${book.prev ? `<button id="r-prev" class="icon" aria-label="Previous chapter"
+          title="${esc(book.prev.label)}">${ICONS.chPrev}</button>` : ""}
         <span id="r-num"></span>
         <input type="range" id="r-slider" min="1" max="${book.page_count}" value="${R.page + 1}" aria-label="Page">
         <span>${book.page_count}</span>
-        <button id="r-next" class="icon" aria-label="Next chapter"
-          ${book.next ? `title="${esc(book.next.label)}"` : "disabled"}>${ICONS.chNext}</button>
+        ${book.next ? `<button id="r-next" class="icon" aria-label="Next chapter"
+          title="${esc(book.next.label)}">${ICONS.chNext}</button>` : ""}
       </div>
-      <button id="r-menu" class="icon b-menu" aria-label="Reading options" title="Reading options">${ICONS.menu}</button>
+      <button id="r-menu" class="icon b-menu" aria-controls="r-drawer">${ICONS.burger}</button>
     </div>
     <!-- written in desktop order (top to bottom, like MangaDex). On touch screens reader.css moves
          the rarely used options to the top and keeps page/chapter/close at the bottom, by the thumb. -->
@@ -238,7 +253,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
         <button class="d-opt d-toggle" data-ov-look="outline" hidden>${ICONS.overlay}<span>Text outline</span><b></b></button>
         <button class="d-opt" data-ov-unhide hidden>${ICONS.overlay}<span></span></button>` : ""}`)).join("")}`;
   $("#r-back").onclick = () => leaveReader();
-  $("#r-menu").onclick = () => setDrawer(true);
+  $("#r-menu").onclick = () => setDrawer(!R.drawer);
   $("#r-close").onclick = () => setDrawer(false);
   $("#r-exit").onclick = () => leaveReader();
   $("#r-fs").onclick = $("#r-fs2").onclick = toggleFullscreen;
@@ -267,6 +282,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   const toNext = () => location.replace(`#/read/${book.next.id}?page=0`);
   if (book.prev) $("#r-prev").onclick = $("#r-cprev").onclick = toPrev;
   if (book.next) $("#r-next").onclick = $("#r-cnext").onclick = toNext;
+  menuButton();
   el.querySelectorAll("[data-panel]").forEach((b) => (b.onclick = () => openPanel(b.dataset.panel)));
   el.querySelectorAll("[data-panel-close]").forEach((b) => (b.onclick = () => openPanel(null)));
   // a tap on the drawer under an open panel closes the panel (reader.css lets the taps through to it)
@@ -463,8 +479,7 @@ function setupPaged() {
     if (type === "swipe") {
       const fast = Math.abs(dx) > 30 && dt < 250;
       if (Math.abs(dx) > innerWidth * 0.18 || fast) {
-        const forward = R.mode === "rtl" ? dx > 0 : dx < 0;
-        turn(forward, Math.sign(dx));
+        turn(dx < 0, Math.sign(dx));  // swipe to the left: the next page comes in from the right
       } else {
         resetZoom(true);  // not far enough: snap back
       }
@@ -485,11 +500,11 @@ function setupPaged() {
     lastTap = { t: now, x: e.clientX, y: e.clientY };
     const x = e.clientX / innerWidth, y = e.clientY / innerHeight, mouse = e.pointerType === "mouse";
     tapTimer = setTimeout(() => {
-      if (Z.s > 1.01) return toggleUi();  // zoomed: taps only show/hide the controls
+      if (Z.s > 1.01) return openMenu();  // zoomed: taps don't turn pages, they only open the menu
       const act = tapAction(x, y, mouse);
       if (act === "next") next();
       else if (act === "prev") prev();
-      else toggleUi();
+      else openMenu();
     }, 230);
   };
   stage.addEventListener("pointerup", end);
@@ -504,13 +519,12 @@ function setupPaged() {
   }, { passive: false });
 }
 
-/* what a tap at (x, y) (fractions of the screen) does: "next", "prev" or "ui" (show/hide controls).
-   Tap zones are set apart from the reading direction (Settings → Reader): swipe, page order and the
-   slide stay with the direction, only where you tap changes. */
+/* what a tap at (x, y) (fractions of the screen) does: "next", "prev" or "ui" (open the menu).
+   Forward is always on the right, like every digital reader (Settings → Reader → Tap zones). */
 function tapAction(x, y, mouse = false) {
   const layout = settings.reader_tap_layout || "default";
   if (layout === "off") return "ui";
-  const d = nextOnLeft() ? x : 1 - x;  // 0 at the "next" edge, 1 at the "previous" edge
+  const d = 1 - x;  // 0 at the "next" (right) edge, 1 at the "previous" (left) edge
   if (layout === "one-handed") {
     if (d > 1 - TAP_EDGE) return "prev";
     if (Math.abs(x - 0.5) < 0.2 && Math.abs(y - 0.5) < 0.2) return "ui";  // a box in the middle
@@ -519,10 +533,6 @@ function tapAction(x, y, mouse = false) {
   const side = mouse ? CLICK_SIDE : TAP_SIDE;
   return d < side ? "next" : d > 1 - side ? "prev" : "ui";
 }
-
-/* forward is on the right (taps, clicks and arrow keys), except in RTL with "Invert tap zones"
-   off: then it's on the left, like a paper book */
-function nextOnLeft() { return R.mode === "rtl" && !settings.reader_tap_invert; }
 
 addEventListener("resize", () => { if (R.book && img()) { clampPan(); applyZoom(); } });
 
@@ -598,7 +608,7 @@ function updatePageUi() {
   $("#r-slider").value = R.page + 1;
   $("#r-page").value = R.page;
   $("#r-page-label").textContent = `${R.page + 1} / ${R.book.page_count}`;
-  // thin bar at the very bottom: how far into this book you are (right to left for RTL)
+  // thin bar at the very bottom: how far into this book you are
   for (const seg of $("#r-progress .rp-track").children) {
     const i = +seg.dataset.p;
     seg.className = i < R.page ? "read" : i === R.page ? "read cur" : "";
@@ -618,10 +628,9 @@ function goTo(i) {
   } else showPage();
 }
 
-/* the old page slides out the way you read: left in LTR, right in RTL */
-const forwardOut = () => (R.mode === "rtl" ? 1 : -1);
-function next() { turn(true, forwardOut()); }
-function prev() { turn(false, -forwardOut()); }
+/* the old page slides out to the left going forward, to the right going back */
+function next() { turn(true, -1); }
+function prev() { turn(false, 1); }
 
 function showEndCard() {
   saveProgress(true);
@@ -682,7 +691,7 @@ function setupVertical() {
     if (e.target.closest("button")) return;
     if (R.drawer) return setDrawer(false);
     maybeAutoFullscreen(e);
-    toggleUi();
+    openMenu();
   });
 }
 
@@ -1226,13 +1235,18 @@ for (const type of ["pointerup", "keydown"]) {
 }
 
 /* ---------------- controls: show/hide, auto-hide after a few seconds ----------------
-   Tap/click toggles the bars. Once shown, they hide on their own after `reader_autohide`
+   A tap/click in the middle shows them with the options drawer (openMenu). Once shown, they hide on their own after `reader_autohide`
    seconds (0 = never). Any use of the bars restarts the countdown, and they wait while
    the slider is held, the mouse is over them, or a dropdown has focus. */
 
 function uiShown() { return !$("#reader").classList.contains("ui-hidden"); }
 
-function toggleUi() { uiShown() ? hideUi() : showUi(); }
+/* a tap on the page that doesn't turn it: the bars and the reading options (the ☰ drawer) together.
+   A tap beside the open drawer closes it again, and the bars hide on their own. */
+function openMenu() {
+  showUi();
+  setDrawer(true);
+}
 
 function showUi() {
   $("#reader").classList.remove("ui-hidden");
@@ -1362,8 +1376,8 @@ document.addEventListener("keydown", (e) => {
   if ($("#reader").hidden || !R.book) return;
   if (e.key === "Escape") return R.panel ? openPanel(null) : R.drawer ? setDrawer(false) : leaveReader();
   if (R.mode === "vertical" || e.target.tagName === "SELECT") return;
-  if (e.key === "ArrowRight") nextOnLeft() ? prev() : next();
-  else if (e.key === "ArrowLeft") nextOnLeft() ? next() : prev();
+  if (e.key === "ArrowRight") next();
+  else if (e.key === "ArrowLeft") prev();
   else if (e.key === " ") next();
 });
 document.addEventListener("visibilitychange", () => {

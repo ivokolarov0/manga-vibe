@@ -709,24 +709,23 @@ function seriesView() {
       reloadAfter ? this.reload() : toast("Saved");
     },
     setStatus(v) { this.patch(v ? { reading_status: v } : { clear_reading_status: true }); },
-    /* ---- ⋯ menu and the reading direction dialog ---- */
+    /* ---- ⋯ menu and the reading mode dialog ---- */
     menuOpen: false,
     readerOpen: false,
-    readerModes: [["", "Automatic", ""], ["rtl", "Right to left", "Manga"],
-      ["ltr", "Left to right", "Comics, some manhua"], ["vertical", "Vertical", "Webtoons, long strips"]],
+    readerModes: [["", "Automatic", ""], ["paged", "Pages", "One page at a time, the next one on the right"],
+      ["vertical", "Vertical", "Webtoons, long strips"]],
     get readerModeLabel() {
-      const names = { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" };
-      return this.s?.reader_mode ? names[this.s.reader_mode] : `Automatic: ${names[this.s?.direction?.mode] || "Right to left"}`;
+      const names = { paged: "Pages", vertical: "Vertical" };
+      return this.s?.reader_mode ? names[this.s.reader_mode] : `Automatic: ${names[this.s?.direction?.mode] || "Pages"}`;
     },
     /* what "Automatic" comes to for this series, and why */
     get autoHint() {
       const d = this.s?.direction;
       if (!d) return "";
-      const names = { rtl: "Right to left", ltr: "Left to right", vertical: "Vertical" };
-      const why = { metadata: this.s.country_of_origin === "JP" ? "a manga from Japan" : "matched, not from Japan",
-        library: "the library folder's direction", default: "not matched: Settings → Reader" };
-      // with a direction set by hand, "Automatic" would be what the metadata etc. say: not known here
-      return d.source === "series" ? "Work it out from the metadata and the library folder"
+      const names = { paged: "Pages", vertical: "Vertical" };
+      const why = { library: "the library folder's mode", default: "Settings → Reader" };
+      // with a mode set by hand, "Automatic" would be what the library folder etc. say: not known here
+      return d.source === "series" ? "Like the library folder, else Settings → Reader"
         : `${names[d.mode]} · ${why[d.source] || ""}`;
     },
     async setReader(v) {
@@ -736,7 +735,7 @@ function seriesView() {
       const fresh = await api(`/api/series/${this.s.id}`).catch(() => null);
       if (fresh) this.s.direction = fresh.direction;
       this.readerOpen = false;
-      toast(`Reading direction: ${this.readerModeLabel}`);
+      toast(`Reading mode: ${this.readerModeLabel}`);
     },
     async toggleFav() {  // flip at once, save in the background; nothing else on the page changes
       const on = !this.s.favorite;
@@ -1111,7 +1110,7 @@ function settingsView() {
       if (!st.running || (st.library_id != null ? st.library_id !== l.id : st.library !== l.name)) return "";
       return st.library_id != null ? `Scanning ${st.done}/${st.total}…` : "Scanning…";
     },
-    async setLibraryDirection(l, v) {
+    async setLibraryMode(l, v) {
       try {
         await api(`/api/libraries/${l.id}`, { method: "PATCH", body: { reader_mode: v } });
         l.reader_mode = v === "default" ? null : v;
