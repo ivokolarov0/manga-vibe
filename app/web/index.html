@@ -423,7 +423,7 @@
             <select x-model="st.reader_mode" @change="save('reader_mode')"><option value="rtl">Right to left</option><option value="ltr">Left to right</option><option value="vertical">Vertical</option></select></label>
           <label class="setting-row"><span class="label">Fit</span>
             <select x-model="st.reader_fit" @change="save('reader_fit')"><option value="screen">Fit screen</option><option value="width">Fit width</option><option value="height">Fit height</option><option value="original">Original</option></select></label>
-          <!-- the Android app is always fullscreen -->
+          <!-- no fullscreen in the Android app: it already fills the screen between the phone's bars -->
           <label class="setting-row" x-show="!$store.app.inApp"><span class="label">Fullscreen on first tap</span>
             <select x-model="st.auto_fullscreen" @change="save('auto_fullscreen')"><option value="true">On</option><option value="false">Off</option></select></label>
           <label class="setting-row"><span class="label">Pages to preload<small>More = smoother, uses more data</small></span>

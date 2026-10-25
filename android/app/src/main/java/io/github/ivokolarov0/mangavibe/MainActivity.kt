@@ -13,7 +13,6 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -33,9 +32,9 @@ import kotlin.concurrent.thread
 import kotlin.math.max
 
 /**
- * The whole app: MangaVibe's web app in a fullscreen WebView. The reader logic stays in the web app;
- * this adds what a browser can't do over plain HTTP: no browser bars, the screen kept on while
- * reading, and page turns with the volume keys.
+ * The whole app: MangaVibe's web app in a WebView that fills the screen between the phone's status
+ * and navigation bars. The reader logic stays in the web app; this adds what a browser can't do over
+ * plain HTTP: no browser bars, the screen kept on while reading, and page turns with the volume keys.
  */
 class MainActivity : Activity() {
 
@@ -73,8 +72,7 @@ class MainActivity : Activity() {
         error = findViewById(R.id.error)
         appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "dev"
 
-        hideSystemBars()
-        padForCutoutAndKeyboard()
+        padForSystemBars()
 
         if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             WebView.setWebContentsDebuggingEnabled(true)  // chrome://inspect
@@ -109,11 +107,6 @@ class MainActivity : Activity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         openLink(intent)
-    }
-
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) hideSystemBars()  // bars shown by a swipe or a dialog hide again
     }
 
     override fun onResume() {
@@ -267,39 +260,33 @@ class MainActivity : Activity() {
         }
     }
 
-    /* ---------------- fullscreen ---------------- */
+    /* ---------------- system bars ---------------- */
 
-    private fun hideSystemBars() {
+    /**
+     * The status and navigation bars stay visible. The window draws behind them (always so from
+     * Android 15 on, so the same on every version), and the root is padded to keep the page between
+     * the bars, out of the camera cutout and above the keyboard.
+     */
+    @Suppress("DEPRECATION")  // setDecorFitsSystemWindows is the default from Android 15 on; still needed on 11-14
+    private fun padForSystemBars() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            @Suppress("DEPRECATION")  // the default from Android 15 on; still needed on 11-14
             window.setDecorFitsSystemWindows(false)
-            window.insetsController?.apply {
-                hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
         } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                or View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION)
+            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
         }
-    }
-
-    /** keep the page out of the camera cutout, and above the keyboard (adjustResize doesn't work in fullscreen) */
-    private fun padForCutoutAndKeyboard() {
         root.setOnApplyWindowInsetsListener { v, insets ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                val cut = insets.getInsets(WindowInsets.Type.displayCutout())
-                val ime = insets.getInsets(WindowInsets.Type.ime())
-                v.setPadding(cut.left, cut.top, cut.right, max(cut.bottom, ime.bottom))
+                val i = insets.getInsets(WindowInsets.Type.systemBars()
+                    or WindowInsets.Type.displayCutout() or WindowInsets.Type.ime())
+                v.setPadding(i.left, i.top, i.right, i.bottom)
             } else {
-                @Suppress("DEPRECATION")
-                val keyboard = insets.systemWindowInsetBottom
+                // systemWindowInsets: the bars and, with adjustResize, the keyboard
                 val cut = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) insets.displayCutout else null
-                if (cut != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    v.setPadding(cut.safeInsetLeft, cut.safeInsetTop, cut.safeInsetRight, max(cut.safeInsetBottom, keyboard))
-                } else {
-                    v.setPadding(0, 0, 0, keyboard)
-                }
+                v.setPadding(max(insets.systemWindowInsetLeft, cut?.safeInsetLeft ?: 0),
+                    max(insets.systemWindowInsetTop, cut?.safeInsetTop ?: 0),
+                    max(insets.systemWindowInsetRight, cut?.safeInsetRight ?: 0),
+                    max(insets.systemWindowInsetBottom, cut?.safeInsetBottom ?: 0))
             }
             insets
         }
