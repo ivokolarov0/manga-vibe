@@ -135,6 +135,26 @@
     }
   }
 
+  .dup-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .dup-cover {
+    flex: none;
+
+    & img {
+      display: block;
+      width: 40px;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      background: var(--surface);
+      border-radius: 4px;
+    }
+  }
+
   .dup-files {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

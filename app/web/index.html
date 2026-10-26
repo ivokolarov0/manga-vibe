@@ -739,8 +739,11 @@
               <template x-for="d in a.duplicates" :key="d.key">
                 <div class="dup-group" :class="{ ignored: d.ignored }">
                   <div class="dup-head">
-                    <div><a :href="'#/series/' + d.series_id"><b x-text="d.series"></b></a>
-                      <span class="chip" x-text="d.label"></span></div>
+                    <div class="dup-title">
+                      <a :href="'#/series/' + d.series_id" class="dup-cover" :title="d.series"><img :src="d.cover" loading="lazy" alt=""></a>
+                      <div><a :href="'#/series/' + d.series_id"><b x-text="d.series"></b></a>
+                        <span class="chip" x-text="d.label"></span></div>
+                    </div>
                     <div class="btn-row">
                       <button class="btn small" :disabled="rescanning[d.series_id]" @click="rescan(d.series_id)"
                               title="Re-read this series' folder after fixing the files on disk"

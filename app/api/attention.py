@@ -9,7 +9,7 @@ import re
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.api.common import book_label, display_title, title_lang
+from app.api.common import book_label, display_title, poster_version, title_lang
 from app.db import get_db, get_setting, set_setting
 from app.models import Book, Series
 from app.scanner.archives import SUPPORTED, TEXT_EPUB
@@ -88,6 +88,7 @@ def attention(ignored: bool = False, db=Depends(get_db)):
         if s.has_duplicates:
             for part, group in duplicate_groups(books):
                 add("duplicates", {"key": f"dup:{sid}:{part}", "series_id": sid, "series": name(sid),
+                                   "cover": f"/api/series/{sid}/poster?size=sm&v={poster_version(s)}",
                                    "label": book_label(group[0]), "files": [_book_info(b) for b in group]})
         g = chapter_gaps(books)
         if g:

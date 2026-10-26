@@ -297,6 +297,8 @@ def test_duplicate_groups_and_ignoring_rows(client):
     assert [g["label"] for g in groups] == ["Ch 1", "Ch 2"]          # one card per chapter
     assert [len(g["files"]) for g in groups] == [2, 2]
     assert {"thumbnail", "page_count", "file_size"} <= set(groups[0]["files"][0])
+    assert groups[0]["cover"].startswith(f"/api/series/{groups[0]['series_id']}/poster?size=sm&v=")
+    assert client.get(groups[0]["cover"]).status_code == 200
     gap = next(g for g in att["gaps"] if g["series"] == "Dup Series")
     before = att["count"]
 
