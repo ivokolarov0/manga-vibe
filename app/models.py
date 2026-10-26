@@ -1,8 +1,8 @@
 """Database tables (SPEC section 5). All fields exist now; later phases fill them."""
 from datetime import datetime, timezone
 
-from sqlalchemy import (JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text,
-                        UniqueConstraint)
+from sqlalchemy import (JSON, Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text,
+                        UniqueConstraint, text)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -72,8 +72,21 @@ class Series(Base):
     books: Mapped[list["Book"]] = relationship(back_populates="series", cascade="all, delete-orphan")
 
 
+# Covering index for what the library grid, reading status and collection checks read about many
+# books at once: SQLite answers those from the index alone, without loading the (wide) book rows.
+BOOK_NUMBERS_COLUMNS = ("series_id", "missing_since", "hidden", "extra", "override_extra", "override_volume",
+                        "volume", "override_chapter", "chapter", "override_chapter_end", "chapter_end")
+
+
 class Book(Base):
     __tablename__ = "book"
+    __table_args__ = (
+        Index("ix_book_numbers", *BOOK_NUMBERS_COLUMNS),
+        # Needs attention looks for the few broken and duplicate files; these skip all the others.
+        # Written "IS 1" because that's what SQLAlchemy sends for .is_(True): "= 1" wouldn't be used.
+        Index("ix_book_error", "series_id", sqlite_where=text("error IS NOT NULL")),
+        Index("ix_book_duplicate", "series_id", sqlite_where=text("duplicate_flag IS 1")),
+    )
     id: Mapped[int] = mapped_column(primary_key=True)
     series_id: Mapped[int] = mapped_column(ForeignKey("series.id", ondelete="CASCADE"), index=True)
     path: Mapped[str] = mapped_column(String, unique=True)
@@ -157,6 +170,8 @@ class Link(Base):
 
 class Progress(Base):
     __tablename__ = "progress"
+    # covering: the per-series counts read only these columns
+    __table_args__ = (Index("ix_progress_book_state", "book_id", "completed", "page"),)
     id: Mapped[int] = mapped_column(primary_key=True)
     book_id: Mapped[int] = mapped_column(ForeignKey("book.id", ondelete="CASCADE"), unique=True)
     page: Mapped[int] = mapped_column(Integer, default=0)
