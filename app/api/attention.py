@@ -134,6 +134,7 @@ def attention(ignored: bool = False, db=Depends(get_db)):
                          "gaps": [f"{a} → {b}" for a, b in g]})
         if s.match_status == "failed":
             add("matches", {"series_id": sid, "series": name(sid), "folder": s.folder_name,
+                            "cover": f"/api/series/{sid}/poster?size=sm&v={poster_version(s)}",
                             "candidates": (s.match_candidates or [])[:3]})
 
     libraries = {l.id: l.name for l in db.query(Library)}
