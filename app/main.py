@@ -37,6 +37,7 @@ async def lifespan(app):
     database.init_db()
     with database.SessionLocal() as s:
         walker.ensure_libraries(s, config.LIBRARY_PATHS)
+        walker.fill_numbering(s)
         plugins.load()
         plugins.disabled = set(database.get_setting(s, "plugins_disabled", []) or [])
     if config.START_WORKERS:

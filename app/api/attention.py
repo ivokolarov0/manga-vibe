@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 
-from app.api.common import book_label, book_numbers, covered_chapters, display_title, poster_version, title_lang
+from app.api.common import book_label, chapter_gaps, display_title, numberings, poster_version, title_lang
 from app.db import get_db, get_setting, set_setting
 from app.metadata.service import ID_FIELDS
 from app.models import Book, Library, Series
@@ -21,12 +21,6 @@ from app.scanner.archives import SUPPORTED, TEXT_EPUB
 router = APIRouter(prefix="/api")
 KEY_RE = re.compile(r"^(err|dup|gap|same):[0-9a-z:._-]{1,80}$")
 MAX_IGNORED = 5000
-
-
-def chapter_gaps(books):
-    """[(after, before)] where whole chapters are missing, e.g. [(14, 52)]."""
-    nums = sorted(covered_chapters(books))
-    return [(a, b) for a, b in zip(nums, nums[1:]) if b - a > 1]
 
 
 def same_match_groups(rows):
@@ -129,8 +123,8 @@ def attention(ignored: bool = False, db=Depends(get_db)):
     for b in db.query(Book).filter(Book.duplicate_flag.is_(True), Book.missing_since.is_(None)):
         if b.series_id in live:
             flagged.setdefault(b.series_id, []).append(b)
-    numbered = book_numbers(db, func.coalesce(Book.override_chapter, Book.chapter).is_not(None))
-    gaps = {sid: g for sid, books in numbered.items() if sid in live and (g := chapter_gaps(books))}
+    rows = db.query(Series.id, Series.numbering).filter(Series.missing_since.is_(None)).all()
+    gaps = {sid: g for sid, num in numberings(db, rows).items() if (g := chapter_gaps(num))}
     failed = [sid for (sid,) in db.query(Series.id).filter(Series.match_status == "failed",
                                                            Series.missing_since.is_(None))]
     same = same_match_groups(_series_ids(db))

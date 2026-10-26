@@ -44,3 +44,19 @@ def test_unknown():
     assert collection(series(volumes=3, status="RELEASING"), vols)["owned"] == 2  # still shown as 2 / 3
     assert state(series(volumes=2, chapters=20), vols + [book(chapter=15)]) == "unknown"  # mixed
     assert state(series(volumes=1), [book()]) == "unknown"                      # no numbers at all
+
+
+def test_numbering_ranges_and_gaps():
+    from app.api.common import chapter_gaps, collection_of, numbering
+    books = [book(chapter=1, chapter_end=3), book(chapter=4), book(chapter=9), book(chapter=12, chapter_end=14),
+             book(chapter=20, hidden=True), book(chapter=30, extra=True)]
+    num = numbering(books)
+    assert num == {"unit": "chapter", "have": [[1, 4], [9, 9], [12, 14]], "chapters": [[1, 4], [9, 9], [12, 14]]}
+    assert chapter_gaps(num) == [(4, 9), (9, 12)]
+    # numbers outside 1..total don't count towards it
+    c = collection_of(series(chapters=10), numbering([book(chapter=0, chapter_end=10), book(chapter=11)]))
+    assert (c["owned"], c["state"]) == (10, "complete")
+    assert collection_of(series(), numbering([book(chapter=0, chapter_end=10)]))["owned"] == 11
+    # a mix of volumes and chapters has no unit, but its chapter gaps are still found
+    mixed = numbering([book(volume=1), book(chapter=5), book(chapter=8)])
+    assert mixed["unit"] is None and chapter_gaps(mixed) == [(5, 8)]

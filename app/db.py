@@ -35,6 +35,8 @@ MIGRATIONS = [
         "CREATE INDEX IF NOT EXISTS ix_book_error ON book (series_id) WHERE error IS NOT NULL",
         "CREATE INDEX IF NOT EXISTS ix_book_duplicate ON book (series_id) WHERE duplicate_flag IS 1",
         "CREATE INDEX IF NOT EXISTS ix_progress_book_state ON progress (book_id, completed, page)")],
+    # 6: the books' numbering stored per series (filled in by fill_numbering() at start)
+    lambda conn: conn.execute(text("ALTER TABLE series ADD COLUMN numbering JSON")),
 ]
 
 
