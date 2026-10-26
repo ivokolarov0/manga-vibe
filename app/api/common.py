@@ -221,26 +221,74 @@ def covered_chapters(books):
     return covered
 
 
-def collection(series, books):
-    """How much of the series is here, compared with the source's (or the owner's) total. Best effort:
-    {"unit": "volume" | "chapter" | None, "owned": n, "total": N | None,
-     "state": "complete" | "incomplete" | "unknown"}.
-    Books numbered by volume only are counted by volume, books with a chapter number by chapter.
-    A mix of both, a missing total, or a series that isn't finished gives "unknown"."""
+def _ranges(nums):
+    """Sorted whole numbers as [[first, last], ...] runs: {1, 2, 3, 7} -> [[1, 3], [7, 7]]."""
+    out = []
+    for n in sorted(nums):
+        if out and n == out[-1][1] + 1:
+            out[-1][1] = n
+        else:
+            out.append([n, n])
+    return out
+
+
+def numbering(books):
+    """What the visible books' numbers say about the series, apart from its metadata. Worked out
+    when the books change (walker.apply_order) and stored on the series, so lists of many series
+    don't read every book: {"unit": "volume" | "chapter" | None, "have": [[first, last], ...] of
+    the unit's whole numbers here, "chapters": the same for every chapter covered}.
+    Books numbered by volume only count by volume, books with a chapter number by chapter;
+    a mix of both (or no numbers) has no unit."""
     main = [b for b in books if not b.hidden and not b.eff_extra]
     by_chapter = [b for b in main if b.eff_chapter is not None]
     by_volume = [b for b in main if b.eff_chapter is None and b.eff_volume is not None]
+    chapters = _ranges(covered_chapters(by_chapter))
     if by_chapter and not by_volume:
-        unit, have, total = "chapter", covered_chapters(by_chapter), series.chapters_total
+        unit, have = "chapter", chapters
     elif by_volume and not by_chapter:
-        unit, total = "volume", series.volumes_total
-        have = {int(b.eff_volume) for b in by_volume if float(b.eff_volume).is_integer()}
+        unit = "volume"
+        have = _ranges({int(b.eff_volume) for b in by_volume if float(b.eff_volume).is_integer()})
     else:
+        unit, have = None, []
+    return {"unit": unit, "have": have, "chapters": chapters}
+
+
+def numberings(db, series):
+    """{series id: numbering()} for these series (objects or rows with id and numbering): the stored
+    one, or worked out now for a series that has none yet."""
+    out = {s.id: s.numbering for s in series if s.numbering is not None}
+    todo = [s.id for s in series if s.numbering is None]
+    if todo:
+        books = book_numbers(db, Book.series_id.in_(todo))
+        out.update({sid: numbering(books.get(sid, [])) for sid in todo})
+    return out
+
+
+def chapter_gaps(num):
+    """[(after, before)] where whole chapters are missing, e.g. [(14, 52)], from a numbering()."""
+    runs = num.get("chapters") or []
+    return [(a[1], b[0]) for a, b in zip(runs, runs[1:])]
+
+
+def collection_of(series, num):
+    """How much of the series is here, compared with the source's (or the owner's) total. Best effort:
+    {"unit": "volume" | "chapter" | None, "owned": n, "total": N | None,
+     "state": "complete" | "incomplete" | "unknown"}. num is the series' numbering().
+    No unit (a mix of volumes and chapters), a missing total, or a series that isn't finished
+    gives "unknown"."""
+    unit, have = num.get("unit"), num.get("have") or []
+    if unit is None:
         return {"unit": None, "owned": 0, "total": None, "state": "unknown"}
+    total = series.chapters_total if unit == "chapter" else series.volumes_total
     if not total:
-        return {"unit": unit, "owned": len(have), "total": None, "state": "unknown"}
-    owned = len(have & set(range(1, total + 1)))
+        return {"unit": unit, "owned": sum(b - a + 1 for a, b in have), "total": None, "state": "unknown"}
+    owned = sum(max(0, min(b, total) - max(a, 1) + 1) for a, b in have)
     state = "unknown"
     if series.publication_status == "FINISHED":
         state = "complete" if owned == total else "incomplete"
     return {"unit": unit, "owned": owned, "total": total, "state": state}
+
+
+def collection(series, books):
+    """collection_of() from the books themselves."""
+    return collection_of(series, numbering(books))

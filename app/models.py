@@ -68,6 +68,9 @@ class Series(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     last_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     missing_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # what the books' numbers say (app/api/common.py numbering()), stored whenever they change;
+    # None until worked out
+    numbering: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
 
     books: Mapped[list["Book"]] = relationship(back_populates="series", cascade="all, delete-orphan")
 

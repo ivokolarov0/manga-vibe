@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from app import images
+from app.api.common import book_numbers, numbering
 from app.db import SessionLocal
 from app.models import Book, Library, PluginPage, Series
 from app.plugins import manager as plugins
@@ -257,6 +258,22 @@ def apply_order(series):
     for b in books:
         b.duplicate_flag = b.id in dup_ids
     series.has_duplicates = bool(dup_ids)
+    series.numbering = numbering(books)  # hidden books are left out by numbering()
+
+
+def fill_numbering(db):
+    """Store numbering() for the series that don't have it yet (all of them, after the upgrade
+    that added it). Reads only the books' number columns, in batches."""
+    todo = [sid for (sid,) in db.query(Series.id).filter(Series.numbering.is_(None))]
+    for i in range(0, len(todo), 500):
+        ids = todo[i:i + 500]
+        books = book_numbers(db, Book.series_id.in_(ids))
+        for sid in ids:
+            db.query(Series).filter(Series.id == sid).update(
+                {Series.numbering: numbering(books.get(sid, []))}, synchronize_session=False)
+        db.commit()
+    if todo:
+        log.info("Worked out the numbering of %d series", len(todo))
 
 
 class Busy(Exception):

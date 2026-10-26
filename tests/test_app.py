@@ -438,3 +438,36 @@ def test_scan_single_library_only_touches_that_library(client):
         shutil.rmtree(new)
         walker.scan_all()
         client.delete(f"/api/libraries/{other_id}")
+
+
+def test_numbering_is_stored_and_kept_current(client):
+    from app.db import SessionLocal
+    from app.models import Series
+    from app.scanner import walker
+    from tests.conftest import make_zip
+    folder = TMP / "manga" / "Numbered Series"
+    for name in ("Numbered Series ch01.zip", "Numbered Series ch02.zip", "Numbered Series ch05.zip"):
+        make_zip(folder / name)
+    walker.scan_all()
+    sid = series_by_name(client)["Numbered Series"]["id"]
+
+    def stored():
+        with SessionLocal() as db:
+            return db.get(Series, sid).numbering
+
+    assert stored()["chapters"] == [[1, 2], [5, 5]]
+    assert any(g["series_id"] == sid for g in client.get("/api/attention").json()["gaps"])
+    # an owner's chapter range fills the gap: the stored numbering follows
+    book = next(b for b in client.get(f"/api/series/{sid}/books").json() if b["chapter"] == 2)
+    client.patch(f"/api/books/{book['id']}", json={"chapter": 2, "chapter_end": 4})
+    assert stored()["chapters"] == [[1, 5]]
+    assert not any(g["series_id"] == sid for g in client.get("/api/attention").json()["gaps"])
+    # a database from before the column: worked out on start
+    with SessionLocal() as db:
+        db.query(Series).filter(Series.id == sid).update({Series.numbering: None})
+        db.commit()
+        assert client.get(f"/api/series/{sid}").json()["collection"]["unit"] == "chapter"  # read before filling
+        walker.fill_numbering(db)
+    assert stored()["chapters"] == [[1, 5]]
+    shutil.rmtree(folder)
+    walker.scan_all()
