@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import String, and_, case, cast, exists, func, or_, select
 
-from app.api.common import (READING_STATUSES, TITLE_FIELDS, book_dict, collection, continue_target,
+from app.api.common import (READING_STATUSES, TITLE_FIELDS, book_dict, book_numbers, collection, continue_target,
                             emit_reading_events, get_or_404, now, series_card, series_counts,
                             status_of, title_lang, visible_books_query)
 from app import config
@@ -42,23 +42,23 @@ MATCH = {"matched": ["auto", "manual"], "attention": ["failed"], "unmatched": ["
 HAVE = ("complete", "incomplete", "unknown")
 
 
-def collections(db, series):
-    """{series_id: collection()} for these series, from one query of their books."""
-    books = {}
-    if series:
-        for b in db.query(Book).filter(Book.series_id.in_([s.id for s in series]),
-                                       Book.missing_since.is_(None), Book.hidden.is_(False)):
-            books.setdefault(b.series_id, []).append(b)
+def collections(db, series, ids=None):
+    """{series_id: collection()} for these series (rows with id, totals and publication status),
+    from one query of their books' numbers. ids: a subquery of the same series ids, for many."""
+    if not series:
+        return {}
+    books = book_numbers(db, Book.series_id.in_(ids if ids is not None else [s.id for s in series]))
     return {s.id: collection(s, books.get(s.id, [])) for s in series}
 
 
 def _have_filter(db, wanted):
     """SQL condition for the Collection filter. Only finished series can be complete or incomplete,
     so those are worked out (in Python, like the chapter-gap check) and everything else is unknown."""
-    finished = db.query(Series).filter(Series.publication_status == "FINISHED",
-                                       Series.missing_since.is_(None)).all()
+    cond = (Series.publication_status == "FINISHED", Series.missing_since.is_(None))
+    finished = db.query(Series.id, Series.chapters_total, Series.volumes_total,
+                        Series.publication_status).filter(*cond).all()
     by_state = {k: set() for k in HAVE}
-    for sid, c in collections(db, finished).items():
+    for sid, c in collections(db, finished, select(Series.id).where(*cond)).items():
         by_state[c["state"]].add(sid)
     known = by_state["complete"] | by_state["incomplete"]
     conds = [Series.id.in_(by_state[k]) for k in ("complete", "incomplete") if k in wanted]

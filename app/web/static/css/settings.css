@@ -297,6 +297,47 @@
     }
   }
 
+  /* automatic matching in progress (Settings > Metadata, Missing metadata) */
+  .meta-progress {
+    display: grid;
+    gap: 6px;
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    & .head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 14px;
+    }
+
+    & small {
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .meta-bar {
+    height: 6px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--text) 12%, transparent);
+    border-radius: 3px;
+
+    & i {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      border-radius: inherit;
+      transition: width 0.4s;
+    }
+  }
+
   /* metadata sources (Settings > Metadata) */
   .meta-sources {
     margin: 0 0 8px;

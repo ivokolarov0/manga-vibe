@@ -442,6 +442,35 @@
     }
   }
 
+  /* a button whose action is running: a spinner before the label (add .busy, and disable it) */
+  .btn.busy::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    flex: none;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: btn-spin 0.7s linear infinite;
+  }
+
+  .btn.busy:disabled {
+    opacity: 1;
+    cursor: progress;
+  }
+
+  @keyframes btn-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn.busy::before {
+      animation-duration: 2s;
+    }
+  }
+
   /* a small "press" so a click feels like it did something */
   .btn:not(:disabled, .disabled):active,
   .iconbtn:active,

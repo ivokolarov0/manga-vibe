@@ -500,7 +500,16 @@
         <!-- metadata -->
         <section x-show="section === 'metadata'">
           <h2>Metadata</h2>
-          <p class="muted" x-text="metaText"></p>
+          <template x-if="$store.app.metaProgress">
+            <div class="meta-progress" x-data="{ get p() { return $store.app.metaProgress } }">
+              <div class="head"><b x-text="`Matching metadata: ${p.done} of ${p.total} series`"></b>
+                <span x-text="p.pct + '%'"></span></div>
+              <div class="meta-bar" role="progressbar" :aria-valuenow="p.done" aria-valuemin="0" :aria-valuemax="p.total">
+                <i :style="`width:${Math.max(p.pct, 1)}%`"></i></div>
+              <small x-text="[p.current && 'Now: ' + p.current, p.left].filter(Boolean).join(' · ')"></small>
+            </div>
+          </template>
+          <p class="muted" x-show="metaText" x-text="metaText"></p>
           <div class="meta-sources">
             <h3>Sources</h3>
             <p class="muted">Tried in this order. Fallbacks are used when the main source has no match or is down.</p>
@@ -711,6 +720,15 @@
           <!-- metadata matches -->
           <template x-if="a && kind === 'matches'">
             <div>
+          <template x-if="$store.app.metaProgress">
+            <div class="meta-progress" x-data="{ get p() { return $store.app.metaProgress } }">
+              <div class="head"><b x-text="`Matching metadata: ${p.done} of ${p.total} series`"></b>
+                <span x-text="p.pct + '%'"></span></div>
+              <div class="meta-bar" role="progressbar" :aria-valuenow="p.done" aria-valuemin="0" :aria-valuemax="p.total">
+                <i :style="`width:${Math.max(p.pct, 1)}%`"></i></div>
+              <small x-text="[p.current && 'Now: ' + p.current, p.left].filter(Boolean).join(' · ')"></small>
+            </div>
+          </template>
               <template x-for="x in a.matches" :key="x.series_id">
                 <div class="item">
                   <div class="cand own">
@@ -725,12 +743,13 @@
                         <span x-text="[c.year, c.format].filter(Boolean).join(' · ')"></span> ·
                         <span class="score" :class="scoreCls(c.score)" x-text="c.score + '%'"></span> ·
                         <span x-text="$store.app.providerName(c.provider)"></span></div>
-                      <button class="btn small" @click="use(x, c)">Use</button>
+                      <button class="btn small" :class="{ busy: isMatching(x, c) }" :disabled="isMatching(x)"
+                              @click="use(x, c)" x-text="isMatching(x, c) ? 'Matching…' : 'Use'"></button>
                     </div>
                   </template>
                   <div class="row">
-                    <button class="btn small" @click="fix(x)">Fix match…</button>
-                    <button class="btn small" @click="dontMatch(x)">Don't match</button>
+                    <button class="btn small" :disabled="isMatching(x)" @click="fix(x)">Fix match…</button>
+                    <button class="btn small" :disabled="isMatching(x)" @click="dontMatch(x)">Don't match</button>
                   </div>
                 </div>
               </template>
@@ -954,12 +973,14 @@
                 <a class="link-btn" x-show="c.url" :href="c.url" target="_blank" rel="noopener"
                    x-text="'Open on ' + $store.app.providerName(provider) + ' ↗'"></a>
               </div>
-              <button class="btn small primary" :disabled="busy" @click="use(c)">Use</button>
+              <button class="btn small primary" :class="{ busy: busy === c.provider_id }" :disabled="!!busy"
+                      @click="use(c)" x-text="busy === c.provider_id ? 'Matching…' : 'Use'"></button>
             </div>
           </template>
           <h3>Or paste a link</h3>
           <div class="row"><input x-model="url" style="flex:1" placeholder="https://anilist.co/manga/… or https://www.mangaupdates.com/series/…">
-            <button class="btn" @click="applyUrl()">Apply</button></div>
+            <button class="btn" :class="{ busy: busy === 'url' }" :disabled="!!busy" @click="applyUrl()"
+                    x-text="busy === 'url' ? 'Matching…' : 'Apply'"></button></div>
           <h3>Other</h3>
           <div class="row">
             <button class="btn small" @click="post('auto-match', 'Queued for automatic matching')">Try automatic match again</button>

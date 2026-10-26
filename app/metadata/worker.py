@@ -18,7 +18,10 @@ _q: "queue.Queue[tuple[str, int]]" = queue.Queue()
 _pending: set = set()
 _lock = threading.Lock()
 status = {"queued": 0, "current": None, "done": 0, "matched": 0, "failed": 0,
-          "providers_down_until": None}
+          "providers_down_until": None,
+          # the current run of work (e.g. 2000 new series), for a progress bar: series handled
+          # since the queue was last empty, and when that run started (unix time)
+          "batch_done": 0, "batch_started": None}
 
 
 def enqueue(kind, series_id):
@@ -26,6 +29,8 @@ def enqueue(kind, series_id):
         if (kind, series_id) in _pending:
             return
         _pending.add((kind, series_id))
+        if status["current"] is None and _q.empty():  # idle: a new run starts
+            status["batch_done"], status["batch_started"] = 0, time.time()
     _q.put((kind, series_id))
     status["queued"] = _q.qsize()
 
@@ -54,6 +59,7 @@ def enqueue_stale_releasing():
 
 
 def _run():
+    service.http.run_in_background()  # the owner's own searches and matches go first
     while True:
         kind, sid = _q.get()
         with _lock:
@@ -87,6 +93,7 @@ def _run():
             log.exception("Metadata %s failed for series %s", kind, sid)
         finally:
             db.close()
+            status["batch_done"] += 1
             status["current"] = None
 
 
