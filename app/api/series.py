@@ -106,10 +106,13 @@ def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | No
                                        for f in TITLE_FIELDS.get(lang, TITLE_FIELDS["english"])],
                                      Series.folder_name))
 
-    # the same aggregate row gives the card numbers: no second pass over books/progress
-    zero = lambda c: func.coalesce(c, 0)
-    query = (db.query(Series, total_c, done_c, zero(agg.c.started), zero(agg.c.done_main), zero(agg.c.total_main))
-             .outerjoin(agg, agg.c.sid == Series.id).filter(Series.missing_since.is_(None)))
+    # Adding up every series' books is the expensive part, so it is joined only when the reading
+    # status filter or the unread sort needs it. The cards' numbers come from series_counts()
+    # for just the page's series.
+    query = db.query(Series)
+    if _split(read) or sort == "unread":
+        query = query.outerjoin(agg, agg.c.sid == Series.id)
+    query = query.filter(Series.missing_since.is_(None))
     if library:
         query = query.filter(Series.library_id == library)
     if q:
@@ -158,14 +161,19 @@ def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | No
     query = query.order_by(col.desc().nulls_last() if desc else col.asc().nulls_last(), title, Series.id)
     if ids_only:
         return {"ids": [sid for (sid,) in query.with_entities(Series.id)]}
-    total = query.count()
-    rows = query.offset(cursor).limit(limit).all()
+    # Only ids are sorted (sorting whole rows, descriptions and all, was most of the time), and the
+    # number of matches comes with them: a window count, worked out before LIMIT.
+    rows = query.with_entities(Series.id, func.count().over()).offset(cursor).limit(limit).all()
+    ids = [sid for sid, _ in rows]
+    total = rows[0][1] if rows else query.count()
+    found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids))} if ids else {}
+    counts_of = series_counts(db, ids)
+    page = [(found[sid], tuple(counts_of[sid])) for sid in ids]
     nxt = cursor + len(rows)
-    # counts tuple order as series_counts(): total, done, started, done_main, total_main
-    have_of = collections(db, [s for s, *_ in rows if s.publication_status == "FINISHED"])
+    have_of = collections(db, [s for s, _ in page if s.publication_status == "FINISHED"])
     items = []
-    for s, *counts in rows:
-        card = series_card(s, tuple(counts), lang)
+    for s, counts in page:
+        card = series_card(s, counts, lang)
         card["incomplete"] = have_of.get(s.id, {}).get("state") == "incomplete"
         items.append(card)
     return {"items": items,
@@ -316,15 +324,26 @@ def series_poster(series_id: int, size: str = "", db=Depends(get_db)):
 def _set_read(db, series_id, completed: bool, up_to_book: int | None = None):
     series = get_or_404(db, Series, series_id)
     old_status = status_of(db, series)
+    books, newly_read = _apply_read(db, series, completed, up_to_book)
+    db.commit()
+    emit_reading_events(db, series, old_status, completed=newly_read)
+    return {"ok": True, "count": len(books)}
+
+
+def _apply_read(db, series, completed: bool, up_to_book: int | None = None):
+    """Mark the series' visible books read (or unread), all or those before up_to_book. Doesn't commit.
+    Returns (the books, ids of the ones that weren't read before)."""
     newly_read = []
-    books = visible_books_query(db, series_id).all()
+    books = visible_books_query(db, series.id).all()
     if up_to_book is not None:
         idx = next((i for i, b in enumerate(books) if b.id == up_to_book), None)
         if idx is None:
             raise HTTPException(404, "Book not in this series")
         books = books[:idx]
+    prog = ({p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]))}
+            if books else {})
     for b in books:
-        p = db.query(Progress).filter_by(book_id=b.id).one_or_none()
+        p = prog.get(b.id)
         if completed:
             if p is None:
                 p = Progress(book_id=b.id)
@@ -334,9 +353,7 @@ def _set_read(db, series_id, completed: bool, up_to_book: int | None = None):
             p.completed, p.page, p.updated_at = True, max(b.page_count - 1, 0), now()
         elif p is not None:
             db.delete(p)
-    db.commit()
-    emit_reading_events(db, series, old_status, completed=newly_read)
-    return {"ok": True, "count": len(books)}
+    return books, newly_read
 
 
 @router.post("/series/{series_id}/mark-read")
@@ -370,15 +387,17 @@ def bulk(body: BulkBody, db=Depends(get_db)):
         raise HTTPException(400, "Unknown action")
     ids = list(dict.fromkeys(body.ids))[:10000]
     found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids))} if ids else {}
-    done = 0
+    done, events = 0, []
     for sid in ids:
         s = found.get(sid)
         if s is None:
             continue
         if body.action in ("read", "unread"):
+            old_status = status_of(db, s)
             if body.action == "unread":
                 s.last_read_at = None
-            _set_read(db, sid, body.action == "read")
+            _, newly_read = _apply_read(db, s, body.action == "read")
+            events.append((s, old_status, newly_read))
         elif body.action in ("favorite", "unfavorite"):
             s.favorite = body.action == "favorite"
         elif s.metadata_source:
@@ -386,7 +405,9 @@ def bulk(body: BulkBody, db=Depends(get_db)):
         else:
             continue
         done += 1
-    db.commit()
+    db.commit()  # once for the whole batch: committing per series made big selections slow
+    for s, old_status, newly_read in events:
+        emit_reading_events(db, s, old_status, completed=newly_read)
     return {"done": done, "skipped": len(ids) - done}
 
 

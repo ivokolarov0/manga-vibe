@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 
 from app import config
-from app.models import Base, Setting
+from app.models import BOOK_NUMBERS_COLUMNS, Base, Setting
 
 log = logging.getLogger("mangavibe")
 
@@ -29,6 +29,12 @@ MIGRATIONS = [
         "UPDATE library SET reader_mode='paged' WHERE reader_mode IN ('rtl', 'ltr')",
         "UPDATE setting SET value='\"paged\"' WHERE key='reader_mode' AND value IN ('\"rtl\"', '\"ltr\"')",
         "DELETE FROM setting WHERE key='reader_tap_invert'")],
+    # 5: indexes for big libraries (see Book and Progress in app/models.py)
+    lambda conn: [conn.execute(text(q)) for q in (
+        f"CREATE INDEX IF NOT EXISTS ix_book_numbers ON book ({', '.join(BOOK_NUMBERS_COLUMNS)})",
+        "CREATE INDEX IF NOT EXISTS ix_book_error ON book (series_id) WHERE error IS NOT NULL",
+        "CREATE INDEX IF NOT EXISTS ix_book_duplicate ON book (series_id) WHERE duplicate_flag IS 1",
+        "CREATE INDEX IF NOT EXISTS ix_progress_book_state ON progress (book_id, completed, page)")],
 ]
 
 
