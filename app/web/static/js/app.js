@@ -362,6 +362,9 @@ function library() {
       // after reading: update the cards in place (now, or when the library is next shown)
       this.$watch("$store.app.progressDirty", () => { this.stale = true; this.refresh(); });
       this.$watch("$store.app.view", () => this.refresh());
+      // other filters or another page: what was picked is out of sight, so selecting ends
+      this.$watch("$store.app.query", () => this.endSelect());
+      this.$watch("$store.app.view", (v) => { if (v !== "library") this.endSelect(); });
       new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && this.$store.app.view === "library" && !this.paged) this.loadMore();
       }, { rootMargin: "800px" }).observe(this.$refs.sentinel);
@@ -512,6 +515,117 @@ function library() {
       return this.filters ? "No series match these filters." : "No series yet. The first scan may still be running; see Settings.";
     },
     cardSub,
+
+    /* ---- multi-select: hold a card to start, then tap or shift-click to pick more ---- */
+    selecting: false,
+    sel: {},          // series id -> true
+    anchor: null,     // the last card tapped: shift-click picks everything between it and the next
+    pressTimer: null, pressAt: null, pressed: false,
+    selMenu: false, delOpen: false, working: "",
+    get selCount() { return Object.keys(this.sel).length; },
+    isSel(s) { return !!this.sel[s.id]; },
+    press(e, s) {
+      if (e.button > 0 || this.selecting) return;
+      this.pressAt = [e.clientX, e.clientY];
+      clearTimeout(this.pressTimer);
+      this.pressTimer = setTimeout(() => this.startSelect(s), 600);  // held without moving
+    },
+    startSelect(s) {
+      this.pressCancel();
+      this.pressed = true;  // the click that ends this hold must not open the series
+      this.selecting = true;
+      this.sel = { [s.id]: true };
+      this.anchor = s.id;
+      navigator.vibrate?.(30);
+    },
+    // a long touch on a phone opens the browser's link menu instead (and cancels the hold): use it
+    pressMenu(e, s) {
+      if (this.selecting) return e.preventDefault();
+      if (!this.pressAt) return;  // a right-click: the normal menu
+      e.preventDefault();
+      if (e.pointerType !== "mouse") this.startSelect(s);
+    },
+    pressMove(e) {
+      if (this.pressAt && Math.hypot(e.clientX - this.pressAt[0], e.clientY - this.pressAt[1]) > 10) this.pressCancel();
+    },
+    pressCancel() { clearTimeout(this.pressTimer); this.pressAt = null; },
+    // after the hold: its click (if the browser sends one) comes right after pointerup
+    pressEnd() {
+      this.pressCancel();
+      if (this.pressed) setTimeout(() => { this.pressed = false; }, 300);
+    },
+    cardClick(e, s) {
+      this.pressCancel();
+      if (this.pressed) { this.pressed = false; e.preventDefault(); return; }  // the hold that started it
+      if (!this.selecting) return;  // a normal click opens the series
+      e.preventDefault();
+      if (e.shiftKey && this.anchor !== null) {
+        const ids = this.items.map((x) => x.id);
+        const [a, b] = [ids.indexOf(this.anchor), ids.indexOf(s.id)].sort((x, y) => x - y);
+        if (a >= 0) {
+          const sel = { ...this.sel };
+          for (const id of ids.slice(a, b + 1)) sel[id] = true;
+          this.sel = sel;
+          this.anchor = s.id;
+          return;
+        }
+      }
+      const sel = { ...this.sel };
+      if (sel[s.id]) delete sel[s.id]; else sel[s.id] = true;
+      this.sel = sel;
+      this.anchor = s.id;
+      if (!this.selCount) this.endSelect();
+    },
+    endSelect() {
+      if (this.working) return;
+      Object.assign(this, { selecting: false, sel: {}, anchor: null, selMenu: false, delOpen: false });
+    },
+    async selectAll() {  // every series matching the filters, also the ones not loaded yet
+      this.selMenu = false;
+      try {
+        const { ids } = await api(`/api/series?ids_only=true&${this.filters}`);
+        this.sel = Object.fromEntries(ids.map((id) => [id, true]));
+      } catch (e) { toast(e.message, 6000, "error"); }
+    },
+    async bulk(action, msg) {
+      this.selMenu = false;
+      this.working = "Working…";
+      try {
+        const r = await api("/api/series/bulk", { method: "POST", body: { ids: Object.keys(this.sel).map(Number), action } });
+        toast(msg(r.done) + (r.skipped && action === "refresh" ? ` (${r.skipped} without metadata skipped)` : ""));
+        this.working = "";
+        this.endSelect();
+        this.$store.app.libraryDirty++;
+      } catch (e) { toast(e.message, 6000, "error"); this.working = ""; }
+    },
+    // the titles the delete dialog names (only loaded cards are known here)
+    get selTitles() { return this.items.filter((s) => this.sel[s.id]).map((s) => s.title); },
+    async deleteSelected() {
+      const ids = Object.keys(this.sel).map(Number);
+      let done = 0;
+      const failed = [];
+      this.delOpen = false;
+      for (const [i, id] of ids.entries()) {
+        this.working = `Deleting ${i + 1} of ${ids.length}…`;
+        try {
+          await api(`/api/series/${id}`, { method: "DELETE" });
+          done++;
+          const sel = { ...this.sel };
+          delete sel[id];
+          this.sel = sel;
+        } catch (e) {
+          failed.push(e.message);
+          // a read-only folder or no permission: the rest would fail the same way
+          if (/read-only|can't delete files/i.test(e.message)) break;
+        }
+      }
+      this.working = "";
+      if (failed.length) toast(`Deleted ${done} of ${ids.length}. ${failed[0]}`, 10000, "error");
+      else toast(`Deleted ${done} series`);
+      if (!failed.length) this.endSelect();
+      this.$store.app.libraryDirty++;
+      refreshAttentionCount();
+    },
   };
 }
 

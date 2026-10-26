@@ -563,4 +563,84 @@
       }
     }
   }
+
+  /* ---------------------------------------------------------------- multi-select
+     A hold on a card starts it; the bar covers the top bar and stays while scrolling. */
+  .select-bar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 56px;
+    padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+    background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+    border-bottom: 2px solid var(--accent);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+
+    & .count {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      font-size: 16px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & .menu-pop {
+      min-width: 220px;
+    }
+  }
+
+  .card {
+    -webkit-touch-callout: none;  /* iOS: a hold selects instead of showing the link preview */
+    user-select: none;
+
+    & .pick {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 2px solid #fff;
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    &.picked .pick {
+      background: var(--accent);
+      border-color: var(--accent);
+
+      &::after {
+        content: "";
+        width: 6px;
+        height: 11px;
+        margin-top: -2px;
+        border: solid var(--accent-text);
+        border-width: 0 2.5px 2.5px 0;
+        transform: rotate(45deg);
+      }
+    }
+
+    &.picked .poster {
+      outline: 3px solid var(--accent);
+      outline-offset: -3px;
+    }
+  }
+
+  .grid.selecting {
+    & .card:not(.picked) .poster img {
+      filter: brightness(0.6);
+    }
+
+    & .badge.status {
+      display: none;  /* the checkbox takes its corner */
+    }
+  }
 }

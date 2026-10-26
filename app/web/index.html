@@ -63,11 +63,59 @@
             <template x-for="n in pageSizes" :key="n"><option :value="n" x-text="n" :selected="n === size"></option></template>
           </select></label>
       </div>
-      <div class="grid" :class="{ loading: paged && loading }">
+      <!-- multi-select: hold a card to start (see library() in app.js) -->
+      <div class="select-bar" x-show="selecting" x-cloak role="toolbar" aria-label="Selected series"
+           @keydown.escape.window="if (!delOpen) endSelect()">
+        <button class="icon-btn" aria-label="Stop selecting" title="Stop selecting" :disabled="!!working"
+                @click="endSelect()">✕</button>
+        <b class="count" x-text="working || `${selCount} selected`" aria-live="polite"></b>
+        <button class="btn small" :disabled="!!working" @click="selectAll()"
+                x-text="total && selCount >= total ? 'All selected' : `Select all${total ? ' ' + total : ''}`"></button>
+        <button class="btn small danger" :disabled="!!working || !selCount" @click="delOpen = true">🗑 Delete</button>
+        <div class="menu" @click.outside="selMenu = false">
+          <button class="icon-btn" aria-label="More actions" title="More actions" :disabled="!!working || !selCount"
+                  @click="selMenu = !selMenu">
+            <svg class="icon dots" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+          </button>
+          <div class="menu-pop" x-show="selMenu" x-transition.opacity x-cloak>
+            <button @click="bulk('read', (n) => `Marked ${n} series as read`)">✓ Mark read</button>
+            <button @click="bulk('unread', (n) => `Marked ${n} series as unread`)">○ Mark unread</button>
+            <button @click="bulk('favorite', (n) => `Added ${n} series to favorites`)">★ Add to favorites</button>
+            <button @click="bulk('unfavorite', (n) => `Removed ${n} series from favorites`)">☆ Remove from favorites</button>
+            <button @click="bulk('refresh', (n) => `Refreshing metadata for ${n} series in the background`)">⟳ Refresh metadata</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- delete the selected series and their folders -->
+      <div class="modal" x-show="delOpen" x-cloak @click.self="delOpen = false" @keydown.escape.window="delOpen = false">
+        <div class="small-dialog delete-dialog">
+          <div class="sheet-head"><b x-text="`Delete ${selCount} series`"></b>
+            <button class="btn small" @click="delOpen = false">Cancel</button></div>
+          <p>Deletes their folders from the drive, and the series from MangaVibe with their reading
+            progress, metadata and posters:</p>
+          <ul class="delete-what">
+            <template x-for="t in selTitles.slice(0, 8)" :key="t"><li x-text="t"></li></template>
+            <li x-show="selCount > Math.min(selTitles.length, 8)" x-text="`and ${selCount - Math.min(selTitles.length, 8)} more`"></li>
+          </ul>
+          <p><b>This can't be undone.</b> The files don't go to a recycle bin.</p>
+          <div class="btn-row">
+            <button class="btn danger" @click="deleteSelected()" x-text="`Delete ${selCount} series and files`"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid" :class="{ loading: paged && loading, selecting }">
         <template x-for="s in items" :key="s.id">
-          <a class="card" :class="{ done: s.reading_status === 'completed', dropped: s.reading_status === 'dropped' }" :href="'#/series/' + s.id">
+          <a class="card" :class="{ done: s.reading_status === 'completed', dropped: s.reading_status === 'dropped', picked: isSel(s) }"
+             :href="'#/series/' + s.id" :aria-pressed="selecting ? String(isSel(s)) : null"
+             @pointerdown="press($event, s)" @pointermove="pressMove($event)" @pointerup="pressEnd()"
+             @pointercancel="pressCancel()" @pointerleave="pressCancel()"
+             @contextmenu="pressMenu($event, s)" @click="cardClick($event, s)">
             <div class="poster">
-              <img :src="s.poster" loading="lazy" alt="">
+              <img :src="s.poster" loading="lazy" alt="" draggable="false">
+              <span class="pick" x-show="selecting" aria-hidden="true"></span>
               <span class="badge done" x-show="s.reading_status === 'completed'">✓</span>
               <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="Dropped" aria-label="Dropped">✕</span>
               <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"></span>

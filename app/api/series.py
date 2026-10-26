@@ -87,10 +87,11 @@ def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | No
                 exclude: list[str] = Query(default=[]),
                 pub: str = "", read: str = "", match: str = "", format: str = "", have: str = "",
                 fav: bool = False, year_min: int | None = None, year_max: int | None = None,
-                score_min: int | None = None, letter: str = "", db=Depends(get_db)):
+                score_min: int | None = None, letter: str = "", ids_only: bool = False, db=Depends(get_db)):
     """Library grid. Multi-value filters are comma-separated (genre=Romance,Comedy).
     letter=a..z keeps titles starting with that letter, letter=# the rest (numbers, symbols, other scripts).
-    have=complete,incomplete,unknown: finished series with every volume/chapter here, or something missing."""
+    have=complete,incomplete,unknown: finished series with every volume/chapter here, or something missing.
+    ids_only=true: just {"ids": [...]} of every match, in order (multi-select's "Select all")."""
     limit = max(1, min(limit, 200))
     lang = title_lang(db)
     agg = reading_aggregates()
@@ -155,6 +156,8 @@ def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | No
     col = sorts.get(sort, title)
     desc = order == "desc" or (order == "" and sort not in ("title",))
     query = query.order_by(col.desc().nulls_last() if desc else col.asc().nulls_last(), title, Series.id)
+    if ids_only:
+        return {"ids": [sid for (sid,) in query.with_entities(Series.id)]}
     total = query.count()
     rows = query.offset(cursor).limit(limit).all()
     nxt = cursor + len(rows)
@@ -348,6 +351,43 @@ def mark_unread(series_id: int, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     s.last_read_at = None
     return _set_read(db, series_id, False)
+
+
+class BulkBody(BaseModel):
+    ids: list[int]
+    action: str
+
+
+BULK_ACTIONS = ("read", "unread", "favorite", "unfavorite", "refresh")
+
+
+@router.post("/series/bulk")
+def bulk(body: BulkBody, db=Depends(get_db)):
+    """One action for many series (the library's multi-select). Deleting goes one series at a time
+    through DELETE /api/series/{id}, so the page can show progress and stop on a read-only folder.
+    refresh queues the series that have a metadata source for the background worker."""
+    if body.action not in BULK_ACTIONS:
+        raise HTTPException(400, "Unknown action")
+    ids = list(dict.fromkeys(body.ids))[:10000]
+    found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids))} if ids else {}
+    done = 0
+    for sid in ids:
+        s = found.get(sid)
+        if s is None:
+            continue
+        if body.action in ("read", "unread"):
+            if body.action == "unread":
+                s.last_read_at = None
+            _set_read(db, sid, body.action == "read")
+        elif body.action in ("favorite", "unfavorite"):
+            s.favorite = body.action == "favorite"
+        elif s.metadata_source:
+            metadata_worker.enqueue("refresh", sid)
+        else:
+            continue
+        done += 1
+    db.commit()
+    return {"done": done, "skipped": len(ids) - done}
 
 
 @router.get("/continue-reading")
