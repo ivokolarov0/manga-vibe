@@ -56,8 +56,8 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 
 ### Finding something to read
 - **Search** titles, alternative names and authors.
-- **Filter** by genre and tag (include or exclude), reading status, format, favorites and first
-  letter; **sort** by title, date added, last updated, last read, score, year or unread count.
+- **Filter** by genre and tag (include or exclude), reading status, format, favorites, first
+  letter, and complete or incomplete collections (finished series with volumes missing); **sort** by title, date added, last updated, last read, score, year or unread count.
 - **Continue**: everything you're in the middle of, to pick up where you left off.
 - **Reading status** worked out from your progress (reading, completed, …), or set by hand, plus
   favorites. Mark a book read or unread, or everything before it.

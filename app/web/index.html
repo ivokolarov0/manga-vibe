@@ -72,6 +72,7 @@
               <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="Dropped" aria-label="Dropped">✕</span>
               <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"></span>
               <span class="badge status" x-show="s.favorite">★</span>
+              <span class="badge missing" x-show="s.incomplete" title="Finished series with volumes or chapters missing">Incomplete</span>
               <div class="bar" x-show="s.reading_status === 'reading'"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
             </div>
             <div class="card-title" x-text="s.title"></div>

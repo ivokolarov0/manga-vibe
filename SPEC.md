@@ -236,6 +236,9 @@ The owner can edit any metadata field by hand (titles, description, tags, status
   - Reading status (Unread, Reading, Completed, On hold, Dropped, Plan to read)
   - Match status (Matched, Needs attention, Unmatched)
   - Format / country (Manga, Manhwa, Manhua, One-shot, Novel)
+  - Collection (finished series only, best effort): Complete (volumes or chapters 1..N all here),
+    Incomplete (something missing), Can't tell (no total, mixed numbering, not finished). The
+    series page shows "8 / 10 volumes"; incomplete series get a mark on their card.
   - Library
   - Favorites only
   - Year range, score range (nice to have)

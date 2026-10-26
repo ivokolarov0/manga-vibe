@@ -11,7 +11,7 @@ import re
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.api.common import book_label, display_title, poster_version, title_lang
+from app.api.common import book_label, covered_chapters, display_title, poster_version, title_lang
 from app.db import get_db, get_setting, set_setting
 from app.metadata.service import ID_FIELDS
 from app.models import Book, Library, Series
@@ -24,14 +24,7 @@ MAX_IGNORED = 5000
 
 def chapter_gaps(books):
     """[(after, before)] where whole chapters are missing, e.g. [(14, 52)]."""
-    covered = set()
-    for b in books:
-        ch, extra = b.eff_chapter, b.eff_extra
-        if ch is None or extra or b.hidden:
-            continue
-        end = b.eff_chapter_end if b.eff_chapter_end is not None else ch
-        covered.update(range(int(ch), int(end) + 1))
-    nums = sorted(covered)
+    nums = sorted(covered_chapters(books))
     return [(a, b) for a, b in zip(nums, nums[1:]) if b - a > 1]
 
 

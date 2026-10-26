@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import String, and_, case, cast, exists, func, or_, select
 
-from app.api.common import (READING_STATUSES, TITLE_FIELDS, book_dict, continue_target,
+from app.api.common import (READING_STATUSES, TITLE_FIELDS, book_dict, collection, continue_target,
                             emit_reading_events, get_or_404, now, series_card, series_counts,
                             status_of, title_lang, visible_books_query)
 from app import config
@@ -39,6 +39,32 @@ FORMATS = {  # filter value -> SQL condition (AniList format + country of origin
     "novel": lambda: Series.format == "NOVEL",
 }
 MATCH = {"matched": ["auto", "manual"], "attention": ["failed"], "unmatched": ["unmatched", "ignored"]}
+HAVE = ("complete", "incomplete", "unknown")
+
+
+def collections(db, series):
+    """{series_id: collection()} for these series, from one query of their books."""
+    books = {}
+    if series:
+        for b in db.query(Book).filter(Book.series_id.in_([s.id for s in series]),
+                                       Book.missing_since.is_(None), Book.hidden.is_(False)):
+            books.setdefault(b.series_id, []).append(b)
+    return {s.id: collection(s, books.get(s.id, [])) for s in series}
+
+
+def _have_filter(db, wanted):
+    """SQL condition for the Collection filter. Only finished series can be complete or incomplete,
+    so those are worked out (in Python, like the chapter-gap check) and everything else is unknown."""
+    finished = db.query(Series).filter(Series.publication_status == "FINISHED",
+                                       Series.missing_since.is_(None)).all()
+    by_state = {k: set() for k in HAVE}
+    for sid, c in collections(db, finished).items():
+        by_state[c["state"]].add(sid)
+    known = by_state["complete"] | by_state["incomplete"]
+    conds = [Series.id.in_(by_state[k]) for k in ("complete", "incomplete") if k in wanted]
+    if "unknown" in wanted:
+        conds.append(~Series.id.in_(known))
+    return or_(*conds)
 
 
 def reading_aggregates():
@@ -59,11 +85,12 @@ def reading_aggregates():
 def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | None = None,
                 sort: str = "title", order: str = "", genre: list[str] = Query(default=[]),
                 exclude: list[str] = Query(default=[]),
-                pub: str = "", read: str = "", match: str = "", format: str = "",
+                pub: str = "", read: str = "", match: str = "", format: str = "", have: str = "",
                 fav: bool = False, year_min: int | None = None, year_max: int | None = None,
                 score_min: int | None = None, letter: str = "", db=Depends(get_db)):
     """Library grid. Multi-value filters are comma-separated (genre=Romance,Comedy).
-    letter=a..z keeps titles starting with that letter, letter=# the rest (numbers, symbols, other scripts)."""
+    letter=a..z keeps titles starting with that letter, letter=# the rest (numbers, symbols, other scripts).
+    have=complete,incomplete,unknown: finished series with every volume/chapter here, or something missing."""
     limit = max(1, min(limit, 200))
     lang = title_lang(db)
     agg = reading_aggregates()
@@ -104,6 +131,9 @@ def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | No
         query = query.filter(Series.match_status.in_([m for k in _split(match) for m in MATCH.get(k, [])]))
     if _split(format):
         query = query.filter(or_(*[FORMATS[f]() for f in _split(format) if f in FORMATS]))
+    wanted = [h for h in _split(have) if h in HAVE]
+    if wanted:
+        query = query.filter(_have_filter(db, wanted))
     if fav:
         query = query.filter(Series.favorite.is_(True))
     if year_min:
@@ -129,7 +159,13 @@ def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | No
     rows = query.offset(cursor).limit(limit).all()
     nxt = cursor + len(rows)
     # counts tuple order as series_counts(): total, done, started, done_main, total_main
-    return {"items": [series_card(s, tuple(counts), lang) for s, *counts in rows],
+    have_of = collections(db, [s for s, *_ in rows if s.publication_status == "FINISHED"])
+    items = []
+    for s, *counts in rows:
+        card = series_card(s, tuple(counts), lang)
+        card["incomplete"] = have_of.get(s.id, {}).get("state") == "incomplete"
+        items.append(card)
+    return {"items": items,
             "next_cursor": nxt if nxt < total else None, "total": total}
 
 
@@ -161,6 +197,7 @@ def get_series(series_id: int, db=Depends(get_db)):
         "titles": {"english": s.title_english, "romaji": s.title_romaji, "native": s.title_native},
         "synonyms": s.synonyms or [], "description": s.description, "start_year": s.start_year,
         "format": s.format, "chapters_total": s.chapters_total, "volumes_total": s.volumes_total,
+        "collection": collection(s, visible_books_query(db, s.id).all()),
         "average_score": s.average_score, "authors": s.authors or [],
         "match_status": s.match_status, "match_confidence": s.match_confidence,
         "metadata_source": s.metadata_source, "match_candidates": s.match_candidates or [],
