@@ -219,7 +219,7 @@ The owner can edit any metadata field by hand (titles, description, tags, status
 
 ### 7.1 Layout and navigation
 - Mobile-first responsive web app. Must feel good on an Android phone in portrait. Desktop layout is the same UI, wider grid.
-- Top bar: app name, search, filter button. Bottom nav on mobile (Library, Continue Reading, Needs Attention, Settings) or a simple menu.
+- Top bar: app name, search, and Settings (⚙, top right, with the Needs attention count on it). Bottom nav: Library and Continue.
 - Dark theme by default, light theme option.
 - Use a PWA manifest (`display: standalone`/`fullscreen`, icons) so the owner can "Add to Home screen" in Chrome. This is a small file, not a separate app.
 

@@ -25,6 +25,52 @@
       flex: 1;
       min-width: 0;
     }
+
+    /* Settings, with the Needs attention count on it */
+    & #settings-link {
+      display: grid;
+      flex: none;
+      place-items: center;
+      padding: 0;
+      color: var(--muted);
+
+      & svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      &.active {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      @media (hover: hover) {
+        &:not(.active):hover {
+          color: var(--text);
+        }
+      }
+    }
+
+    & #att-count {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      min-width: 18px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 16px;
+      text-align: center;
+    }
   }
 
   main {
@@ -74,19 +120,6 @@
       display: block;
       font-size: 19px;
       line-height: 1.2;
-    }
-
-    & #att-count {
-      position: absolute;
-      top: -4px;
-      left: 55%;
-      padding: 0 5px;
-      border-radius: 8px;
-      background: var(--danger);
-      color: #fff;
-      font-size: 10px;
-      font-style: normal;
-      font-weight: 700;
     }
   }
 
