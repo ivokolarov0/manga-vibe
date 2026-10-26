@@ -19,11 +19,11 @@ curl -fsSL https://get.docker.com | sudo sh
 Change `$HOME/Manga` if your manga is somewhere else:
 
 ```bash
-sudo docker run -d --name mangavibe --restart unless-stopped -p 8090:8090 -v "$HOME/Manga:/manga:ro" -v "$HOME/mangavibe-data:/data" ivokolarov/mangavibe:latest
+sudo docker run -d --name mangavibe --restart unless-stopped -p 8090:8090 -v "$HOME/Manga:/manga" -v "$HOME/mangavibe-data:/data" ivokolarov/mangavibe:latest
 ```
 
 - `$HOME/mangavibe-data` is where MangaVibe keeps its own data (database, covers, plugins).
-- `:ro` means read-only: MangaVibe can never change your manga files.
+- `/manga` is mounted read-write so **Delete series** can remove series you don't want. Add `:ro` after `/manga` (`...:/manga:ro`) if MangaVibe should never be able to change your files; deleting is then turned off.
 
 Prefer Docker Compose, or want to change the time zone or add a second library? See
 [Other servers and Docker Compose](docker.md).

@@ -181,12 +181,40 @@
         color: var(--muted);
         font-size: 12px;
       }
+
+      &.danger {
+        color: var(--danger);
+      }
     }
   }
 
-  /* small dialog: reading direction */
+  /* small dialog: reading direction, delete series */
   .modal > .small-dialog {
     max-width: 420px;
+  }
+
+  .delete-dialog {
+    & p {
+      margin: 8px 0;
+    }
+
+    & .delete-what {
+      display: grid;
+      gap: 4px;
+      margin: 8px 0 12px;
+      padding-left: 20px;
+      color: var(--muted);
+
+      & code {
+        color: var(--text);
+        font-size: 13px;
+      }
+    }
+
+    & .btn-row {
+      justify-content: flex-end;
+      margin-top: 12px;
+    }
   }
 
   .sp-poster {

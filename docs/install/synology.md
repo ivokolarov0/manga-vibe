@@ -31,8 +31,9 @@ Open **Container Manager** (**Docker**) → **Registry** → search `ivokolarov/
 - Container name `mangavibe`. Tick **Enable auto-restart** (on older DSM it's in **Advanced
   Settings**).
 - **Port Settings**: change the local port from *Auto* to `8090` (container port `8090`).
-- **Volume Settings** (**Volume**) → **Add Folder**: pick your manga folder, mount path `/manga`,
-  tick **Read-only**.
+- **Volume Settings** (**Volume**) → **Add Folder**: pick your manga folder, mount path `/manga`.
+  Leave **Read-only** unticked so **Delete series** can remove series you don't want. Tick it if
+  MangaVibe should never be able to change your files (deleting is then turned off).
 - **Add Folder** again: pick `docker/mangavibe`, mount path `/data`.
 - **Next** → **Done** (**Apply** → **Next** → **Done**).
 

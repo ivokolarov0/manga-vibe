@@ -5,8 +5,9 @@
 > conversation rather than written or reviewed line by line by a human developer. It has automated
 > tests and has been checked in a browser, but it has not had a professional security audit.
 > Use it at your own risk, keep it on your home network (see [Reading away from home](docs/away-from-home.md)),
-> and keep backups of anything you care about. Your manga folder is mounted read-only, so the app
-> can't change your files.
+> and keep backups of anything you care about. The app changes your manga files in one way only:
+> **Delete series** removes a series' folder when you ask it to. Mount the manga folder read-only
+> (`:ro`) if you never want that.
 
 <p align="center">
   <img src="docs/media/desktop.webp" width="74%" alt="MangaVibe on a computer: the library grid, a genre filter, a series page with its books in order and the files behind them, and the Needs attention lists">

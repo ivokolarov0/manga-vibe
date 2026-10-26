@@ -21,7 +21,9 @@ The owner tried Komga + Komf and Kavita. The problems were:
 - Public internet exposure (LAN only; remote access via VPN/Tailscale).
 - Native Android/iOS apps.
 - Downloading manga from the internet.
-- Modifying, renaming or moving the owner's files. **The manga folder is mounted read-only. The app never writes to it.**
+- Modifying, renaming or moving the owner's files. The one exception: **Delete series** removes a
+  series folder when the owner asks (issue #104, see DECISIONS.md). Mounting the manga folder
+  read-only (`:ro`) turns that off.
 
 ---
 
@@ -48,7 +50,7 @@ Deliverables must therefore include:
 
 ### Layout
 ```
-/manga                      (mounted read-only)
+/manga                      (read-write; :ro turns off Delete series)
   Series Name A/
     Series_Name_A_v01_ch01_[OT].zip
     Series_Name_A10.zip
@@ -313,6 +315,7 @@ POST   /api/scan                            GET  /api/scan/status
 GET    /api/series?cursor=&limit=&q=&genre=&tag=&exclude_tag=&pub_status=&read_status=&match=&format=&sort=&order=
 GET    /api/series/{id}                     PATCH /api/series/{id}           (edit metadata, sets locks)
 GET    /api/series/{id}/books
+GET    /api/series/{id}/delete-info         DELETE /api/series/{id}         (deletes the folder too)
 POST   /api/series/{id}/match/search        (body: query) -> candidates
 POST   /api/series/{id}/match               (body: provider, provider_id | url)
 POST   /api/series/{id}/unmatch             POST /api/series/{id}/ignore-match
@@ -341,7 +344,7 @@ GET    /api/health
 ### 9.2 Volumes
 | Container path | NAS folder | Mode |
 |---|---|---|
-| `/manga` | the owner's manga shared folder | **read-only** |
+| `/manga` | the owner's manga shared folder | read-write (read-only turns off Delete series) |
 | `/data` | `docker/mangavibe` | read-write (database, covers, cache, config) |
 
 Additional library roots can be mounted as `/library2`, etc., and added in Settings.
@@ -457,7 +460,8 @@ Each phase ends with: tests passing, app running locally, short note in `README.
 ## 15. Working agreement for the AI session
 - Ask the owner only when a decision is expensive to undo; otherwise decide, record it in `DECISIONS.md`, and continue.
 - Explain deployment steps in plain language with exact clicks for the Synology Docker GUI; the owner is not a developer.
-- Never add steps that modify, rename or delete the owner's manga files.
+- Never add steps that modify, rename or delete the owner's manga files, apart from the owner's own
+  **Delete series**.
 - Prefer fewer dependencies and less code. Explain any new dependency in one line.
 - When a phase is done, give the owner: what changed, how to update the container on the NAS, and what to test on the phone.
 
@@ -465,7 +469,7 @@ Each phase ends with: tests passing, app running locally, short note in `README.
 
 ## 16. Plugins (owner decision before phase 1)
 
-The library stays **read-only**; plugins extend the app, never the files.
+Plugins extend the app, never the files: they can't write to the library.
 
 - A plugin is a Python file or package in `/data/plugins`, a subclass of `app.plugins.Plugin`.
   Loaded at startup and via Settings → Reload plugins; each can be disabled in Settings.

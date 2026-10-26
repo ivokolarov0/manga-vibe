@@ -39,8 +39,10 @@ you never share the address. Anyone who finds it can:
 - slow down or overload your NAS or PC by starting scans over and over
 - reach any bug in MangaVibe or the packages it uses, straight from the internet
 
-Your manga files themselves stay safe, because they're mounted read-only. The login details plugins
-save, such as MyAnimeList's, are never sent to the browser. **Everything else is open to anyone.**
+Anyone who reaches it can also use **Delete series**, which deletes the series' files. If you open
+MangaVibe to the internet, mount the manga folder read-only (`:ro`) so your files stay safe. The login
+details plugins save, such as MyAnimeList's, are never sent to the browser. **Everything else is open
+to anyone.**
 
 ## Not sure if you opened it by accident?
 

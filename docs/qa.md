@@ -11,10 +11,13 @@ and match % built in from the start. I didn't feel like making a mobile app, so 
 (well, that changed: turns out I'm too lazy to open the browser, so now there's an
 [Android app](phone.md#android-app)).
 
-**Why is the manga folder read-only?**
-The code was written almost entirely with Claude, and it may have gaps. I don't want to be
-responsible if something decides it should delete a file in your collection. So I explicitly
-don't want the app to have any permission to touch your files.
+**Can MangaVibe change my files?**
+In one way only: **Delete series** (the ⋯ menu on a series page) deletes a series' folder, after
+showing what it will remove. I added it because I wanted to get rid of series I don't care about
+without leaving the app. It can only delete a series folder directly inside a library folder,
+nothing above it. The code was written almost entirely with Claude and may have gaps, so if you
+never want the app to touch your files, mount the manga folder read-only (`:ro`). Deleting is then
+turned off.
 
 **Why is there no user login?**
 Too much of a headache, and it means handling sensitive information I don't want to be responsible
@@ -61,8 +64,8 @@ It makes updating easier, and if someone wants a quick and dirty solution, here 
 
 - **Connecting to pirate sites to read their contents.** MangaVibe reads the files you own, nothing else.
 - **Crawling or scraping pirate sites**, including downloaders and "find the raws" features.
-- **Changing library files**: renaming, converting, optimizing, tagging, moving or deleting them. The
-  library is read-only on purpose (see above).
+- **Changing library files**: renaming, converting, optimizing, tagging or moving them. Deleting a
+  whole series is the one exception (see above).
 - **More mobile apps**: an iPhone app, a Play Store listing, or a native reader. The
   [Android app](phone.md#android-app) is a window onto the web app, and that's as far as it goes.
 - **Tying it to an existing mobile app**, such as making it a source or extension for another reader app.
