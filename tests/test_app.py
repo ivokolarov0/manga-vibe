@@ -343,6 +343,45 @@ def test_attention_count_matches_full_lists(client):
     walker.scan_all()
 
 
+def test_same_match_groups_link_through_any_id():
+    from app.api.attention import same_match_groups
+    rows = [(1, {"anilist_id": 5}), (2, {"anilist_id": 5, "mal_id": 9}), (3, {"mal_id": 9}),
+            (4, {"anilist_id": 6}), (5, {"mangadex_id": "x"})]
+    [(key, ids, shared)] = same_match_groups(rows)
+    assert key == "same:1-2-3" and ids == [1, 2, 3]
+    assert shared == [("anilist_id", "5"), ("mal_id", "9")]
+    big = same_match_groups([(i, {"anilist_id": 1}) for i in range(1000, 1030)])
+    assert len(big[0][0]) <= 85  # long groups get a short key, which the ignore list accepts
+
+
+def test_same_match_attention_list(client):
+    """Issue #96: two series matched to the same entry are listed together; they can be ignored."""
+    from app.db import SessionLocal
+    from app.models import Series
+    by_name = series_by_name(client)
+    a, b = by_name["Hana to Akuma"]["id"], by_name["Series B"]["id"]
+    with SessionLocal() as db:
+        db.get(Series, a).anilist_id = db.get(Series, b).anilist_id = 777
+        db.commit()
+    try:
+        att = client.get("/api/attention").json()
+        [g] = att["same"]
+        assert g["key"] == f"same:{min(a, b)}-{max(a, b)}"
+        assert g["shared"] == [{"field": "anilist_id", "id": "777"}]
+        assert {m["series_id"] for m in g["members"]} == {a, b}
+        assert {"folder", "library", "books"} <= set(g["members"][0])
+        assert client.get("/api/attention/count").json()["count"] == att["count"]
+        assert client.post("/api/attention/ignore", json={"key": g["key"]}).json() == {"ok": True}
+        after = client.get("/api/attention").json()
+        assert after["same"] == [] and after["count"] == att["count"] - 1
+        assert client.get("/api/attention/count").json()["count"] == after["count"]
+        client.post("/api/attention/ignore", json={"key": g["key"], "ignore": False})
+    finally:
+        with SessionLocal() as db:
+            db.get(Series, a).anilist_id = db.get(Series, b).anilist_id = None
+            db.commit()
+
+
 def test_tag_with_comma_filters(client):
     from app.db import SessionLocal
     from app.metadata import service

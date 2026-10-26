@@ -1,9 +1,11 @@
-"""Needs Attention: unreadable files, unsupported formats, duplicates, chapter gaps, failed matches.
+"""Needs Attention: unreadable files, unsupported formats, duplicates, chapter gaps, failed matches,
+and series matched to the same metadata entry.
 
 Every row has a `key`. A row the owner marks as "ignore" (a false alarm) is hidden from the
 lists and the badge; the keys are kept in the `attention_ignored` setting and can be restored.
-Keys: err:<book id>, dup:<series id>:<chapter or volume>, gap:<series id>.
+Keys: err:<book id>, dup:<series id>:<chapter or volume>, gap:<series id>, same:<series ids>.
 """
+import hashlib
 import re
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,11 +13,12 @@ from pydantic import BaseModel, Field
 
 from app.api.common import book_label, display_title, title_lang
 from app.db import get_db, get_setting, set_setting
-from app.models import Book, Series
+from app.metadata.service import ID_FIELDS
+from app.models import Book, Library, Series
 from app.scanner.archives import SUPPORTED, TEXT_EPUB
 
 router = APIRouter(prefix="/api")
-KEY_RE = re.compile(r"^(err|dup|gap):[0-9a-z:._-]{1,80}$")
+KEY_RE = re.compile(r"^(err|dup|gap|same):[0-9a-z:._-]{1,80}$")
 MAX_IGNORED = 5000
 
 
@@ -30,6 +33,48 @@ def chapter_gaps(books):
         covered.update(range(int(ch), int(end) + 1))
     nums = sorted(covered)
     return [(a, b) for a, b in zip(nums, nums[1:]) if b - a > 1]
+
+
+def same_match_groups(rows):
+    """Series that share a metadata ID (AniList, MAL, MangaUpdates or MangaDex).
+    rows: [(series id, {id field: value})]. Returns [(key, [series ids], [(id field, value)])],
+    where series linked through different IDs (A~B by AniList, B~C by MAL) end up in one group."""
+    parent = {}
+
+    def find(x):
+        while parent.setdefault(x, x) != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    by_id = {}
+    for sid, ids in rows:
+        for f in ID_FIELDS:
+            if ids.get(f) is not None:
+                by_id.setdefault((f, str(ids[f])), []).append(sid)
+    for sids in by_id.values():
+        for other in sids[1:]:
+            parent[find(other)] = find(sids[0])
+    groups = {}
+    for (f, v), sids in by_id.items():
+        if len(sids) > 1:
+            g = groups.setdefault(find(sids[0]), [set(), []])
+            g[0].update(sids)
+            g[1].append((f, v))
+    out = []
+    for members, shared in groups.values():
+        ids = sorted(members)
+        part = "-".join(map(str, ids))
+        if len(part) > 80:  # a big group: keep the key short (the ignore list checks the length)
+            part = hashlib.sha1(part.encode()).hexdigest()
+        out.append((f"same:{part}", ids, sorted(shared, key=lambda x: ID_FIELDS.index(x[0]))))
+    return out
+
+
+def _series_ids(db):
+    cols = [getattr(Series, f) for f in ID_FIELDS]
+    q = db.query(Series.id, *cols).filter(Series.missing_since.is_(None))
+    return [(sid, dict(zip(ID_FIELDS, vals))) for sid, *vals in q]
 
 
 def _num(v):
@@ -61,7 +106,7 @@ def attention(ignored: bool = False, db=Depends(get_db)):
     skip = set(get_setting(db, "attention_ignored", []) or [])
     series = {s.id: s for s in db.query(Series).filter(Series.missing_since.is_(None))}
     name = lambda sid: display_title(series[sid], lang)
-    lists = {k: [] for k in ("matches", "unreadable", "unsupported", "duplicates", "gaps")}
+    lists = {k: [] for k in ("matches", "same", "unreadable", "unsupported", "duplicates", "gaps")}
     hidden = {k: 0 for k in lists}
 
     def add(kind, item):
@@ -97,10 +142,19 @@ def attention(ignored: bool = False, db=Depends(get_db)):
             add("matches", {"series_id": sid, "series": name(sid), "folder": s.folder_name,
                             "candidates": (s.match_candidates or [])[:3]})
 
+    libraries = {l.id: l.name for l in db.query(Library)}
+    for key, sids, shared in same_match_groups(_series_ids(db)):
+        members = sorted((series[sid] for sid in sids), key=lambda s: name(s.id).lower())
+        add("same", {"key": key, "series": name(members[0].id), "shared": [{"field": f, "id": v} for f, v in shared],
+                     "members": [{"series_id": s.id, "series": name(s.id), "folder": s.folder_path,
+                                  "library": libraries.get(s.library_id, ""), "match_status": s.match_status,
+                                  "books": sum(1 for b in books_by_series.get(s.id, []) if not b.hidden_by_owner)}
+                                 for s in members]})
+
     order = lambda x: (x["series"].lower(), x.get("key", ""))
     out = {k: sorted(v, key=order) for k, v in lists.items()}
     count = lambda k: sum(1 for x in out[k] if not x["ignored"])
-    out["count"] = count("matches") + count("unreadable") + count("duplicates")
+    out["count"] = count("matches") + count("same") + count("unreadable") + count("duplicates")
     out["ignored_counts"] = hidden
     return out
 
@@ -122,7 +176,8 @@ def attention_count(db=Depends(get_db)):
     dups = sum(1 for sid, books in flagged.items() for part, _ in duplicate_groups(books)
                if f"dup:{sid}:{part}" not in skip)
     matches = (db.query(Series).filter(Series.match_status == "failed", Series.missing_since.is_(None)).count())
-    return {"count": errors + dups + matches}
+    same = sum(1 for key, _, _ in same_match_groups(_series_ids(db)) if key not in skip)
+    return {"count": errors + dups + matches + same}
 
 
 class IgnoreBody(BaseModel):

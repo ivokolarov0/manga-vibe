@@ -82,8 +82,9 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 - **Screen readers** (TalkBack, NVDA, VoiceOver) get the same text.
 
 ### Looking after your collection
-- **Needs attention** in Settings lists what to fix: series that couldn't be matched, files that
-  can't be read (with what's inside them), duplicates side by side, and missing chapters.
+- **Needs attention** in Settings lists what to fix: series that couldn't be matched, series
+  matched to the same entry, files that can't be read (with what's inside them), duplicates side
+  by side, and missing chapters.
 - **Fix a book's place by hand** (Files tab): its volume, chapter, a chapter range, or mark it as an
   extra or hidden. Only MangaVibe's database changes, never the file.
 
