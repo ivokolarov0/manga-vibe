@@ -271,7 +271,7 @@ The owner can edit any metadata field by hand (titles, description, tags, status
 - Optional later: sync progress to AniList (phase 6, needs AniList OAuth).
 
 ### 7.7 Needs attention
-A list of: series with failed/low-confidence matches (with "Fix match"), series with duplicate files, series with chapter gaps (e.g. 14 → 52), unreadable/corrupt files, text EPUBs waiting for the novel reader.
+A list of: series with failed/low-confidence matches (with "Fix match"), series matched to the same metadata entry (grouped by the shared AniList/MAL/MangaUpdates/MangaDex ID), series with duplicate files, series with chapter gaps (e.g. 14 → 52), unreadable/corrupt files, text EPUBs waiting for the novel reader.
 
 ### 7.8 Settings
 - Library roots (add/remove, rescan now).

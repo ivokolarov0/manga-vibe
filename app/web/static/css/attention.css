@@ -96,7 +96,8 @@
       font-size: 13px;
     }
 
-    & .btn {
+    & .btn,
+    & .btn-row {
       flex: none;
     }
 

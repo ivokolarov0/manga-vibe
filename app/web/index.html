@@ -370,7 +370,7 @@
         <template x-for="[k, label] in attNav" :key="k">
           <button :class="{ active: section === 'att-' + k }" @click="go('att-' + k)">
             <span class="ico">•</span><span x-text="label"></span>
-            <span class="count" :class="{ zero: !attCount(k), alert: ['unreadable', 'matches', 'duplicates'].includes(k) }"
+            <span class="count" :class="{ zero: !attCount(k), alert: ['unreadable', 'matches', 'same', 'duplicates'].includes(k) }"
                   x-text="attCount(k)"></span></button>
         </template>
       </nav>
@@ -727,6 +727,36 @@
                   <div class="row">
                     <button class="btn small" @click="fix(x)">Fix match…</button>
                     <button class="btn small" @click="dontMatch(x)">Don't match</button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+
+          <!-- series matched to the same entry: one card per group -->
+          <template x-if="a && kind === 'same'">
+            <div class="att-list">
+              <template x-for="g in a.same" :key="g.key">
+                <div class="att-card" :class="{ ignored: g.ignored }">
+                  <div class="att-card-head">
+                    <span class="chip" x-text="sharedLabel(g)"></span>
+                    <button class="btn small push" @click="ignore(g.key, !g.ignored)"
+                            x-text="g.ignored ? 'Restore' : 'Not a problem'"></button>
+                  </div>
+                  <div class="att-rows">
+                    <template x-for="m in g.members" :key="m.series_id">
+                      <div class="att-row">
+                        <div class="what">
+                          <a :href="'#/series/' + m.series_id"><b x-text="m.series"></b></a>
+                          <span class="muted" x-text="[m.library, `${m.books} ${m.books === 1 ? 'book' : 'books'}`].filter(Boolean).join(' · ')"></span>
+                          <span class="muted break folder" x-text="m.folder"></span>
+                        </div>
+                        <div class="btn-row">
+                          <a class="btn small" :href="'#/series/' + m.series_id">Open</a>
+                          <button class="btn small" @click="fix(m)">Fix match…</button>
+                        </div>
+                      </div>
+                    </template>
                   </div>
                 </div>
               </template>

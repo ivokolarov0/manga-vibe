@@ -31,10 +31,13 @@ const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["comp
 const ATT_TABS = [
   ["unreadable", "Errors", "These files could not be opened. The message says why."],
   ["matches", "Missing metadata", "No confident match was found online. Pick the right one, or open Fix match."],
+  ["same", "Same match", "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."],
   ["duplicates", "Duplicates", "Two or more files with the same chapter number. Both are kept."],
   ["gaps", "Missing chapters", "Gaps in the chapter numbers. Often fine (volumes may cover them)."],
   ["unsupported", "Not supported", "Text books (light novel EPUBs) are listed; a novel reader comes later."],
 ];
+
+const ID_NAMES = { anilist_id: "AniList", mal_id: "MyAnimeList", mangaupdates_id: "MangaUpdates", mangadex_id: "MangaDex" };
 
 /* ---------------- small helpers ---------------- */
 
@@ -991,6 +994,7 @@ function attentionView() {
       } catch (e) { toast(e.message, 6000, "error"); }
     },
     fix(x) { this.$store.app.openFix(x.series_id, () => refreshAttentionCount()); },
+    sharedLabel(g) { return "Same " + g.shared.map((x) => `${ID_NAMES[x.field] || x.field} #${x.id}`).join(", "); },
     async dontMatch(x) {
       await api(`/api/series/${x.series_id}/ignore-match`, { method: "POST" });
       this.afterChange();
