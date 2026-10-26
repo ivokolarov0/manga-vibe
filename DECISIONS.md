@@ -153,7 +153,7 @@ Choices made where the spec was open. Newest at the bottom.
   re-encoded to a 32×32 PNG and cached per host for a week. SVG icons (MangaUpdates only has one) are
   drawn to PNG with PyMuPDF; the SVG itself is never served, so scripts in it can't run.
 - **Needs attention moved into Settings**, which now has a sidebar (a scrolling strip on phones).
-  The badge sits on the Settings tab. Old `#/attention` links redirect.
+  The badge sits on the Settings button (⚙, top right of the header; issue #107). Old `#/attention` links redirect.
 - **Duplicates** are one card per chapter with the files side by side (thumbnail, pages, size,
   Open, Hide this one).
 - **Ignoring rows**: errors, duplicate groups and chapter gaps can be marked as false alarms. Keys are
