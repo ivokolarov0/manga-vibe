@@ -161,7 +161,7 @@ def page(book_id: int, n: int, request: Request, w: int | None = None, db=Depend
                 b.id, n, w, b.mtime, lambda: archives.read_page(path, b.format, n)[0])
             return Response(data, media_type="image/webp", headers=headers)
         data, mime = archives.read_page(path, b.format, n)
-        if mime not in archives.WEB_MIME:  # e.g. TIFF: browsers can't show it, convert
+        if mime not in archives.WEB_MIME:  # e.g. TIFF, JPEG XL: browsers can't show it, convert
             data, mime = images.resize(data, 100_000), "image/webp"
         return Response(data, media_type=mime, headers=headers)
     except archives.ArchiveError as e:

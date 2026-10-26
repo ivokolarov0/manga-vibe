@@ -27,7 +27,7 @@ from pathlib import Path, PurePosixPath
 
 from app.scanner.parser import natural_key
 
-IMAGE_EXT = {".jpg", ".jpeg", ".jpe", ".jfif", ".png", ".webp", ".gif", ".avif", ".bmp", ".tif", ".tiff"}
+IMAGE_EXT = {".jpg", ".jpeg", ".jpe", ".jfif", ".png", ".webp", ".gif", ".avif", ".bmp", ".tif", ".tiff", ".jxl"}
 ARCHIVE_FORMATS = {".cbz": "zip", ".zip": "zip", ".cbr": "rar", ".rar": "rar",
                    ".cb7": "7z", ".7z": "7z", ".epub": "epub", ".pdf": "pdf"}
 SUPPORTED = {"zip", "rar", "7z", "folder", "epub", "pdf"}
@@ -35,7 +35,7 @@ TEXT_EPUB = "Text EPUB"  # start of the message for light novels (shown under "N
 PDF_WIDTH = 1600         # PDF pages are rendered this wide (px)
 MIME = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".jpe": "image/jpeg", ".jfif": "image/jpeg",
         ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".avif": "image/avif",
-        ".bmp": "image/bmp", ".tif": "image/tiff", ".tiff": "image/tiff"}
+        ".bmp": "image/bmp", ".tif": "image/tiff", ".tiff": "image/tiff", ".jxl": "image/jxl"}
 WEB_MIME = {"image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/bmp"}
 NESTED = "!/"  # separator between an inner archive and a page inside it
 MAGIC = [(b"PK\x03\x04", "zip"), (b"PK\x05\x06", "zip"), (b"Rar!\x1a\x07", "rar"),
