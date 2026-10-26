@@ -224,6 +224,14 @@ def test_filters(client):
     total = client.get("/api/series").json()["total"]
     assert sid not in ids("exclude=Romance") and len(ids("exclude=Romance")) == total - 1
     assert ids("pub=FINISHED") == [sid]
+    # finished, 54 chapters on AniList, only a few here
+    assert ids("have=incomplete") == [sid] and ids("have=complete") == []
+    assert sid not in ids("have=unknown") and len(ids("have=unknown")) == total - 1
+    assert sorted(ids("have=incomplete,unknown")) == sorted(ids(""))
+    card = next(s for s in client.get("/api/series").json()["items"] if s["id"] == sid)
+    assert card["incomplete"] is True
+    have = client.get(f"/api/series/{sid}").json()["collection"]  # other tests edit these books
+    assert (have["unit"], have["total"], have["state"]) == ("chapter", 54, "incomplete") and have["owned"] < 54
     assert ids("match=matched") == [sid]
     assert ids("format=manhwa") == []
     assert ids("q=Devil") == [sid]            # synonym search

@@ -426,6 +426,16 @@
       background: rgba(0, 0, 0, 0.65);
       font-weight: 600;
     }
+
+    &.missing {
+      top: auto;
+      right: auto;
+      bottom: 7px;
+      left: 4px;
+      background: var(--warn);
+      color: #000;
+      font-weight: 600;
+    }
   }
 
   .bar {

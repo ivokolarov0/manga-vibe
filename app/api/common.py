@@ -182,3 +182,40 @@ def ensure_inside_library(db, path: str):
         if p == r or r in p.parents:
             return p
     raise HTTPException(403, "File is outside the library folders")
+
+
+def covered_chapters(books):
+    """The whole chapter numbers the visible, non-extra books cover (ranges included)."""
+    covered = set()
+    for b in books:
+        ch = b.eff_chapter
+        if ch is None or b.eff_extra or b.hidden:
+            continue
+        end = b.eff_chapter_end if b.eff_chapter_end is not None else ch
+        covered.update(range(int(ch), int(end) + 1))
+    return covered
+
+
+def collection(series, books):
+    """How much of the series is here, compared with the source's (or the owner's) total. Best effort:
+    {"unit": "volume" | "chapter" | None, "owned": n, "total": N | None,
+     "state": "complete" | "incomplete" | "unknown"}.
+    Books numbered by volume only are counted by volume, books with a chapter number by chapter.
+    A mix of both, a missing total, or a series that isn't finished gives "unknown"."""
+    main = [b for b in books if not b.hidden and not b.eff_extra]
+    by_chapter = [b for b in main if b.eff_chapter is not None]
+    by_volume = [b for b in main if b.eff_chapter is None and b.eff_volume is not None]
+    if by_chapter and not by_volume:
+        unit, have, total = "chapter", covered_chapters(by_chapter), series.chapters_total
+    elif by_volume and not by_chapter:
+        unit, total = "volume", series.volumes_total
+        have = {int(b.eff_volume) for b in by_volume if float(b.eff_volume).is_integer()}
+    else:
+        return {"unit": None, "owned": 0, "total": None, "state": "unknown"}
+    if not total:
+        return {"unit": unit, "owned": len(have), "total": None, "state": "unknown"}
+    owned = len(have & set(range(1, total + 1)))
+    state = "unknown"
+    if series.publication_status == "FINISHED":
+        state = "complete" if owned == total else "incomplete"
+    return {"unit": unit, "owned": owned, "total": total, "state": state}

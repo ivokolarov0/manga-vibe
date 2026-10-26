@@ -22,8 +22,11 @@ const FILTER_GROUPS = [
     NOT_YET_RELEASED: "Not yet released", UNKNOWN: "Unknown status" }],
   ["match", "Metadata", { matched: "Has metadata", attention: "Needs attention", unmatched: "No metadata" }],
   ["format", "Format", { manga: "Manga", manhwa: "Manhwa", manhua: "Manhua", one_shot: "One-shot", novel: "Novel" }],
+  // finished series only: are all volumes/chapters here? (best effort, see collection() in app/api/common.py)
+  ["have", "Collection", { complete: "Complete collection", incomplete: "Incomplete collection",
+    unknown: "Can't tell if complete" }],
 ];
-const LIST_KEYS = ["read", "pub", "match", "format", "genre", "exclude"];
+const LIST_KEYS = ["read", "pub", "match", "format", "have", "genre", "exclude"];
 // first-letter filter (letter=B); "#" is everything else: numbers, symbols, other scripts
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Completed"],
@@ -64,6 +67,13 @@ function navigateLibrary(p) {
 const libraryUrl = (params) => "#/?" + new URLSearchParams(params).toString();
 const scoreCls = (s) => (s >= 90 ? "hi" : s >= 70 ? "mid" : "lo");
 const kindOf = (s) => s.format === "NOVEL" ? "Novel" : s.format === "ONE_SHOT" ? "One-shot" : COUNTRY[s.country_of_origin];
+
+// "8 / 8 volumes · complete", "120 / 150 chapters · some missing"; empty when there's no total to compare with
+function haveText(c) {
+  if (!c?.total) return "";
+  const text = `${c.owned} / ${c.total} ${c.unit}${c.total === 1 ? "" : "s"}`;
+  return text + ({ complete: " · complete", incomplete: " · some missing" }[c.state] || "");
+}
 
 function cardSub(s) {
   const st = s.reading_status, read = s.book_count - s.unread_count;
@@ -687,6 +697,7 @@ function seriesView() {
         ["Author", s.authors.map((a) => a.name + (a.role ? ` (${a.role})` : "")).join("\n")],
         ["Year", s.start_year], ["Type", kindOf(s)], ["Status", PUB_LABELS[s.publication_status]],
         ["Length", [s.volumes_total && `${s.volumes_total} volumes`, s.chapters_total && `${s.chapters_total} chapters`].filter(Boolean).join(" · ")],
+        ["You have", haveText(s.collection)],
         ["Score", s.average_score && `${s.average_score}%`],
         ["In library", `${s.book_count} books · ${s.unread_count} unread`],
         ...s.plugin_fields.map((f) => [f.label, typeof f.value === "object" ? JSON.stringify(f.value) : f.value]),
