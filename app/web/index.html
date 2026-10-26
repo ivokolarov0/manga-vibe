@@ -713,8 +713,11 @@
             <div>
               <template x-for="x in a.matches" :key="x.series_id">
                 <div class="item">
-                  <a :href="'#/series/' + x.series_id"><b x-text="x.series"></b></a>
-                  <span class="muted" x-text="'folder: ' + x.folder"></span>
+                  <div class="cand own">
+                    <a :href="'#/series/' + x.series_id" :title="x.series"><img :src="x.cover" loading="lazy" alt=""></a>
+                    <div class="info"><a :href="'#/series/' + x.series_id"><b x-text="x.series"></b></a>
+                      <span class="muted" x-text="'Your copy · folder: ' + x.folder"></span></div>
+                  </div>
                   <template x-for="c in x.candidates" :key="c.provider + c.provider_id">
                     <div class="cand">
                       <img :src="c.cover_url" x-show="c.cover_url" loading="lazy" alt="">

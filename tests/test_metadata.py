@@ -193,6 +193,8 @@ def test_ambiguous_goes_to_needs_attention_then_fix(client):
     att = client.get("/api/attention").json()
     item = next(m for m in att["matches"] if m["series_id"] == sid)
     assert item["candidates"][0]["title"] == "Hanako-kun"
+    assert item["cover"].startswith(f"/api/series/{sid}/poster?size=sm&v=")   # your copy, to compare with
+    assert client.get(item["cover"]).status_code == 200
 
     r = client.post(f"/api/series/{sid}/match", json={"url": "https://anilist.co/manga/30002/Hana-to-Akuma"})
     assert r.status_code == 200 and r.json()["match_status"] == "manual"

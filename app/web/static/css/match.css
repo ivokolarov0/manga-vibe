@@ -26,5 +26,18 @@
         font-size: 15px;
       }
     }
+
+    /* The series' own cover, above the candidates, to compare against. */
+    &.own {
+      padding-top: 0;
+
+      & a {
+        flex: none;
+      }
+
+      & img {
+        display: block;
+      }
+    }
   }
 }
