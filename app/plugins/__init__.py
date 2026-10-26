@@ -36,7 +36,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 5
+API_VERSION = 6
 
 
 @dataclass
@@ -153,6 +153,11 @@ class Plugin:
 
     def on_series_scanned(self, ctx, series, books):
         """Called after a series was scanned and ordered."""
+
+    def on_series_deleted(self, ctx, series):
+        """The owner is deleting this series (its folder and everything about it). Called just
+        before, so the series, its books and the plugin's own data for it can still be read.
+        Plugin API 6."""
 
     # --- reading events ---------------------------------------------------
     # Called in the background after the change is saved, one event at a time, so a slow

@@ -20,14 +20,14 @@ it up once; after that MangaVibe updates itself.
 Open **Terminal** (Spotlight → type *Terminal*), paste this and press Enter:
 
 ```bash
-docker run -d --name mangavibe --restart unless-stopped -p 8090:8090 -v "$HOME/Manga:/manga:ro" -v "$HOME/MangaVibe:/data" ivokolarov/mangavibe:latest
+docker run -d --name mangavibe --restart unless-stopped -p 8090:8090 -v "$HOME/Manga:/manga" -v "$HOME/MangaVibe:/data" ivokolarov/mangavibe:latest
 ```
 
 - This expects your manga in a folder called **Manga** in your home folder. If it's somewhere else,
   change `$HOME/Manga` to that path, e.g. `/Volumes/MyDrive/Manga`.
 - `$HOME/MangaVibe` is where MangaVibe keeps its own data (database, covers, plugins). It's created
   for you.
-- `:ro` means read-only: MangaVibe can never change your manga files.
+- `/manga` is mounted read-write so **Delete series** can remove series you don't want. Add `:ro` after `/manga` (`...:/manga:ro`) if MangaVibe should never be able to change your files; deleting is then turned off.
 
 ## 3. Open it
 

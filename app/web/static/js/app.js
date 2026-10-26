@@ -893,6 +893,34 @@ function seriesView() {
         this.reload();
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.rescanning = false; }
     },
+    /* ---- delete the series and its folder ---- */
+    del: { open: false, info: null, busy: false },
+    async openDelete() {
+      this.del = { open: true, info: null, busy: false };
+      try { this.del.info = await api(`/api/series/${this.s.id}/delete-info`); }
+      catch (e) { this.del.open = false; toast(e.message, 6000, "error"); }
+    },
+    closeDelete() { if (!this.del.busy) this.del.open = false; },
+    async confirmDelete() {
+      this.del.busy = true;
+      try {
+        await api(`/api/series/${this.s.id}`, { method: "DELETE" });
+        toast(`Deleted: ${this.s.title}`);
+        this.del = { open: false, info: null, busy: false };
+        this.$store.app.libraryDirty++;
+        refreshAttentionCount();
+        location.hash = "#/";
+      } catch (e) {
+        toast(e.message, 8000, "error");
+        this.del.busy = false;
+        this.del.open = false;
+        this.reload();  // a partial delete: show what is left
+      }
+    },
+    sizeText(n) {
+      return n >= 1073741824 ? (n / 1073741824).toFixed(1) + " GB"
+        : n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.ceil(n / 1024) + " KB";
+    },
     progressPct(b) { return b.page_count ? Math.round((b.page + 1) / b.page_count * 100) : 0; },
     mb(n) { return (n / 1048576).toFixed(1) + " MB"; },
     n(v) { return v === null || v === undefined ? "–" : v; },

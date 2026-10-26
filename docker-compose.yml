@@ -10,7 +10,7 @@ services:
     ports:
       - "8090:8090"
     volumes:
-      - ./dev-library:/manga:ro     # your manga folder, read-only
+      - ./dev-library:/manga        # your manga folder (add :ro to turn off Delete series)
       - ./docker-data:/data         # database, covers, cache, plugins
     environment:
       TZ: Europe/Sofia

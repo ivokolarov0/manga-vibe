@@ -524,6 +524,33 @@ def refresh(series_id: int, db=Depends(get_db)):
     return get_series(series_id, db)
 
 
+@router.get("/series/{series_id}/delete-info")
+def delete_info(series_id: int, db=Depends(get_db)):
+    """For the confirmation: the folder, how many files and bytes, and whether it can be deleted."""
+    from app.scanner import deleting
+    return deleting.info(db, get_or_404(db, Series, series_id))
+
+
+@router.delete("/series/{series_id}")
+def delete_series(series_id: int, db=Depends(get_db)):
+    """Delete the series' folder from the drive, then the series from the library."""
+    get_or_404(db, Series, series_id)
+    db.close()  # the delete uses its own session
+    from app.scanner import deleting, walker
+    try:
+        result = deleting.delete_series(series_id)
+    except deleting.CannotDelete as e:
+        raise HTTPException(400, str(e))
+    except walker.Busy as e:
+        raise HTTPException(409, str(e))
+    except KeyError:
+        raise HTTPException(404, "Series not found")
+    if not result["deleted"]:
+        raise HTTPException(500, f"{result['left']} files could not be deleted ({result['error']}). "
+                                 "The series stays in the library with what is left.")
+    return result
+
+
 @router.post("/series/{series_id}/rescan")
 def rescan(series_id: int, db=Depends(get_db)):
     """Re-read this series' folder now: new files, removed files, changed names, errors.

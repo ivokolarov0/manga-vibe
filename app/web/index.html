@@ -154,6 +154,7 @@
                     <small x-text="readerModeLabel"></small></button>
                   <button @click="menuOpen = false; rescan()">⟳ Rescan this series</button>
                   <button @click="menuOpen = false; fixMatch()">🔎 Fix match…</button>
+                  <button class="danger" @click="menuOpen = false; openDelete()">🗑 Delete series…</button>
                 </div>
               </div>
             </div>
@@ -199,6 +200,32 @@
                     </button>
                   </template>
                 </div>
+              </div>
+            </div>
+
+            <!-- delete the series and its folder (from the ⋯ menu) -->
+            <div class="modal" x-show="del.open" x-cloak @click.self="closeDelete()"
+                 @keydown.escape.window="closeDelete()">
+              <div class="small-dialog delete-dialog">
+                <div class="sheet-head"><b>Delete series</b>
+                  <button class="btn small" :disabled="del.busy" @click="closeDelete()">Cancel</button></div>
+                <p class="muted" x-show="!del.info">Checking the folder…</p>
+                <template x-if="del.info">
+                  <div>
+                    <p>Deletes <b x-text="s.title"></b> from the drive and from MangaVibe:</p>
+                    <ul class="delete-what">
+                      <li>the folder <code class="break" x-text="del.info.folder"></code></li>
+                      <li x-text="`${del.info.files} files, ${sizeText(del.info.size)}`"></li>
+                      <li>its reading progress, metadata and poster</li>
+                    </ul>
+                    <p class="err" x-show="!del.info.can_delete" x-text="del.info.reason"></p>
+                    <p x-show="del.info.can_delete"><b>This can't be undone.</b> The files don't go to a recycle bin.</p>
+                    <div class="btn-row">
+                      <button class="btn danger" :class="{ busy: del.busy }" :disabled="!del.info.can_delete || del.busy"
+                              @click="confirmDelete()" x-text="del.busy ? 'Deleting…' : 'Delete series and files'"></button>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
 
@@ -1098,7 +1125,7 @@
     <div>
       <div class="sheet-head"><b>Add a library folder</b><button class="btn small" @click="close()">Cancel</button></div>
       <p class="muted">These are the folders inside the MangaVibe container. To see another folder here,
-        first mount it into the container as a volume (read-only), then restart it.</p>
+        first mount it into the container as a volume, then restart it.</p>
       <div class="chips" x-show="crumbs.length">
         <template x-for="c in crumbs" :key="c.path">
           <button class="chip-btn" @click="open(c.path)" x-text="c.name"></button>

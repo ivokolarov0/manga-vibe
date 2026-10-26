@@ -6,8 +6,9 @@ your data folder (`docker/mangavibe/plugins` on the NAS). After copying it there
 
 A plugin that fails to load, or crashes in a hook, is logged and skipped. It never stops the app.
 
-**Plugins never write to the manga folder.** It is mounted read-only. Everything a plugin
-produces goes into MangaVibe's database.
+**Plugins don't write to the manga folder.** Everything a plugin produces goes into MangaVibe's
+database. The only thing in the app that changes the owner's files is **Delete series**, and only
+when the owner asks; plugins hear about it through `on_series_deleted`.
 
 ## Minimal plugin
 
@@ -31,6 +32,7 @@ class Hello(Plugin):
 | **Extra fields** shown on the series page | `fields = [FieldDef("key", "Label")]`, then `ctx.set_field(series, "key", value)` (any JSON value; `None` removes it) |
 | **Fix ordering / parsing** | `on_book_scanned(ctx, book, parsed)`: change `parsed.volume`, `.chapter`, `.chapter_end`, `.extra`, `.extra_index`, `.version` |
 | **Do something after a series scan** | `on_series_scanned(ctx, series, books)` |
+| **Clean up when the owner deletes a series** | `on_series_deleted(ctx, series)`: called just before the series and its folder are deleted, so it and your data for it can still be read. Plugin API 6 |
 | **Buttons on the series page** | `actions = [Action("key", "Label", confirm=None)]` and `run_action(ctx, key, series)` returning a message |
 | **Dropdowns on the series page** | `choices = [Choice("key", "Label", options=[("value", "Label"), ...])]`, `get_choice(ctx, key, series)` and `set_choice(ctx, key, series, value)` (see [Dropdowns](#dropdowns)) |
 | **Change how the app looks** | `css = """ :root { --accent: #ff6fa8; } """` (loaded after the built-in styles, so it wins) |

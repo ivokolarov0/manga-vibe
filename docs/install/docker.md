@@ -11,7 +11,7 @@ ARM. Give it port **8090**, auto-restart, and two folders:
 
 | In the container | What it is | Mode |
 |---|---|---|
-| `/manga` | your manga folder | **read-only** |
+| `/manga` | your manga folder | read-write, or read-only (`:ro`) to turn off **Delete series** |
 | `/data` | database, covers, cache, plugins (empty to start with) | read-write |
 
 ## Docker Compose
@@ -24,7 +24,7 @@ services:
     ports:
       - "8090:8090"
     volumes:
-      - /path/to/manga:/manga:ro
+      - /path/to/manga:/manga        # add :ro to turn off Delete series
       - /path/to/mangavibe-data:/data
     restart: unless-stopped
 ```
@@ -38,7 +38,7 @@ All optional:
 | Variable | Default | What it does |
 |---|---|---|
 | `TZ` | `UTC` | Your time zone, e.g. `Europe/Sofia` |
-| `LIBRARY_PATHS` | `/manga` | More than one library: `/manga,/manga2` (mount each one read-only) |
+| `LIBRARY_PATHS` | `/manga` | More than one library: `/manga,/manga2` (mount each one into the container) |
 | `RESCAN_HOURS` | `6` | How often the library is scanned for new files |
 | `CACHE_MAX_GB` | `2` | Space for resized pages and thumbnails |
 | `PUID` / `PGID` | `1000` | User the app runs as, if that user can read your manga folder |

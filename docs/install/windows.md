@@ -21,13 +21,13 @@ it up once; after that MangaVibe updates itself.
 2. Paste this line, but first change `D:\Manga` to the folder your manga is in, then press Enter:
 
    ```powershell
-   docker run -d --name mangavibe --restart unless-stopped -p 8090:8090 -v "D:\Manga:/manga:ro" -v "C:\MangaVibe:/data" ivokolarov/mangavibe:latest
+   docker run -d --name mangavibe --restart unless-stopped -p 8090:8090 -v "D:\Manga:/manga" -v "C:\MangaVibe:/data" ivokolarov/mangavibe:latest
    ```
 
    - To get a folder's path, open it in File Explorer and click the address bar.
    - `C:\MangaVibe` is where MangaVibe keeps its own data (database, covers, plugins). It's created
      for you.
-   - `:ro` means read-only: MangaVibe can never change your manga files.
+   - `/manga` is mounted read-write so **Delete series** can remove series you don't want. Add `:ro` after `/manga` (`...:/manga:ro`) if MangaVibe should never be able to change your files; deleting is then turned off.
 
 ## 3. Open it
 

@@ -4,7 +4,8 @@ Choices made where the spec was open. Newest at the bottom.
 
 ## Phase 1
 
-- **Library stays read-only, plugins included** (owner's choice). Plugins add metadata, extra
+- **Library stays read-only, plugins included** (owner's choice; since replaced for one case: see
+  [Delete series](#delete-series-the-one-way-the-app-changes-the-library)). Plugins add metadata, extra
   fields, scan hooks and buttons, but all their data goes into the database in `/data`. No
   write-back of ComicInfo.xml, no renaming.
 - **Plugins are plain Python files** in `/data/plugins`, loaded at startup or via "Reload plugins".
@@ -424,3 +425,24 @@ Choices made where the spec was open. Newest at the bottom.
 - **A tap in the middle opens the menu.** It used to only show the bars, and the options needed a second
   tap on ☰. Now the bars and the options drawer come up together; a tap beside the drawer closes it and
   the bars hide on their own. Tapping off ("swipe only") and zoomed-in taps do the same.
+
+## Delete series: the one way the app changes the library
+
+- **The owner changed the read-only decision** (issue #104): they want to delete series they don't care
+  about without leaving the app. Only that: a whole series folder, when the owner asks. Renaming, moving,
+  tagging and converting files stay out of scope, and plugins still can't write to the library.
+- **The mount is the switch.** Install docs now mount `/manga` read-write; `:ro` (Synology: Read-only)
+  turns deleting off. No separate setting: the mount already says what the app may do, and a setting
+  could disagree with it. The dialog tells apart a read-only mount (statvfs `ST_RDONLY`) and a folder the
+  app's user (`PUID`) can't write to, since the fixes differ.
+- **Only a series folder.** It must be a real folder (not a link) directly inside its library folder; the
+  library folder itself and anything deeper are refused. It waits for, or refuses during, a full scan.
+- **Folder first, then the database.** If some files can't be deleted (in use, no permission), the series
+  stays and is rescanned, so what is left still shows up. Once the folder is gone the series row is
+  deleted at once (not hidden for `KEEP_MISSING_DAYS` like a folder that disappears by itself): books,
+  progress, tags, links and plugin data go with it through `ON DELETE CASCADE`; its poster, thumbnails,
+  cached pages and ignored Needs attention rows are removed too.
+- **Plugins** get `on_series_deleted(ctx, series)` just before (plugin API 6), to clean up their own data
+  elsewhere.
+- **No password, so anyone who reaches the app can delete.** `docs/away-from-home.md` says to mount
+  read-only before opening it to the internet.
