@@ -74,7 +74,7 @@ Deliverables must therefore include:
 | `.cbz`, `.zip` | Python `zipfile`. Read pages directly from the archive; do not extract to disk. |
 | `.cbr`, `.rar` | `rarfile` Python package + `unrar` binary installed in the Docker image. |
 | `.cb7`, `.7z` | `py7zr` (nice to have). |
-| Folder of `.jpg/.jpeg/.png/.webp/.gif/.avif` | Treat as one book. |
+| Folder of `.jpg/.jpeg/.png/.webp/.gif/.avif/.jxl` | Treat as one book. |
 | `.epub` (image-based manga) | Read the spine; if pages are images, show them in the normal manga reader. |
 | `.epub` (text, light novels) | **Phase 6.** Until then, list it in the library and show a "text EPUB, reader coming later" message. |
 | `.pdf` | Nice to have (render pages with PyMuPDF). |

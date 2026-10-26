@@ -130,3 +130,33 @@ def test_folder_picker_and_remove_library(client):
     with SessionLocal() as db:  # removed folders are not added back from LIBRARY_PATHS on restart
         walker.ensure_libraries(db, [str(extra)])
     assert str(extra) not in [l["root_path"] for l in client.get("/api/libraries").json()]
+
+
+def jxl(color, size=(120, 180)):
+    from app import images  # noqa: F401  (registers JPEG XL)
+    out = io.BytesIO()
+    Image.new("RGB", size, color).save(out, "JXL")
+    return out.getvalue()
+
+
+def test_jpeg_xl_pages(client):
+    """Archives of .jxl pages: listed, thumbnailed, and sent to the browser as WebP."""
+    from app.scanner import walker
+    folder = TMP / "manga" / "Jxl Series"
+    folder.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(folder / "Jxl Series v01.cbz", "w") as z:
+        for i in (2, 1):
+            z.writestr(f"{i:03}.jxl", jxl((i * 90, 30, 60)))
+    walker.scan_all()
+    sid = next(s["id"] for s in client.get("/api/series", params={"q": "Jxl Series"}).json()["items"])
+    book = client.get(f"/api/series/{sid}/books").json()[0]
+    assert book["page_count"] == 2 and not book["error"]
+    assert client.get(f"/api/books/{book['id']}/thumbnail").status_code == 200
+    for url in (f"/api/books/{book['id']}/pages/0", f"/api/books/{book['id']}/pages/1?w=400"):
+        r = client.get(url)
+        assert r.status_code == 200 and r.headers["content-type"] == "image/webp"
+        assert Image.open(io.BytesIO(r.content)).size == (120, 180)
+    # a JPEG XL poster upload works too
+    r = client.post(f"/api/series/{sid}/poster/upload", files={"file": ("p.jxl", jxl((1, 2, 3), (300, 450)), "image/jxl")})
+    assert r.status_code == 200, r.text
+    client.delete(f"/api/series/{sid}")

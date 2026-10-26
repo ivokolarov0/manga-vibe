@@ -1134,7 +1134,7 @@
               <section>
                 <h3>Upload an image</h3>
                 <p class="muted">JPEG, PNG, WebP, GIF or AVIF, up to 10 MB. The image is checked and saved as a new JPEG.</p>
-                <input type="file" x-ref="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" @change="pickFile($event)">
+                <input type="file" x-ref="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/jxl,.jxl" @change="pickFile($event)">
                 <div class="btn-row" x-show="file">
                   <button class="btn primary" :disabled="uploading" @click="upload()" x-text="uploading ? 'Uploading…' : 'Use this image'"></button>
                   <button class="btn" @click="clearFile()">Cancel</button>

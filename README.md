@@ -46,7 +46,8 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 - **Each folder is a series**, and the books in it are put in order even with messy file names:
   `Vol 3`, `ch03v2`, `c10-18`, `15a`, Japanese titles, extras and duplicates.
 - **Reads** `.cbz/.zip`, `.cbr/.rar`, `.cb7/.7z`, image `.epub`, `.pdf` and folders of images, without
-  unpacking them. Archives inside archives and files with the wrong extension work too.
+  unpacking them. Pages can be JPEG, PNG, WebP, GIF, AVIF, JPEG XL, BMP or TIFF. Archives inside
+  archives and files with the wrong extension work too.
 - **Several library folders**, each scanned every few hours and on start. New files show up by
   themselves; a removed file disappears.
 - **Covers and details** (titles in three languages, description, genres, tags, authors, status,

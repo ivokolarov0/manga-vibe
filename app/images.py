@@ -9,6 +9,11 @@ from PIL import Image, ImageOps
 from app import config
 
 log = logging.getLogger("mangavibe")
+
+try:  # JPEG XL pages: Pillow can't read them by itself. Browsers mostly can't either, so they are
+    import pillow_jxl  # noqa: F401  (registers the format)   sent to the reader as WebP.
+except ImportError:  # an older image before its new packages are installed
+    log.warning("pillow-jxl-plugin is missing: JPEG XL pages can't be shown")
 THUMB_WIDTH = 300
 _cache_lock = threading.Lock()
 _writes_since_trim = 0

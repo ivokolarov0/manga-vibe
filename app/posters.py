@@ -13,11 +13,11 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
-from app import config
+from app import config, images  # noqa: F401  (images registers JPEG XL)
 
 MAX_UPLOAD = 10 * 1024 * 1024
 MAX_PIXELS = 40_000_000           # e.g. 5000 x 8000
-ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "GIF", "BMP", "AVIF", "MPO"}
+ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "GIF", "BMP", "AVIF", "MPO", "JXL"}
 BIG_WIDTH, SMALL_BOX = 600, (300, 450)
 
 
@@ -33,9 +33,9 @@ def _decode(data: bytes) -> Image.Image:
     try:
         im = Image.open(io.BytesIO(data))  # reads only the header
     except Exception:
-        raise PosterError("That file is not an image (JPEG, PNG, WebP, GIF or AVIF)")
+        raise PosterError("That file is not an image (JPEG, PNG, WebP, GIF, AVIF or JPEG XL)")
     if im.format not in ALLOWED_FORMATS:
-        raise PosterError(f"{im.format} images can't be used; use JPEG, PNG, WebP, GIF or AVIF")
+        raise PosterError(f"{im.format} images can't be used; use JPEG, PNG, WebP, GIF, AVIF or JPEG XL")
     if im.width * im.height > MAX_PIXELS or im.width < 16 or im.height < 16:
         raise PosterError("The image size is out of range")
     try:
