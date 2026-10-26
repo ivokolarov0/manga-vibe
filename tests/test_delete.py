@@ -163,3 +163,35 @@ def test_plugins_see_the_series_before_it_goes(client, monkeypatch):
 def test_missing_series(client):
     assert client.delete("/api/series/999999").status_code == 404
     assert client.get("/api/series/999999/delete-info").status_code == 404
+
+
+def test_select_all_ids_follow_the_filters(client):
+    """Multi-select's "Select all": every match, not only the loaded page, in the grid's order."""
+    _, a = make_series(client, "Pick Alpha")
+    _, b = make_series(client, "Pick Beta")
+    ids = client.get("/api/series", params={"q": "Pick ", "ids_only": "true"}).json()["ids"]
+    assert ids == [a, b]
+    page = client.get("/api/series", params={"q": "Pick ", "limit": 1}).json()
+    assert [s["id"] for s in page["items"]] == [a] and page["total"] == 2
+    for sid in (a, b):
+        client.delete(f"/api/series/{sid}")
+
+
+def test_bulk_actions(client):
+    _, a = make_series(client, "Bulk Alpha")
+    _, b = make_series(client, "Bulk Beta")
+    ids = [a, b, 999999]  # an unknown id is skipped
+    r = client.post("/api/series/bulk", json={"ids": ids, "action": "read"}).json()
+    assert r == {"done": 2, "skipped": 1}
+    assert all(client.get(f"/api/series/{s}").json()["reading_status"] == "completed" for s in (a, b))
+    client.post("/api/series/bulk", json={"ids": ids, "action": "unread"})
+    assert all(client.get(f"/api/series/{s}").json()["reading_status"] == "unread" for s in (a, b))
+    client.post("/api/series/bulk", json={"ids": [a], "action": "favorite"})
+    assert client.get(f"/api/series/{a}").json()["favorite"] is True
+    client.post("/api/series/bulk", json={"ids": [a], "action": "unfavorite"})
+    assert client.get(f"/api/series/{a}").json()["favorite"] is False
+    # refresh only queues series that have a metadata source
+    assert client.post("/api/series/bulk", json={"ids": [a, b], "action": "refresh"}).json() == {"done": 0, "skipped": 2}
+    assert client.post("/api/series/bulk", json={"ids": [a], "action": "rename"}).status_code == 400
+    for sid in (a, b):
+        client.delete(f"/api/series/{sid}")
