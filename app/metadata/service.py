@@ -52,8 +52,33 @@ def ordered_providers():
 
 # ---------------------------------------------------------------- applying
 
+def prepare(db, series, data, provider_id_name, fresh=False):
+    """The network part of applying metadata: the cover and the MangaUpdates lookup.
+    Call it before anything is written, then pass the result to apply(). SQLite lets one
+    connection write at a time, so waiting on the network after the first write would hold up
+    everything else (a manual match, saving reading progress) until the downloads finish.
+    fresh: the series' metadata is cleared before apply() (manual match, upgrade)."""
+    locked = set(series.locked_fields or [])
+    cover = None
+    if data.get("cover_url") and "poster" not in locked and series.poster_source != "upload":
+        try:
+            cover = http.get_bytes(data["cover_url"])
+        except http.ProviderError as e:
+            log.warning("Could not use the cover for %s: %s", series.folder_name, e)
+    secondary = None
+    has_mu = (data.get("ids") or {}).get("mangaupdates_id") or (not fresh and series.mangaupdates_id)
+    if provider_id_name != "mangaupdates" and not has_mu:
+        value = lambda f: getattr(series, f) if f in locked else data.get(f)  # as apply() leaves it
+        titles = [t for t in (value("title_romaji"), value("title_english"), value("title_native"),
+                              *(value("synonyms") or [])) if t]
+        secondary = find_secondary(db, series, titles, value("start_year"))
+    return {"cover": cover, "secondary": secondary}
+
+
 def apply(db, series, data, provider_id_name, provider_item_id, status="manual", confidence=None,
-          download_poster=True):
+          extras=None):
+    """Write the metadata. extras: what prepare() downloaded (cover, MangaUpdates match)."""
+    extras = extras or {}
     locked = set(series.locked_fields or [])
     for f in SERIES_FIELDS:
         if f not in locked and f in data:
@@ -64,7 +89,11 @@ def apply(db, series, data, provider_id_name, provider_item_id, status="manual",
     if "tags" not in locked:
         set_tags(db, series, data.get("genres") or [], data.get("tags") or [])
     if "links" not in locked:
-        set_links(db, series, data.get("links") or [])
+        keep = []  # a refresh keeps the MangaUpdates link found earlier (it isn't looked up again)
+        if series.mangaupdates_id and provider_id_name != "mangaupdates":
+            keep = [{"site": l.site, "url": l.url}
+                    for l in db.query(Link).filter_by(series_id=series.id, site="MangaUpdates")]
+        set_links(db, series, (data.get("links") or []) + keep)
     series.metadata_source = {"provider": provider_id_name, "id": str(provider_item_id)}
     series.match_status = status
     series.match_confidence = confidence
@@ -72,9 +101,15 @@ def apply(db, series, data, provider_id_name, provider_item_id, status="manual",
     series.matched_at = now()
     if series.title_romaji or series.title_english:
         series.sort_title = (series.title_romaji or series.title_english).lower()
-    if download_poster and data.get("cover_url") and "poster" not in locked \
-            and series.poster_source != "upload":
-        save_poster(series, data["cover_url"])
+    if extras.get("cover"):
+        try:
+            save_poster_bytes(series, extras["cover"], "provider")
+        except PosterError as e:
+            log.warning("Could not use the cover for %s: %s", series.folder_name, e)
+    mu = extras.get("secondary")
+    if mu:
+        series.mangaupdates_id = mu.provider_id
+        add_links(db, series, [{"site": "MangaUpdates", "url": mu.url}] if mu.url else [])
 
 
 def add_links(db, series, links):
@@ -92,35 +127,30 @@ def set_links(db, series, links):
 
 def set_tags(db, series, genres, tags):
     """Replace provider genres/tags; the owner's custom tags are kept."""
-    custom = {t.id for t in db.query(Tag).filter_by(kind="custom")}
-    for st in db.query(SeriesTag).filter_by(series_id=series.id):
-        if st.tag_id not in custom:
-            db.delete(st)
+    custom = {tid for (tid,) in db.query(Tag.id).filter_by(kind="custom")}
+    old = db.query(SeriesTag).filter(SeriesTag.series_id == series.id)
+    if custom:
+        old = old.filter(SeriesTag.tag_id.not_in(custom))
+    old.delete()
     db.flush()
+    items = [("genre", {"name": g}) for g in genres] + [("tag", t) for t in tags]
+    names = {item["name"].strip() for _, item in items} - {""}
+    existing = {t.name: t for t in db.query(Tag).filter(Tag.name.in_(names))} if names else {}
     seen = set()
-    for kind, items in (("genre", [{"name": g} for g in genres]), ("tag", tags)):
-        for item in items:
-            name = item["name"].strip()
-            if not name or name.lower() in seen:
-                continue
-            seen.add(name.lower())
-            tag = db.query(Tag).filter(Tag.name == name).one_or_none()
-            if tag is None:
-                tag = Tag(name=name, kind=kind)
-                db.add(tag)
-                db.flush()
-            if tag.id in custom:
-                continue
-            db.add(SeriesTag(series_id=series.id, tag_id=tag.id, rank=item.get("rank"),
-                             is_spoiler=bool(item.get("spoiler"))))
-
-
-def save_poster(series, url):
-    """Download a provider cover; it goes through the same checks as an uploaded poster."""
-    try:
-        save_poster_bytes(series, http.get_bytes(url), "provider")
-    except (http.ProviderError, PosterError) as e:
-        log.warning("Could not use the cover for %s: %s", series.folder_name, e)
+    for kind, item in items:
+        name = item["name"].strip()
+        if not name or name.lower() in seen:
+            continue
+        seen.add(name.lower())
+        tag = existing.get(name)
+        if tag is None:
+            tag = Tag(name=name, kind=kind)
+            db.add(tag)
+            db.flush()
+        if tag.id in custom:
+            continue
+        db.add(SeriesTag(series_id=series.id, tag_id=tag.id, rank=item.get("rank"),
+                         is_spoiler=bool(item.get("spoiler"))))
 
 
 def clear_metadata(db, series):
@@ -181,12 +211,11 @@ def auto_match(db, series):
         best = matcher.pick(scored, threshold)
         if best:
             data = best.data or p.fetch(Context(p, db), best.provider_id)
-            apply(db, series, data, p.id, best.provider_id, "auto", scored[0][0])
+            extras = prepare(db, series, data, p.id)
+            apply(db, series, data, p.id, best.provider_id, "auto", scored[0][0], extras)
             if PRIMARY_ORDER[0] in down:
                 # matched with a fallback only because AniList was down: try AniList again later
                 series.metadata_source = {**series.metadata_source, "retry_primary": True}
-            if p.id != "mangaupdates":
-                add_secondary(db, series)
             log.info("Matched %s -> %s (%s, %d%%)", series.folder_name, best.title, p.name, scored[0][0])
             return True
         if not saved:
@@ -200,26 +229,19 @@ def auto_match(db, series):
     return False
 
 
-def add_secondary(db, series):
-    """After an AniList match, add the MangaUpdates link/ID if it's a confident match."""
+def find_secondary(db, series, titles, year):
+    """After an AniList match: the MangaUpdates entry for the link/ID, if it's a confident match."""
     mu = provider("mangaupdates")
-    if mu is None or series.mangaupdates_id:
-        return
-    titles = [t for t in (series.title_romaji, series.title_english, series.title_native,
-                          *(series.synonyms or [])) if t]
-    if not titles:
-        return
+    if mu is None or not titles:
+        return None
     try:
-        cands = mu.search(Context(mu, db), titles[0], series.start_year)
+        cands = mu.search(Context(mu, db), titles[0], year)
     except http.ProviderError as e:
         log.info("MangaUpdates lookup skipped for %s: %s", series.folder_name, e)
-        return
-    scored = sorted(((max(matcher.score(t, [c.title, *c.other_titles], series.start_year, c.year)
+        return None
+    scored = sorted(((max(matcher.score(t, [c.title, *c.other_titles], year, c.year)
                           for t in titles[:3]), c) for c in cands), key=lambda x: -x[0])
-    best = matcher.pick(scored, 90, 5)
-    if best:
-        series.mangaupdates_id = best.provider_id
-        add_links(db, series, [{"site": "MangaUpdates", "url": best.url}] if best.url else [])
+    return matcher.pick(scored, 90, 5)
 
 
 def search(db, series, provider_id_name, query):
@@ -243,10 +265,9 @@ def manual_match(db, series, provider_id_name=None, item_id=None, url=None):
     if p is None:
         raise ValueError(f"Unknown provider {provider_id_name}")
     data = p.fetch(Context(p, db), item_id)
+    extras = prepare(db, series, data, p.id, fresh=True)
     clear_metadata(db, series)
-    apply(db, series, data, p.id, item_id, "manual", 100)
-    if p.id != "mangaupdates":
-        add_secondary(db, series)
+    apply(db, series, data, p.id, item_id, "manual", 100, extras)
 
 
 def unmatch(db, series, ignore=False):
@@ -262,10 +283,9 @@ def refresh(db, series):
     p = provider(src["provider"])
     if p is None:
         raise ValueError(f"Provider {src['provider']} is not installed or disabled")
-    apply(db, series, p.fetch(Context(p, db), src["id"]), p.id, src["id"],
-          series.match_status, series.match_confidence)
-    if p.id != "mangaupdates":
-        add_secondary(db, series)
+    data = p.fetch(Context(p, db), src["id"])
+    extras = prepare(db, series, data, p.id)
+    apply(db, series, data, p.id, src["id"], series.match_status, series.match_confidence, extras)
 
 
 def upgrade_to_primary(db, series):
@@ -280,9 +300,9 @@ def upgrade_to_primary(db, series):
     if best is None:
         series.metadata_source = {k: v for k, v in src.items() if k != "retry_primary"}
         return False
+    data = best.data or p.fetch(Context(p, db), best.provider_id)
+    extras = prepare(db, series, data, p.id, fresh=True)  # looks up the MangaUpdates link again
     clear_metadata(db, series)
-    apply(db, series, best.data or p.fetch(Context(p, db), best.provider_id), p.id, best.provider_id,
-          "auto", scored[0][0])
-    add_secondary(db, series)  # looks up the MangaUpdates link again
+    apply(db, series, data, p.id, best.provider_id, "auto", scored[0][0], extras)
     log.info("Upgraded %s to %s metadata", series.folder_name, p.name)
     return True

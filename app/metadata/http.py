@@ -2,19 +2,29 @@
 import logging
 import threading
 import time
+from collections import deque
 from urllib.parse import urlparse
 
 import httpx
 
 log = logging.getLogger("mangavibe.http")
 
-# minimum seconds between requests per host (AniList: spec says ~30/min)
+# seconds between requests per host, on average (AniList: spec says ~30/min)
 MIN_INTERVAL = {"graphql.anilist.co": 2.0, "api.mangaupdates.com": 1.0}
 DEFAULT_INTERVAL = 1.0
 USER_AGENT = "MangaVibe/1.0 (personal self-hosted manga server)"
 
-_last: dict[str, float] = {}
-_lock = threading.Lock()
+# The interval is the average rate a site allows (AniList: 30 a minute). The background worker
+# (matching a newly added library can take hours) uses at most BACKGROUND_SHARE of it, so a
+# search or match the owner starts goes out right away instead of queueing behind the worker.
+WINDOW = 60.0
+BACKGROUND_SHARE = 0.7
+BURST_GAP = 0.25  # the shortest gap between the owner's requests, as a fraction of the interval
+
+_sent: dict[str, deque] = {}  # host -> time.monotonic() of the requests in the last WINDOW seconds
+_waiting: dict[str, int] = {}  # host -> the owner's requests waiting for their turn
+_cond = threading.Condition()
+_thread = threading.local()
 transport = None  # tests put an httpx.MockTransport here
 
 
@@ -24,13 +34,48 @@ class ProviderError(Exception):
         self.status = status  # the HTTP status code, or None when the site couldn't be reached
 
 
+def run_in_background():
+    """Mark the calling thread as background work: its requests give way to the owner's."""
+    _thread.background = True
+
+
+def _delay(host, background, now):
+    """Seconds until this request may go out (0: now), or None to wait for the owner's requests."""
+    gap = MIN_INTERVAL.get(host, DEFAULT_INTERVAL)
+    sent = _sent.setdefault(host, deque())
+    while sent and sent[0] <= now - WINDOW:
+        sent.popleft()
+    if background:
+        if _waiting.get(host):
+            return None
+        limit, spacing = max(1, int(WINDOW / gap * BACKGROUND_SHARE)), gap / BACKGROUND_SHARE
+    else:
+        limit, spacing = max(1, int(WINDOW / gap)), gap * BURST_GAP
+    wait = (sent[-1] + spacing - now) if sent else 0
+    if len(sent) >= limit:  # wait until enough of the last minute's requests are older than WINDOW
+        wait = max(wait, sent[len(sent) - limit] + WINDOW - now)
+    return max(wait, 0)
+
+
 def _wait_turn(host):
-    with _lock:
-        gap = MIN_INTERVAL.get(host, DEFAULT_INTERVAL)
-        wait = _last.get(host, 0) + gap - time.monotonic()
-        _last[host] = max(time.monotonic(), _last.get(host, 0) + gap)
-    if wait > 0 and transport is None:
-        time.sleep(wait)
+    if transport is not None:
+        return
+    background = getattr(_thread, "background", False)
+    with _cond:
+        if not background:
+            _waiting[host] = _waiting.get(host, 0) + 1
+        try:
+            while True:
+                now = time.monotonic()
+                wait = _delay(host, background, now)
+                if wait == 0:
+                    _sent[host].append(now)
+                    return
+                _cond.wait(wait if wait is not None else WINDOW)
+        finally:
+            if not background:
+                _waiting[host] -= 1
+            _cond.notify_all()
 
 
 def request(method, url, retries=4, **kw):

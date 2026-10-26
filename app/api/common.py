@@ -2,8 +2,10 @@
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import NamedTuple
 
 from fastapi import HTTPException
+from sqlalchemy import case, func
 
 from app.db import get_setting
 from app.models import Book, Library, Progress
@@ -182,6 +184,29 @@ def ensure_inside_library(db, path: str):
         if p == r or r in p.parents:
             return p
     raise HTTPException(403, "File is outside the library folders")
+
+
+class BookNumbers(NamedTuple):
+    """The numbering of a visible book: what covered_chapters() and collection() read."""
+    eff_volume: float | None
+    eff_chapter: float | None
+    eff_chapter_end: float | None
+    eff_extra: bool
+    hidden: bool = False
+
+
+def book_numbers(db, *conditions):
+    """{series id: [BookNumbers]} for the visible books matching the conditions. Reads only the
+    number columns: much cheaper than loading whole Book rows for many series."""
+    chapter = func.coalesce(Book.override_chapter, Book.chapter)
+    q = (db.query(Book.series_id, func.coalesce(Book.override_volume, Book.volume), chapter,
+                  case((Book.override_chapter.is_not(None), Book.override_chapter_end), else_=Book.chapter_end),
+                  func.coalesce(Book.override_extra, Book.extra))
+         .filter(Book.missing_since.is_(None), Book.hidden.is_(False), *conditions))
+    out = {}
+    for sid, vol, ch, end, extra in q:
+        out.setdefault(sid, []).append(BookNumbers(vol, ch, end, bool(extra)))
+    return out
 
 
 def covered_chapters(books):

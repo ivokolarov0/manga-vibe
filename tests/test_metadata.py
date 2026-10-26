@@ -143,6 +143,52 @@ def test_auto_match_anilist(client):
     assert client.get(s["poster_large"]).headers["content-type"] == "image/jpeg"
 
 
+def test_downloads_happen_before_database_writes(client):
+    """The cover and the MangaUpdates lookup must not run while this match holds SQLite's single
+    write lock: everything else (a manual match, saving progress) would wait for the network."""
+    import sqlite3
+    from app import config
+    free = []
+
+    def check(request):
+        if request.url.host in ("img.test", "api.mangaupdates.com"):
+            other = sqlite3.connect(config.DB_PATH, timeout=0)
+            try:
+                other.execute("BEGIN IMMEDIATE")  # fails at once if someone else is writing
+                other.rollback()
+                free.append(True)
+            except sqlite3.OperationalError:
+                free.append(False)
+            finally:
+                other.close()
+        return handler(request)
+
+    http.transport = httpx.MockTransport(check)
+    sid = hana(client)
+    client.post(f"/api/series/{sid}/unmatch")
+    assert run_auto_match(sid) is True
+    assert client.post(f"/api/series/{sid}/match", json={"provider": "anilist", "provider_id": "30002"}).status_code == 200
+    assert client.post(f"/api/series/{sid}/refresh").status_code == 200
+    assert free and all(free)
+    assert "MangaUpdates" in {l["site"] for l in client.get(f"/api/series/{sid}").json()["links"]}
+
+
+def test_owner_requests_go_before_the_background_worker(monkeypatch):
+    host = "graphql.anilist.co"  # 2 s apart on average: 30 a minute, the worker may use 21
+    monkeypatch.setattr(http, "_sent", {host: __import__("collections").deque()})
+    monkeypatch.setattr(http, "_waiting", {})
+    t = 1000.0
+    http._sent[host].extend([t - 50 + i * 2.5 for i in range(20)])  # the worker's last minute
+    now = t - 50 + 19 * 2.5 + 0.1                                   # just after its last request
+    assert http._delay(host, False, now) == pytest.approx(0.4)       # owner: only a short gap
+    assert http._delay(host, True, now) == pytest.approx(2.857 - 0.1, abs=0.01)
+    http._waiting[host] = 1
+    assert http._delay(host, True, now + 5) is None                  # worker waits for the owner
+    http._waiting[host] = 0
+    http._sent[host].extend([now + i for i in range(10)])            # 30 in the last minute: full
+    assert http._delay(host, False, now + 10) > 0
+
+
 def test_title_language_setting(client):
     sid = hana(client)
     client.post(f"/api/series/{sid}/match", json={"provider": "anilist", "provider_id": "30002"})
@@ -270,3 +316,18 @@ def test_metadata_providers_order_and_toggle(client):
     finally:
         client.put("/api/plugins/anilist", json={"enabled": True})
         client.put("/api/plugins/mangaupdates", json={"enabled": True})
+
+
+def test_status_counts_the_current_run(monkeypatch):
+    """The progress bar's numbers: a new run starts counting when the queue was idle."""
+    import queue
+    from app.metadata import worker
+    monkeypatch.setattr(worker, "_q", queue.Queue())
+    monkeypatch.setattr(worker, "_pending", set())
+    monkeypatch.setitem(worker.status, "current", None)
+    monkeypatch.setitem(worker.status, "batch_done", 7)
+    monkeypatch.setitem(worker.status, "batch_started", None)
+    worker.enqueue("match", 1)
+    worker.enqueue("match", 2)
+    assert worker.status["batch_done"] == 0 and worker.status["batch_started"]
+    assert worker.status["queued"] == 2

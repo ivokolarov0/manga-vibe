@@ -10,8 +10,9 @@ import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import func
 
-from app.api.common import book_label, covered_chapters, display_title, poster_version, title_lang
+from app.api.common import book_label, book_numbers, covered_chapters, display_title, poster_version, title_lang
 from app.db import get_db, get_setting, set_setting
 from app.metadata.service import ID_FIELDS
 from app.models import Book, Library, Series
@@ -92,13 +93,22 @@ def _book_info(b):
             "thumbnail": f"/api/books/{b.id}/thumbnail?v={int(b.mtime)}", "hidden": b.hidden_by_owner}
 
 
+def _book_counts(db, series_ids):
+    """{series id: books not hidden by the owner}"""
+    if not series_ids:
+        return {}
+    q = (db.query(Book.series_id, func.count(Book.id))
+         .filter(Book.series_id.in_(series_ids), Book.missing_since.is_(None),
+                 Book.hidden_by_owner.is_not(True))
+         .group_by(Book.series_id))
+    return dict(q.all())
+
+
 @router.get("/attention")
 def attention(ignored: bool = False, db=Depends(get_db)):
     """The lists. With ignored=true, ignored rows are included (marked "ignored": true)."""
     lang = title_lang(db)
     skip = set(get_setting(db, "attention_ignored", []) or [])
-    series = {s.id: s for s in db.query(Series).filter(Series.missing_since.is_(None))}
-    name = lambda sid: display_title(series[sid], lang)
     lists = {k: [] for k in ("matches", "same", "unreadable", "unsupported", "duplicates", "gaps")}
     hidden = {k: 0 for k in lists}
 
@@ -110,40 +120,52 @@ def attention(ignored: bool = False, db=Depends(get_db)):
                 return
         lists[kind].append(item)
 
-    for b in db.query(Book).filter(Book.error.is_not(None), Book.missing_since.is_(None)):
-        if b.series_id not in series:
-            continue
+    # Only flagged rows are loaded in full; on a big library almost every series and book is fine,
+    # and loading them all as objects made this list take seconds.
+    live = {sid for (sid,) in db.query(Series.id).filter(Series.missing_since.is_(None))}
+    errors = [b for b in db.query(Book).filter(Book.error.is_not(None), Book.missing_since.is_(None))
+              if b.series_id in live]
+    flagged = {}
+    for b in db.query(Book).filter(Book.duplicate_flag.is_(True), Book.missing_since.is_(None)):
+        if b.series_id in live:
+            flagged.setdefault(b.series_id, []).append(b)
+    numbered = book_numbers(db, func.coalesce(Book.override_chapter, Book.chapter).is_not(None))
+    gaps = {sid: g for sid, books in numbered.items() if sid in live and (g := chapter_gaps(books))}
+    failed = [sid for (sid,) in db.query(Series.id).filter(Series.match_status == "failed",
+                                                           Series.missing_since.is_(None))]
+    same = same_match_groups(_series_ids(db))
+    needed = {b.series_id for b in errors} | set(flagged) | set(gaps) | set(failed) \
+        | {sid for _, sids, _ in same for sid in sids}
+    series = {s.id: s for s in db.query(Series).filter(Series.id.in_(needed))} if needed else {}
+    name = lambda sid: display_title(series[sid], lang)
+
+    for b in errors:
         not_yet = b.format not in SUPPORTED or b.error.startswith(TEXT_EPUB)
         add("unsupported" if not_yet else "unreadable", {
             "key": f"err:{b.id}", "series_id": b.series_id, "series": name(b.series_id), "book_id": b.id,
             "file": b.file_name, "path": b.path, "error": b.error, "format": b.format})
-
-    books_by_series = {}
-    for b in db.query(Book).filter(Book.missing_since.is_(None)):
-        books_by_series.setdefault(b.series_id, []).append(b)
-    for sid, s in series.items():
-        books = books_by_series.get(sid, [])
-        if s.has_duplicates:
-            for part, group in duplicate_groups(books):
-                add("duplicates", {"key": f"dup:{sid}:{part}", "series_id": sid, "series": name(sid),
-                                   "cover": f"/api/series/{sid}/poster?size=sm&v={poster_version(s)}",
-                                   "label": book_label(group[0]), "files": [_book_info(b) for b in group]})
-        g = chapter_gaps(books)
-        if g:
-            add("gaps", {"key": f"gap:{sid}", "series_id": sid, "series": name(sid),
-                         "gaps": [f"{a} → {b}" for a, b in g]})
-        if s.match_status == "failed":
-            add("matches", {"series_id": sid, "series": name(sid), "folder": s.folder_name,
-                            "cover": f"/api/series/{sid}/poster?size=sm&v={poster_version(s)}",
-                            "candidates": (s.match_candidates or [])[:3]})
+    for sid, books in flagged.items():
+        for part, group in duplicate_groups(books):
+            add("duplicates", {"key": f"dup:{sid}:{part}", "series_id": sid, "series": name(sid),
+                               "cover": f"/api/series/{sid}/poster?size=sm&v={poster_version(series[sid])}",
+                               "label": book_label(group[0]), "files": [_book_info(b) for b in group]})
+    for sid, g in gaps.items():
+        add("gaps", {"key": f"gap:{sid}", "series_id": sid, "series": name(sid),
+                     "gaps": [f"{a} → {b}" for a, b in g]})
+    for sid in failed:
+        s = series[sid]
+        add("matches", {"series_id": sid, "series": name(sid), "folder": s.folder_name,
+                        "cover": f"/api/series/{sid}/poster?size=sm&v={poster_version(s)}",
+                        "candidates": (s.match_candidates or [])[:3]})
 
     libraries = {l.id: l.name for l in db.query(Library)}
-    for key, sids, shared in same_match_groups(_series_ids(db)):
+    book_counts = _book_counts(db, {sid for _, sids, _ in same for sid in sids})
+    for key, sids, shared in same:
         members = sorted((series[sid] for sid in sids), key=lambda s: name(s.id).lower())
         add("same", {"key": key, "series": name(members[0].id), "shared": [{"field": f, "id": v} for f, v in shared],
                      "members": [{"series_id": s.id, "series": name(s.id), "folder": s.folder_path,
                                   "library": libraries.get(s.library_id, ""), "match_status": s.match_status,
-                                  "books": sum(1 for b in books_by_series.get(s.id, []) if not b.hidden_by_owner)}
+                                  "books": book_counts.get(s.id, 0)}
                                  for s in members]})
 
     order = lambda x: (x["series"].lower(), x.get("key", ""))

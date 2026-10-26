@@ -103,6 +103,20 @@ document.addEventListener("alpine:init", () => {
     sub: null,           // second part of the route, e.g. "display" in #/settings/display
     providers: [],
     providerName(id) { return this.providers.find((p) => p.id === id)?.name || id; },
+    meta: null,          // GET /api/metadata/status, polled while Settings is open
+    // automatic matching in progress: { done, total, pct, current, left } for the progress bar, else null
+    get metaProgress() {
+      const m = this.meta;
+      if (!m || !(m.current || m.queued)) return null;
+      const done = m.batch_done || 0, total = done + m.queued + (m.current ? 1 : 0);
+      let left = "";
+      if (m.batch_started && done >= 5) {  // a few series in, the pace is known
+        const min = Math.round((Date.now() / 1000 - m.batch_started) / done * (total - done) / 60);
+        left = min < 1 ? "less than a minute left"
+          : min < 60 ? `about ${min} min left` : `about ${Math.floor(min / 60)} h ${min % 60} min left`;
+      }
+      return { done, total, pct: Math.floor((done / total) * 100), current: m.current, left };
+    },
     libraryDirty: 0,     // bump to make the library reload (e.g. after a match)
     progressDirty: 0,    // bumped after the reader closes and its last progress save is done
     update: null,        // GET /api/update: running version, newest version on GitHub
@@ -931,17 +945,19 @@ function fixMatch() {
       } finally { this.searching = false; }
     },
     async use(c) {
-      this.busy = true;
+      this.busy = c.provider_id;  // which "Use" shows the spinner
       try {
         await api(`/api/series/${this.s.id}/match`, { method: "POST", body: { provider: this.provider, provider_id: c.provider_id } });
         this.done("Matched: " + c.title);
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.busy = false; }
     },
     async applyUrl() {
+      if (this.busy) return;
+      this.busy = "url";
       try {
         await api(`/api/series/${this.s.id}/match`, { method: "POST", body: { url: this.url.trim() } });
         this.done("Matched");
-      } catch (e) { toast(e.message, 6000, "error"); }
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.busy = false; }
     },
     async post(path, msg) {
       try { await api(`/api/series/${this.s.id}/${path}`, { method: "POST" }); this.done(msg); }
@@ -997,13 +1013,18 @@ function attentionView() {
       toast(f.hidden ? "File shown again" : "File hidden from reading (it stays on disk)");
       this.afterChange();
     },
+    matching: null,  // {series_id, provider_id} while a "Use" runs: a spinner on it, the row's buttons off
     async use(x, c) {
+      if (this.matching) return;
+      this.matching = { series_id: x.series_id, provider_id: c.provider_id };
       try {
         await api(`/api/series/${x.series_id}/match`, { method: "POST", body: { provider: c.provider, provider_id: c.provider_id } });
-        toast("Matched");
-        this.afterChange();
-      } catch (e) { toast(e.message, 6000, "error"); }
+        toast("Matched: " + c.title);
+        this.$store.app.libraryDirty++;
+        await refreshAttentionCount();  // keep the spinner until the row is gone
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.matching = null; }
     },
+    isMatching(x, c) { return this.matching?.series_id === x.series_id && (!c || this.matching.provider_id === c.provider_id); },
     fix(x) { this.$store.app.openFix(x.series_id, () => refreshAttentionCount()); },
     sharedLabel(g) { return "Same " + g.shared.map((x) => `${ID_NAMES[x.field] || x.field} #${x.id}`).join(", "); },
     async dontMatch(x) {
@@ -1257,12 +1278,12 @@ Your files are not touched. `
     async pollMeta() {
       const st = await api("/api/metadata/status").catch(() => null);
       if (!st || this.$store.app.view !== "settings") return;
+      this.$store.app.meta = st;  // the progress bar (Metadata, Missing metadata)
       const parts = [];
-      if (st.current) parts.push(`Matching: ${st.current}`);
-      if (st.queued) parts.push(`${st.queued} series waiting`);
       if (st.matched || st.failed) parts.push(`${st.matched} matched, ${st.failed} need attention`);
       if (st.providers_down_until) parts.push(`AniList/MangaUpdates not reachable; retrying at ${new Date(st.providers_down_until).toLocaleTimeString()}`);
-      this.metaText = parts.join(" · ") || "Idle. New series are matched automatically after each scan.";
+      this.metaText = parts.join(" · ") || (st.current || st.queued ? ""
+        : "Idle. New series are matched automatically after each scan.");
       if (st.current || st.queued) { this.$store.app.libraryDirty++; this.timers.push(setTimeout(() => this.pollMeta(), 2000)); }
     },
   };
