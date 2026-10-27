@@ -50,8 +50,9 @@ class MainActivity : Activity() {
     private lateinit var saved: View
     private lateinit var savedList: LinearLayout
 
-    /** checking the other saved servers after the current one didn't answer */
-    private var fallingBack = false
+    /** checking which saved server answers, before loading the page */
+    private var checking = false
+    private var pausedAt = 0L
 
     /** the server's origin, e.g. "http://192.168.1.20:8090"; null until set up */
     @Volatile
@@ -108,7 +109,7 @@ class MainActivity : Activity() {
         server = Server.saved(this)
         if (!openLink(intent)) {
             val s = server
-            if (s == null) showSetup(false) else load(s)
+            if (s == null) showSetup(false) else reach(null)
         }
     }
 
@@ -120,10 +121,18 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         web.onResume()
+        // back after a while, maybe somewhere else (left home): if the server is gone, find another
+        val s = server
+        val url = web.url
+        if (pausedAt > 0 && System.currentTimeMillis() - pausedAt > 60_000 && showsServer() && !checking && s != null) {
+            thread { if (!Server.answers(s, 3000)) runOnUiThread { if (server == s) reach(url) } }
+        }
+        pausedAt = 0
     }
 
     override fun onPause() {
         web.onPause()
+        pausedAt = System.currentTimeMillis()
         super.onPause()
     }
 
@@ -251,39 +260,56 @@ class MainActivity : Activity() {
         setupError.visibility = View.VISIBLE
     }
 
-    /**
-     * The server didn't answer [url]. If other servers are saved (e.g. the home network's address
-     * while away, with Tailscale saved too), the first that answers takes over, on the same page.
-     */
-    private fun showError(url: String?) {
-        if (setup.visibility == View.VISIBLE || fallingBack) return
-        val failed = server
-        val errorText = findViewById<TextView>(R.id.error_text)
+    /** the "can't reach" panel, also used for "Connecting…" (then without Try again) */
+    private fun showStatus(title: String, text: String, canRetry: Boolean) {
+        findViewById<TextView>(R.id.error_title).text = title
+        findViewById<TextView>(R.id.error_text).text = text
+        findViewById<View>(R.id.retry).visibility = if (canRetry) View.VISIBLE else View.GONE
         error.visibility = View.VISIBLE
         setReaderState(false, false)
-        val others = Server.known(this).filter { it != failed }
-        if (failed == null || others.isEmpty()) {
-            errorText.text = getString(R.string.error_text, failed ?: "")
-            return
-        }
-        fallingBack = true
-        errorText.text = getString(R.string.trying_others, failed)
+    }
+
+    private val showConnecting = Runnable {
+        server?.let { showStatus(getString(R.string.connecting_title), getString(R.string.connecting_text, it), false) }
+    }
+
+    /**
+     * Loads [url] (a page of the current server, or its start page) after a quick check that the
+     * server answers. An address that can't be reached (the home network's, while away) would leave
+     * the WebView on a blank page for minutes before it gives up, so the check comes first. If the
+     * current server doesn't answer ([skipCurrent]: it just failed), the other saved ones are tried,
+     * and the first that answers takes over, on the same page.
+     */
+    private fun reach(url: String?, skipCurrent: Boolean = false) {
+        val current = server ?: return
+        if (checking || setup.visibility == View.VISIBLE) return
+        checking = true
+        val candidates = (if (skipCurrent) emptyList() else listOf(current)) +
+            Server.known(this).filter { it != current }
+        if (skipCurrent) showConnecting.run() else root.postDelayed(showConnecting, 600)
         thread {
-            val found = others.firstOrNull { Server.answers(it, 4000) }
+            // the current one first: on the home network it answers at once
+            val found = candidates.firstOrNull { Server.answers(it, if (it == current) 3000 else 5000) }
             runOnUiThread {
-                fallingBack = false
+                checking = false
+                root.removeCallbacks(showConnecting)
                 // the user may have picked a server themselves meanwhile
-                if (server != failed || setup.visibility == View.VISIBLE) return@runOnUiThread
+                if (server != current || setup.visibility == View.VISIBLE) return@runOnUiThread
                 if (found == null) {
-                    errorText.text = getString(R.string.error_text, failed)
+                    showStatus(getString(R.string.error_title), getString(R.string.error_text, current), true)
                     return@runOnUiThread
                 }
-                useServer(found)
-                load(samePage(url, failed, found))
-                Toast.makeText(this, getString(R.string.switched_to, found.removePrefix("http://")), Toast.LENGTH_SHORT).show()
+                if (found != current) {
+                    useServer(found)
+                    Toast.makeText(this, getString(R.string.switched_to, found.removePrefix("http://")), Toast.LENGTH_SHORT).show()
+                }
+                load(samePage(url, current, found))
             }
         }
     }
+
+    /** The page didn't load from the current server: try the others. */
+    private fun showError(url: String?) = reach(url, skipCurrent = true)
 
     /** [url] (a page of [from]) at [to], or [to]'s start page */
     private fun samePage(url: String?, from: String, to: String): String {
@@ -293,11 +319,7 @@ class MainActivity : Activity() {
             (u.encodedFragment?.let { "#$it" } ?: "")
     }
 
-    private fun retry() {
-        error.visibility = View.GONE
-        val url = web.url
-        if (url != null && Server.origin(Uri.parse(url)) == server) web.reload() else server?.let { load(it) }
-    }
+    private fun retry() = reach(web.url)
 
     /* ---------------- reader: screen on, volume keys ---------------- */
 
