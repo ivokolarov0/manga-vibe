@@ -23,7 +23,8 @@
     <string name="saved_current">%1$s  (current)</string>
     <string name="forget_title">Forget %1$s?</string>
     <string name="forget_yes">Forget</string>
-    <string name="trying_others">%1$s didn\'t answer. Trying your other saved servers…</string>
+    <string name="connecting_title">Connecting…</string>
+    <string name="connecting_text">Looking for MangaVibe at %1$s and your other saved servers.</string>
     <string name="switched_to">Connected through %1$s</string>
     <string name="no_app_for_link">No app can open this link.</string>
 </resources>
