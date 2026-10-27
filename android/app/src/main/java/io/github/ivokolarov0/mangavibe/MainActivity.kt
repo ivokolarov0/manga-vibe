@@ -26,6 +26,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import kotlin.concurrent.thread
@@ -46,6 +47,11 @@ class MainActivity : Activity() {
     private lateinit var connect: Button
     private lateinit var setupCancel: Button
     private lateinit var error: View
+    private lateinit var saved: View
+    private lateinit var savedList: LinearLayout
+
+    /** checking the other saved servers after the current one didn't answer */
+    private var fallingBack = false
 
     /** the server's origin, e.g. "http://192.168.1.20:8090"; null until set up */
     @Volatile
@@ -70,6 +76,8 @@ class MainActivity : Activity() {
         connect = findViewById(R.id.connect)
         setupCancel = findViewById(R.id.setup_cancel)
         error = findViewById(R.id.error)
+        saved = findViewById(R.id.saved)
+        savedList = findViewById(R.id.saved_list)
         appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "dev"
 
         padForSystemBars()
@@ -177,6 +185,40 @@ class MainActivity : Activity() {
         address.setSelection(address.text.length)
         connect.isEnabled = true
         connect.setText(R.string.setup_connect)
+        fillSaved()
+    }
+
+    /** the saved servers as buttons: tap to connect, hold to forget */
+    private fun fillSaved() {
+        savedList.removeAllViews()
+        val known = Server.known(this)
+        saved.visibility = if (known.isEmpty()) View.GONE else View.VISIBLE
+        val dp = resources.displayMetrics.density
+        for (origin in known) {
+            val label = origin.removePrefix("http://")
+            val b = Button(this).apply {
+                text = if (origin == server) getString(R.string.saved_current, label) else label
+                isAllCaps = false
+                textSize = 15f
+                setTextColor(getColor(R.color.text))
+                setBackgroundResource(R.drawable.button_secondary_bg)
+                stateListAnimator = null
+                setOnClickListener {
+                    address.setText(label)
+                    tryConnect()
+                }
+                setOnLongClickListener {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle(getString(R.string.forget_title, label))
+                        .setPositiveButton(R.string.forget_yes) { _, _ -> Server.forget(this@MainActivity, origin); fillSaved() }
+                        .setNegativeButton(R.string.setup_cancel, null)
+                        .show()
+                    true
+                }
+            }
+            savedList.addView(b, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (48 * dp).toInt())
+                .apply { topMargin = (8 * dp).toInt() })
+        }
     }
 
     private fun tryConnect() {
@@ -209,11 +251,46 @@ class MainActivity : Activity() {
         setupError.visibility = View.VISIBLE
     }
 
-    private fun showError() {
-        if (setup.visibility == View.VISIBLE) return
-        findViewById<TextView>(R.id.error_text).text = getString(R.string.error_text, server ?: "")
+    /**
+     * The server didn't answer [url]. If other servers are saved (e.g. the home network's address
+     * while away, with Tailscale saved too), the first that answers takes over, on the same page.
+     */
+    private fun showError(url: String?) {
+        if (setup.visibility == View.VISIBLE || fallingBack) return
+        val failed = server
+        val errorText = findViewById<TextView>(R.id.error_text)
         error.visibility = View.VISIBLE
         setReaderState(false, false)
+        val others = Server.known(this).filter { it != failed }
+        if (failed == null || others.isEmpty()) {
+            errorText.text = getString(R.string.error_text, failed ?: "")
+            return
+        }
+        fallingBack = true
+        errorText.text = getString(R.string.trying_others, failed)
+        thread {
+            val found = others.firstOrNull { Server.answers(it, 4000) }
+            runOnUiThread {
+                fallingBack = false
+                // the user may have picked a server themselves meanwhile
+                if (server != failed || setup.visibility == View.VISIBLE) return@runOnUiThread
+                if (found == null) {
+                    errorText.text = getString(R.string.error_text, failed)
+                    return@runOnUiThread
+                }
+                useServer(found)
+                load(samePage(url, failed, found))
+                Toast.makeText(this, getString(R.string.switched_to, found.removePrefix("http://")), Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    /** [url] (a page of [from]) at [to], or [to]'s start page */
+    private fun samePage(url: String?, from: String, to: String): String {
+        val u = Uri.parse(url ?: return to)
+        if (Server.origin(u) != from) return to
+        return to + (u.encodedPath ?: "") + (u.encodedQuery?.let { "?$it" } ?: "") +
+            (u.encodedFragment?.let { "#$it" } ?: "")
     }
 
     private fun retry() {
@@ -339,12 +416,12 @@ class MainActivity : Activity() {
         }
 
         override fun onReceivedError(view: WebView, request: WebResourceRequest, err: WebResourceError) {
-            if (request.isForMainFrame) showError()
+            if (request.isForMainFrame) showError(request.url.toString())
         }
 
         override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, response: WebResourceResponse) {
             // e.g. a reverse proxy's 502 while the server restarts after an update
-            if (request.isForMainFrame && response.statusCode >= 500) showError()
+            if (request.isForMainFrame && response.statusCode >= 500) showError(request.url.toString())
         }
 
         override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {

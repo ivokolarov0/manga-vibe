@@ -18,5 +18,12 @@
     <string name="switch_text">This link is for %1$s. The app is connected to %2$s.</string>
     <string name="switch_yes">Switch</string>
     <string name="switch_no">Keep current</string>
+    <string name="saved_title">Saved servers</string>
+    <string name="saved_text">Tap one to switch, e.g. between your home network and Tailscale. Hold one to forget it. When the server doesn\'t answer, the app tries the others by itself.</string>
+    <string name="saved_current">%1$s  (current)</string>
+    <string name="forget_title">Forget %1$s?</string>
+    <string name="forget_yes">Forget</string>
+    <string name="trying_others">%1$s didn\'t answer. Trying your other saved servers…</string>
+    <string name="switched_to">Connected through %1$s</string>
     <string name="no_app_for_link">No app can open this link.</string>
 </resources>
