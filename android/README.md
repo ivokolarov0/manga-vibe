@@ -13,6 +13,10 @@ It needs no Play Store and no HTTPS. On first start it asks for the server's add
 **Open app** on the banner or in Settings → Android app. The app then opens and connects by itself.
 If the app isn't installed, the same button downloads it.
 
+Every address the app connects to is saved (e.g. the home network's and the Tailscale one). Settings →
+Android app → Change server lists them to switch with one tap (hold one to forget it). When the
+current address doesn't answer, the app tries the other saved ones and switches to the first that does.
+
 ## How it fits together
 
 - `MainActivity.kt`: the WebView, the setup and "can't reach" screens, the system bars, the volume and back keys.
