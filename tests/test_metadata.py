@@ -34,7 +34,7 @@ MU_SERIES = {
     "url": "https://www.mangaupdates.com/series/i7mo6s6/hana-to-akuma",
     "associated": [{"title": "Devil with Flower"}, {"title": "花と悪魔"}, {"title": "花与恶魔"}],
     "description": "15-years-ago Vivi, the demon...<BR>", "image": {"url": {"original": "https://img.test/mu.jpg"}},
-    "type": "Manga", "year": "2007", "bayesian_rating": 8.56, "status": "10 Volumes (Complete)",
+    "type": "Manga", "year": "2007", "bayesian_rating": 8.56, "status": "10 Volumes (Complete)\n5 Kanzenban Volumes (Complete)",
     "completed": True, "genres": [{"genre": "Fantasy"}, {"genre": "Romance"}],
     "categories": [{"category": "Adopted Protagonist", "votes": 16}],
     "authors": [{"name": "OTO Hisamu", "type": "Author"}, {"name": "OTO Hisamu", "type": "Artist"}],
@@ -282,6 +282,41 @@ def test_collection_marked_complete(client):
     client.put(f"/api/series/{sid}/metadata", json={"collection_complete": False})
     assert sid in ids("have=incomplete")
     assert client.get(f"/api/series/{sid}").json()["collection"]["manual"] is False
+
+def test_editions_stored_and_picked_by_hand(client):
+    """A match stores the editions MangaUpdates lists; the owner can pick one in Edit, and both
+    survive a refresh."""
+    sid = hana(client)
+    client.post(f"/api/series/{sid}/match", json={"provider": "anilist", "provider_id": "30002"})
+    s = client.get(f"/api/series/{sid}").json()
+    assert s["editions"] == [{"volumes": 10, "names": []}, {"volumes": 5, "names": ["Kanzenban"]}]
+    assert s["edition_volumes"] is None
+    r = client.put(f"/api/series/{sid}/metadata", json={"edition_volumes": 5})
+    assert r.status_code == 200 and "edition_volumes" not in r.json()["locked_fields"]
+    assert client.post(f"/api/series/{sid}/refresh").status_code == 200
+    s = client.get(f"/api/series/{sid}").json()
+    assert (s["edition_volumes"], s["volumes_total"], len(s["editions"])) == (5, 10, 2)
+    client.put(f"/api/series/{sid}/metadata", json={"edition_volumes": 0})  # back to automatic
+    assert client.get(f"/api/series/{sid}").json()["edition_volumes"] is None
+
+
+def test_editions_filled_in_for_older_matches(client):
+    from app.db import SessionLocal
+    from app.metadata import service
+    from app.models import Series
+    sid = hana(client)
+    client.post(f"/api/series/{sid}/match", json={"provider": "anilist", "provider_id": "30002"})
+    with SessionLocal() as db:
+        s = db.get(Series, sid)
+        s.editions = None
+        state["mu_up"] = False
+        with pytest.raises(http.ProviderError):
+            service.fill_editions(db, s)
+        assert s.editions is None  # tried again at the next start
+        state["mu_up"] = True
+        service.fill_editions(db, s)
+        assert [e["volumes"] for e in s.editions] == [10, 5]
+
 
 def test_filters(client):
     sid = hana(client)

@@ -1119,6 +1119,10 @@
               <select x-model="f.collection_complete">
                 <option value="auto">Automatic</option><option value="complete">Complete</option>
               </select></label>
+            <label title="Which edition your files are from (regular, kanzenban, omnibus...). Automatic: worked out from the pages per volume and the editions MangaUpdates lists">Edition
+              <select x-model="f.edition_volumes">
+                <template x-for="[v, label] in editions" :key="v"><option :value="v" x-text="label" :selected="v === f.edition_volumes"></option></template>
+              </select></label>
             <label class="wide">Authors <small>one per line: Name (Role)</small> <span x-show="locked('authors')">🔒</span>
               <textarea rows="3" x-model="f.authors"></textarea></label>
             <label class="wide">Genres <small>comma separated</small> <span x-show="locked('tags')">🔒</span>

@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from sqlalchemy import case, func
 
 from app.db import get_setting
+from app.metadata import editions
 from app.models import Book, Library, Progress
 
 READING_STATUSES = {"plan_to_read", "reading", "completed", "on_hold", "dropped"}  # manual choices
@@ -193,6 +194,7 @@ class BookNumbers(NamedTuple):
     eff_chapter_end: float | None
     eff_extra: bool
     hidden: bool = False
+    page_count: int = 0
 
 
 def book_numbers(db, *conditions):
@@ -201,11 +203,11 @@ def book_numbers(db, *conditions):
     chapter = func.coalesce(Book.override_chapter, Book.chapter)
     q = (db.query(Book.series_id, func.coalesce(Book.override_volume, Book.volume), chapter,
                   case((Book.override_chapter.is_not(None), Book.override_chapter_end), else_=Book.chapter_end),
-                  func.coalesce(Book.override_extra, Book.extra))
+                  func.coalesce(Book.override_extra, Book.extra), Book.page_count)
          .filter(Book.missing_since.is_(None), Book.hidden.is_(False), *conditions))
     out = {}
-    for sid, vol, ch, end, extra in q:
-        out.setdefault(sid, []).append(BookNumbers(vol, ch, end, bool(extra)))
+    for sid, vol, ch, end, extra, pages in q:
+        out.setdefault(sid, []).append(BookNumbers(vol, ch, end, bool(extra), page_count=pages or 0))
     return out
 
 
@@ -236,7 +238,8 @@ def numbering(books):
     """What the visible books' numbers say about the series, apart from its metadata. Worked out
     when the books change (walker.apply_order) and stored on the series, so lists of many series
     don't read every book: {"unit": "volume" | "chapter" | None, "have": [[first, last], ...] of
-    the unit's whole numbers here, "chapters": the same for every chapter covered}.
+    the unit's whole numbers here, "chapters": the same for every chapter covered, and for volumes
+    "pages": the usual (median) pages per volume file, which tells editions apart}.
     Books numbered by volume only count by volume, books with a chapter number by chapter;
     a mix of both (or no numbers) has no unit."""
     main = [b for b in books if not b.hidden and not b.eff_extra]
@@ -250,7 +253,11 @@ def numbering(books):
         have = _ranges({int(b.eff_volume) for b in by_volume if float(b.eff_volume).is_integer()})
     else:
         unit, have = None, []
-    return {"unit": unit, "have": have, "chapters": chapters}
+    out = {"unit": unit, "have": have, "chapters": chapters}
+    pages = sorted(n for b in by_volume if (n := getattr(b, "page_count", 0) or 0) > 0)
+    if unit == "volume" and pages:
+        out["pages"] = pages[len(pages) // 2]
+    return out
 
 
 def numberings(db, series):
@@ -275,7 +282,9 @@ def collection_of(series, num):
     {"unit": "volume" | "chapter" | None, "owned": n, "total": N | None,
      "state": "complete" | "incomplete" | "unknown", "manual": bool}. num is the series' numbering().
     No unit (a mix of volumes and chapters), a missing total, or a series that isn't finished
-    gives "unknown". A series the owner marked complete (collection_complete) is always "complete"."""
+    gives "unknown". A series the owner marked complete (collection_complete) is always "complete".
+    Volumes count against the edition the files are from (edition_of()); when that isn't the
+    regular one, "edition": {"volumes", "names", "regular", "manual"} says which."""
     out = _counted(series, num)
     out["manual"] = bool(getattr(series, "collection_complete", False))
     if out["manual"]:
@@ -283,18 +292,37 @@ def collection_of(series, num):
     return out
 
 
+def edition_of(series, num):
+    """The volume count of the edition the files are from: the owner's pick, or the MangaUpdates
+    edition the pages per file point to, or AniList's (regular) count."""
+    picked = getattr(series, "edition_volumes", None)
+    if picked:
+        return picked
+    have = num.get("have") or []
+    return editions.pick(series.volumes_total, getattr(series, "editions", None), num.get("pages"),
+                         have[-1][1] if have else 0)
+
+
 def _counted(series, num):
     unit, have = num.get("unit"), num.get("have") or []
     if unit is None:
         return {"unit": None, "owned": 0, "total": None, "state": "unknown"}
-    total = series.chapters_total if unit == "chapter" else series.volumes_total
+    extra = {}
+    if unit == "chapter":
+        total = series.chapters_total
+    else:
+        total = edition_of(series, num)
+        picked = bool(getattr(series, "edition_volumes", None))
+        if total and (total != series.volumes_total or picked):
+            extra = {"edition": {"volumes": total, "names": editions.names_of(getattr(series, "editions", None), total),
+                                 "regular": series.volumes_total, "manual": picked}}
     if not total:
-        return {"unit": unit, "owned": sum(b - a + 1 for a, b in have), "total": None, "state": "unknown"}
+        return {"unit": unit, "owned": sum(b - a + 1 for a, b in have), "total": None, "state": "unknown", **extra}
     owned = sum(max(0, min(b, total) - max(a, 1) + 1) for a, b in have)
     state = "unknown"
     if series.publication_status == "FINISHED":
         state = "complete" if owned == total else "incomplete"
-    return {"unit": unit, "owned": owned, "total": total, "state": state}
+    return {"unit": unit, "owned": owned, "total": total, "state": state, **extra}
 
 
 def collection(series, books):

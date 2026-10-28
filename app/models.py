@@ -66,6 +66,10 @@ class Series(Base):
     # the owner says the collection is complete whatever the numbers say (e.g. omnibus editions);
     # not metadata, so a refresh never changes it
     collection_complete: Mapped[bool] = mapped_column(Boolean, default=False)
+    # the editions MangaUpdates lists (app/metadata/editions.py): [{"volumes": 18, "names": ["Kanzenban"]}]
+    editions: Mapped[list | None] = mapped_column(JSON(none_as_null=True))
+    # the owner's pick of edition (its volume count); None: worked out from the pages per file
+    edition_volumes: Mapped[int | None] = mapped_column(Integer)
     has_duplicates: Mapped[bool] = mapped_column(Boolean, default=False)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
@@ -81,7 +85,8 @@ class Series(Base):
 # Covering index for what the library grid, reading status and collection checks read about many
 # books at once: SQLite answers those from the index alone, without loading the (wide) book rows.
 BOOK_NUMBERS_COLUMNS = ("series_id", "missing_since", "hidden", "extra", "override_extra", "override_volume",
-                        "volume", "override_chapter", "chapter", "override_chapter_end", "chapter_end")
+                        "volume", "override_chapter", "chapter", "override_chapter_end", "chapter_end",
+                        "page_count")
 
 
 class Book(Base):
