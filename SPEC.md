@@ -241,6 +241,8 @@ The owner can edit any metadata field by hand (titles, description, tags, status
   - Collection (finished series only, best effort): Complete (volumes or chapters 1..N all here),
     Incomplete (something missing), Can't tell (no total, mixed numbering, not finished). The
     series page shows "8 / 10 volumes"; incomplete series get a mark on their card.
+    Edit → Collection: Complete marks a series complete whatever the numbers say (omnibus
+    editions); it is kept through metadata refresh and hides the series' chapter gaps.
   - Library
   - Favorites only
   - Year range, score range (nice to have)

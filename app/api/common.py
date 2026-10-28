@@ -273,9 +273,17 @@ def chapter_gaps(num):
 def collection_of(series, num):
     """How much of the series is here, compared with the source's (or the owner's) total. Best effort:
     {"unit": "volume" | "chapter" | None, "owned": n, "total": N | None,
-     "state": "complete" | "incomplete" | "unknown"}. num is the series' numbering().
+     "state": "complete" | "incomplete" | "unknown", "manual": bool}. num is the series' numbering().
     No unit (a mix of volumes and chapters), a missing total, or a series that isn't finished
-    gives "unknown"."""
+    gives "unknown". A series the owner marked complete (collection_complete) is always "complete"."""
+    out = _counted(series, num)
+    out["manual"] = bool(getattr(series, "collection_complete", False))
+    if out["manual"]:
+        out["state"] = "complete"
+    return out
+
+
+def _counted(series, num):
     unit, have = num.get("unit"), num.get("have") or []
     if unit is None:
         return {"unit": None, "owned": 0, "total": None, "state": "unknown"}

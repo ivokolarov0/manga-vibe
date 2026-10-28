@@ -37,6 +37,8 @@ MIGRATIONS = [
         "CREATE INDEX IF NOT EXISTS ix_progress_book_state ON progress (book_id, completed, page)")],
     # 6: the books' numbering stored per series (filled in by fill_numbering() at start)
     lambda conn: conn.execute(text("ALTER TABLE series ADD COLUMN numbering JSON")),
+    # 7: a collection marked complete by hand (omnibus editions)
+    lambda conn: conn.execute(text("ALTER TABLE series ADD COLUMN collection_complete BOOLEAN DEFAULT 0")),
 ]
 
 

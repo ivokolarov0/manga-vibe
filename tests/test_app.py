@@ -462,6 +462,14 @@ def test_numbering_is_stored_and_kept_current(client):
     client.patch(f"/api/books/{book['id']}", json={"chapter": 2, "chapter_end": 4})
     assert stored()["chapters"] == [[1, 5]]
     assert not any(g["series_id"] == sid for g in client.get("/api/attention").json()["gaps"])
+    # a collection marked complete by hand has no missing chapters to report
+    book5 = next(b for b in client.get(f"/api/series/{sid}/books").json() if b["chapter"] == 5)
+    client.patch(f"/api/books/{book5['id']}", json={"chapter": 9})
+    assert any(g["series_id"] == sid for g in client.get("/api/attention").json()["gaps"])
+    client.put(f"/api/series/{sid}/metadata", json={"collection_complete": True})
+    assert not any(g["series_id"] == sid for g in client.get("/api/attention").json()["gaps"])
+    client.put(f"/api/series/{sid}/metadata", json={"collection_complete": False})
+    client.patch(f"/api/books/{book5['id']}", json={"chapter": 5})
     # a database from before the column: worked out on start
     with SessionLocal() as db:
         db.query(Series).filter(Series.id == sid).update({Series.numbering: None})

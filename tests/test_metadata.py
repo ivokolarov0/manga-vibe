@@ -264,6 +264,25 @@ def test_search_unmatch_ignore(client):
 
 # ---------------------------------------------------------------- filters
 
+def test_collection_marked_complete(client):
+    """Omnibus editions: the owner marks the collection complete; it stays through a refresh."""
+    sid = hana(client)
+    client.post(f"/api/series/{sid}/match", json={"provider": "anilist", "provider_id": "30002"})
+    ids = lambda q: [s["id"] for s in client.get(f"/api/series?{q}").json()["items"]]
+    assert sid in ids("have=incomplete")
+    r = client.put(f"/api/series/{sid}/metadata", json={"collection_complete": True})
+    assert r.status_code == 200 and "collection_complete" not in r.json()["locked_fields"]
+    assert sid in ids("have=complete") and sid not in ids("have=incomplete") + ids("have=unknown")
+    card = next(s for s in client.get("/api/series").json()["items"] if s["id"] == sid)
+    assert card["incomplete"] is False
+    assert client.post(f"/api/series/{sid}/refresh").status_code == 200
+    s = client.get(f"/api/series/{sid}").json()
+    assert s["chapters_total"] == 54  # the series' own length is untouched
+    assert (s["collection"]["state"], s["collection"]["manual"]) == ("complete", True)
+    client.put(f"/api/series/{sid}/metadata", json={"collection_complete": False})
+    assert sid in ids("have=incomplete")
+    assert client.get(f"/api/series/{sid}").json()["collection"]["manual"] is False
+
 def test_filters(client):
     sid = hana(client)
     client.post(f"/api/series/{sid}/match", json={"provider": "anilist", "provider_id": "30002"})

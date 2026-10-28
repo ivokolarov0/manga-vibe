@@ -57,6 +57,9 @@ class MetadataEdit(BaseModel):
     tags: list[str] | None = Field(default=None, max_length=200)
     links: list[LinkIn] | None = Field(default=None, max_length=30)
     unlock: list[str] = []  # fields to hand back to automatic metadata
+    # Collection: Automatic (False) or Complete (True), e.g. for omnibus editions. Not metadata,
+    # so it isn't locked: a refresh never touches it.
+    collection_complete: bool | None = None
 
 
 SIMPLE = ["title_english", "title_romaji", "title_native", "synonyms", "description", "publication_status",
@@ -76,7 +79,9 @@ def _clean(v):
 def edit_metadata(series_id: int, body: MetadataEdit, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     locked = set(s.locked_fields or [])
-    sent = body.model_fields_set - {"unlock"}
+    sent = body.model_fields_set - {"unlock", "collection_complete"}
+    if body.collection_complete is not None:
+        s.collection_complete = body.collection_complete
     for f in SIMPLE:
         if f in sent:
             v = _clean(getattr(body, f))
