@@ -1102,7 +1102,7 @@
               <textarea rows="7" x-model="f.description" maxlength="20000"></textarea></label>
             <label>Status <span x-show="locked('publication_status')">🔒</span>
               <select x-model="f.publication_status">
-                <template x-for="[k, v] in Object.entries(pubLabels)" :key="k"><option :value="k" x-text="v"></option></template>
+                <template x-for="[k, v] in Object.entries(pubLabels)" :key="k"><option :value="k" :selected="k === f.publication_status" x-text="v"></option></template>
               </select></label>
             <label>Type <span x-show="locked('format') || locked('country_of_origin')">🔒</span>
               <select x-model="f.type">
@@ -1153,7 +1153,7 @@
                 <h3>Use a page from a book</h3>
                 <div class="page-pick">
                   <select x-model="pageBook">
-                    <template x-for="b in books" :key="b.id"><option :value="b.id" x-text="b.label"></option></template>
+                    <template x-for="b in books" :key="b.id"><option :value="b.id" :selected="b.id === +pageBook" x-text="b.label"></option></template>
                   </select>
                   <label>Page <input type="number" min="1" :max="pageBookObj?.page_count || 1" x-model="pageNo"></label>
                 </div>
