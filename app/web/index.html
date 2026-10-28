@@ -1115,6 +1115,10 @@
               <input type="number" min="0" x-model="f.volumes_total"></label>
             <label>Chapters <span x-show="locked('chapters_total')">🔒</span>
               <input type="number" min="0" x-model="f.chapters_total"></label>
+            <label title="Complete: count the collection as complete whatever the numbers say, e.g. for omnibus editions">Collection
+              <select x-model="f.collection_complete">
+                <option value="auto">Automatic</option><option value="complete">Complete</option>
+              </select></label>
             <label class="wide">Authors <small>one per line: Name (Role)</small> <span x-show="locked('authors')">🔒</span>
               <textarea rows="3" x-model="f.authors"></textarea></label>
             <label class="wide">Genres <small>comma separated</small> <span x-show="locked('tags')">🔒</span>

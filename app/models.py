@@ -63,6 +63,9 @@ class Series(Base):
     reading_status: Mapped[str | None] = mapped_column(String)
     reader_mode: Mapped[str | None] = mapped_column(String)  # per-series reading mode (paged or vertical)
     favorite: Mapped[bool] = mapped_column(Boolean, default=False)
+    # the owner says the collection is complete whatever the numbers say (e.g. omnibus editions);
+    # not metadata, so a refresh never changes it
+    collection_complete: Mapped[bool] = mapped_column(Boolean, default=False)
     has_duplicates: Mapped[bool] = mapped_column(Boolean, default=False)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

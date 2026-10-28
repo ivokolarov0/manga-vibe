@@ -50,11 +50,13 @@ def collections(db, series):
 
 
 def _have_filter(db, wanted):
-    """SQL condition for the Collection filter. Only finished series can be complete or incomplete,
-    so those are worked out (in Python, like the chapter-gap check) and everything else is unknown."""
-    cond = (Series.publication_status == "FINISHED", Series.missing_since.is_(None))
+    """SQL condition for the Collection filter. Only finished series (and ones the owner marked
+    complete) can be complete or incomplete, so those are worked out (in Python, like the
+    chapter-gap check) and everything else is unknown."""
+    cond = (or_(Series.publication_status == "FINISHED", Series.collection_complete.is_(True)),
+            Series.missing_since.is_(None))
     finished = db.query(Series.id, Series.numbering, Series.chapters_total, Series.volumes_total,
-                        Series.publication_status).filter(*cond).all()
+                        Series.publication_status, Series.collection_complete).filter(*cond).all()
     by_state = {k: set() for k in HAVE}
     for sid, c in collections(db, finished).items():
         by_state[c["state"]].add(sid)

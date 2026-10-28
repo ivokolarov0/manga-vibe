@@ -123,7 +123,9 @@ def attention(ignored: bool = False, db=Depends(get_db)):
     for b in db.query(Book).filter(Book.duplicate_flag.is_(True), Book.missing_since.is_(None)):
         if b.series_id in live:
             flagged.setdefault(b.series_id, []).append(b)
-    rows = db.query(Series.id, Series.numbering).filter(Series.missing_since.is_(None)).all()
+    # a series marked complete by hand (omnibus editions) has no missing chapters to report
+    rows = db.query(Series.id, Series.numbering).filter(Series.missing_since.is_(None),
+                                                        Series.collection_complete.is_not(True)).all()
     gaps = {sid: g for sid, num in numberings(db, rows).items() if (g := chapter_gaps(num))}
     failed = [sid for (sid,) in db.query(Series.id).filter(Series.match_status == "failed",
                                                            Series.missing_since.is_(None))]

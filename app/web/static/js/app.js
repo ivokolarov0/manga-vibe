@@ -68,8 +68,10 @@ const libraryUrl = (params) => "#/?" + new URLSearchParams(params).toString();
 const scoreCls = (s) => (s >= 90 ? "hi" : s >= 70 ? "mid" : "lo");
 const kindOf = (s) => s.format === "NOVEL" ? "Novel" : s.format === "ONE_SHOT" ? "One-shot" : COUNTRY[s.country_of_origin];
 
-// "8 / 8 volumes · complete", "120 / 150 chapters · some missing"; empty when there's no total to compare with
+// "8 / 8 volumes · complete", "120 / 150 chapters · some missing"; empty when there's no total to compare with.
+// Marked complete by hand (omnibus editions): "12 / 37 volumes · complete (set by you)".
 function haveText(c) {
+  if (c?.manual) return (c.total ? `${c.owned} / ${c.total} ${c.unit}${c.total === 1 ? "" : "s"} · ` : "") + "complete (set by you)";
   if (!c?.total) return "";
   const text = `${c.owned} / ${c.total} ${c.unit}${c.total === 1 ? "" : "s"}`;
   return text + ({ complete: " · complete", incomplete: " · some missing" }[c.state] || "");
@@ -1507,6 +1509,7 @@ function editSeries() {
         genres: s.tags.filter((t) => t.kind === "genre").map((t) => t.name).join(", "),
         tags: s.tags.filter((t) => t.kind !== "genre").map((t) => t.name).join(", "),
         links: lines(s.links.map((l) => `${l.site} | ${l.url}`)),
+        collection_complete: s.collection?.manual ? "complete" : "auto",
       };
       this.orig = { ...this.f };
     },
@@ -1530,6 +1533,7 @@ function editSeries() {
         const m = line.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
         return m ? { name: m[1], role: m[2] } : { name: line, role: "" };
       });
+      if (changed("collection_complete")) b.collection_complete = f.collection_complete === "complete";
       if (changed("genres")) b.genres = list(f.genres, ",");
       if (changed("tags")) b.tags = list(f.tags, ",");
       if (changed("links")) b.links = list(f.links, "\n").map((line) => {

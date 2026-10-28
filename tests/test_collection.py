@@ -9,8 +9,9 @@ def book(volume=None, chapter=None, chapter_end=None, extra=False, hidden=False)
                            eff_extra=extra, hidden=hidden)
 
 
-def series(volumes=None, chapters=None, status="FINISHED"):
-    return SimpleNamespace(volumes_total=volumes, chapters_total=chapters, publication_status=status)
+def series(volumes=None, chapters=None, status="FINISHED", marked=False):
+    return SimpleNamespace(volumes_total=volumes, chapters_total=chapters, publication_status=status,
+                           collection_complete=marked)
 
 
 def state(s, books):
@@ -19,7 +20,8 @@ def state(s, books):
 
 def test_volumes():
     books = [book(volume=v) for v in range(1, 9)]
-    assert collection(series(volumes=8), books) == {"unit": "volume", "owned": 8, "total": 8, "state": "complete"}
+    assert collection(series(volumes=8), books) == {"unit": "volume", "owned": 8, "total": 8, "state": "complete",
+                                                   "manual": False}
     missing = collection(series(volumes=8), books[:3] + books[4:])
     assert missing["owned"] == 7 and missing["state"] == "incomplete"
     # duplicates, hidden files, extras and half volumes don't count
@@ -60,3 +62,13 @@ def test_numbering_ranges_and_gaps():
     # a mix of volumes and chapters has no unit, but its chapter gaps are still found
     mixed = numbering([book(volume=1), book(chapter=5), book(chapter=8)])
     assert mixed["unit"] is None and chapter_gaps(mixed) == [(5, 8)]
+
+
+def test_marked_complete_by_hand():
+    # a 37-volume series owned as 12 omnibus volumes: complete because the owner says so
+    omnibus = [book(volume=v) for v in range(1, 13)]
+    c = collection(series(volumes=37, marked=True), omnibus)
+    assert (c["owned"], c["total"], c["state"], c["manual"]) == (12, 37, "complete", True)
+    assert collection(series(volumes=37), omnibus)["manual"] is False
+    # whatever the numbers or the status say
+    assert state(series(status="RELEASING", marked=True), [book(volume=1), book(chapter=3)]) == "complete"
