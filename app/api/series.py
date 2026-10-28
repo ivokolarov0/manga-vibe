@@ -56,7 +56,8 @@ def _have_filter(db, wanted):
     cond = (or_(Series.publication_status == "FINISHED", Series.collection_complete.is_(True)),
             Series.missing_since.is_(None))
     finished = db.query(Series.id, Series.numbering, Series.chapters_total, Series.volumes_total,
-                        Series.publication_status, Series.collection_complete).filter(*cond).all()
+                        Series.publication_status, Series.collection_complete, Series.editions,
+                        Series.edition_volumes).filter(*cond).all()
     by_state = {k: set() for k in HAVE}
     for sid, c in collections(db, finished).items():
         by_state[c["state"]].add(sid)
@@ -209,6 +210,7 @@ def get_series(series_id: int, db=Depends(get_db)):
         "synonyms": s.synonyms or [], "description": s.description, "start_year": s.start_year,
         "format": s.format, "chapters_total": s.chapters_total, "volumes_total": s.volumes_total,
         "collection": collections(db, [s])[s.id],
+        "editions": s.editions or [], "edition_volumes": s.edition_volumes,
         "average_score": s.average_score, "authors": s.authors or [],
         "match_status": s.match_status, "match_confidence": s.match_confidence,
         "metadata_source": s.metadata_source, "match_candidates": s.match_candidates or [],

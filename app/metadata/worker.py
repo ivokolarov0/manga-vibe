@@ -80,6 +80,8 @@ def _run():
                 service.refresh(db, s)
             elif kind == "upgrade":
                 service.upgrade_to_primary(db, s)
+            elif kind == "editions":
+                service.fill_editions(db, s)
             db.commit()
             status["done"] += 1
         except service.AllProvidersDown:
@@ -126,6 +128,15 @@ def enqueue_upgrades():
             enqueue("upgrade", sid)
 
 
+def enqueue_missing_editions():
+    """Matched series without the MangaUpdates editions list (matched before it was stored)."""
+    with SessionLocal() as db:
+        ids = [sid for (sid,) in db.query(Series.id).filter(
+            Series.editions.is_(None), Series.mangaupdates_id.is_not(None), Series.missing_since.is_(None))]
+    for sid in ids:
+        enqueue("editions", sid)
+
+
 def _periodic():
     """Every 6 hours: refresh stale RELEASING series, retry AniList for fallback matches."""
     while True:
@@ -142,3 +153,4 @@ def start():
     threading.Thread(target=_periodic, daemon=True, name="metadata-periodic").start()
     enqueue_unmatched()
     enqueue_upgrades()
+    enqueue_missing_editions()

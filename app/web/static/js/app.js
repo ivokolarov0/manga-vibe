@@ -77,6 +77,28 @@ function haveText(c) {
   return text + ({ complete: " · complete", incomplete: " · some missing" }[c.state] || "");
 }
 
+// The edition the volumes count against, when it isn't the regular one: "Kanzenban · 18 volumes (regular: 27)"
+function editionText(c) {
+  const e = c?.edition;
+  if (!e) return "";
+  return [e.names.join(", "), `${e.volumes} volumes` + (e.regular && e.regular !== e.volumes ? ` (regular: ${e.regular})` : ""),
+          e.manual ? "set by you" : "from the pages per volume"].filter(Boolean).join(" · ");
+}
+
+// The Edit form's Edition choices: [value, label]; "0" is automatic
+function editionOptions(s) {
+  const out = [["0", "Automatic"]], seen = new Set();
+  const add = (n, names) => {
+    if (!n || seen.has(n)) return;
+    seen.add(n);
+    out.push([String(n), `${n} volumes` + (names?.length ? ` · ${names.join(", ")}` : n === s.volumes_total ? " · regular" : "")]);
+  };
+  add(s.volumes_total, []);
+  for (const e of s.editions || []) add(e.volumes, e.names);
+  add(s.edition_volumes, []);
+  return out;
+}
+
 function cardSub(s) {
   const st = s.reading_status, read = s.book_count - s.unread_count;
   if (st === "completed") return "✓ Completed";
@@ -828,6 +850,7 @@ function seriesView() {
         ["Year", s.start_year], ["Type", kindOf(s)], ["Status", PUB_LABELS[s.publication_status]],
         ["Length", [s.volumes_total && `${s.volumes_total} volumes`, s.chapters_total && `${s.chapters_total} chapters`].filter(Boolean).join(" · ")],
         ["You have", haveText(s.collection)],
+        ["Edition", editionText(s.collection)],
         ["Score", s.average_score && `${s.average_score}%`],
         ["In library", `${s.book_count} books · ${s.unread_count} unread`],
         ...s.plugin_fields.map((f) => [f.label, typeof f.value === "object" ? JSON.stringify(f.value) : f.value]),
@@ -1510,11 +1533,13 @@ function editSeries() {
         tags: s.tags.filter((t) => t.kind !== "genre").map((t) => t.name).join(", "),
         links: lines(s.links.map((l) => `${l.site} | ${l.url}`)),
         collection_complete: s.collection?.manual ? "complete" : "auto",
+        edition_volumes: String(s.edition_volumes || 0),
       };
       this.orig = { ...this.f };
     },
     close() { this.clearFile(); this.$store.app.edit.open = false; },
     locked(field) { return this.s?.locked_fields.includes(field); },
+    get editions() { return this.s ? editionOptions(this.s) : []; },
     get lockedCount() { return this.s?.locked_fields.length || 0; },
 
     /* turn the form back into API values; only changed fields are sent (and so locked) */
@@ -1534,6 +1559,7 @@ function editSeries() {
         return m ? { name: m[1], role: m[2] } : { name: line, role: "" };
       });
       if (changed("collection_complete")) b.collection_complete = f.collection_complete === "complete";
+      if (changed("edition_volumes")) b.edition_volumes = +f.edition_volumes;
       if (changed("genres")) b.genres = list(f.genres, ",");
       if (changed("tags")) b.tags = list(f.tags, ",");
       if (changed("links")) b.links = list(f.links, "\n").map((line) => {

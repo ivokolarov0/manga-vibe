@@ -60,6 +60,8 @@ class MetadataEdit(BaseModel):
     # Collection: Automatic (False) or Complete (True), e.g. for omnibus editions. Not metadata,
     # so it isn't locked: a refresh never touches it.
     collection_complete: bool | None = None
+    # the edition the files are from, as its volume count; 0: worked out automatically. Not locked either.
+    edition_volumes: int | None = Field(default=None, ge=0, le=10000)
 
 
 SIMPLE = ["title_english", "title_romaji", "title_native", "synonyms", "description", "publication_status",
@@ -79,9 +81,11 @@ def _clean(v):
 def edit_metadata(series_id: int, body: MetadataEdit, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     locked = set(s.locked_fields or [])
-    sent = body.model_fields_set - {"unlock", "collection_complete"}
+    sent = body.model_fields_set - {"unlock", "collection_complete", "edition_volumes"}
     if body.collection_complete is not None:
         s.collection_complete = body.collection_complete
+    if body.edition_volumes is not None:
+        s.edition_volumes = body.edition_volumes or None
     for f in SIMPLE:
         if f in sent:
             v = _clean(getattr(body, f))

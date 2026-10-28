@@ -2,7 +2,7 @@
 fallback for titles not on AniList (or while AniList is down)."""
 import re
 
-from app.metadata import http
+from app.metadata import editions, http
 from app.metadata.text import clean_html, has_script
 from app.plugins import Candidate, Plugin
 
@@ -59,6 +59,7 @@ def normalize(s):
         "links": [{"site": "MangaUpdates", "url": s["url"]}] if s.get("url") else [],
         "cover_url": image, "banner_url": None,
         "ids": {"mangaupdates_id": str(s["series_id"])},
+        "editions": editions.from_mangaupdates(s),
     }
 
 

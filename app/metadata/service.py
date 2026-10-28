@@ -53,7 +53,7 @@ def ordered_providers():
 # ---------------------------------------------------------------- applying
 
 def prepare(db, series, data, provider_id_name, fresh=False):
-    """The network part of applying metadata: the cover and the MangaUpdates lookup.
+    """The network part of applying metadata: the cover, the MangaUpdates lookup and editions.
     Call it before anything is written, then pass the result to apply(). SQLite lets one
     connection write at a time, so waiting on the network after the first write would hold up
     everything else (a manual match, saving reading progress) until the downloads finish.
@@ -72,7 +72,23 @@ def prepare(db, series, data, provider_id_name, fresh=False):
         titles = [t for t in (value("title_romaji"), value("title_english"), value("title_native"),
                               *(value("synonyms") or [])) if t]
         secondary = find_secondary(db, series, titles, value("start_year"))
-    return {"cover": cover, "secondary": secondary}
+    mu_id = ((data.get("ids") or {}).get("mangaupdates_id") or (secondary and secondary.provider_id)
+             or (None if fresh else series.mangaupdates_id))
+    found = data.get("editions") if provider_id_name == "mangaupdates" else fetch_editions(db, series, mu_id)
+    return {"cover": cover, "secondary": secondary, "editions": found}
+
+
+def fetch_editions(db, series, mu_id):
+    """The editions MangaUpdates lists for the series (regular, kanzenban, omnibus...), or None
+    when there's no MangaUpdates entry or it can't be reached (the ones found before are kept)."""
+    mu = provider("mangaupdates")
+    if mu is None or not mu_id:
+        return None
+    try:
+        return mu.fetch(Context(mu, db), mu_id).get("editions")
+    except http.ProviderError as e:
+        log.info("MangaUpdates editions skipped for %s: %s", series.folder_name, e)
+        return None
 
 
 def apply(db, series, data, provider_id_name, provider_item_id, status="manual", confidence=None,
@@ -106,6 +122,8 @@ def apply(db, series, data, provider_id_name, provider_item_id, status="manual",
             save_poster_bytes(series, extras["cover"], "provider")
         except PosterError as e:
             log.warning("Could not use the cover for %s: %s", series.folder_name, e)
+    if extras.get("editions") is not None:
+        series.editions = extras["editions"]
     mu = extras.get("secondary")
     if mu:
         series.mangaupdates_id = mu.provider_id
@@ -162,6 +180,7 @@ def clear_metadata(db, series):
         series.publication_status = "UNKNOWN"
     for f in ID_FIELDS:
         setattr(series, f, None)
+    series.editions = None  # another series' editions; the owner's pick (edition_volumes) stays
     if "tags" not in locked:
         set_tags(db, series, [], [])
     if "links" not in locked:
@@ -286,6 +305,16 @@ def refresh(db, series):
     data = p.fetch(Context(p, db), src["id"])
     extras = prepare(db, series, data, p.id)
     apply(db, series, data, p.id, src["id"], series.match_status, series.match_confidence, extras)
+
+
+def fill_editions(db, series):
+    """A series matched before editions were stored: look them up once (a background job)."""
+    if series.editions is not None or not series.mangaupdates_id:
+        return
+    found = fetch_editions(db, series, series.mangaupdates_id)
+    if found is None:
+        raise http.ProviderError("MangaUpdates is not reachable")  # tried again at the next start
+    series.editions = found
 
 
 def upgrade_to_primary(db, series):

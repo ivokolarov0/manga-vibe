@@ -39,6 +39,14 @@ MIGRATIONS = [
     lambda conn: conn.execute(text("ALTER TABLE series ADD COLUMN numbering JSON")),
     # 7: a collection marked complete by hand (omnibus editions)
     lambda conn: conn.execute(text("ALTER TABLE series ADD COLUMN collection_complete BOOLEAN DEFAULT 0")),
+    # 8: editions (omnibus, kanzenban...): the list from MangaUpdates, the owner's pick, and the
+    # pages per file in the numbering (cleared so fill_numbering() works it out again)
+    lambda conn: [conn.execute(text(q)) for q in (
+        "ALTER TABLE series ADD COLUMN editions JSON",
+        "ALTER TABLE series ADD COLUMN edition_volumes INTEGER",
+        "UPDATE series SET numbering = NULL",
+        "DROP INDEX IF EXISTS ix_book_numbers",
+        f"CREATE INDEX ix_book_numbers ON book ({', '.join(BOOK_NUMBERS_COLUMNS)})")],
 ]
 
 

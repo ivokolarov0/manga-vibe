@@ -243,6 +243,10 @@ The owner can edit any metadata field by hand (titles, description, tags, status
     series page shows "8 / 10 volumes"; incomplete series get a mark on their card.
     Edit → Collection: Complete marks a series complete whatever the numbers say (omnibus
     editions); it is kept through metadata refresh and hides the series' chapter gaps.
+    Volumes count against the edition the files are from: MangaUpdates lists the editions
+    (regular, kanzenban, bunkoban, omnibus...) and the pages per volume file pick one, e.g. two
+    600-page files of a 5-volume manga are the 2-volume perfect edition, so 2 / 2 · complete.
+    Edit → Edition picks one by hand; the series page shows it next to the regular count.
   - Library
   - Favorites only
   - Year range, score range (nice to have)

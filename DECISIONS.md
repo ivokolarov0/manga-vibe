@@ -446,3 +446,19 @@ Choices made where the spec was open. Newest at the bottom.
   elsewhere.
 - **No password, so anyone who reaches the app can delete.** `docs/away-from-home.md` says to mount
   read-only before opening it to the internet.
+
+## Editions: counting volumes against the edition the files are from
+
+- **AniList has one volume count** (usually the regular edition), so a complete kanzenban or
+  omnibus set showed as Incomplete. **MangaUpdates lists every edition** in its status
+  ("18 Kanzenban Volumes (Complete)") and in each English publisher's notes ("14 Omnibus; 3-in-1");
+  these are parsed into `series.editions` (`app/metadata/editions.py`). Google Books and Open Library
+  have page counts per printed book but need a key or miss many series, and their titles are messy.
+- **Pages per file pick the edition.** The median pages of the volume files is stored in the
+  numbering. A regular volume is about 200 pages; files at least 1.3× that are from a bigger edition:
+  `regular volumes × 200 ÷ pages` estimates the count, and the nearest listed edition with fewer volumes
+  (but not fewer than the highest volume number here) is used. Thinner files keep AniList's count.
+- **The owner's pick wins** (Edit → Edition, `edition_volumes`). Not a locked field: a refresh
+  updates the editions list but never the pick. AniList's count stays as the series' length.
+- **Series matched earlier** get their editions in the background at start (one MangaUpdates request
+  each, behind the owner's own requests).
