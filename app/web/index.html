@@ -444,19 +444,27 @@
 
     <!-- ============ settings (with Needs attention) ============ -->
     <section class="view settings-page" x-data="settingsView()" x-show="$store.app.view === 'settings'" x-cloak>
-      <nav class="settings-nav">
-        <h4>Settings</h4>
-        <template x-for="[k, label, icon] in nav" :key="k">
-          <button :class="{ active: section === k || (k === 'plugins' && section === 'plugin') }" @click="go(k)">
-            <span class="ico" x-text="icon"></span><span x-text="label"></span></button>
-        </template>
-        <h4>Needs attention</h4>
-        <template x-for="[k, label] in attNav" :key="k">
-          <button :class="{ active: section === 'att-' + k }" @click="go('att-' + k)">
-            <span class="ico">•</span><span x-text="label"></span>
-            <span class="count" :class="{ zero: !attCount(k), alert: ['unreadable', 'matches', 'same', 'duplicates'].includes(k) }"
-                  x-text="attCount(k)"></span></button>
-        </template>
+      <nav class="settings-nav" :class="{ open: navOpen }" @click.outside="navOpen = false" @keydown.escape="navOpen = false">
+        <!-- phones only: shows where you are, tap to open the full list -->
+        <button class="settings-nav-toggle" @click="navOpen = !navOpen" :aria-expanded="navOpen">
+          <span class="ico" x-text="current[0]"></span><span class="label" x-text="current[1]"></span>
+          <span class="count alert" x-show="attAlerts && !navOpen" x-text="attAlerts"></span>
+          <span class="chev" aria-hidden="true">▾</span>
+        </button>
+        <div class="settings-nav-list">
+          <h4>Settings</h4>
+          <template x-for="[k, label, icon] in nav" :key="k">
+            <button :class="{ active: section === k || (k === 'plugins' && section === 'plugin') }" @click="go(k)">
+              <span class="ico" x-text="icon"></span><span x-text="label"></span></button>
+          </template>
+          <h4>Needs attention</h4>
+          <template x-for="[k, label] in attNav" :key="k">
+            <button :class="{ active: section === 'att-' + k }" @click="go('att-' + k)">
+              <span class="ico">•</span><span x-text="label"></span>
+              <span class="count" :class="{ zero: !attCount(k), alert: ['unreadable', 'matches', 'same', 'duplicates'].includes(k) }"
+                    x-text="attCount(k)"></span></button>
+          </template>
+        </div>
       </nav>
 
       <div class="settings-content">

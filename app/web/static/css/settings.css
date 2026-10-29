@@ -1,4 +1,4 @@
-/* Settings page: navigation on the left (a scrolling strip on phones), the chosen section on the right.
+/* Settings page: navigation on the left (a drop-down menu on phones), the chosen section on the right.
    Each setting is a row with a divider, so a label and its control clearly belong together. */
 @layer pages {
   .settings-page {
@@ -13,44 +13,33 @@
     }
   }
 
+  /* phones: a sticky bar with one "current page ▾" button; tapping it drops down the full list.
+     desktop: the list is a sidebar and the button is hidden. */
   .settings-nav {
     position: sticky;
     top: 55px;
     z-index: 5;
-    display: flex;
-    gap: 6px;
     margin: -12px -12px 0;
     padding: 8px 12px;
-    overflow-x: auto;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
-    scrollbar-width: none;
 
     & h4 {
-      display: none;
-    }
+      margin: 10px 10px 4px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
 
-    & button {
-      display: flex;
-      flex: none;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 12px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      font-size: 13px;
-      white-space: nowrap;
-
-      &.active {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: var(--accent-text);
+      &:first-child {
+        margin-top: 4px;
       }
     }
 
     & .ico {
       width: 18px;
+      flex: none;
       text-align: center;
     }
 
@@ -58,7 +47,7 @@
       min-width: 20px;
       padding: 0 6px;
       border-radius: 9px;
-      background: var(--surface);
+      background: var(--surface2);
       color: var(--muted);
       font-size: 11px;
       text-align: center;
@@ -73,55 +62,114 @@
       }
     }
 
-    /* desktop: a real sidebar */
     @media (min-width: 800px) {
       top: 70px;
-      flex-direction: column;
-      gap: 2px;
       margin: 0;
       padding: 8px;
-      overflow: visible;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-panel);
+    }
+  }
 
-      & h4 {
-        display: block;
-        margin: 10px 10px 4px;
-        color: var(--muted);
-        font-size: 11px;
+  .settings-nav-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+
+    & .label {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & .chev {
+      color: var(--muted);
+      transition: transform 0.15s;
+    }
+
+    .open > & {
+      border-color: var(--accent);
+
+      & .chev {
+        transform: rotate(180deg);
+      }
+    }
+
+    @media (min-width: 800px) {
+      display: none;
+    }
+  }
+
+  .settings-nav-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    & button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px;
+      background: none;
+      border: 0;
+      border-radius: var(--radius);
+      font-size: 14px;
+      text-align: left;
+
+      &.active {
+        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        color: var(--text);
         font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-
-        &:first-child {
-          margin-top: 4px;
-        }
       }
 
-      & button {
-        width: 100%;
-        padding: 9px 10px;
-        background: none;
-        border: 0;
-        border-radius: var(--radius);
-        font-size: 14px;
-        text-align: left;
-
-        &:hover {
-          background: var(--surface2);
-        }
-
-        &.active {
-          background: color-mix(in srgb, var(--accent) 18%, transparent);
-          color: var(--text);
-          font-weight: 600;
-        }
-
-        & .count {
-          margin-left: auto;
-        }
+      & .count {
+        margin-left: auto;
       }
+    }
+
+    /* phones: a panel that drops down under the bar */
+    @media (max-width: 799.98px) {
+      position: absolute;
+      top: calc(100% - 2px);
+      right: 12px;
+      left: 12px;
+      max-height: min(70vh, 560px);
+      padding: 6px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-panel);
+      box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-6px);
+      transition: opacity 0.15s, transform 0.15s, visibility 0s 0.15s;
+
+      .open > & {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition: opacity 0.15s, transform 0.15s;
+      }
+    }
+  }
+
+  @media (hover: hover) {
+    .settings-nav-list button:not(.active):hover {
+      background: var(--surface2);
     }
   }
 
