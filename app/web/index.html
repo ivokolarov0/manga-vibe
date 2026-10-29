@@ -464,24 +464,29 @@
         <section x-show="section === 'library'">
           <h2>Library folders</h2>
           <template x-for="l in libs" :key="l.id">
-            <div class="setting-row">
-              <div class="label">
-                <span x-text="l.name"></span>
-                <small x-text="l.root_path + ' · ' + l.series + ' series' + (l.available ? '' : ' · not found, check the volume mount')"></small>
-                <small class="scan-progress" x-show="libScanText(l)" x-text="libScanText(l)"></small>
-                <label class="lib-direction"><small>Its series read</small>
-                  <select :value="l.reader_mode || 'default'" @change="setLibraryMode(l, $event.target.value)"
-                          :aria-label="'Reading mode for the series in ' + l.name">
-                    <option value="default">Like Settings → Reader</option>
-                    <option value="paged">Pages</option>
-                    <option value="vertical">Vertical (webtoons)</option>
-                  </select></label>
+            <div class="lib-card" :class="{ missing: !l.available }">
+              <div class="libcard-head">
+                <span class="libcard-icon" aria-hidden="true">📁</span>
+                <div class="libcard-title">
+                  <strong x-text="l.name"></strong>
+                  <small x-text="l.root_path + ' · ' + l.series + ' series' + (l.available ? '' : ' · not found, check the volume mount')"></small>
+                  <small class="scan-progress" x-show="libScanText(l)" x-text="libScanText(l)"></small>
+                </div>
+                <div class="row-buttons">
+                  <button class="btn small" :disabled="!!scan.running" @click="rescan(l)"
+                          :title="scan.running ? 'A scan is running' : 'Scan only this folder'">⟳ Scan</button>
+                  <button class="btn small danger" @click="removeLibrary(l)">Remove</button>
+                </div>
               </div>
-              <div class="row-buttons">
-                <button class="btn small" :disabled="!!scan.running" @click="rescan(l)"
-                        :title="scan.running ? 'A scan is running' : 'Scan only this folder'">⟳ Scan</button>
-                <button class="btn small danger" @click="removeLibrary(l)">Remove</button>
-              </div>
+              <label class="lib-option">
+                <span class="lib-option-text"><span>Reading mode</span>
+                  <small>For series in this folder that don't set their own</small></span>
+                <select :value="l.reader_mode || 'default'" @change="setLibraryMode(l, $event.target.value)"
+                        :aria-label="'Reading mode for the series in ' + l.name">
+                  <option value="default">Like Settings → Reader</option>
+                  <option value="paged">Pages</option>
+                  <option value="vertical">Vertical (webtoons)</option>
+                </select></label>
             </div>
           </template>
           <div class="setting-row">

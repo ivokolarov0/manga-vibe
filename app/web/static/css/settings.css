@@ -176,20 +176,6 @@
       & small.scan-progress {
         color: var(--accent);
       }
-
-      /* Library folders: which way its unmatched series read */
-      & .lib-direction {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 4px 8px;
-        align-items: center;
-        margin-top: 4px;
-
-        & select {
-          min-width: 0;
-          max-width: 100%;
-        }
-      }
     }
 
     & .row-buttons {
@@ -204,6 +190,98 @@
 
     & > input[type="checkbox"] {
       flex-shrink: 0;  /* long text next to it squeezed it */
+    }
+  }
+
+  /* Settings > Library folders: each folder is its own card.
+     Top: icon, name, path and its buttons. Bottom strip: the folder's settings. */
+  .lib-card {
+    margin: 6px 0 12px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--text) 3%, var(--surface));
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+
+    &.missing {
+      border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+    }
+
+    & small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    & small.scan-progress {
+      color: var(--accent);
+    }
+
+    & .libcard-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+      padding: 14px 16px;
+    }
+
+    & .libcard-icon {
+      display: grid;
+      flex-shrink: 0;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      font-size: 20px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+    }
+
+    & .libcard-title {
+      display: grid;
+      flex: 1;
+      gap: 3px;
+      min-width: 180px;
+
+      & strong {
+        font-size: 16px;
+        overflow-wrap: anywhere;
+      }
+
+      & small {
+        overflow-wrap: anywhere;
+      }
+    }
+
+    & .row-buttons {
+      display: flex;
+      flex-shrink: 0;
+      gap: 6px;
+    }
+
+    & .lib-option {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px 16px;
+      padding: 12px 16px;
+      background: color-mix(in srgb, var(--text) 5%, var(--surface));
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+
+      & .lib-option-text {
+        display: grid;
+        gap: 2px;
+
+        & > span {
+          font-size: 14px;
+          font-weight: 500;
+        }
+      }
+
+      & select {
+        min-width: 200px;
+        max-width: 100%;
+        background: var(--surface);
+      }
     }
   }
 
