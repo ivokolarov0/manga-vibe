@@ -485,14 +485,14 @@
             </div>
           </template>
           <div class="setting-row">
-            <div class="label"><span x-text="scanText || 'Scan for new files'"></span>
-              <small>Runs by itself every 6 hours and on start.</small></div>
-            <button class="btn small" :disabled="!!scan.running" @click="rescan()">Rescan all</button>
-          </div>
-          <div class="setting-row">
             <div class="label"><span>Add a folder</span>
               <small>Only folders mounted in the container are visible (e.g. /library2).</small></div>
             <button class="btn small primary" @click="$store.app.folderPicker = true">+ Add folder</button>
+          </div>
+          <div class="setting-row">
+            <div class="label"><span x-text="scanText || 'Scan for new files'"></span>
+              <small>Runs by itself every 6 hours and on start.</small></div>
+            <button class="btn small" :disabled="!!scan.running" @click="rescan()">Rescan all</button>
           </div>
         </section>
 
