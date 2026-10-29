@@ -1,7 +1,10 @@
-# Builds the Android app (android/) when a GitHub release is published, and attaches it to the
-# release as MangaVibe.apk. The web app links to releases/latest/download/MangaVibe.apk.
-# Run by hand (workflow_dispatch), it builds the chosen branch and keeps the APK as a workflow artifact;
-# with a release tag (e.g. v1.10.0) it attaches the APK to that release instead (to redo a failed build).
+# Attaches the Android app (android/) to every published GitHub release as MangaVibe.apk. The web
+# app links to releases/latest/download/MangaVibe.apk, so every release needs one.
+# A release only builds the app when android/ changed since the release whose APK it would reuse;
+# otherwise it copies that release's MangaVibe.apk (seconds instead of a Gradle build).
+# Run by hand (workflow_dispatch), it always builds the chosen branch and keeps the APK as a workflow
+# artifact; with a release tag (e.g. v1.10.0) it attaches the APK to that release instead (to force a
+# build for a release, or to redo a failed one).
 #
 # Signing: Android only installs an update over the app if both are signed with the same key, so
 # every release must use one key. Add these repository secrets (how: android/README.md):
@@ -29,15 +32,54 @@ jobs:
       KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # the tags, to see what changed in android/
+
+      # build, or reuse the APK of the newest earlier release that has one
+      - name: Build or reuse
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != release ]; then
+            echo "Run by hand: building"; echo "build=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # newest first; drafts have no tag yet, and the new release has no APK yet
+          prev=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=50" --jq "
+            [.[] | select(.draft | not) | select(.tag_name != \"$TAG\")
+                 | select(any(.assets[]; .name == \"MangaVibe.apk\"))][0].tag_name // empty")
+          if [ -z "$prev" ]; then
+            echo "No earlier release has an APK: building"; echo "build=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if ! git diff --quiet "$prev" "$TAG" -- android/; then
+            echo "android/ changed since $prev: building"
+            git diff --stat "$prev" "$TAG" -- android/
+            echo "build=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "android/ unchanged since $prev: reusing its APK"
+          echo "build=false" >> "$GITHUB_OUTPUT"
+          echo "prev=$prev" >> "$GITHUB_OUTPUT"
+
+      - name: Reuse the earlier APK
+        if: steps.decide.outputs.build == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREV: ${{ steps.decide.outputs.prev }}
+        run: |
+          gh release download "$PREV" --pattern MangaVibe.apk --dir "$RUNNER_TEMP"
+          gh release upload "$TAG" "$RUNNER_TEMP/MangaVibe.apk" --clobber
 
       - uses: actions/setup-java@v4
+        if: steps.decide.outputs.build == 'true'
         with:
           distribution: temurin
           java-version: 17
 
       - uses: gradle/actions/setup-gradle@v4
+        if: steps.decide.outputs.build == 'true'
 
       - name: Signing key
+        if: steps.decide.outputs.build == 'true'
         run: |
           if [ -z "$KEYSTORE_BASE64" ]; then
             if [ -n "$TAG" ]; then
@@ -57,6 +99,7 @@ jobs:
           echo "MANGAVIBE_KEYSTORE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
 
       - name: Build
+        if: steps.decide.outputs.build == 'true'
         working-directory: android
         env:
           MANGAVIBE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -70,13 +113,13 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/MangaVibe.apk"
 
       - name: Attach to the release
-        if: env.TAG != ''
+        if: steps.decide.outputs.build == 'true' && env.TAG != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" "$RUNNER_TEMP/MangaVibe.apk" --clobber
 
       - uses: actions/upload-artifact@v4
-        if: env.TAG == ''
+        if: steps.decide.outputs.build == 'true' && env.TAG == ''
         with:
           name: MangaVibe-apk
           path: ${{ runner.temp }}/MangaVibe.apk
