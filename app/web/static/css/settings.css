@@ -203,7 +203,9 @@
     padding: 8px 16px;
     border-bottom: 1px solid var(--border);
 
-    &:last-child {
+    /* also when only an empty Alpine <template> (an x-if that's off) comes after it */
+    &:last-child,
+    &:has(+ template:last-child) {
       border-bottom: 0;
     }
 
