@@ -478,7 +478,7 @@
                   </select></label>
               </div>
               <div class="row-buttons">
-                <button class="btn small" :disabled="scan.running" @click="rescan(l)"
+                <button class="btn small" :disabled="!!scan.running" @click="rescan(l)"
                         :title="scan.running ? 'A scan is running' : 'Scan only this folder'">⟳ Scan</button>
                 <button class="btn small danger" @click="removeLibrary(l)">Remove</button>
               </div>
@@ -487,7 +487,7 @@
           <div class="setting-row">
             <div class="label"><span x-text="scanText || 'Scan for new files'"></span>
               <small>Runs by itself every 6 hours and on start.</small></div>
-            <button class="btn small" :disabled="scan.running" @click="rescan()">Rescan all</button>
+            <button class="btn small" :disabled="!!scan.running" @click="rescan()">Rescan all</button>
           </div>
           <div class="setting-row">
             <div class="label"><span>Add a folder</span>
@@ -881,7 +881,7 @@
                         <span class="chip" x-text="d.label"></span></div>
                     </div>
                     <div class="btn-row">
-                      <button class="btn small" :disabled="rescanning[d.series_id]" @click="rescan(d.series_id)"
+                      <button class="btn small" :disabled="!!rescanning[d.series_id]" @click="rescan(d.series_id)"
                               title="Re-read this series' folder after fixing the files on disk"
                               x-text="rescanning[d.series_id] ? 'Rescanning…' : '⟳ Rescan'"></button>
                       <button class="btn small" @click="ignore(d.key, !d.ignored)"
