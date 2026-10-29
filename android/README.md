@@ -43,7 +43,9 @@ Needs JDK 17 and the Android SDK (Android Studio has both): open this folder in 
 The APK is `app/build/outputs/apk/release/app-release.apk`. Without a signing key (below) it is signed
 with your debug key: fine for your own phone.
 
-Releases are built by `.github/workflows/android.yml` and attached to the GitHub release as `MangaVibe.apk`.
+Releases get the app from `.github/workflows/android.yml`, attached to the GitHub release as `MangaVibe.apk`.
+It is only rebuilt when `android/` changed since the last release with an APK; otherwise that APK is
+copied over. To rebuild anyway: Actions → Android app → Run workflow, with the release tag.
 
 ## Signing key (once, for releases)
 

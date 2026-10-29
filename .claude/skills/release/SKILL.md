@@ -6,8 +6,10 @@ description: Publish a new MangaVibe version as a GitHub release. Finds the last
 # Release a new version
 
 A GitHub release is what running apps update to (`app/updater.py`), and publishing it builds the
-Docker image (`.github/workflows/image.yml`) and the Android app, attached to the release as
-`MangaVibe.apk` (`.github/workflows/android.yml`; it fails if the `ANDROID_KEYSTORE_*` secrets are missing). The `releases` branch is no longer used: never push or
+Docker image (`.github/workflows/image.yml`) and attaches the Android app as `MangaVibe.apk`
+(`.github/workflows/android.yml`). The app is only rebuilt when `android/` changed since the last
+release with an APK; otherwise that release's APK is copied over in seconds. A build fails if the
+`ANDROID_KEYSTORE_*` secrets are missing. The `releases` branch is no longer used: never push or
 merge into it.
 
 ## 1. Check where we are
@@ -30,6 +32,9 @@ For each merged PR since the last tag (merge commits name them: `Merge pull requ
 ```
 gh pr view N --json title,body,labels
 ```
+
+Note whether `android/` changed (`git diff --stat <last tag> origin/main -- android/`): only then is
+the app rebuilt.
 
 Also check whether this version needs a new Docker image (the app then can't update by itself, and
 users have to pull the image):
@@ -60,10 +65,11 @@ Show, short:
 - last version and date, and the proposed version
 - one line per change (the PR title in plain words), and which change decided the bump
 - whether it needs a new Docker image
+- whether the Android app gets rebuilt (`android/` changed) or the last APK is reused
 
 Then ask with AskUserQuestion: the proposed version first, marked (Recommended), and the other two
-bumps as options. The user can also type a version, or ask for a pre-release (step 5). Don't publish
-before the user answers.
+bumps as options. The user can also type a version, ask for a pre-release, or ask to rebuild the app
+(step 5). Don't publish before the user answers.
 
 ## 5. Publish
 
@@ -80,6 +86,11 @@ gh release create vX.Y.Z --target <origin/main sha> --title "vX.Y.Z" --generate-
 - Pre-release (to test it first, e.g. "release it as a test"): add `--prerelease` and use a version
   like `v1.2.0-rc.1`. It builds an image tagged `1.2.0-rc.1` but not `latest`, and running apps
   don't get it. Later the real release is `v1.2.0`.
+- Rebuild the app although `android/` didn't change (the user says "with the app", "rebuild the
+  app", "build the APK"): first let the release's own Android run finish (it copies the old APK,
+  in seconds: `gh run list --workflow android.yml --limit 1`, then `gh run watch <id>`), then
+  `gh workflow run android.yml --ref vX.Y.Z -f tag=vX.Y.Z`. That build replaces the copied APK.
+  Watch it like the image build (step 6).
 
 ## 6. Watch the image build
 
