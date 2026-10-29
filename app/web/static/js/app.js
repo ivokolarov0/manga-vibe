@@ -1240,7 +1240,20 @@ function settingsView() {
     },
     // only plugins with something to set up, run or update get a page
     hasPluginPage(p) { return !!(p.settings.length || p.global_actions.length || p.update.supported); },
-    go(sec) { location.replace(`#/settings/${sec}`); },
+    go(sec) { this.navOpen = false; location.replace(`#/settings/${sec}`); },
+    // phones: the nav is one "current page ▾" button that opens a menu
+    navOpen: false,
+    get current() {
+      if (this.section === "plugin") return ["🧩", this.plugin?.name || "Plugin"];
+      const n = SETTINGS_NAV.find(([k]) => k === this.section);
+      if (n) return [n[2], n[1]];
+      const a = ATT_TABS.find(([k]) => "att-" + k === this.section);
+      return a ? ["⚠", a[1]] : ["⚙", "Settings"];
+    },
+    // problems worth a look (the red counts), shown on the closed menu button
+    get attAlerts() {
+      return ["unreadable", "matches", "same", "duplicates"].reduce((n, k) => n + this.attCount(k), 0);
+    },
     // Settings → Android app
     appServer: androidApp?.server() || "",
     appVersion: androidApp?.version() || "",
