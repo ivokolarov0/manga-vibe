@@ -22,6 +22,11 @@ CASES = [
     ("Some Title 015a.cbz", "Some Title", None, 15.1, None, 1, False, None),
     ("Kingdom v05 c040.cbz", "Kingdom", 5, 40, None, 1, False, None),
     ("Title Omake.zip", "Title", None, None, None, 1, True, None),
+    # an extra that names its chapter or volume keeps it
+    ("Title ch05 Extra.zip", "Title", None, 5, None, 1, True, None),
+    ("Title_c012.5_Omake_[Grp].cbz", "Title", None, 12.5, None, 1, True, None),
+    ("Title v03 Bonus.cbz", "Title", 3, None, None, 1, True, None),
+    ("Title Extra Chapter 2.zip", "Title", None, None, None, 1, True, 2),
     ("ワンピース 第3巻.zip", "ワンピース", 3, None, None, 1, False, None),
     ("ワンピース 第12話.zip", "ワンピース", None, 12, None, 1, False, None),
 ]
@@ -93,3 +98,13 @@ def test_group_order_volumes_chapters_extras_unnumbered():
     kept, _, _ = order(files, "T")
     assert [p.name for p in kept] == ["Vol 01.cbz", "Vol 02.cbz", "T ch05.zip",
                                       "T Omake.zip", "Readme thing.zip"]
+
+
+def test_extra_with_a_chapter_stays_after_that_chapter():
+    files = ["Nana ch06.zip", "Nana Extra.zip", "Nana ch05 Extra.zip", "Nana ch05.zip", "Nana ch04.zip", "Nana v02 Bonus.cbz",
+             "Nana v02.cbz", "Nana v01.cbz"]
+    kept, _, dups = order(files, "Nana")
+    assert [p.name for p in kept] == ["Nana v01.cbz", "Nana v02.cbz", "Nana v02 Bonus.cbz", "Nana ch04.zip", "Nana ch05.zip",
+                                      "Nana ch05 Extra.zip", "Nana ch06.zip", "Nana Extra.zip"]
+    assert dups == []  # an extra is not a duplicate of its chapter
+    assert kept[5].label() == "Ch 5 extra"

@@ -12,6 +12,8 @@ BRACKETS = re.compile(r"\[[^\]]*\]|\{[^}]*\}")           # [Group], {tags}
 PARENS = re.compile(r"\((?:digital|\d{4}|[^)]*scan[^)]*|[^)]*rip[^)]*)\)", re.I)
 # no trailing \b: catches glued forms like "ExtraChapter" or "Extra2"
 EXTRA_WORDS = re.compile(r"(?<![a-z])(extra|bonus|omake|special|side[ _-]?story|one[ _-]?shot)", re.I)
+# the extra word with a "chapter" right after it: "Extra Chapter 2" is the 2nd extra, not one of chapter 2
+EXTRA_LEAD = re.compile(EXTRA_WORDS.pattern + r"(?:[ ._-]*(?:chapter|ch)(?![a-z]))?", re.I)
 
 VOL = re.compile(r"(?:\bvolume|\bvol|\bv)[ ._-]*(\d+(?:\.\d+)?)|第\s*(\d+)\s*巻", re.I)
 # ranges like ch01-05 / c001-c010
@@ -34,20 +36,22 @@ class Parsed:
     ref: object = None  # caller's object (e.g. a Book row), carried through order()
 
     def sort_key(self):
-        """Groups: volume-only books, chapters, extras, unnumbered (spec 4.3)."""
+        """Groups: volume-only books, chapters, extras, unnumbered (spec 4.3). An extra that names
+        its chapter or volume ("ch05 extra") goes right after that chapter or volume."""
         inf = float("inf")
         vol = self.volume if self.volume is not None else inf
         name = natural_key(self.name)
-        if self.extra:
-            return (2, self.extra_index if self.extra_index is not None else inf, 0, name)
+        after = 1 if self.extra else 0
         if self.chapter is not None:
-            return (1, self.chapter, vol, name)
+            return (1, self.chapter, vol, after, name)
         if self.volume is not None:
-            return (0, self.volume, 0, name)
-        return (3, 0, 0, name)
+            return (0, self.volume, 0, after, name)
+        if self.extra:
+            return (2, self.extra_index if self.extra_index is not None else inf, 0, 0, name)
+        return (3, 0, 0, 0, name)
 
     def label(self):
-        if self.extra:
+        if self.extra and self.chapter is None and self.volume is None:
             return f"Extra{'' if self.extra_index is None else ' ' + _fmt(self.extra_index)}"
         parts = []
         if self.volume is not None:
@@ -59,6 +63,8 @@ class Parsed:
             parts.append(c)
         if self.version > 1:
             parts.append(f"(v{self.version} revision)")
+        if self.extra:
+            parts.append("extra")
         return " ".join(parts) or "?"
 
 
@@ -90,11 +96,23 @@ def parse(filename: str, series_title: str = "") -> Parsed:
         s = s[:m.start()] + s[m.end():]
 
     if EXTRA_WORDS.search(s):
+        # an extra keeps the chapter or volume it names ("ch05 omake"), so it stays in its place;
+        # a bare number is the extra's own ("Extra2")
         p.extra = True
-        n = TRAILING_NUM.search(EXTRA_WORDS.sub(" ", s).strip())
-        p.extra_index = float(n.group(1)) if n else None
+        s = re.sub(r"\s+", " ", EXTRA_LEAD.sub(" ", s)).strip()
+        _numbers(p, s, bare=False)
+        if p.chapter is None and p.volume is None:
+            n = TRAILING_NUM.search(s)
+            p.extra_index = float(n.group(1)) if n else None
         return p
 
+    _numbers(p, s, bare=True)
+    return p
+
+
+def _numbers(p, s, bare):
+    """Chapter (or range) and volume from the cleaned name; with bare, a lone trailing number
+    is a chapter too."""
     m = CH_RANGE.search(s)
     if m:
         p.chapter, p.chapter_end = float(m.group(1)), float(m.group(2))
@@ -112,11 +130,10 @@ def parse(filename: str, series_title: str = "") -> Parsed:
         s = s[:m.start()] + " " + s[m.end():]
 
     # bare trailing number ("Title52") -> chapter, the most common convention
-    if p.chapter is None and p.volume is None:
+    if bare and p.chapter is None and p.volume is None:
         m = TRAILING_NUM.search(s)
         if m:
             p.chapter = float(m.group(1)) + _suffix(m.group(2))
-    return p
 
 
 def order(files, series_title=""):

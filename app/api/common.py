@@ -119,7 +119,7 @@ def series_card(series, counts, lang):
 
 
 def book_label(b: Book):
-    if b.eff_extra:
+    if b.eff_extra and b.eff_chapter is None and b.eff_volume is None:
         return "Extra" + ("" if b.extra_index is None else f" {_fmt(b.extra_index)}")
     parts = []
     if b.eff_volume is not None:
@@ -127,6 +127,8 @@ def book_label(b: Book):
     if b.eff_chapter is not None:
         end = b.eff_chapter_end
         parts.append(f"Ch {_fmt(b.eff_chapter)}" + (f"-{_fmt(end)}" if end is not None else ""))
+    if b.eff_extra:
+        parts.append("extra")
     return " ".join(parts) or Path(b.file_name).stem
 
 

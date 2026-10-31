@@ -47,6 +47,9 @@ MIGRATIONS = [
         "UPDATE series SET numbering = NULL",
         "DROP INDEX IF EXISTS ix_book_numbers",
         f"CREATE INDEX ix_book_numbers ON book ({', '.join(BOOK_NUMBERS_COLUMNS)})")],
+    # 9: extras keep the chapter or volume they name ("ch05 omake"), so they sort in place:
+    # read the files marked as extras again at the next scan (mtime -1 forces it)
+    lambda conn: conn.execute(text("UPDATE book SET mtime = -1 WHERE extra = 1")),
 ]
 
 
