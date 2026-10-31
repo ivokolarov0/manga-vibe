@@ -24,7 +24,30 @@ CASES = [
     ("Title Omake.zip", "Title", None, None, None, 1, True, None),
     ("ワンピース 第3巻.zip", "ワンピース", 3, None, None, 1, False, None),
     ("ワンピース 第12話.zip", "ワンピース", None, 12, None, 1, False, None),
+    # a chapter's title doesn't make it an extra or give it a volume (issue #129)
+    ("Chapter 333 - Something Special", "", None, 333, None, 1, False, None),
+    ("Chapter 267 - Extra The President Has Donkey Ears", "", None, 267, None, 1, False, None),
+    ("Chapter 448 - An Assassin From The Past (Around Volume 15).cbz", "", None, 448, None, 1, False, None),
+    ("Vol.02 Ch.010: Bonus Round.cbz", "", 2, 10, None, 1, False, None),
+    ("Title Extra Chapter 3 - Something.cbz", "Title", None, None, None, 1, True, 3),
+    ("Title Chapter 12 Extra.cbz", "Title", None, None, None, 1, True, 12),
 ]
+
+
+def test_chapter_titles_leave_no_false_gaps():
+    """Hayate the Combat Butler (issue #129): titles with "Special" / "Extra" were read as extras."""
+    from app.api.common import BookNumbers, chapter_gaps, numbering
+    names = ["Chapter 052 - Nagi - Andalucia dream", "Chapter 053 - Good Luck With Special Training, Nagi!",
+             "Chapter 054 - Winning or Losing Is For The Runner", "Chapter 219 - We Are Not Innovators!",
+             "Chapter 224 - Getting a Girl into a Good Mood", "Chapter 266 - And It Becomes a Smile",
+             "Chapter 267 - Extra The President Has Donkey Ears", "Chapter 268 - The Long Stroy Is Over",
+             "Chapter 332 - A Genius's Strategy", "Chapter 333 - Something Special", "Chapter 334 - Identity Crisis",
+             "Chapter 347 - Are You A Magnet Or Someting",
+             "Chapter 348 - Chef Maria's Summer Vegetable Special, Round 1",
+             "Chapter 349 - I Don't Want to Think About Getting Fat Anymore", "Chapter 328"]
+    ps = [parse(n) for n in names]
+    num = numbering([BookNumbers(p.volume, p.chapter, p.chapter_end, p.extra) for p in ps])
+    assert chapter_gaps(num) == [(54, 219), (219, 224), (224, 266), (268, 328), (328, 332), (334, 347)]
 
 
 @pytest.mark.parametrize("name,series,vol,ch,ch_end,rev,extra,extra_idx", CASES)

@@ -47,6 +47,9 @@ MIGRATIONS = [
         "UPDATE series SET numbering = NULL",
         "DROP INDEX IF EXISTS ix_book_numbers",
         f"CREATE INDEX ix_book_numbers ON book ({', '.join(BOOK_NUMBERS_COLUMNS)})")],
+    # 9: chapter titles no longer make a file an extra ("Chapter 333 - Something Special"):
+    # the next scan reads the files marked extra again
+    lambda conn: conn.execute(text("UPDATE book SET mtime = -1 WHERE extra = 1")),
 ]
 
 

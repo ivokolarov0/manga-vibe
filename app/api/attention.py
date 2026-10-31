@@ -147,7 +147,7 @@ def attention(ignored: bool = False, db=Depends(get_db)):
                                "label": book_label(group[0]), "files": [_book_info(b) for b in group]})
     for sid, g in gaps.items():
         add("gaps", {"key": f"gap:{sid}", "series_id": sid, "series": name(sid),
-                     "gaps": [f"{a} → {b}" for a, b in g]})
+                     "gaps": [str(a + 1) if b - a == 2 else f"{a + 1}–{b - 1}" for a, b in g]})
     for sid in failed:
         s = series[sid]
         add("matches", {"series_id": sid, "series": name(sid), "folder": s.folder_name,
