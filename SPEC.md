@@ -96,11 +96,12 @@ File names are messy and inconsistent, even within one series. This is a core fe
 
 ### 4.2 Detection rules (in this order)
 1. **Revision marker:** a `v` + number **glued to a preceding digit** (`ch03v2`) is a revision (version 2), **not** a volume. Remove it before the next steps.
-2. **Extras:** words `extra`, `bonus`, `omake`, `special`, `side story`, `oneshot`/`one shot` — matched even when glued to other text (`ExtraChapter`, `Extra2`). A trailing number becomes the extra index (`Extra2` → extra #2). Extras sort after all numbered books.
+2. **Chapter title:** text after `Chapter N - ` / `Ch.N: ` is the chapter's title and is ignored.
+   Extras are **not** detected from names: they are written too many ways (`12+extra`, `12+omake`, `12.5`, `Extra2`). Only the owner marks a book as extra (4.6). Extras sort after all numbered books.
 3. **Chapter range:** `ch01-05`, `c001-c010`, `Chapter 1~3` → chapters 1–5.
 4. **Chapter:** `chapter`, `ch`, `c`, `#`, Japanese `第N話`. Decimals (`10.5`) and letter suffixes (`15a` → 15.1, `15b` → 15.2) are supported.
 5. **Volume:** `volume`, `vol`, `v` (word-start), Japanese `第N巻`.
-6. **Bare trailing number** (`Hana_to_Akuma52`, `Title 015a`) when no chapter or volume was found → **chapter**.
+6. **Bare number** (`Hana_to_Akuma52`, `Title 015a`, or the last number in `Title 12+omake`) when no chapter or volume was found → **chapter**.
 7. Nothing found → no number; sort by natural filename order after numbered books.
 
 ### 4.3 Sorting
@@ -122,20 +123,22 @@ File names are messy and inconsistent, even within one series. This is a core fe
 | `Hana_to_Akuma_v01_ch03v2_[OT].zip` | Hana to Akuma | Vol 1, Ch 3, revision 2 |
 | `[KnO]Hana_to_Akuma52.zip` | Hana to Akuma | Ch 52 |
 | `Hana_to_Akuma10.zip` | Hana to Akuma | Ch 10 |
-| `Hana_to_Akuma_Bonus_Chapter_[FBD].zip` | Hana to Akuma | Extra |
-| `Hana_to_Akuma_ExtraChapter.zip` | Hana to Akuma | Extra |
-| `Hana_to_Akuma_Extra2.zip` | Hana to Akuma | Extra #2 (**not** chapter 2) |
+| `Hana_to_Akuma_Bonus_Chapter_[FBD].zip` | Hana to Akuma | no number |
+| `Hana_to_Akuma_ExtraChapter.zip` | Hana to Akuma | no number |
+| `Hana_to_Akuma_Extra2.zip` | Hana to Akuma | Ch 2 |
 | `Hana_to_Akuma_v2.zip` | Hana to Akuma | Vol 2 (not a revision) |
 | `Berserk Vol.03 (Digital).cbz` | Berserk | Vol 3 |
 | `[Group] 20th Century Boys c010-012.rar` | 20th Century Boys | Ch 10–12 |
 | `Some Title - Chapter 10.5.zip` | Some Title | Ch 10.5 |
 | `Some Title 015a.cbz` | Some Title | Ch 15.1 |
 | `Kingdom v05 c040.cbz` | Kingdom | Vol 5, Ch 40 |
-| `Title Omake.zip` | Title | Extra |
+| `Title Omake.zip` | Title | no number |
+| `Title 12+omake.cbz` | Title | Ch 12 |
+| `Chapter 333 - Something Special` | | Ch 333 |
 | `ワンピース 第3巻.zip` | ワンピース | Vol 3 |
 | `ワンピース 第12話.zip` | ワンピース | Ch 12 |
 
-**Full-folder test** (shuffled input, real folder from the owner's library). Given the Hana to Akuma files `v01_ch01..v01_ch05` (ch03/ch04 as `v2`), `v02_ch06..v02_ch09` (ch07/ch08 as `v2`), `Hana_to_Akuma10..14.zip`, `[KnO]Hana_to_Akuma52..58.zip`, the three extras, plus an old `v01_ch03_[OT].zip`, the expected order is: Ch 1–9, Ch 10–14, Ch 52–58, then the three extras. `v01_ch03_[OT].zip` is an older revision (hidden from reading order). No duplicates flagged.
+**Full-folder test** (shuffled input, real folder from the owner's library). Given the Hana to Akuma files `v01_ch01..v01_ch05` (ch03/ch04 as `v2`), `v02_ch06..v02_ch09` (ch07/ch08 as `v2`), `Hana_to_Akuma10..14.zip`, `[KnO]Hana_to_Akuma52..58.zip`, `Bonus_Chapter` and `ExtraChapter`, plus an old `v01_ch03_[OT].zip`, the expected order is: Ch 1–9, Ch 10–14, Ch 52–58, then the two unnumbered files. `v01_ch03_[OT].zip` is an older revision (hidden from reading order). No duplicates flagged.
 
 ### 4.6 Manual override
 In the series "Files" view the owner can:

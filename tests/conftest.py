@@ -40,7 +40,7 @@ def build_library(root: Path):
     make_zip(hana / "Hana_to_Akuma_v01_ch03_[OT].zip")
     make_zip(hana / "Hana_to_Akuma_v01_ch03v2_[OT].zip")
     make_zip(hana / "[KnO]Hana_to_Akuma52.zip")
-    make_zip(hana / "Hana_to_Akuma_Extra2.zip")
+    make_zip(hana / "Hana_to_Akuma_Omake.zip")
     folder = root / "Series B" / "Chapter 5"
     folder.mkdir(parents=True)
     for i in (2, 10, 1):

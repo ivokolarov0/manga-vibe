@@ -462,3 +462,7 @@ Choices made where the spec was open. Newest at the bottom.
   updates the editions list but never the pick. AniList's count stays as the series' length.
 - **Series matched earlier** get their editions in the background at start (one MangaUpdates request
   each, behind the owner's own requests).
+
+- **Extras aren't guessed from file names** (owner's choice). They are written too many ways
+  (`12+extra`, `12+omake`, `12.5`, chapter titles like "Something Special"), and a wrong guess left
+  the chapter out of the count. A name's number is its chapter; the owner marks extras by hand.
