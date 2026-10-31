@@ -24,7 +24,7 @@ def test_series_found_and_junk_ignored(client):
 def test_book_order_and_revisions(client):
     sid = series_by_name(client)["Hana to Akuma"]["id"]
     books = client.get(f"/api/series/{sid}/books").json()
-    assert [b["label"] for b in books] == ["Vol 1 Ch 1", "Vol 1 Ch 3", "Ch 52", "Extra 2"]
+    assert [b["label"] for b in books] == ["Vol 1 Ch 1", "Vol 1 Ch 3", "Ch 52", "Hana_to_Akuma_Omake"]
     assert books[1]["revision"] == 2
     all_books = client.get(f"/api/series/{sid}/books?all=1").json()
     hidden = [b["file_name"] for b in all_books if b["hidden"]]
@@ -158,9 +158,9 @@ def test_example_plugin(client):
     assert "broken.py" in data["errors"]  # a broken plugin is reported, app keeps working
 
     (TMP / "manga" / "Hana to Akuma" / "series.json").write_text(
-        '{"chapters": {"Hana_to_Akuma_Extra2.zip": 7}}')
+        '{"chapters": {"Hana_to_Akuma_Omake.zip": 7}}')
     time.sleep(0.01)
-    (TMP / "manga" / "Hana to Akuma" / "Hana_to_Akuma_Extra2.zip").touch()  # force re-read
+    (TMP / "manga" / "Hana to Akuma" / "Hana_to_Akuma_Omake.zip").touch()  # force re-read
     walker.scan_all()
     sid = series_by_name(client)["Hana to Akuma"]["id"]
     s = client.get(f"/api/series/{sid}").json()

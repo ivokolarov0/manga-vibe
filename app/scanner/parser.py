@@ -1,4 +1,5 @@
-"""Filename parser for manga files: detects volume, chapter, version and extras."""
+"""Filename parser for manga files: detects volume, chapter and version. Extras are never guessed
+from names (they are written too many ways: 12+extra, 12.5, omake...); the owner marks them."""
 import re
 from dataclasses import dataclass
 from typing import Optional
@@ -10,8 +11,6 @@ natural_key = natsort_keygen(alg=ns.IGNORECASE)  # "file2" < "File10"
 ARCHIVE_EXT = re.compile(r"\.(cbz|zip|cbr|rar|cb7|7z|epub|pdf)$", re.I)
 BRACKETS = re.compile(r"\[[^\]]*\]|\{[^}]*\}")           # [Group], {tags}
 PARENS = re.compile(r"\((?:digital|\d{4}|[^)]*scan[^)]*|[^)]*rip[^)]*)\)", re.I)
-# no trailing \b: catches glued forms like "ExtraChapter" or "Extra2"
-EXTRA_WORDS = re.compile(r"(?<![a-z])(extra|bonus|omake|special|side[ _-]?story|one[ _-]?shot)", re.I)
 
 VOL = re.compile(r"(?:\bvolume|\bvol|\bv)[ ._-]*(\d+(?:\.\d+)?)|第\s*(\d+)\s*巻", re.I)
 # ranges like ch01-05 / c001-c010
@@ -22,6 +21,10 @@ VERSION = re.compile(r"(?<=\d)v(\d+)\b", re.I)
 # "Chapter 053 - Title" / "Ch.5: Title": what follows the separator is the chapter's title
 TITLE_SEP = re.compile(r"\s*[-–—:]\s")
 TRAILING_NUM = re.compile(r"(\d+(?:\.\d+)?)([a-z])?\s*$", re.I)
+# the last number in the name, when text follows it ("Title 12+extra")
+LAST_NUM = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)(?!.*\d)")
+# the last number in the name, when text follows it ("Title 12+extra")
+LAST_NUM = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)(?!.*\d)")
 
 
 @dataclass
@@ -91,19 +94,12 @@ def parse(filename: str, series_title: str = "") -> Parsed:
         p.version = int(m.group(1))
         s = s[:m.start()] + s[m.end():]
 
-    # drop a chapter's title, so words and numbers in it ("Something Special", "Volume 15")
-    # don't make it an extra or give it a volume
+    # drop a chapter's title, so numbers in it ("Around Volume 15") don't give it a volume
     m = CH.search(s)
     if m:
         end = (CH_RANGE.match(s, m.start()) or m).end()
         if TITLE_SEP.match(s, end):
             s = s[:end]
-
-    if EXTRA_WORDS.search(s):
-        p.extra = True
-        n = TRAILING_NUM.search(EXTRA_WORDS.sub(" ", s).strip())
-        p.extra_index = float(n.group(1)) if n else None
-        return p
 
     m = CH_RANGE.search(s)
     if m:
@@ -121,11 +117,13 @@ def parse(filename: str, series_title: str = "") -> Parsed:
         p.volume = float(m.group(1) or m.group(2))
         s = s[:m.start()] + " " + s[m.end():]
 
-    # bare trailing number ("Title52") -> chapter, the most common convention
+    # bare number ("Title52", "Title 12+omake") -> chapter, the most common convention
     if p.chapter is None and p.volume is None:
         m = TRAILING_NUM.search(s)
         if m:
             p.chapter = float(m.group(1)) + _suffix(m.group(2))
+        elif m := LAST_NUM.search(s):
+            p.chapter = float(m.group(1))
     return p
 
 

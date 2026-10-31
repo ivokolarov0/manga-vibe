@@ -12,16 +12,16 @@ CASES = [
     ("Hana_to_Akuma_v01_ch03v2_[OT].zip", HANA, 1, 3, None, 2, False, None),
     ("[KnO]Hana_to_Akuma52.zip", HANA, None, 52, None, 1, False, None),
     ("Hana_to_Akuma10.zip", HANA, None, 10, None, 1, False, None),
-    ("Hana_to_Akuma_Bonus_Chapter_[FBD].zip", HANA, None, None, None, 1, True, None),
-    ("Hana_to_Akuma_ExtraChapter.zip", HANA, None, None, None, 1, True, None),
-    ("Hana_to_Akuma_Extra2.zip", HANA, None, None, None, 1, True, 2),
+    ("Hana_to_Akuma_Bonus_Chapter_[FBD].zip", HANA, None, None, None, 1, False, None),
+    ("Hana_to_Akuma_ExtraChapter.zip", HANA, None, None, None, 1, False, None),
+    ("Hana_to_Akuma_Extra2.zip", HANA, None, 2, None, 1, False, None),
     ("Hana_to_Akuma_v2.zip", HANA, 2, None, None, 1, False, None),
     ("Berserk Vol.03 (Digital).cbz", "Berserk", 3, None, None, 1, False, None),
     ("[Group] 20th Century Boys c010-012.rar", "20th Century Boys", None, 10, 12, 1, False, None),
     ("Some Title - Chapter 10.5.zip", "Some Title", None, 10.5, None, 1, False, None),
     ("Some Title 015a.cbz", "Some Title", None, 15.1, None, 1, False, None),
     ("Kingdom v05 c040.cbz", "Kingdom", 5, 40, None, 1, False, None),
-    ("Title Omake.zip", "Title", None, None, None, 1, True, None),
+    ("Title Omake.zip", "Title", None, None, None, 1, False, None),
     ("ワンピース 第3巻.zip", "ワンピース", 3, None, None, 1, False, None),
     ("ワンピース 第12話.zip", "ワンピース", None, 12, None, 1, False, None),
     # a chapter's title doesn't make it an extra or give it a volume (issue #129)
@@ -29,13 +29,17 @@ CASES = [
     ("Chapter 267 - Extra The President Has Donkey Ears", "", None, 267, None, 1, False, None),
     ("Chapter 448 - An Assassin From The Past (Around Volume 15).cbz", "", None, 448, None, 1, False, None),
     ("Vol.02 Ch.010: Bonus Round.cbz", "", 2, 10, None, 1, False, None),
-    ("Title Extra Chapter 3 - Something.cbz", "Title", None, None, None, 1, True, 3),
-    ("Title Chapter 12 Extra.cbz", "Title", None, None, None, 1, True, 12),
+    ("Title Extra Chapter 3 - Something.cbz", "Title", None, 3, None, 1, False, None),
+    ("Title Chapter 12 Extra.cbz", "Title", None, 12, None, 1, False, None),
+    # extras are never guessed from names: the number they carry is their chapter
+    ("Title 12+extra.cbz", "Title", None, 12, None, 1, False, None),
+    ("Title 12+omake.cbz", "Title", None, 12, None, 1, False, None),
+    ("Title 12.5.cbz", "Title", None, 12.5, None, 1, False, None),
 ]
 
 
 def test_chapter_titles_leave_no_false_gaps():
-    """Hayate the Combat Butler (issue #129): titles with "Special" / "Extra" were read as extras."""
+    """Hayate the Combat Butler (issue #129): titles with "Special" / "Extra" used to make extras."""
     from app.api.common import BookNumbers, chapter_gaps, numbering
     names = ["Chapter 052 - Nagi - Andalucia dream", "Chapter 053 - Good Luck With Special Training, Nagi!",
              "Chapter 054 - Winning or Losing Is For The Runner", "Chapter 219 - We Are Not Innovators!",
@@ -61,11 +65,6 @@ def test_parse(name, series, vol, ch, ch_end, rev, extra, extra_idx):
     assert p.extra_index == extra_idx
 
 
-def test_extra_glued_number_is_not_chapter():
-    p = parse("Hana_to_Akuma_Extra2.zip", HANA)
-    assert p.chapter is None and p.extra_index == 2
-
-
 def test_more_formats():
     assert parse("Chapter 1~3.zip").chapter_end == 3
     assert parse("Some #7.cbz").chapter == 7
@@ -80,23 +79,22 @@ def hana_folder():
         files.append(f"Hana_to_Akuma_v02_ch{c:02d}{'v2' if c in (7, 8) else ''}_[OT].zip")
     files += [f"Hana_to_Akuma{c}.zip" for c in range(10, 15)]
     files += [f"[KnO]Hana_to_Akuma{c}.zip" for c in range(52, 59)]
-    extras = ["Hana_to_Akuma_Bonus_Chapter_[FBD].zip", "Hana_to_Akuma_ExtraChapter.zip",
-              "Hana_to_Akuma_Extra2.zip"]
-    files += extras
+    unnumbered = ["Hana_to_Akuma_Bonus_Chapter_[FBD].zip", "Hana_to_Akuma_ExtraChapter.zip"]
+    files += unnumbered
     files.append("Hana_to_Akuma_v01_ch03_[OT].zip")  # older revision
-    return files, extras
+    return files, unnumbered
 
 
 @pytest.mark.parametrize("seed", range(5))
 def test_full_folder(seed):
-    files, extras = hana_folder()
+    files, unnumbered = hana_folder()
     random.Random(seed).shuffle(files)
     kept, skipped, dups = order(files, HANA)
 
-    numbered = [p for p in kept if not p.extra]
+    numbered = [p for p in kept if p.chapter is not None]
     assert [p.chapter for p in numbered] == list(range(1, 15)) + list(range(52, 59))
-    assert sorted(p.name for p in kept if p.extra) == sorted(extras)
-    assert all(p.extra for p in kept[len(numbered):])
+    assert [p.name for p in kept[len(numbered):]] == sorted(unnumbered)
+    assert not any(p.extra for p in kept)  # extras are only marked by the owner
     assert [p.name for p in skipped] == ["Hana_to_Akuma_v01_ch03_[OT].zip"]
     assert dups == []
 
@@ -112,7 +110,9 @@ def test_natural_sort_of_unnumbered():
 
 
 def test_group_order_volumes_chapters_extras_unnumbered():
+    from app.scanner.parser import Parsed, order_parsed
     files = ["Readme thing.zip", "T Omake.zip", "T ch05.zip", "Vol 02.cbz", "Vol 01.cbz"]
-    kept, _, _ = order(files, "T")
-    assert [p.name for p in kept] == ["Vol 01.cbz", "Vol 02.cbz", "T ch05.zip",
-                                      "T Omake.zip", "Readme thing.zip"]
+    parsed = [parse(f, "T") for f in files] + [Parsed(name="Marked extra.zip", extra=True)]  # by the owner
+    kept, _, _ = order_parsed(parsed)
+    assert [p.name for p in kept] == ["Vol 01.cbz", "Vol 02.cbz", "T ch05.zip", "Marked extra.zip",
+                                      "Readme thing.zip", "T Omake.zip"]

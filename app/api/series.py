@@ -76,8 +76,8 @@ def reading_aggregates():
                    func.count(Book.id).label("total"),
                    func.sum(done).label("done"),
                    func.sum(case((and_(Progress.completed.is_not(True), Progress.page > 0), 1), else_=0)).label("started"),
-                   func.sum(case((Book.extra.is_(False), 1), else_=0)).label("total_main"),
-                   func.sum(case((and_(Book.extra.is_(False), Progress.completed.is_(True)), 1), else_=0)).label("done_main"))
+                   func.sum(case((func.coalesce(Book.override_extra, Book.extra).is_(False), 1), else_=0)).label("total_main"),
+                   func.sum(case((and_(func.coalesce(Book.override_extra, Book.extra).is_(False), Progress.completed.is_(True)), 1), else_=0)).label("done_main"))
             .outerjoin(Progress, Progress.book_id == Book.id)
             .where(visible).group_by(Book.series_id).subquery())
 
