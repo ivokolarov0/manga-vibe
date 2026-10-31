@@ -19,6 +19,8 @@ CH_RANGE = re.compile(r"(?:\bchapter|\bch|\bc|#)[ ._-]*(\d+(?:\.\d+)?)[ ]*[-~][ 
 CH = re.compile(r"(?:\bchapter|\bch|\bc|#)[ ._-]*(\d+(?:\.\d+)?)([a-z])?\b|第\s*(\d+)\s*話()", re.I)
 # revision marker glued to a number: ch03v2 -> version 2 (NOT volume 2)
 VERSION = re.compile(r"(?<=\d)v(\d+)\b", re.I)
+# "Chapter 053 - Title" / "Ch.5: Title": what follows the separator is the chapter's title
+TITLE_SEP = re.compile(r"\s*[-–—:]\s")
 TRAILING_NUM = re.compile(r"(\d+(?:\.\d+)?)([a-z])?\s*$", re.I)
 
 
@@ -88,6 +90,14 @@ def parse(filename: str, series_title: str = "") -> Parsed:
     if m:
         p.version = int(m.group(1))
         s = s[:m.start()] + s[m.end():]
+
+    # drop a chapter's title, so words and numbers in it ("Something Special", "Volume 15")
+    # don't make it an extra or give it a volume
+    m = CH.search(s)
+    if m:
+        end = (CH_RANGE.match(s, m.start()) or m).end()
+        if TITLE_SEP.match(s, end):
+            s = s[:end]
 
     if EXTRA_WORDS.search(s):
         p.extra = True
