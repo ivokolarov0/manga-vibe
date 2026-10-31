@@ -42,7 +42,7 @@ def series_counts(db, series_ids):
     """{series_id: (total, completed, in_progress, completed_non_extra, total_non_extra)}"""
     if not series_ids:
         return {}
-    rows = (db.query(Book.series_id, Book.extra, Progress.completed, Progress.page)
+    rows = (db.query(Book.series_id, func.coalesce(Book.override_extra, Book.extra), Progress.completed, Progress.page)
             .outerjoin(Progress, Progress.book_id == Book.id)
             .filter(Book.series_id.in_(series_ids), Book.missing_since.is_(None),
                     Book.hidden.is_(False))

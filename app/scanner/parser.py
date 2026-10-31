@@ -1,4 +1,5 @@
-"""Filename parser for manga files: detects volume, chapter, version and extras."""
+"""Filename parser for manga files: detects volume, chapter and version. Extras are never guessed
+from names (they are written too many ways: 12+extra, 12.5, omake...); the owner marks them."""
 import re
 from dataclasses import dataclass
 from typing import Optional
@@ -10,10 +11,6 @@ natural_key = natsort_keygen(alg=ns.IGNORECASE)  # "file2" < "File10"
 ARCHIVE_EXT = re.compile(r"\.(cbz|zip|cbr|rar|cb7|7z|epub|pdf)$", re.I)
 BRACKETS = re.compile(r"\[[^\]]*\]|\{[^}]*\}")           # [Group], {tags}
 PARENS = re.compile(r"\((?:digital|\d{4}|[^)]*scan[^)]*|[^)]*rip[^)]*)\)", re.I)
-# no trailing \b: catches glued forms like "ExtraChapter" or "Extra2"
-EXTRA_WORDS = re.compile(r"(?<![a-z])(extra|bonus|omake|special|side[ _-]?story|one[ _-]?shot)", re.I)
-# the extra word with a "chapter" right after it: "Extra Chapter 2" is the 2nd extra, not one of chapter 2
-EXTRA_LEAD = re.compile(EXTRA_WORDS.pattern + r"(?:[ ._-]*(?:chapter|ch)(?![a-z]))?", re.I)
 
 VOL = re.compile(r"(?:\bvolume|\bvol|\bv)[ ._-]*(\d+(?:\.\d+)?)|第\s*(\d+)\s*巻", re.I)
 # ranges like ch01-05 / c001-c010
@@ -21,7 +18,13 @@ CH_RANGE = re.compile(r"(?:\bchapter|\bch|\bc|#)[ ._-]*(\d+(?:\.\d+)?)[ ]*[-~][ 
 CH = re.compile(r"(?:\bchapter|\bch|\bc|#)[ ._-]*(\d+(?:\.\d+)?)([a-z])?\b|第\s*(\d+)\s*話()", re.I)
 # revision marker glued to a number: ch03v2 -> version 2 (NOT volume 2)
 VERSION = re.compile(r"(?<=\d)v(\d+)\b", re.I)
+# "Chapter 053 - Title" / "Ch.5: Title": what follows the separator is the chapter's title
+TITLE_SEP = re.compile(r"\s*[-–—:]\s")
 TRAILING_NUM = re.compile(r"(\d+(?:\.\d+)?)([a-z])?\s*$", re.I)
+# the last number in the name, when text follows it ("Title 12+extra")
+LAST_NUM = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)(?!.*\d)")
+# the last number in the name, when text follows it ("Title 12+extra")
+LAST_NUM = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)(?!.*\d)")
 
 
 @dataclass
@@ -36,8 +39,8 @@ class Parsed:
     ref: object = None  # caller's object (e.g. a Book row), carried through order()
 
     def sort_key(self):
-        """Groups: volume-only books, chapters, extras, unnumbered (spec 4.3). An extra that names
-        its chapter or volume ("ch05 extra") goes right after that chapter or volume."""
+        """Groups: volume-only books, chapters, extras, unnumbered (spec 4.3). An extra with a
+        chapter or volume number stays in its place, right after that chapter or volume."""
         inf = float("inf")
         vol = self.volume if self.volume is not None else inf
         name = natural_key(self.name)
@@ -95,24 +98,13 @@ def parse(filename: str, series_title: str = "") -> Parsed:
         p.version = int(m.group(1))
         s = s[:m.start()] + s[m.end():]
 
-    if EXTRA_WORDS.search(s):
-        # an extra keeps the chapter or volume it names ("ch05 omake"), so it stays in its place;
-        # a bare number is the extra's own ("Extra2")
-        p.extra = True
-        s = re.sub(r"\s+", " ", EXTRA_LEAD.sub(" ", s)).strip()
-        _numbers(p, s, bare=False)
-        if p.chapter is None and p.volume is None:
-            n = TRAILING_NUM.search(s)
-            p.extra_index = float(n.group(1)) if n else None
-        return p
+    # drop a chapter's title, so numbers in it ("Around Volume 15") don't give it a volume
+    m = CH.search(s)
+    if m:
+        end = (CH_RANGE.match(s, m.start()) or m).end()
+        if TITLE_SEP.match(s, end):
+            s = s[:end]
 
-    _numbers(p, s, bare=True)
-    return p
-
-
-def _numbers(p, s, bare):
-    """Chapter (or range) and volume from the cleaned name; with bare, a lone trailing number
-    is a chapter too."""
     m = CH_RANGE.search(s)
     if m:
         p.chapter, p.chapter_end = float(m.group(1)), float(m.group(2))
@@ -129,11 +121,14 @@ def _numbers(p, s, bare):
         p.volume = float(m.group(1) or m.group(2))
         s = s[:m.start()] + " " + s[m.end():]
 
-    # bare trailing number ("Title52") -> chapter, the most common convention
-    if bare and p.chapter is None and p.volume is None:
+    # bare number ("Title52", "Title 12+omake") -> chapter, the most common convention
+    if p.chapter is None and p.volume is None:
         m = TRAILING_NUM.search(s)
         if m:
             p.chapter = float(m.group(1)) + _suffix(m.group(2))
+        elif m := LAST_NUM.search(s):
+            p.chapter = float(m.group(1))
+    return p
 
 
 def order(files, series_title=""):

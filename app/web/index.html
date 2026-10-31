@@ -935,7 +935,7 @@
                 <div class="att-row" :class="{ ignored: x.ignored }">
                   <div class="what">
                     <a :href="'#/series/' + x.series_id"><b x-text="x.series"></b></a>
-                    <span class="muted" x-text="'Missing between ' + x.gaps.join(', ')"></span>
+                    <span class="muted" x-text="'Missing ' + (x.gaps.length === 1 && !x.gaps[0].includes('–') ? 'chapter ' : 'chapters ') + x.gaps.join(', ')"></span>
                   </div>
                   <button class="btn small" @click="ignore(x.key, !x.ignored)" x-text="x.ignored ? 'Restore' : 'Ignore'"></button>
                 </div>
