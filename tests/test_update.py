@@ -96,6 +96,27 @@ def test_install_switch_and_cleanup(image):
     assert sorted(p.name for p in code.iterdir() if p.is_dir()) == [SHA2, SHA3]  # oldest removed
 
 
+def test_install_reuses_packages_of_the_running_version(image):
+    """A package the image doesn't have is installed once, not again at every update."""
+    code = config.DATA_DIR / "code"
+    jxl = BASE_REQ + "pillow-jxl-plugin==1.3.8\n"
+    updater.install(SHA1, downloader=downloader(version_files(req=jxl)))
+    assert image == [["pillow-jxl-plugin==1.3.8"]]
+    (code / SHA1 / "deps" / "pkg.py").write_text("")  # stands in for the installed package
+
+    updater.install(SHA2, downloader=downloader(version_files(req=jxl, main="X = 2\n")))
+    assert image == [["pillow-jxl-plugin==1.3.8"]]  # not installed again
+    assert (code / SHA2 / "deps" / "pkg.py").exists()
+
+    # one more package: only that one is installed, on top of the copy
+    updater.install(SHA3, downloader=downloader(version_files(req=jxl + "natsort==8.4.0\n")))
+    assert image[-1] == ["natsort==8.4.0"] and (code / SHA3 / "deps" / "pkg.py").exists()
+
+    # a package's version changed: start clean and install everything
+    updater.install(SHA1, downloader=downloader(version_files(req=BASE_REQ + "pillow-jxl-plugin==1.4.0\n")))
+    assert image[-1] == ["pillow-jxl-plugin==1.4.0"] and not (code / SHA1 / "deps" / "pkg.py").exists()
+
+
 def test_install_remembers_the_image(image):
     """The entrypoint runs a new image's own code when a download was made for another image."""
     (config.IMAGE_DIR / "sha").write_text(SHA3 + "\n")

@@ -251,6 +251,27 @@ def new_requirements(new_text):
     return [line for name, line in _requirements(new_text).items() if not _same(base.get(name), line)]
 
 
+DEPS_LIST = ".requirements"  # in a version's deps/: the requirement lines installed there
+
+
+def _reuse_deps(extra, deps):
+    """Copy the running version's deps/ to deps when every package in it is still wanted (same
+    version), so an update doesn't install them again. Returns the lines it brings, lowercased.
+    Only for the same image: packages are built for its Python."""
+    cur = _read(code_dir() / "current")
+    src = code_dir() / cur / "deps" if cur else None
+    if not extra or not src or not (src / DEPS_LIST).is_file():
+        return set()
+    if _read(code_dir() / cur / ".image") != image_sha():
+        return set()
+    have = {line.strip().lower() for line in (src / DEPS_LIST).read_text(encoding="utf-8").splitlines() if line.strip()}
+    if not have <= {line.lower() for line in extra}:
+        return set()  # a package changed or was dropped: start clean
+    shutil.copytree(src, deps)
+    log.info("Reusing the installed packages of version %s: %s", cur[:7], ", ".join(sorted(have)))
+    return have
+
+
 def _download(sha, dest):
     with _client() as c:
         r = c.get(f"https://codeload.github.com/{config.UPDATE_REPO}/tar.gz/{sha}")
@@ -300,11 +321,17 @@ def install(sha=None, downloader=_download):
             raise RuntimeError("This version needs a new Docker image. See github.com/ivokolarov0/manga-vibe#updating")
         req = staging / "requirements.txt"
         extra = new_requirements(req.read_text(encoding="utf-8")) if req.exists() else []
-        if extra:
-            status["message"] = "Installing " + ", ".join(extra) + "…"
-            log.info("Installing new packages for version %s: %s", sha[:7], ", ".join(extra))
+        deps = staging / "deps"
+        reused = _reuse_deps(extra, deps)
+        todo = [line for line in extra if line.lower() not in reused]
+        if todo:
+            status["message"] = "Installing " + ", ".join(todo) + "…"
+            log.info("Installing new packages for version %s: %s", sha[:7], ", ".join(todo))
             _run(["uv", "pip", "install", "--no-cache", "--python", sys.executable,
-                  "--target", str(staging / "deps"), *extra], cwd=staging)
+                  "--target", str(deps), *todo], cwd=staging)
+        if extra:
+            deps.mkdir(exist_ok=True)
+            (deps / DEPS_LIST).write_text("\n".join(extra) + "\n", encoding="utf-8")
         status["message"] = "Testing the new version…"
         with tempfile.TemporaryDirectory() as tmp:
             env = {**os.environ, "DATA_DIR": tmp, "START_WORKERS": "0",
