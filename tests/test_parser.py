@@ -116,3 +116,16 @@ def test_group_order_volumes_chapters_extras_unnumbered():
     kept, _, _ = order_parsed(parsed)
     assert [p.name for p in kept] == ["Vol 01.cbz", "Vol 02.cbz", "T ch05.zip", "Marked extra.zip",
                                       "Readme thing.zip", "T Omake.zip"]
+
+
+def test_marked_extra_with_a_chapter_stays_after_that_chapter():
+    from app.scanner.parser import Parsed, order_parsed
+    parsed = [parse(f, "Nana") for f in ["Nana ch06.zip", "Nana ch05.zip", "Nana ch04.zip", "Nana v02.cbz", "Nana v01.cbz"]]
+    parsed += [Parsed(name="Nana ch05 side.zip", chapter=5, extra=True),  # marked extra by the owner
+               Parsed(name="Nana v02 bonus.cbz", volume=2, extra=True),
+               Parsed(name="Nana loose extra.zip", extra=True)]
+    kept, _, dups = order_parsed(parsed)
+    assert [p.name for p in kept] == ["Nana v01.cbz", "Nana v02.cbz", "Nana v02 bonus.cbz", "Nana ch04.zip",
+                                      "Nana ch05.zip", "Nana ch05 side.zip", "Nana ch06.zip", "Nana loose extra.zip"]
+    assert dups == []  # an extra is not a duplicate of its chapter
+    assert kept[5].label() == "Ch 5 extra"

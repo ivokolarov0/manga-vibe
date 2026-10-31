@@ -53,6 +53,10 @@ MIGRATIONS = [
     # 10: extras are no longer guessed from file names (only the owner marks them): the next scan
     # reads the files that were guessed as extras again, to give them their chapter number
     lambda conn: conn.execute(text("UPDATE book SET mtime = -1 WHERE extra = 1")),
+    # 11: extras with a chapter or volume number stay in their place: the next scan sorts the
+    # series that have extras again (a sort_index of 0 makes it)
+    lambda conn: conn.execute(text("UPDATE book SET sort_index = 0 "
+                                   "WHERE COALESCE(override_extra, extra) = 1")),
 ]
 
 

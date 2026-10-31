@@ -39,20 +39,22 @@ class Parsed:
     ref: object = None  # caller's object (e.g. a Book row), carried through order()
 
     def sort_key(self):
-        """Groups: volume-only books, chapters, extras, unnumbered (spec 4.3)."""
+        """Groups: volume-only books, chapters, extras, unnumbered (spec 4.3). An extra with a
+        chapter or volume number stays in its place, right after that chapter or volume."""
         inf = float("inf")
         vol = self.volume if self.volume is not None else inf
         name = natural_key(self.name)
-        if self.extra:
-            return (2, self.extra_index if self.extra_index is not None else inf, 0, name)
+        after = 1 if self.extra else 0
         if self.chapter is not None:
-            return (1, self.chapter, vol, name)
+            return (1, self.chapter, vol, after, name)
         if self.volume is not None:
-            return (0, self.volume, 0, name)
-        return (3, 0, 0, name)
+            return (0, self.volume, 0, after, name)
+        if self.extra:
+            return (2, self.extra_index if self.extra_index is not None else inf, 0, 0, name)
+        return (3, 0, 0, 0, name)
 
     def label(self):
-        if self.extra:
+        if self.extra and self.chapter is None and self.volume is None:
             return f"Extra{'' if self.extra_index is None else ' ' + _fmt(self.extra_index)}"
         parts = []
         if self.volume is not None:
@@ -64,6 +66,8 @@ class Parsed:
             parts.append(c)
         if self.version > 1:
             parts.append(f"(v{self.version} revision)")
+        if self.extra:
+            parts.append("extra")
         return " ".join(parts) or "?"
 
 
