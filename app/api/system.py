@@ -25,6 +25,7 @@ DEFAULT_SETTINGS = {
     "title_language": "english",   # english | romaji | native
     "theme": "dark",               # dark | light
     "card_size": "medium",         # small | medium | large
+    "nav_position": "bottom",      # bottom | top: where the Library / Continue bar sits
     "library_listing": "lazy",     # lazy (infinite scroll) | paged (numbered pages)
     "library_page_size": 60,       # series per page in paged mode
     "reader_mode": "paged",        # paged | vertical

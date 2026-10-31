@@ -286,7 +286,7 @@ A list of: series with failed/low-confidence matches (with "Fix match"), series 
 
 ### 7.8 Settings
 - Library roots (add/remove, rescan now).
-- Title language, theme, card size.
+- Title language, theme, card size, navigation bar position (bottom or under the top bar).
 - Reader defaults (mode, fit, auto-fullscreen, preload count).
 - Metadata: include adult results, auto-match on/off, auto-accept threshold, refresh schedule.
 - Optional single password (see 10).

@@ -55,6 +55,7 @@ async function loadSettings() {
   Object.assign(settings, await api("/api/settings"));
   document.documentElement.dataset.theme = settings.theme;
   document.documentElement.dataset.card = settings.card_size;
+  document.documentElement.dataset.nav = settings.nav_position;
   return settings;
 }
 

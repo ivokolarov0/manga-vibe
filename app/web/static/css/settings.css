@@ -17,7 +17,7 @@
      desktop: the list is a sidebar and the button is hidden. */
   .settings-nav {
     position: sticky;
-    top: 55px;
+    top: var(--header-height);
     z-index: 5;
     margin: -12px -12px 0;
     padding: 8px 12px;
@@ -63,7 +63,7 @@
     }
 
     @media (min-width: 800px) {
-      top: 70px;
+      top: calc(var(--header-height) + 15px);
       margin: 0;
       padding: 8px;
       background: var(--surface);
