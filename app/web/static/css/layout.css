@@ -77,6 +77,10 @@
     max-width: 1400px;
     margin: 0 auto;
     padding: 12px 12px calc(76px + var(--safe-bottom));
+
+    [data-nav="top"] & {
+      padding-bottom: calc(16px + var(--safe-bottom));
+    }
   }
 
   .view > h2 {
@@ -120,6 +124,48 @@
       display: block;
       font-size: 19px;
       line-height: 1.2;
+    }
+
+    /* Settings → Display → Navigation bar: Top. Tabs under the top bar that stick with it:
+       icon and label side by side, an accent underline on the current one. Halves on phones,
+       left-aligned with the content on wider screens. */
+    [data-nav="top"] & {
+      position: sticky;
+      top: var(--topbar-height);
+      bottom: auto;
+      z-index: 9;
+      height: var(--top-nav-height);
+      padding: 0 max(0px, (100% - 1400px) / 2);
+      background: var(--bg);
+      border-top: 0;
+      border-bottom: 1px solid var(--border);
+
+      & a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+
+        &.active {
+          border-bottom-color: var(--accent);
+        }
+      }
+
+      & span {
+        display: inline;
+        font-size: 15px;
+        line-height: 1;
+      }
+
+      @media (min-width: 700px) {
+        & a {
+          flex: none;
+        }
+      }
     }
   }
 
@@ -206,6 +252,11 @@
       transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
     }
 
+    /* no bar at the bottom to stay clear of */
+    [data-nav="top"] & {
+      bottom: calc(20px + var(--safe-bottom));
+    }
+
     &.error {
       border-left-color: var(--danger);
     }
@@ -222,7 +273,7 @@
   /* "new version" message: top right, under the top bar; stays until answered */
   #update-toast {
     position: fixed;
-    top: 64px;
+    top: calc(var(--header-height) + 9px);
     right: 12px;
     z-index: 90;
     width: min(440px, calc(100vw - 24px));

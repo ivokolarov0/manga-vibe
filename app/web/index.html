@@ -27,6 +27,13 @@
     </a>
   </header>
 
+  <!-- ============ Library / Continue: fixed at the bottom, or under the top bar
+       (Settings → Display → Navigation bar), so it comes right after the top bar ============ -->
+  <nav id="bottomnav" x-data x-show="$store.app.view !== 'read'">
+    <a href="#/" :class="{ active: $store.app.view === 'library' }"><span>▦</span>Library</a>
+    <a href="#/continue" :class="{ active: $store.app.view === 'continue' }"><span>▶</span>Continue</a>
+  </nav>
+
   <main>
     <!-- ============ Android browser: offer the app (android/) ============ -->
     <div class="app-banner" x-data x-show="$store.app.appBanner && $store.app.view === 'library'" x-cloak>
@@ -516,6 +523,8 @@
             <select x-model="st.theme" @change="save('theme')"><option value="dark">Dark</option><option value="light">Light</option></select></label>
           <label class="setting-row"><span class="label">Card size</span>
             <select x-model="st.card_size" @change="save('card_size')"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
+          <label class="setting-row"><span class="label">Navigation bar<small>Where Library and Continue sit</small></span>
+            <select x-model="st.nav_position" @change="save('nav_position')"><option value="bottom">Bottom</option><option value="top">Top</option></select></label>
           <label class="setting-row"><span class="label">Library listing<small>Load more while scrolling, or show numbered pages</small></span>
             <select x-model="st.library_listing" @change="save('library_listing')"><option value="lazy">Lazy load</option><option value="paged">Paginated</option></select></label>
           <label class="setting-row" x-show="st.library_listing === 'paged'"><span class="label">Series per page</span>
@@ -937,12 +946,6 @@
       </div>
     </section>
   </main>
-
-  <!-- ============ bottom nav ============ -->
-  <nav id="bottomnav" x-data x-show="$store.app.view !== 'read'">
-    <a href="#/" :class="{ active: $store.app.view === 'library' }"><span>▦</span>Library</a>
-    <a href="#/continue" :class="{ active: $store.app.view === 'continue' }"><span>▶</span>Continue</a>
-  </nav>
 
   <!-- ============ filter sheet ============ -->
   <div class="sheet" x-data="sortSheet()" x-show="$store.app.sheet === 'sort'" x-cloak

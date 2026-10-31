@@ -35,6 +35,16 @@
 
     --safe-bottom: env(safe-area-inset-bottom, 0px);
 
+    /* top bar height, and the Library / Continue bar when it sits under it (data-nav="top").
+       Sticky things below them (Settings menu, "new version" message) start after both. */
+    --topbar-height: 55px;
+    --top-nav-height: 0px;
+    --header-height: calc(var(--topbar-height) + var(--top-nav-height));
+
+    &[data-nav="top"] {
+      --top-nav-height: 40px;
+    }
+
     &[data-theme="light"] {
       --bg: #f6f6f8;
       --surface: #ffffff;
