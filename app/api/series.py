@@ -324,7 +324,9 @@ def _book_badges(db, books):
 
 
 @router.get("/series/{series_id}/poster")
-def series_poster(series_id: int, size: str = "", db=Depends(get_db)):
+def series_poster(series_id: int, size: str = "", db=Depends(get_db, scope="function")):
+    # the session closes when this returns, not after the file is sent: a page of posters to a
+    # slow phone held a database connection each and ran the pool dry
     s = get_or_404(db, Series, series_id)
     path = s.poster_path
     if path and size == "sm":

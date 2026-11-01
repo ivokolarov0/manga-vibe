@@ -61,6 +61,43 @@ def test_pages_and_resize(client):
     assert client.get(f"/api/series/{sid}/poster").status_code == 200
 
 
+def test_files_are_sent_without_holding_a_database_connection(client):
+    """Thumbnails and posters used to keep their request's database connection until the file was
+    sent: a library page of thumbnails to a slow phone took all 60 and the site froze."""
+    import anyio
+    from app import db
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    book = client.get(f"/api/series/{sid}/books").json()[0]
+    held = []
+
+    async def get(path):
+        scope = {"type": "http", "method": "GET", "path": path, "raw_path": path.encode(), "query_string": b"",
+                 "headers": [], "http_version": "1.1", "scheme": "http", "server": ("test", 80),
+                 "client": ("test", 1), "root_path": ""}
+        sent = anyio.Event()
+        asked = []
+
+        async def receive():  # the request, then (once the file is sent) the client goes away
+            if not asked:
+                asked.append(1)
+                return {"type": "http.request", "body": b"", "more_body": False}
+            await sent.wait()
+            return {"type": "http.disconnect"}
+
+        async def send(message):
+            if message["type"] == "http.response.body":
+                held.append(db.engine.pool.checkedout())
+                if not message.get("more_body"):
+                    sent.set()
+        with anyio.fail_after(20):
+            await client.app(scope, receive, send)
+
+    for path in (f"/api/books/{book['id']}/thumbnail", f"/api/series/{sid}/poster"):
+        held.clear()
+        anyio.run(get, path)
+        assert held and max(held) == 0, path
+
+
 def test_waiting_pages_dont_freeze_the_app(client):
     """Pages waiting their turn to be resized used to hold a database connection each (15 ran the
     pool dry), and then one of the server's 40 worker threads each: either way every other request

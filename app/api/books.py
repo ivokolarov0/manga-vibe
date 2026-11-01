@@ -139,7 +139,7 @@ def run_book_action(book_id: int, plugin_id: str, action_key: str, db=Depends(ge
 
 
 @router.get("/{book_id}/thumbnail")
-def thumbnail(book_id: int, db=Depends(get_db)):
+def thumbnail(book_id: int, db=Depends(get_db, scope="function")):  # closed before the file is sent
     b = get_or_404(db, Book, book_id)
     if not b.thumbnail_path:
         raise HTTPException(404, "No thumbnail")
