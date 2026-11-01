@@ -21,10 +21,9 @@ VERSION = re.compile(r"(?<=\d)v(\d+)\b", re.I)
 # "Chapter 053 - Title" / "Ch.5: Title": what follows the separator is the chapter's title
 TITLE_SEP = re.compile(r"\s*[-–—:]\s")
 TRAILING_NUM = re.compile(r"(\d+(?:\.\d+)?)([a-z])?\s*$", re.I)
-# the last number in the name, when text follows it ("Title 12+extra")
-LAST_NUM = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)(?!.*\d)")
-# the last number in the name, when text follows it ("Title 12+extra")
-LAST_NUM = re.compile(r"(?<![\d.])(\d+(?:\.\d+)?)(?!.*\d)")
+# a number on its own, not part of a word: "12" in "Title 12+extra", but not the digits of a
+# release group like "(1r0n)" or "(senfgurke2)"
+LONE_NUM = re.compile(r"(?<![a-z\d.])(\d+(?:\.\d+)?)(?![a-z\d])", re.I)
 
 
 @dataclass
@@ -80,18 +79,24 @@ def _fmt(n):
     return str(int(n)) if float(n).is_integer() else str(n)
 
 
+def _clean(s):
+    """Without [groups], {tags}, (2020) (Digital) and the like, underscores and extra spaces."""
+    s = PARENS.sub(" ", BRACKETS.sub(" ", s)).replace("_", " ")
+    return re.sub(r"\s+", " ", s).strip()
+
+
 def parse(filename: str, series_title: str = "") -> Parsed:
     p = Parsed(name=filename)
-    s = ARCHIVE_EXT.sub("", filename)
-    s = BRACKETS.sub(" ", s)
-    s = PARENS.sub(" ", s)
-    s = s.replace("_", " ")
-    s = re.sub(r"\s+", " ", s).strip()
+    s = _clean(ARCHIVE_EXT.sub("", filename))
 
-    # strip the series title so digits in it don't count
+    # strip the series title so digits in it don't count ("Mob Psycho 100"). It is the folder
+    # name, cleaned like the file name; when the folder's tags differ from the file's
+    # ("... (1r0n)" vs "... - 17-21 (1r0n) (f)"), the name without any (...) is tried too.
     if series_title:
-        t = re.sub(r"[\s_]+", " ", series_title).strip()
-        s = re.sub(re.escape(t), " ", s, flags=re.I).strip()
+        for t in (_clean(series_title), _clean(re.sub(r"\([^)]*\)", " ", series_title))):
+            if t and re.search(re.escape(t), s, re.I):
+                s = re.sub(re.escape(t), " ", s, flags=re.I).strip()
+                break
 
     m = VERSION.search(s)
     if m:
@@ -126,8 +131,8 @@ def parse(filename: str, series_title: str = "") -> Parsed:
         m = TRAILING_NUM.search(s)
         if m:
             p.chapter = float(m.group(1)) + _suffix(m.group(2))
-        elif m := LAST_NUM.search(s):
-            p.chapter = float(m.group(1))
+        elif nums := LONE_NUM.findall(s):  # the last one, when text follows it
+            p.chapter = float(nums[-1])
     return p
 
 

@@ -250,6 +250,9 @@ The owner can edit any metadata field by hand (titles, description, tags, status
     (regular, kanzenban, bunkoban, omnibus...) and the pages per volume file pick one, e.g. two
     600-page files of a 5-volume manga are the 2-volume perfect edition, so 2 / 2 · complete.
     Edit → Edition picks one by hand; the series page shows it next to the regular count.
+    Series matched only on MangaUpdates (no AniList count) count against its biggest listed
+    edition. A series that is one file without a number is complete when the metadata says it
+    has one volume (or one chapter): a one-shot.
   - Library
   - Favorites only
   - Year range, score range (nice to have)
