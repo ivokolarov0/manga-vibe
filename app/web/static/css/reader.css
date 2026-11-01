@@ -42,6 +42,22 @@
       &.dragging {
         cursor: grabbing;
       }
+
+      /* the next page is taking a while to load (reader.js adds this after 150 ms) */
+      &.waiting::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 28px;
+        height: 28px;
+        margin: -14px 0 0 -14px;
+        border: 3px solid #888;
+        border-right-color: transparent;
+        border-radius: 50%;
+        pointer-events: none;
+        animation: btn-spin 0.7s linear infinite;
+      }
     }
 
     &.fit-screen .stage img {

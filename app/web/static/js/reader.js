@@ -553,34 +553,37 @@ function turn(forward, outDir) {
   }, 160);
 }
 
-/* show R.page; `fromDir` is the side the new page slides in from (-1 left, 1 right, 0 none) */
+/* show R.page; `fromDir` is the side the new page slides in from (-1 left, 1 right, 0 none).
+   The browser keeps painting the old picture in the <img> until the new one is decoded, so a
+   sliding page stays hidden until then; only then does it slide in. */
+let showToken = 0;
 function showPage(fromDir = 0) {
   const el = img();
   if (!el) return;
+  const stage = $("#reader .stage");
   $("#reader .endcard")?.remove();
   Object.assign(Z, { s: 1, x: 0, y: 0, hiRes: false });
-  $("#reader .stage").classList.remove("zoomed");
+  stage.classList.remove("zoomed");
   el.style.transition = "none";
-  el.style.opacity = "1";
   el.style.transform = fromDir ? `translateX(${fromDir * 30}%)` : "none";
-  if (fromDir) el.style.opacity = "0.3";
-  const enter = () => {
-    if (!fromDir) return;
-    requestAnimationFrame(() => {
-      el.style.opacity = "1";
-      if (Z.s > 1.01) return;  // zoomed in meanwhile: keep the zoom, don't slide
-      el.style.transition = "transform .2s ease-out, opacity .2s";
-      el.style.transform = "translate(0, 0) scale(1)";
-      el.style.opacity = "1";
-    });
-  };
-  el.onload = () => {
-    el.onload = null;  // once per page: the hi-res swap later must not re-run the slide-in (it would reset zoom)
-    $("#reader .stage")?.classList.toggle("can-pan", canPan());  // e.g. "fit width" pages taller than the screen
-    enter();
-  };
+  el.style.opacity = fromDir ? "0" : "1";
+  const token = ++showToken;  // a newer turn makes this one stale
+  clearTimeout(stage._spin);
+  stage._spin = setTimeout(() => stage.classList.add("waiting"), 150);  // slow page: show a spinner
   el.src = pageUrl(R.page);
-  if (el.complete) enter();
+  // decode() fails on a broken page (onerror shows a toast) or when src changes again; show the page anyway
+  el.decode().catch(() => {}).then(() => {
+    if (token !== showToken || img() !== el) return;
+    clearTimeout(stage._spin);
+    stage.classList.remove("waiting");
+    stage.classList.toggle("can-pan", canPan());  // e.g. "fit width" pages taller than the screen
+    if (!fromDir) return;
+    if (Z.s > 1.01) { el.style.opacity = "1"; return; }  // zoomed in meanwhile: keep the zoom, don't slide
+    void el.offsetWidth;  // apply the start position first, so the slide below animates from it
+    el.style.transition = "transform .2s ease-out, opacity .2s";
+    el.style.transform = "translate(0, 0) scale(1)";
+    el.style.opacity = "1";
+  });
   updatePageUi();
   preload();
   saveProgress();
