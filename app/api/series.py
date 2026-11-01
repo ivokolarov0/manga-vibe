@@ -15,7 +15,7 @@ from app.db import get_db
 from app.direction import MODES, reading_direction
 from app.metadata import service as metadata, worker as metadata_worker
 from app.metadata.http import ProviderError
-from app.models import Book, Link, PluginField, Progress, Series, SeriesTag, Tag
+from app.models import Book, Library, Link, PluginField, Progress, Series, SeriesTag, Tag
 from app.plugins import Context, action_result, implements, manager as plugins
 
 router = APIRouter(prefix="/api")
@@ -192,6 +192,20 @@ def list_tags(db=Depends(get_db)):
     return [{"name": n, "kind": k, "count": c} for n, k, c in rows]
 
 
+def host_path(lib, folder):
+    """A series folder as seen outside Docker: the library's host_path plus the part of the folder
+    under the library's root, with the host path's own separator (\\ for a Windows or SMB path).
+    None when the library has no host_path or the folder isn't under its root."""
+    if not lib or not lib.host_path:
+        return None
+    root, path = lib.root_path.replace("\\", "/").rstrip("/"), folder.replace("\\", "/")
+    if path != root and not path.startswith(root + "/"):
+        return None
+    rest = [p for p in path[len(root):].split("/") if p]
+    sep = "\\" if "\\" in lib.host_path else "/"
+    return sep.join([lib.host_path.rstrip("/\\"), *rest])
+
+
 @router.get("/series/{series_id}")
 def get_series(series_id: int, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
@@ -206,6 +220,7 @@ def get_series(series_id: int, db=Depends(get_db)):
     return {
         **series_card(s, counts, lang),
         "folder_name": s.folder_name, "folder_path": s.folder_path,
+        "host_path": host_path(db.get(Library, s.library_id), s.folder_path),
         "titles": {"english": s.title_english, "romaji": s.title_romaji, "native": s.title_native},
         "synonyms": s.synonyms or [], "description": s.description, "start_year": s.start_year,
         "format": s.format, "chapters_total": s.chapters_total, "volumes_total": s.volumes_total,

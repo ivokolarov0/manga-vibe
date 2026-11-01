@@ -21,6 +21,9 @@ class Library(Base):
     root_path: Mapped[str] = mapped_column(String, unique=True)
     # reading mode (paged or vertical) for its series (see app/direction.py); None: Settings → Reader
     reader_mode: Mapped[str | None] = mapped_column(String)
+    # the same folder outside Docker (e.g. /volume1/manga or \\NAS\manga), typed by the owner:
+    # the app only sees root_path, the mount inside the container
+    host_path: Mapped[str | None] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 

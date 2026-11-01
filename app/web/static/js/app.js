@@ -1016,7 +1016,7 @@ function seriesView() {
     /* ---- the folder path: copy it (to paste into a file manager) ---- */
     copied: false,
     async copyPath() {
-      if (await copyText(this.s.folder_path)) {
+      if (await copyText(this.s.host_path || this.s.folder_path)) {
         this.copied = true;
         clearTimeout(this.copiedTimer);
         this.copiedTimer = setTimeout(() => { this.copied = false; }, 1600);
@@ -1341,6 +1341,15 @@ function settingsView() {
         await api(`/api/libraries/${l.id}`, { method: "PATCH", body: { reader_mode: v } });
         l.reader_mode = v === "default" ? null : v;
         toast("Saved");
+      } catch (e) { toast(e.message, 6000, "error"); }
+    },
+    async setLibraryHostPath(l, v) {
+      v = v.trim();
+      if (v === (l.host_path || "")) return;
+      try {
+        await api(`/api/libraries/${l.id}`, { method: "PATCH", body: { host_path: v } });
+        l.host_path = v || null;
+        toast(v ? "Saved" : "Cleared: the series page shows the path inside Docker");
       } catch (e) { toast(e.message, 6000, "error"); }
     },
     async removeLibrary(l) {

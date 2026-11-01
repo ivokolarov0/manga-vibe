@@ -419,6 +419,15 @@
     }
   }
 
+  .path-hint {
+    margin: -4px 0 12px;
+    font-size: 12px;
+
+    & a {
+      color: var(--accent);
+    }
+  }
+
   .panel {
     & .chips {
       margin: 4px 0;
