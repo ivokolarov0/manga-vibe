@@ -33,6 +33,27 @@ function toast(msg, ms = 3000, kind = "") {
   toast.timer = setTimeout(() => t.classList.remove("show"), ms);
 }
 
+/* Copy text. The Clipboard API only works on https or localhost; MangaVibe on a NAS is
+   usually plain http, so fall back to a hidden textarea there. Returns true when it worked. */
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch { /* fall through to the old way */ }
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.setAttribute("readonly", "");
+  ta.style.cssText = "position:fixed;top:0;left:0;opacity:0;pointer-events:none";
+  document.body.append(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch { ok = false; }
+  ta.remove();
+  return ok;
+}
+
 /* What a plugin button returned: a message, and maybe a page to open (e.g. a website's login). */
 async function showActionResult(r) {
   if (r.message) toast(r.message, 6000);

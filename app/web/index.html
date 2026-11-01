@@ -337,7 +337,19 @@
                 </section>
                 <section class="panel">
                   <h2>Folder</h2>
-                  <p class="muted break" x-text="s.folder_path"></p>
+                  <div class="path-field">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    <code class="path" x-text="s.folder_path" :title="s.folder_path"></code>
+                    <button class="copy" :class="{ done: copied }" @click="copyPath()"
+                            :aria-label="copied ? 'Copied' : 'Copy path'" :title="copied ? 'Copied' : 'Copy path'">
+                      <svg x-show="!copied" class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+                      <svg x-show="copied" x-cloak class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+                      <span x-text="copied ? 'Copied' : 'Copy'"></span>
+                    </button>
+                  </div>
                   <div class="btn-row">
                     <button class="btn" :disabled="rescanning" @click="rescan()"
                             x-text="rescanning ? 'Rescanning…' : '⟳ Rescan this series'"></button>
