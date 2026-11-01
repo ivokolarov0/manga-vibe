@@ -923,10 +923,13 @@ function seriesView() {
     },
     fixMatch() { this.$store.app.openFix(this.s.id, () => this.reload()); },
     editInfo(tab = "info") { this.$store.app.openEdit(this.s.id, () => this.reload(), tab); },
+    actionBusy: "",  // plugin + key of the plugin button that is running (it can take a while)
     async runAction(a) {
       if (a.confirm && !confirm(a.confirm)) return;
+      this.actionBusy = a.plugin + a.key;
       try { await showActionResult(await api(`/api/series/${this.s.id}/actions/${a.plugin}/${a.key}`, { method: "POST" })); }
       catch (e) { toast(e.message, 6000, "error"); }
+      finally { this.actionBusy = ""; }
       this.reload();  // the plugin may have changed the status or its fields
     },
     choiceBusy: false,

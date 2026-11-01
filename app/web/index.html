@@ -361,7 +361,8 @@
                 <section class="panel" x-show="s.actions.length">
                   <h2>Plugin tools</h2>
                   <div class="btn-row">
-                    <template x-for="a in s.actions"><button class="btn" @click="runAction(a)" x-text="a.label"></button></template>
+                    <template x-for="a in s.actions"><button class="btn" :class="{ busy: actionBusy === a.plugin + a.key }"
+                      :disabled="actionBusy === a.plugin + a.key" @click="runAction(a)" x-text="a.label"></button></template>
                   </div>
                 </section>
               </div>
@@ -732,7 +733,8 @@
                   </template>
                   <div class="btn-row plugin-actions" x-show="plugin.global_actions.length">
                     <template x-for="a in plugin.global_actions" :key="a.key">
-                      <button class="btn small" :disabled="busyAction === plugin.id + a.key"
+                      <button class="btn small" :class="{ busy: busyAction === plugin.id + a.key }"
+                              :disabled="busyAction === plugin.id + a.key"
                               @click="runGlobalAction(plugin, a)" x-text="a.label"></button>
                     </template>
                   </div>
