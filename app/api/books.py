@@ -154,6 +154,10 @@ def page(book_id: int, n: int, request: Request, w: int | None = None, db=Depend
     if request.headers.get("if-none-match") == etag:
         return Response(status_code=304)
     headers = {"Cache-Control": IMMUTABLE, "ETag": etag}
+    # Hand the database connection back before the slow part: the reader asks for several pages at
+    # once, and each may wait its turn to be resized. Holding a connection meanwhile ran the pool dry
+    # and froze every other request. `b` keeps the values already read.
+    db.close()
     try:
         if w:
             w = max(200, min(w, 4000))

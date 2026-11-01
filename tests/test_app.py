@@ -61,6 +61,33 @@ def test_pages_and_resize(client):
     assert client.get(f"/api/series/{sid}/poster").status_code == 200
 
 
+def test_waiting_pages_dont_freeze_the_app(client):
+    """Pages waiting their turn to be resized used to hold a database connection each: 15 of them
+    ran the pool dry, and every other request waited 30 s and failed."""
+    import threading
+    from app import images
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    book = client.get(f"/api/series/{sid}/books").json()[0]
+    for _ in range(2):
+        images._resize_slots.acquire()  # the resizer is busy: page requests queue up
+    statuses = []
+    try:
+        threads = [threading.Thread(target=lambda w=w: statuses.append(
+            client.get(f"/api/books/{book['id']}/pages/2?w={w}").status_code)) for w in range(300, 320)]
+        for t in threads:
+            t.start()
+        time.sleep(1)  # let them all reach the resizer
+        t0 = time.monotonic()
+        assert client.get("/api/series").status_code == 200
+        assert time.monotonic() - t0 < 5
+    finally:
+        for _ in range(2):
+            images._resize_slots.release()
+    for t in threads:
+        t.join(30)
+    assert statuses == [200] * 20
+
+
 def test_progress_and_continue_reading(client):
     sid = series_by_name(client)["Hana to Akuma"]["id"]
     books = client.get(f"/api/series/{sid}/books").json()
