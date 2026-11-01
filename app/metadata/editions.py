@@ -63,6 +63,15 @@ def from_mangaupdates(s):
     return [{"volumes": n, "names": by_count[n]} for n in sorted(by_count, reverse=True)]
 
 
+def regular_of(volumes_total, editions):
+    """The regular edition's volume count: AniList's, or for series it has none for (matched on
+    MangaUpdates) the biggest edition MangaUpdates lists. The regular run has the most volumes;
+    omnibus, kanzenban and bunkoban editions put more in each."""
+    if volumes_total:
+        return volumes_total
+    return max((e["volumes"] for e in editions or []), default=None)
+
+
 def pick(regular, editions, pages, top=0):
     """The volume count of the edition the files look like. regular: AniList's count; pages: the
     usual pages per file; top: the highest volume number here (an edition can't have fewer).

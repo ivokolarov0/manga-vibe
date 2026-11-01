@@ -35,6 +35,20 @@ CASES = [
     ("Title 12+extra.cbz", "Title", None, 12, None, 1, False, None),
     ("Title 12+omake.cbz", "Title", None, 12, None, 1, False, None),
     ("Title 12.5.cbz", "Title", None, 12.5, None, 1, False, None),
+    ("001 Read Online", "Oyasumi Punpun Manga", None, 1, None, 1, False, None),  # a folder of images
+    # digits in a release group's name aren't a number: a one-shot stays unnumbered
+    ("A Vampire in the Bathhouse (2025) (Digital) (1r0n).cbz", "A Vampire in the Bathhouse",
+     None, None, None, 1, False, None),
+    ("Azumanga Daioh {Omnibus Edition} (2009) (Scanned) (senfgurke2).cbz", "Azumanga Daioh",
+     None, None, None, 1, False, None),
+    ("Title 12 (1r0n).cbz", "Title", None, 12, None, 1, False, None),
+    # the series title is the folder name, tags and all: numbers in the title don't count
+    ("Mob Psycho 100 - Reigen (2020) (Digital) (1r0n).cbz", "Mob Psycho 100 - Reigen (2020) (Digital) (1r0n)",
+     None, None, None, 1, False, None),
+    ("Uzumaki (3-in-1 Edition) (2018) (Digital) (1r0n).cbz", "Uzumaki (3-in-1 Edition) (2018) (Digital) (1r0n)",
+     None, None, None, 1, False, None),
+    ("Mob Psycho 100 v02 (2021) (Digital) (f).cbz", "Mob Psycho 100 (Digital) (1r0n)", 2, None, None, 1, False, None),
+    ("Mob Psycho 100 - 12 (Digital) (f).cbz", "Mob Psycho 100 (Digital) (1r0n)", None, 12, None, 1, False, None),
 ]
 
 

@@ -45,7 +45,32 @@ def test_unknown():
     assert state(series(volumes=2, status="RELEASING"), vols) == "unknown"      # still coming out
     assert collection(series(volumes=3, status="RELEASING"), vols)["owned"] == 2  # still shown as 2 / 3
     assert state(series(volumes=2, chapters=20), vols + [book(chapter=15)]) == "unknown"  # mixed
-    assert state(series(volumes=1), [book()]) == "unknown"                      # no numbers at all
+    assert state(series(volumes=2), [book(), book()]) == "unknown"              # no numbers at all
+    assert state(series(volumes=4), [book()]) == "unknown"                      # one file, 4 volumes: omnibus?
+
+
+def test_one_shot_in_one_unnumbered_file():
+    # "A Vampire in the Bathhouse (2025) (Digital).cbz": no number, and the series has one volume
+    c = collection(series(volumes=1, chapters=6), [book()])
+    assert (c["unit"], c["owned"], c["total"], c["state"]) == ("volume", 1, 1, "complete")
+    assert state(series(chapters=1), [book()]) == "complete"                    # a one-chapter one-shot
+    assert state(series(volumes=1, status="RELEASING"), [book()]) == "unknown"
+    assert state(series(volumes=1), [book(), book(extra=True)]) == "complete"  # extras don't count
+    from app.api.common import numbering
+    assert numbering([book()])["single"] is True and "single" not in numbering([book(volume=1)])
+
+
+def test_no_anilist_count_uses_the_mangaupdates_editions():
+    # matched on MangaUpdates only: no volume count, but its editions are listed
+    listed = [{"volumes": 48, "names": ["Dark Horse"]}, {"volumes": 24, "names": ["Shinsou-ban"]}]
+    c = collection(series(editions=listed), [book(volume=v, pages=180) for v in range(1, 49)])
+    assert (c["owned"], c["total"], c["state"], "edition" in c) == (48, 48, "complete", False)
+    assert state(series(editions=listed), [book(volume=v, pages=180) for v in range(1, 30)]) == "incomplete"
+    # thick files still pick the smaller edition: 6 Master Edition volumes of a 10-volume manga
+    blame = [{"volumes": 10, "names": []}, {"volumes": 6, "names": ["Master Edition"]}]
+    c = collection(series(editions=blame), [book(volume=v, pages=380) for v in range(1, 7)])
+    assert (c["total"], c["state"], c["edition"]["regular"]) == (6, "complete", 10)
+    assert state(series(), [book(volume=1)]) == "unknown"                        # no editions either
 
 
 def test_numbering_ranges_and_gaps():

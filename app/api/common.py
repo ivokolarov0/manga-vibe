@@ -241,7 +241,8 @@ def numbering(books):
     when the books change (walker.apply_order) and stored on the series, so lists of many series
     don't read every book: {"unit": "volume" | "chapter" | None, "have": [[first, last], ...] of
     the unit's whole numbers here, "chapters": the same for every chapter covered, and for volumes
-    "pages": the usual (median) pages per volume file, which tells editions apart}.
+    "pages": the usual (median) pages per volume file, which tells editions apart, and "single":
+    true when the series is one file without a number (a one-shot, see _single_file_unit())}.
     Books numbered by volume only count by volume, books with a chapter number by chapter;
     a mix of both (or no numbers) has no unit."""
     main = [b for b in books if not b.hidden and not b.eff_extra]
@@ -259,6 +260,8 @@ def numbering(books):
     pages = sorted(n for b in by_volume if (n := getattr(b, "page_count", 0) or 0) > 0)
     if unit == "volume" and pages:
         out["pages"] = pages[len(pages) // 2]
+    if len(main) == 1 and unit is None:
+        out["single"] = True
     return out
 
 
@@ -296,17 +299,32 @@ def collection_of(series, num):
 
 def edition_of(series, num):
     """The volume count of the edition the files are from: the owner's pick, or the MangaUpdates
-    edition the pages per file point to, or AniList's (regular) count."""
+    edition the pages per file point to, or the regular count (editions.regular_of())."""
     picked = getattr(series, "edition_volumes", None)
     if picked:
         return picked
     have = num.get("have") or []
-    return editions.pick(series.volumes_total, getattr(series, "editions", None), num.get("pages"),
+    listed = getattr(series, "editions", None)
+    return editions.pick(editions.regular_of(series.volumes_total, listed), listed, num.get("pages"),
                          have[-1][1] if have else 0)
+
+
+def _single_file_unit(series, num):
+    """A series that is one file without a number ("Title (2025) (Digital).cbz") is its one volume
+    (or chapter) when the metadata says it has just one: "volume" | "chapter" | None."""
+    if not num.get("single"):
+        return None
+    if edition_of(series, num) == 1:
+        return "volume"
+    if not series.volumes_total and series.chapters_total == 1:
+        return "chapter"
+    return None
 
 
 def _counted(series, num):
     unit, have = num.get("unit"), num.get("have") or []
+    if unit is None and (unit := _single_file_unit(series, num)):
+        have = [[1, 1]]
     if unit is None:
         return {"unit": None, "owned": 0, "total": None, "state": "unknown"}
     extra = {}
@@ -315,9 +333,11 @@ def _counted(series, num):
     else:
         total = edition_of(series, num)
         picked = bool(getattr(series, "edition_volumes", None))
-        if total and (total != series.volumes_total or picked):
-            extra = {"edition": {"volumes": total, "names": editions.names_of(getattr(series, "editions", None), total),
-                                 "regular": series.volumes_total, "manual": picked}}
+        listed = getattr(series, "editions", None)
+        regular = editions.regular_of(series.volumes_total, listed)
+        if total and (total != regular or picked):
+            extra = {"edition": {"volumes": total, "names": editions.names_of(listed, total),
+                                 "regular": regular, "manual": picked}}
     if not total:
         return {"unit": unit, "owned": sum(b - a + 1 for a, b in have), "total": None, "state": "unknown", **extra}
     owned = sum(max(0, min(b, total) - max(a, 1) + 1) for a, b in have)

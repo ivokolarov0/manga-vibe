@@ -59,6 +59,12 @@ MIGRATIONS = [
                                    "WHERE COALESCE(override_extra, extra) = 1")),
     # 12: each library folder's path outside Docker, for the series page's "Copy path"
     lambda conn: conn.execute(text("ALTER TABLE library ADD COLUMN host_path VARCHAR")),
+    # 13: the numbering marks one-file series (one-shots) for the collection check, so it's worked
+    # out again; and the next scan reads the files without a number again: ones read before the
+    # parser knew names like "001 Read Online" kept no number, as unchanged files aren't re-read
+    lambda conn: [conn.execute(text(q)) for q in (
+        "UPDATE series SET numbering = NULL",
+        "UPDATE book SET mtime = -1 WHERE volume IS NULL AND chapter IS NULL")],
 ]
 
 
