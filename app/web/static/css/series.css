@@ -346,6 +346,79 @@
     }
   }
 
+  /* series folder: the path in a field, with a copy button on its right */
+  .path-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 0 12px;
+    padding: 6px 6px 6px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    & > .icon {
+      flex: none;
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linejoin: round;
+    }
+
+    & .path {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 12.5px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      user-select: all;  /* one click selects it all, for copying by hand */
+    }
+
+    & .copy {
+      display: inline-flex;
+      flex: none;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) - 2px);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      transition: color 0.12s, background-color 0.12s, border-color 0.12s;
+
+      & .icon {
+        width: 14px;
+        height: 14px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      &.done {
+        color: var(--ok);
+        border-color: color-mix(in srgb, var(--ok) 45%, var(--border));
+        background: color-mix(in srgb, var(--ok) 12%, var(--surface2));
+      }
+
+      @media (hover: hover) {
+        &:not(.done):hover {
+          color: var(--text);
+          border-color: color-mix(in srgb, var(--text) 30%, var(--border));
+        }
+      }
+    }
+  }
+
   .panel {
     & .chips {
       margin: 4px 0;

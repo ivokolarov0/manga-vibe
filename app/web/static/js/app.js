@@ -1013,6 +1013,16 @@ function seriesView() {
       this.reload();
     },
 
+    /* ---- the folder path: copy it (to paste into a file manager) ---- */
+    copied: false,
+    async copyPath() {
+      if (await copyText(this.s.folder_path)) {
+        this.copied = true;
+        clearTimeout(this.copiedTimer);
+        this.copiedTimer = setTimeout(() => { this.copied = false; }, 1600);
+      } else toast("Couldn't copy. Select the path and copy it by hand.", 5000, "error");
+    },
+
     /* ---- re-read this series' folder ---- */
     rescanning: false,
     async rescan() {
