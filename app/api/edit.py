@@ -192,8 +192,9 @@ def choose_poster(series_id: int, body: PosterChoice, db=Depends(get_db)):
 
 @router.get("/links/{link_id}/icon")
 def link_icon(link_id: int, db=Depends(get_db)):
-    link = get_or_404(db, Link, link_id)
-    png = favicon.icon_png(link.url)
+    url = get_or_404(db, Link, link_id).url
+    db.close()  # the icon may come from the site (seconds): don't hold a database connection meanwhile
+    png = favicon.icon_png(url)
     if png is None:
         raise HTTPException(404, "No icon")
     return Response(png, media_type="image/png", headers={"Cache-Control": "private, max-age=604800"})
