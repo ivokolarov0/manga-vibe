@@ -107,6 +107,45 @@ def test_7z_named_cbz(tmp_path):
     assert archives.read_page(str(p), fmt, 0)[1] == "image/png"
 
 
+@needs_7zip
+def test_book_read_page_by_page_is_unpacked_once(tmp_path, monkeypatch):
+    """A 7z/RAR book: one page (a thumbnail) is read on its own, a second page unpacks the book,
+    and the rest come from the unpacked folder instead of a 7-Zip run each."""
+    from app import config
+    monkeypatch.setattr(archives, "_unpacked", archives._Unpacked())
+    src = tmp_path / "src"
+    src.mkdir()
+    colors = ["red", "green", "blue", "yellow"]
+    for i, c in enumerate(colors):
+        (src / f"{i:02d}.png").write_bytes(png(c, (20, 20)))
+    p = tmp_path / "Solid.cb7"
+    subprocess.run([archives.SEVENZIP, "a", "-t7z", "-ms=on", str(p), str(src / "*")], check=True,
+                   capture_output=True)
+    runs = []
+    real_run = archives._7z_run
+    monkeypatch.setattr(archives, "_7z_run", lambda args, **kw: (runs.append(args[0]), real_run(args, **kw))[1])
+
+    def page(i):
+        data, _ = archives.read_page(str(p), "7z", i)
+        return Image.open(io.BytesIO(data)).convert("RGB").getpixel((0, 0))
+
+    assert page(0) == (255, 0, 0)
+    assert not archives._unpacked.dirs              # a single page: no unpacking
+    assert page(1) == (0, 128, 0)                   # the second page unpacks the book
+    assert len(archives._unpacked.dirs) == 1
+    runs.clear()
+    assert [page(2), page(3)] == [(0, 0, 255), (255, 255, 0)]
+    assert runs == []                               # read from the folder, not 7-Zip
+    folder = next(iter(archives._unpacked.dirs.values()))
+    assert folder.parent == config.CACHE_DIR / "unpacked"
+
+    archives._unpacked.dirs.clear()                 # an unpack that fails falls back to page by page
+    archives._unpacked.recent.clear()
+    monkeypatch.setattr(archives._unpacked, "_unpack", lambda key: (_ for _ in ()).throw(archives.ArchiveError("x")))
+    assert page(0) == (255, 0, 0) and page(1) == (0, 128, 0) and page(2) == (0, 0, 255)
+    assert len(archives._unpacked.failed) == 1
+
+
 def test_broken_first_page_and_recheck_after_fix(client):
     """A bad cover must not make the book unreadable; a fixed file clears its error on rescan."""
     from app.scanner import walker

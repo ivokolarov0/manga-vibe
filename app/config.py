@@ -10,8 +10,6 @@ def _env(name, default):
 
 DATA_DIR = Path(_env("DATA_DIR", "/data"))
 LIBRARY_PATHS = [p.strip() for p in _env("LIBRARY_PATHS", "/manga").split(",") if p.strip()]
-PORT = int(_env("PORT", "8090"))
-APP_PASSWORD = _env("APP_PASSWORD", "")
 CACHE_MAX_GB = float(_env("CACHE_MAX_GB", "2"))
 RESCAN_HOURS = float(_env("RESCAN_HOURS", "6"))
 START_WORKERS = _env("START_WORKERS", "1") == "1"  # tests turn background metadata off

@@ -2,6 +2,7 @@
 import hashlib
 import io
 import logging
+import os
 import threading
 
 from PIL import Image, ImageOps
@@ -50,9 +51,11 @@ def cached_resized_page(book_id: int, index: int, width: int, mtime: float, load
     global _writes_since_trim
     key = hashlib.sha1(f"{book_id}:{mtime}".encode()).hexdigest()[:10]
     path = config.PAGES_DIR / str(book_id) / f"{key}_{index}_{width}.webp"
-    if path.exists():
-        path.touch()  # mark as recently used for LRU trimming
+    try:
+        os.utime(path)  # mark as recently used for LRU trimming (touch() would create an empty file)
         return path.read_bytes()
+    except FileNotFoundError:
+        pass  # not made yet, or trimmed just now: make it
     data = resize(load(), width)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)
@@ -66,10 +69,28 @@ def cached_resized_page(book_id: int, index: int, width: int, mtime: float, load
     return data
 
 
+_trimming = threading.Lock()
+
+
 def trim_page_cache():
-    """Delete least recently used cached pages until under CACHE_MAX_GB."""
+    """Delete least recently used cached pages until under CACHE_MAX_GB. One trim at a time."""
+    if not _trimming.acquire(blocking=False):
+        return
+    try:
+        _trim()
+    finally:
+        _trimming.release()
+
+
+def _trim():
     limit = config.CACHE_MAX_GB * 1024 ** 3
-    files = [(p.stat().st_mtime, p.stat().st_size, p) for p in config.PAGES_DIR.rglob("*.webp")]
+    files = []
+    for p in config.PAGES_DIR.rglob("*.webp"):
+        try:
+            st = p.stat()
+        except FileNotFoundError:  # a book's pages deleted meanwhile
+            continue
+        files.append((st.st_mtime, st.st_size, p))
     total = sum(f[1] for f in files)
     if total <= limit:
         return

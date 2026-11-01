@@ -62,30 +62,42 @@ def test_pages_and_resize(client):
 
 
 def test_waiting_pages_dont_freeze_the_app(client):
-    """Pages waiting their turn to be resized used to hold a database connection each: 15 of them
-    ran the pool dry, and every other request waited 30 s and failed."""
+    """Pages waiting their turn to be resized used to hold a database connection each (15 ran the
+    pool dry), and then one of the server's 40 worker threads each: either way every other request
+    waited, and the site froze. More than 40 pages wait here, holding neither."""
     import threading
-    from app import images
+    from app import db, images
+    from app.api.books import PAGE_THREADS
     sid = series_by_name(client)["Hana to Akuma"]["id"]
     book = client.get(f"/api/series/{sid}/books").json()[0]
+    count = 50
     for _ in range(2):
         images._resize_slots.acquire()  # the resizer is busy: page requests queue up
-    statuses = []
+    statuses, threads = [], []
     try:
         threads = [threading.Thread(target=lambda w=w: statuses.append(
-            client.get(f"/api/books/{book['id']}/pages/2?w={w}").status_code)) for w in range(300, 320)]
+            client.get(f"/api/books/{book['id']}/pages/2?w={w}").status_code))
+            for w in range(300, 300 + count)]
         for t in threads:
             t.start()
-        time.sleep(1)  # let them all reach the resizer
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:  # until every request is in line for the page threads
+            st = PAGE_THREADS.statistics()
+            if st.borrowed_tokens + st.tasks_waiting == count:
+                break
+            time.sleep(0.05)
+        st = PAGE_THREADS.statistics()
+        assert st.borrowed_tokens + st.tasks_waiting == count
+        assert db.engine.pool.checkedout() <= 1  # waiting pages hold no database connection
         t0 = time.monotonic()
         assert client.get("/api/series").status_code == 200
         assert time.monotonic() - t0 < 5
     finally:
         for _ in range(2):
             images._resize_slots.release()
-    for t in threads:
-        t.join(30)
-    assert statuses == [200] * 20
+        for t in threads:
+            t.join(60)
+    assert statuses == [200] * count
 
 
 def test_progress_and_continue_reading(client):
@@ -121,6 +133,51 @@ def test_incremental_rescan_and_missing(client):
     shutil.move(moved, hana / "[KnO]Hana_to_Akuma52.zip")
     walker.scan_all()
     assert "Ch 52" in [b["label"] for b in client.get(f"/api/series/{sid}/books").json()]
+
+
+def test_long_missing_books_and_series_leave_no_files(client):
+    """After 30 days missing a book or series is deleted, and its thumbnails, poster and cached
+    pages in /data go with it (they used to stay forever)."""
+    from datetime import timedelta
+    from app import config
+    from app.db import SessionLocal
+    from app.models import Book, Series
+    from app.scanner import walker
+    from tests.conftest import make_zip
+    folder = TMP / "manga" / "Purge Me"
+    make_zip(folder / "Purge Me v01.zip")
+    make_zip(folder / "Purge Me v02.zip")
+    walker.scan_all()
+    sid = series_by_name(client)["Purge Me"]["id"]
+    books = {b["file_name"]: b["id"] for b in client.get(f"/api/series/{sid}/books").json()}
+    v1, v2 = books["Purge Me v01.zip"], books["Purge Me v02.zip"]
+    assert client.get(f"/api/books/{v2}/pages/0?w=200").status_code == 200  # a cached page
+    poster = config.COVERS_DIR / f"{sid}.jpg"
+    poster.write_bytes(b"poster")
+    thumb = lambda b: config.THUMBS_DIR / f"{b}.webp"
+    assert thumb(v1).exists() and thumb(v2).exists() and (config.PAGES_DIR / str(v2)).exists()
+
+    def age(model, ids):
+        with SessionLocal() as db:
+            for row in db.query(model).filter(model.id.in_(ids)):
+                row.missing_since = walker.now() - timedelta(days=walker.KEEP_MISSING_DAYS + 1)
+            db.commit()
+
+    (folder / "Purge Me v02.zip").unlink()
+    walker.scan_all()  # missing since now: kept for 30 days
+    assert thumb(v2).exists()
+    age(Book, [v2])
+    walker.scan_all()
+    assert not thumb(v2).exists() and not (config.PAGES_DIR / str(v2)).exists()
+    assert thumb(v1).exists() and poster.exists()  # the series and its other book stay
+
+    shutil.rmtree(folder)
+    walker.scan_all()
+    age(Series, [sid])
+    walker.scan_all()
+    with SessionLocal() as db:
+        assert db.get(Series, sid) is None
+    assert not poster.exists() and not thumb(v1).exists()
 
 
 def test_path_safety(client):

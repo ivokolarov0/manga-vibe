@@ -1,15 +1,17 @@
-"""Read pages from archives and image folders without extracting to disk.
+"""Read pages from archives and image folders.
 
-Everything here only reads. The library is mounted read-only and we never open
-a file for writing.
+The library is only read: it is mounted read-only and we never open a file there for writing.
+A RAR or 7z book that is being read page after page is unpacked once into /data/cache/unpacked
+(see _Unpacked); everything else is read straight from the archive.
 
 - The real archive type is detected from the file's first bytes, so a ZIP named
   .rar or a RAR named .cbz still opens.
-- ZIPs that Python can't decompress (Deflate64, PPMd) and .7z/.cb7 are read with
-  the 7-Zip program; RARs fall back to 7-Zip too if `unrar` fails.
+- ZIPs that Python can't decompress (Deflate64, PPMd), .7z/.cb7, and RARs' pages are read with
+  the 7-Zip program (RARs with rarfile when 7-Zip isn't installed).
 - Archives inside archives (a volume zip holding chapter zips) are read one level
   deep. Their pages are named "inner.zip!/001.jpg".
 """
+import hashlib
 import io
 import os
 import posixpath
@@ -18,6 +20,7 @@ import shutil
 import subprocess
 import tempfile
 import threading
+import time
 import zipfile
 from collections import OrderedDict, Counter
 from functools import lru_cache
@@ -49,6 +52,13 @@ class ArchiveError(Exception):
 
 class UnsupportedFormat(ArchiveError):
     pass
+
+
+def not_yet_supported(fmt, error):
+    """A book this version can't read at all (a light novel, an unknown format), as opposed to a
+    damaged file. Unchanged, it reads the same way on every scan, so scans leave it alone. The
+    version that adds support resets these with a migration (UPDATE book SET mtime = -1 ...)."""
+    return fmt not in SUPPORTED or (error or "").startswith(TEXT_EPUB)
 
 
 # ---------------------------------------------------------------- helpers
@@ -103,13 +113,6 @@ def sniff(path: Path, ext_format=None):
     return found or ext_format
 
 
-def book_format(path: Path):
-    """'zip', 'rar', ... for archive files, 'folder' for image folders, else None."""
-    if path.is_dir():
-        return "folder" if any(is_image(e.name) for e in os.scandir(path) if e.is_file()) else None
-    return ARCHIVE_FORMATS.get(path.suffix.lower())
-
-
 def _sorted_pages(names):
     return sorted((n for n in names if is_image(n)), key=natural_key)
 
@@ -136,8 +139,105 @@ def _7z_list(path):
     return names
 
 
-def _7z_read(path, name):
+def _7z_read_one(path, name):
     return _7z_run(["x", "-so", "-spd", "-sccUTF-8", path, "--", name])
+
+
+# A RAR or 7z book read page by page would run 7-Zip once per page, and in a "solid" archive (most
+# RARs and 7z files) page 150 means unpacking pages 1-149 first, every time. So the second page read
+# from a book within UNPACK_AFTER seconds (someone is reading it, not just making a thumbnail)
+# unpacks the whole book once into the cache folder, and its pages are read from there. The last
+# UNPACK_KEEP books stay; bigger books than UNPACK_MAX_BYTES are never unpacked.
+UNPACK_AFTER = 600
+UNPACK_KEEP = 3
+UNPACK_MAX_BYTES = 1024 * 1024 * 1024
+
+
+class _Unpacked:
+    def __init__(self):
+        self.dirs = OrderedDict()   # (path, mtime) -> folder, most recently used last
+        self.recent = {}            # (path, mtime) -> when a page was last read without unpacking
+        self.failed = set()         # (path, mtime) that 7-Zip couldn't unpack: page by page from then on
+        self.lock = threading.Lock()
+        self.locks = {}             # (path, mtime) -> lock while that book is being unpacked
+        self.cleared = False
+
+    def root(self):
+        from app import config
+        return config.CACHE_DIR / "unpacked"
+
+    def read(self, path, name):
+        key = (path, os.path.getmtime(path))
+        folder = self._folder(key)
+        if folder is None:
+            return _7z_read_one(path, name)
+        target = (folder / name).resolve()
+        if folder.resolve() not in target.parents:
+            raise ArchiveError("Bad page name")
+        try:
+            return target.read_bytes()
+        except FileNotFoundError:  # removed meanwhile, or the name differs: read it directly
+            return _7z_read_one(path, name)
+
+    def _folder(self, key):
+        """The book's unpacked folder, unpacking it now if it's being read page after page."""
+        now = time.monotonic()
+        with self.lock:
+            if key in self.dirs:
+                self.dirs.move_to_end(key)
+                return self.dirs[key]
+            last = self.recent.get(key)
+            self.recent = {k: t for k, t in self.recent.items() if now - t < UNPACK_AFTER}
+            self.recent[key] = now
+            if (last is None or now - last >= UNPACK_AFTER or key in self.failed
+                    or os.path.getsize(key[0]) > UNPACK_MAX_BYTES):
+                return None
+            book_lock = self.locks.setdefault(key, threading.Lock())
+        with book_lock:  # other pages of the same book wait for this one unpack
+            with self.lock:
+                if key in self.dirs or key in self.failed:
+                    return self.dirs.get(key)
+            try:
+                folder = self._unpack(key)
+            except (ArchiveError, OSError, subprocess.TimeoutExpired):
+                with self.lock:
+                    self.failed.add(key)
+                    self.locks.pop(key, None)
+                return None  # page by page, as before
+            with self.lock:
+                self.dirs[key] = folder
+                self.locks.pop(key, None)
+                old = []
+                while len(self.dirs) > UNPACK_KEEP:
+                    old.append(self.dirs.popitem(last=False)[1])
+            for d in old:
+                shutil.rmtree(d, ignore_errors=True)
+            return folder
+
+    def _unpack(self, key):
+        path, mtime = key
+        root = self.root()
+        if not self.cleared:  # folders left from before a restart
+            shutil.rmtree(root, ignore_errors=True)
+            self.cleared = True
+        root.mkdir(parents=True, exist_ok=True)
+        tmp = Path(tempfile.mkdtemp(dir=root, prefix=".part-"))
+        try:
+            _7z_run(["x", "-y", "-spd", "-sccUTF-8", f"-o{tmp}", path], timeout=600)
+        except BaseException:
+            shutil.rmtree(tmp, ignore_errors=True)
+            raise
+        folder = root / hashlib.sha1(f"{path}:{mtime}".encode()).hexdigest()[:16]
+        shutil.rmtree(folder, ignore_errors=True)
+        tmp.rename(folder)
+        return folder
+
+
+_unpacked = _Unpacked()
+
+
+def _7z_read(path, name):
+    return _unpacked.read(path, name)
 
 
 # ---------------------------------------------------------------- one archive level
@@ -197,14 +297,11 @@ def _read(path, fmt, name) -> bytes:
             # Deflate64 / PPMd compression (made by Windows/WinZip for big files): 7-Zip reads them
             return _7z_read(path, name)
     if fmt == "rar":
-        try:
-            import rarfile
-            with rarfile.RarFile(path) as r:
-                return r.read(name)
-        except Exception:
-            if SEVENZIP:
-                return _7z_read(path, name)
-            raise
+        if SEVENZIP:  # the Docker image reads RARs with 7-Zip (it has no unrar for rarfile to use)
+            return _7z_read(path, name)
+        import rarfile
+        with rarfile.RarFile(path) as r:
+            return r.read(name)
     if fmt == "7z":
         return _7z_read(path, name)
     raise UnsupportedFormat(fmt)

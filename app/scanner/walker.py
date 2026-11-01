@@ -1,12 +1,13 @@
 """Library scanner: finds series and books, updates the database incrementally."""
 import logging
 import os
+import shutil
 import threading
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from app import images
+from app import config, images
 from app.api.common import book_numbers, numbering
 from app.db import SessionLocal
 from app.models import Book, Library, PluginPage, Series
@@ -123,8 +124,9 @@ def scan_library(db, lib: Library):
     for s in db.query(Series).filter(Series.library_id == lib.id):
         if s.id not in seen and s.missing_since is None:
             s.missing_since = now()
-    _purge_missing(db, lib.id)
+    gone = _purge_missing(db, lib.id)
     db.commit()
+    _remove_purged_files(*gone)
     log.info("Scanned library %s: %d series in %.1fs", lib.name, len(dirs), time.time() - t0)
 
 
@@ -153,8 +155,9 @@ def scan_series(db, lib, folder: Path) -> Series | None:
         except OSError:
             continue
         book = existing.get(key)
-        if book and book.file_size == size and book.mtime == mtime and book.missing_since is None                 and book.error is None:
-            continue  # unchanged; books with errors are re-checked on every scan
+        if (book and book.file_size == size and book.mtime == mtime and book.missing_since is None
+                and (book.error is None or archives.not_yet_supported(book.format, book.error))):
+            continue  # unchanged; damaged books are re-checked on every scan, light novels aren't
         if book is None:
             book = Book(series_id=series.id, path=key, file_name=path.name, format=fmt)
             db.add(book)
@@ -320,15 +323,36 @@ def rescan_series(series_id: int):
 
 
 def _purge_missing(db, lib_id: int):
-    """Delete books and series of this library that have been missing for too long."""
+    """Delete books and series of this library that have been missing for too long. Returns what
+    to remove from /data once that is committed: {series_id: [book ids]} of deleted series, and
+    the ids of books deleted from series that stay."""
+    from app.scanner.deleting import forget
     cutoff = now() - timedelta(days=KEEP_MISSING_DAYS)
-    for b in (db.query(Book).join(Series, Book.series_id == Series.id)
-              .filter(Series.library_id == lib_id, Book.missing_since.is_not(None))):
-        if _aware(b.missing_since) < cutoff:
-            db.delete(b)
+    gone_series, gone_books = {}, []
     for s in db.query(Series).filter(Series.library_id == lib_id, Series.missing_since.is_not(None)):
         if _aware(s.missing_since) < cutoff:
-            db.delete(s)
+            gone_series[s.id] = [b.id for b in s.books]
+            forget(db, s.id, gone_series[s.id])
+            db.delete(s)  # its books go with it
+    for b in (db.query(Book).join(Series, Book.series_id == Series.id)
+              .filter(Series.library_id == lib_id, Book.missing_since.is_not(None))):
+        if b.series_id not in gone_series and _aware(b.missing_since) < cutoff:
+            gone_books.append(b.id)
+            db.delete(b)
+    return gone_series, gone_books
+
+
+def _remove_purged_files(gone_series, gone_books):
+    """Posters, thumbnails and cached pages of what _purge_missing() deleted: they stayed in /data."""
+    from app.scanner.deleting import remove_cached_files
+    for sid, book_ids in gone_series.items():
+        remove_cached_files(sid, book_ids)
+    for b in gone_books:
+        (config.THUMBS_DIR / f"{b}.webp").unlink(missing_ok=True)
+        shutil.rmtree(config.PAGES_DIR / str(b), ignore_errors=True)
+    if gone_series or gone_books:
+        log.info("Removed %d series and %d books missing for over %d days",
+                 len(gone_series), len(gone_books), KEEP_MISSING_DAYS)
 
 
 def _aware(dt):

@@ -89,6 +89,17 @@ def test_epub_and_pdf_in_library(client):
     att = client.get("/api/attention").json()
     assert "Format Series Novel v02.epub" in [x["file"] for x in att["unsupported"]]
     assert "Format Series Novel v02.epub" not in [x["file"] for x in att["unreadable"]]
+    # unchanged, the light novel isn't opened (and logged) again on every scan
+    opened, list_pages = [], archives.list_pages
+    archives.list_pages = lambda p, f: (opened.append(p), list_pages(p, f))[1]
+    try:
+        (lib / "Format Series v01.epub").touch()  # changed: read again
+        walker.scan_all()
+    finally:
+        archives.list_pages = list_pages
+    names = {Path(p).name for p in opened}
+    assert "Format Series v01.epub" in names and "Format Series Novel v02.epub" not in names
+    assert "Format Series Novel v02.epub" in [x["file"] for x in client.get("/api/attention").json()["unsupported"]]
     import shutil
     shutil.rmtree(lib)
     walker.scan_all()
