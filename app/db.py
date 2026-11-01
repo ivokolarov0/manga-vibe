@@ -57,6 +57,8 @@ MIGRATIONS = [
     # series that have extras again (a sort_index of 0 makes it)
     lambda conn: conn.execute(text("UPDATE book SET sort_index = 0 "
                                    "WHERE COALESCE(override_extra, extra) = 1")),
+    # 12: each library folder's path outside Docker, for the series page's "Copy path"
+    lambda conn: conn.execute(text("ALTER TABLE library ADD COLUMN host_path VARCHAR")),
 ]
 
 

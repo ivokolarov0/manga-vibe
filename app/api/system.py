@@ -58,20 +58,26 @@ def libraries(db=Depends(get_db)):
     counts = dict(db.query(Series.library_id, func.count(Series.id))
                   .filter(Series.missing_since.is_(None)).group_by(Series.library_id).all())
     return [{"id": l.id, "name": l.name, "root_path": l.root_path, "series": counts.get(l.id, 0),
-             "available": Path(l.root_path).is_dir(), "reader_mode": l.reader_mode} for l in db.query(Library)]
+             "available": Path(l.root_path).is_dir(), "reader_mode": l.reader_mode,
+             "host_path": l.host_path} for l in db.query(Library)]
 
 
 class LibraryPatch(BaseModel):
-    reader_mode: str  # paged | vertical, or "default" (Settings → Reader)
+    reader_mode: str | None = None  # paged | vertical, or "default" (Settings → Reader)
+    host_path: str | None = None    # the folder outside Docker; "" clears it
 
 
 @router.patch("/libraries/{lib_id}")
 def patch_library(lib_id: int, body: LibraryPatch, db=Depends(get_db)):
-    """The reading mode (paged or vertical) of the library's series (app/direction.py)."""
+    """The reading mode (paged or vertical) of the library's series (app/direction.py), and the
+    folder's path outside Docker (shown and copied on the series page)."""
     lib = get_or_404(db, Library, lib_id)
-    if body.reader_mode != "default" and body.reader_mode not in MODES:
-        raise HTTPException(400, "Unknown reading mode")
-    lib.reader_mode = None if body.reader_mode == "default" else body.reader_mode
+    if body.reader_mode is not None:
+        if body.reader_mode != "default" and body.reader_mode not in MODES:
+            raise HTTPException(400, "Unknown reading mode")
+        lib.reader_mode = None if body.reader_mode == "default" else body.reader_mode
+    if body.host_path is not None:
+        lib.host_path = body.host_path.strip() or None
     db.commit()
     return {"ok": True}
 

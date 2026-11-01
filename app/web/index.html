@@ -340,7 +340,8 @@
                   <div class="path-field">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-                    <code class="path" x-text="s.folder_path" :title="s.folder_path"></code>
+                    <code class="path" x-text="s.host_path || s.folder_path"
+                          :title="s.host_path ? s.host_path + '\n(in Docker: ' + s.folder_path + ')' : s.folder_path"></code>
                     <button class="copy" :class="{ done: copied }" @click="copyPath()"
                             :aria-label="copied ? 'Copied' : 'Copy path'" :title="copied ? 'Copied' : 'Copy path'">
                       <svg x-show="!copied" class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -350,6 +351,8 @@
                       <span x-text="copied ? 'Copied' : 'Copy'"></span>
                     </button>
                   </div>
+                  <p class="muted path-hint" x-show="!s.host_path">This is the path inside Docker. To see the one on your
+                    NAS, set <a href="#/settings/library">Path outside Docker</a> for its library folder.</p>
                   <div class="btn-row">
                     <button class="btn" :disabled="rescanning" @click="rescan()"
                             x-text="rescanning ? 'Rescanning…' : '⟳ Rescan this series'"></button>
@@ -514,6 +517,13 @@
                   <option value="paged">Pages</option>
                   <option value="vertical">Vertical (webtoons)</option>
                 </select></label>
+              <label class="lib-option">
+                <span class="lib-option-text"><span>Path outside Docker</span>
+                  <small>What <code x-text="l.root_path"></code> is on your NAS or computer, e.g.
+                    <code class="ex">/volume1/manga</code> or <code class="ex">\\NAS\manga</code>. The series page shows and copies it.</small></span>
+                <input type="text" class="host-path" :value="l.host_path || ''" placeholder="/volume1/manga"
+                       spellcheck="false" autocomplete="off" @change="setLibraryHostPath(l, $event.target.value)"
+                       @keydown.enter="$event.target.blur()" :aria-label="'Path outside Docker for ' + l.name"></label>
             </div>
           </template>
           <div class="setting-row">
