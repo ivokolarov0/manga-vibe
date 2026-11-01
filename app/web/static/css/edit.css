@@ -40,6 +40,18 @@
       line-height: 1.4;
       resize: vertical;
     }
+
+    /* Save / Cancel stay pinned to the bottom of the dialog while the fields scroll.
+       The negative offset and margin cover the dialog's bottom padding. */
+    & > .btn-row {
+      position: sticky;
+      bottom: calc(-16px - var(--safe-bottom));
+      z-index: 1;
+      margin-bottom: calc(-16px - var(--safe-bottom));
+      padding: 10px 0 calc(16px + var(--safe-bottom));
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
   }
 
   .poster-edit {
