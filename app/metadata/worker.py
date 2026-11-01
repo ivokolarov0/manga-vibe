@@ -65,59 +65,61 @@ def _run():
         with _lock:
             _pending.discard((kind, sid))
         status["queued"] = _q.qsize()
-        db = SessionLocal()
-        try:
-            s = db.get(Series, sid)
-            if s is None:
-                continue
-            status["current"] = s.folder_name
-            if kind == "match":
-                if s.match_status != "unmatched":
-                    continue  # matched by hand meanwhile, or ignored
-                ok = service.auto_match(db, s)
-                status["matched" if ok else "failed"] += 1
-            elif kind == "refresh":
-                service.refresh(db, s)
-            elif kind == "upgrade":
-                service.upgrade_to_primary(db, s)
-            elif kind == "editions":
-                service.fill_editions(db, s)
-            db.commit()
-            status["done"] += 1
-        except service.AllProvidersDown:
-            db.rollback()
-            _providers_down(kind, sid)
-        except service.http.ProviderError as e:
-            db.rollback()  # refresh/upgrade while the provider is down: the next cycle tries again
-            log.warning("Metadata %s for series %s skipped: %s", kind, sid, e)
-        except Exception:
-            db.rollback()
-            log.exception("Metadata %s failed for series %s", kind, sid)
-        finally:
-            db.close()
-            status["batch_done"] += 1
-            status["current"] = None
+        if _handle(kind, sid) == "down":
+            _pause(kind, sid)
 
 
-def _providers_down(kind, sid):
-    """Put the series (and everything still queued) back after a pause."""
+def _handle(kind, sid):
+    """Do one queued job. "down" when no provider could be reached."""
+    db = SessionLocal()
+    try:
+        s = db.get(Series, sid)
+        if s is None:
+            return None
+        status["current"] = s.folder_name
+        if kind == "match":
+            if s.match_status != "unmatched":
+                return None  # matched by hand meanwhile, or ignored
+            ok = service.auto_match(db, s)
+            status["matched" if ok else "failed"] += 1
+        elif kind == "refresh":
+            service.refresh(db, s)
+        elif kind == "upgrade":
+            service.upgrade_to_primary(db, s)
+        elif kind == "editions":
+            service.fill_editions(db, s)
+        db.commit()
+        status["done"] += 1
+    except service.AllProvidersDown:
+        db.rollback()
+        return "down"
+    except service.http.ProviderError as e:
+        db.rollback()  # refresh/upgrade while the provider is down: the next cycle tries again
+        log.warning("Metadata %s for series %s skipped: %s", kind, sid, e)
+    except Exception:
+        db.rollback()
+        log.exception("Metadata %s failed for series %s", kind, sid)
+    finally:
+        db.close()
+        status["batch_done"] += 1
+        status["current"] = None
+    return None
+
+
+_resume = threading.Event()  # set to end a pause early (tests)
+
+
+def _pause(kind, sid):
+    """No provider answered: put the series back and wait before trying anything again. The worker
+    is the only thread doing this work, so while it waits, everything queued meanwhile (e.g. after
+    a scan) just stays in the queue, once each, instead of failing and starting pauses of its own."""
+    enqueue(kind, sid)
     until = datetime.now(timezone.utc) + timedelta(minutes=RETRY_MINUTES)
     status["providers_down_until"] = until.isoformat()
     log.warning("No metadata provider reachable; retrying in %d minutes", RETRY_MINUTES)
-    waiting = [(kind, sid)]
-    while not _q.empty():
-        waiting.append(_q.get())
-    with _lock:
-        _pending.clear()
-    status["queued"] = len(waiting)
-
-    def later():
-        status["providers_down_until"] = None
-        for k, s in waiting:
-            enqueue(k, s)
-    t = threading.Timer(RETRY_MINUTES * 60, later)
-    t.daemon = True
-    t.start()
+    _resume.wait(RETRY_MINUTES * 60)
+    _resume.clear()
+    status["providers_down_until"] = None
 
 
 def enqueue_upgrades():

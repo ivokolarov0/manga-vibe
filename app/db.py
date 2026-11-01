@@ -124,9 +124,10 @@ def init_db():
     # Every request holds a connection while it runs, and the web server runs up to 40 at once
     # (anyio's thread limit), plus the scanner, metadata and plugin threads. SQLAlchemy's default
     # pool (5 + 10 overflow) ran dry when 15 requests were slow, and every other request then waited
-    # 30 s for a connection and failed: the site froze. SQLite connections are cheap, so the pool is
-    # larger than the threads that can use it.
-    engine = create_engine(f"sqlite:///{config.DB_PATH}", pool_size=10, max_overflow=90,
+    # 30 s for a connection and failed: the site froze. SQLite connections are cheap, so the pool
+    # keeps as many as the threads that can use them (opening extra ones per burst re-ran the PRAGMAs
+    # below each time), with room for the background threads on top.
+    engine = create_engine(f"sqlite:///{config.DB_PATH}", pool_size=40, max_overflow=20,
                            connect_args={"check_same_thread": False, "timeout": 30})
 
     @event.listens_for(engine, "connect")

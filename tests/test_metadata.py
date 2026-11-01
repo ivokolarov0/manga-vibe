@@ -385,3 +385,28 @@ def test_status_counts_the_current_run(monkeypatch):
     worker.enqueue("match", 2)
     assert worker.status["batch_done"] == 0 and worker.status["batch_started"]
     assert worker.status["queued"] == 2
+
+
+def test_one_pause_while_providers_are_down(monkeypatch):
+    """No provider answers: the worker puts the series back and waits. Series queued during the wait
+    stay in the queue, once each; they used to fail at once and start pauses (and retries) of their own."""
+    import queue
+    import threading
+    import time
+    from app.metadata import worker
+    monkeypatch.setattr(worker, "_q", queue.Queue())
+    monkeypatch.setattr(worker, "_pending", set())
+    monkeypatch.setitem(worker.status, "providers_down_until", None)
+    t = threading.Thread(target=worker._pause, args=("match", 1))
+    t.start()
+    deadline = time.monotonic() + 5
+    while not worker.status["providers_down_until"] and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert worker.status["providers_down_until"]
+    for sid in (1, 2, 2):  # e.g. a scan finishing during the pause
+        worker.enqueue("match", sid)
+    assert list(worker._q.queue) == [("match", 1), ("match", 2)]
+    assert t.is_alive()  # still waiting: nothing is tried meanwhile
+    worker._resume.set()
+    t.join(5)
+    assert not t.is_alive() and worker.status["providers_down_until"] is None

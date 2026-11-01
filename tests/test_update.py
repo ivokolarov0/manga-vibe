@@ -8,7 +8,6 @@ import httpx
 import pytest
 
 from app import config, updater
-from tests.conftest import TMP
 
 ROOT = Path(__file__).parent.parent
 SHA1, SHA2, SHA3 = "1" * 40, "2" * 40, "3" * 40

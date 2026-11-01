@@ -2,14 +2,16 @@
 import logging
 import traceback
 
+import anyio
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 from app import images
 from app.api.common import (book_dict, display_title, emit_reading_events, ensure_inside_library,
                             get_or_404, now, status_of, title_lang, visible_books_query)
-from app.db import get_db
+from app.db import SessionLocal, get_db
 from app.direction import reading_direction
 from app.models import Book, OverlayHidden, Progress, Series
 from app.plugins import Box, Context, Overlay, action_result, implements, manager as plugins
@@ -144,36 +146,52 @@ def thumbnail(book_id: int, db=Depends(get_db)):
     return FileResponse(b.thumbnail_path, headers={"Cache-Control": IMMUTABLE})
 
 
+# Pages are read and resized by at most this many threads at once. A request waiting for one of them
+# waits in the event loop, not on one of the web server's 40 worker threads: a long vertical strip
+# asks for dozens of pages at once, and those used to take every thread (and before that every
+# database connection) and froze the rest of the app until they were done.
+PAGE_THREADS = anyio.CapacityLimiter(4)
+
+
+def _page_source(book_id: int):
+    """(id, path, format, mtime) of a readable book, with its own short database session."""
+    with SessionLocal() as db:
+        b = get_or_404(db, Book, book_id)
+        path = str(ensure_inside_library(db, b.path))
+        if b.error:
+            raise HTTPException(409, b.error)
+        return b.id, path, b.format, b.mtime
+
+
+def _page_bytes(book_id, path, fmt, mtime, n, w):
+    """(bytes, mime) of page n, resized to width w when given."""
+    if w:
+        return images.cached_resized_page(
+            book_id, n, w, mtime, lambda: archives.read_page(path, fmt, n)[0]), "image/webp"
+    data, mime = archives.read_page(path, fmt, n)
+    if mime not in archives.WEB_MIME:  # e.g. TIFF, JPEG XL: browsers can't show it, convert
+        data, mime = images.resize(data, 100_000), "image/webp"
+    return data, mime
+
+
 @router.get("/{book_id}/pages/{n}")
-def page(book_id: int, n: int, request: Request, w: int | None = None, db=Depends(get_db)):
-    b = get_or_404(db, Book, book_id)
-    path = str(ensure_inside_library(db, b.path))
-    if b.error:
-        raise HTTPException(409, b.error)
-    etag = f'"{b.id}-{int(b.mtime)}-{n}-{w or 0}"'
+async def page(book_id: int, n: int, request: Request, w: int | None = None):
+    bid, path, fmt, mtime = await run_in_threadpool(_page_source, book_id)
+    etag = f'"{bid}-{int(mtime)}-{n}-{w or 0}"'
     if request.headers.get("if-none-match") == etag:
         return Response(status_code=304)
-    headers = {"Cache-Control": IMMUTABLE, "ETag": etag}
-    # Hand the database connection back before the slow part: the reader asks for several pages at
-    # once, and each may wait its turn to be resized. Holding a connection meanwhile ran the pool dry
-    # and froze every other request. `b` keeps the values already read.
-    db.close()
+    if w:
+        w = max(200, min(w, 4000))
     try:
-        if w:
-            w = max(200, min(w, 4000))
-            data = images.cached_resized_page(
-                b.id, n, w, b.mtime, lambda: archives.read_page(path, b.format, n)[0])
-            return Response(data, media_type="image/webp", headers=headers)
-        data, mime = archives.read_page(path, b.format, n)
-        if mime not in archives.WEB_MIME:  # e.g. TIFF, JPEG XL: browsers can't show it, convert
-            data, mime = images.resize(data, 100_000), "image/webp"
-        return Response(data, media_type=mime, headers=headers)
+        data, mime = await anyio.to_thread.run_sync(_page_bytes, bid, path, fmt, mtime, n, w,
+                                                    limiter=PAGE_THREADS)
     except archives.ArchiveError as e:
-        raise HTTPException(409, str(e))
+        raise HTTPException(409, str(e)) from None
     except IndexError:
-        raise HTTPException(404, "No such page")
+        raise HTTPException(404, "No such page") from None
     except FileNotFoundError:
-        raise HTTPException(404, "File is missing (moved or share not mounted?)")
+        raise HTTPException(404, "File is missing (moved or share not mounted?)") from None
+    return Response(data, media_type=mime, headers={"Cache-Control": IMMUTABLE, "ETag": etag})
 
 
 class ProgressBody(BaseModel):

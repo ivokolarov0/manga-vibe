@@ -5,7 +5,7 @@ import threading
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -110,14 +110,23 @@ class UploadSizeLimit:
         await send({"type": "http.response.body", "body": body})
 
 
+class RememberAddress:
+    """Plugins build links back to the app (e.g. a login callback) from the address in use.
+    A plain ASGI middleware: @app.middleware("http") wrapped every response (every thumbnail and
+    page) in an extra task and stream for this one line."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["path"].startswith("/api/"):
+            plugins.base_url = str(Request(scope).base_url).rstrip("/")
+        return await self.app(scope, receive, send)
+
+
 app = FastAPI(title="MangaVibe", lifespan=lifespan)
 app.add_middleware(UploadSizeLimit, limit=MAX_UPLOAD + 64 * 1024)  # + room for the multipart headers
-@app.middleware("http")
-async def remember_address(request, call_next):
-    """Plugins build links back to the app (e.g. a login callback) from the address in use."""
-    if request.url.path.startswith("/api/"):
-        plugins.base_url = str(request.base_url).rstrip("/")
-    return await call_next(request)
+app.add_middleware(RememberAddress)
 
 
 app.include_router(system.router)
