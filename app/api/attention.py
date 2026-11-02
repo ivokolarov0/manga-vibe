@@ -8,11 +8,13 @@ Keys: err:<book id>, dup:<series id>:<chapter or volume>, gap:<series id>, same:
 import hashlib
 import re
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 
 from app.api.common import book_label, chapter_gaps, display_title, numberings, poster_version, title_lang
+from app import shelves
+from app.api.filters import shelf_filter
 from app.db import get_db, get_setting, set_setting
 from app.metadata.service import ID_FIELDS
 from app.models import Book, Library, Series
@@ -59,9 +61,9 @@ def same_match_groups(rows):
     return out
 
 
-def _series_ids(db):
+def _series_ids(db, shown):
     cols = [getattr(Series, f) for f in ID_FIELDS]
-    q = db.query(Series.id, *cols).filter(Series.missing_since.is_(None))
+    q = db.query(Series.id, *cols).filter(Series.missing_since.is_(None), *shown)
     return [(sid, dict(zip(ID_FIELDS, vals))) for sid, *vals in q]
 
 
@@ -99,8 +101,10 @@ def _book_counts(db, series_ids):
 
 
 @router.get("/attention")
-def attention(ignored: bool = False, db=Depends(get_db)):
-    """The lists. With ignored=true, ignored rows are included (marked "ignored": true)."""
+def attention(request: Request, ignored: bool = False, shelf: int | None = None, db=Depends(get_db)):
+    """The lists, for one library (shelf) or all of them; a locked library's series are left out.
+    With ignored=true, ignored rows are included (marked "ignored": true)."""
+    shown = shelf_filter(db, request, shelf)
     lang = title_lang(db)
     skip = set(get_setting(db, "attention_ignored", []) or [])
     lists = {k: [] for k in ("matches", "same", "unreadable", "unsupported", "duplicates", "gaps")}
@@ -116,7 +120,7 @@ def attention(ignored: bool = False, db=Depends(get_db)):
 
     # Only flagged rows are loaded in full; on a big library almost every series and book is fine,
     # and loading them all as objects made this list take seconds.
-    live = {sid for (sid,) in db.query(Series.id).filter(Series.missing_since.is_(None))}
+    live = {sid for (sid,) in db.query(Series.id).filter(Series.missing_since.is_(None), *shown)}
     errors = [b for b in db.query(Book).filter(Book.error.is_not(None), Book.missing_since.is_(None))
               if b.series_id in live]
     flagged = {}
@@ -124,12 +128,12 @@ def attention(ignored: bool = False, db=Depends(get_db)):
         if b.series_id in live:
             flagged.setdefault(b.series_id, []).append(b)
     # a series marked complete by hand (omnibus editions) has no missing chapters to report
-    rows = db.query(Series.id, Series.numbering).filter(Series.missing_since.is_(None),
+    rows = db.query(Series.id, Series.numbering).filter(Series.missing_since.is_(None), *shown,
                                                         Series.collection_complete.is_not(True)).all()
     gaps = {sid: g for sid, num in numberings(db, rows).items() if (g := chapter_gaps(num))}
     failed = [sid for (sid,) in db.query(Series.id).filter(Series.match_status == "failed",
-                                                           Series.missing_since.is_(None))]
-    same = same_match_groups(_series_ids(db))
+                                                           Series.missing_since.is_(None), *shown)]
+    same = same_match_groups(_series_ids(db, shown))
     needed = {b.series_id for b in errors} | set(flagged) | set(gaps) | set(failed) \
         | {sid for _, sids, _ in same for sid in sids}
     series = {s.id: s for s in db.query(Series).filter(Series.id.in_(needed))} if needed else {}
@@ -173,11 +177,12 @@ def attention(ignored: bool = False, db=Depends(get_db)):
 
 
 @router.get("/attention/count")
-def attention_count(db=Depends(get_db)):
+def attention_count(request: Request, shelf: int | None = None, db=Depends(get_db)):
     """Just the badge number (same rules as attention()["count"]), loading only flagged rows,
     so polling it every minute stays cheap on a big library."""
+    shown = shelf_filter(db, request, shelf)
     skip = set(get_setting(db, "attention_ignored", []) or [])
-    live = {sid for (sid,) in db.query(Series.id).filter(Series.missing_since.is_(None))}
+    live = {sid for (sid,) in db.query(Series.id).filter(Series.missing_since.is_(None), *shown)}
     errors = sum(
         1 for bid, fmt, err, sid in db.query(Book.id, Book.format, Book.error, Book.series_id)
         .filter(Book.error.is_not(None), Book.missing_since.is_(None))
@@ -188,8 +193,9 @@ def attention_count(db=Depends(get_db)):
             flagged.setdefault(b.series_id, []).append(b)
     dups = sum(1 for sid, books in flagged.items() for part, _ in duplicate_groups(books)
                if f"dup:{sid}:{part}" not in skip)
-    matches = (db.query(Series).filter(Series.match_status == "failed", Series.missing_since.is_(None)).count())
-    same = sum(1 for key, _, _ in same_match_groups(_series_ids(db)) if key not in skip)
+    matches = (db.query(Series).filter(Series.match_status == "failed", Series.missing_since.is_(None), *shown)
+               .count())
+    same = sum(1 for key, _, _ in same_match_groups(_series_ids(db, shown)) if key not in skip)
     return {"count": errors + dups + matches + same}
 
 
@@ -198,11 +204,31 @@ class IgnoreBody(BaseModel):
     ignore: bool = True
 
 
+def _key_series(db, key):
+    """The series a row's key is about (see the module docstring); [] when it can't be told."""
+    kind, _, rest = key.partition(":")
+    try:
+        if kind == "err":
+            sid = db.query(Book.series_id).filter(Book.id == int(rest)).scalar()
+            return [sid] if sid is not None else []
+        if kind in ("dup", "gap"):
+            return [int(rest.split(":")[0])]
+        if kind == "same":
+            return [int(p) for p in rest.split("-")]
+    except ValueError:  # a big "same" group's key is a hash
+        pass
+    return []
+
+
 @router.post("/attention/ignore")
-def ignore_row(body: IgnoreBody, db=Depends(get_db)):
-    """Hide one row as a false alarm (or bring it back with ignore=false)."""
+def ignore_row(body: IgnoreBody, request: Request, db=Depends(get_db)):
+    """Hide one row as a false alarm (or bring it back with ignore=false). Not for a row of a locked
+    library's series."""
     if not KEY_RE.match(body.key):
         raise HTTPException(400, "Unknown row")
+    locked = shelves.locked_for(db, request)
+    if locked and any(shelves.series_shelf(db, sid) in locked for sid in _key_series(db, body.key)):
+        raise HTTPException(403, "This library is locked")
     keys = set(get_setting(db, "attention_ignored", []) or [])
     (keys.add if body.ignore else keys.discard)(body.key)
     if len(keys) > MAX_IGNORED:

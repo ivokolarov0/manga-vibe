@@ -145,7 +145,13 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   el.hidden = false;
   el.innerHTML = `<div class="loading">Loading…</div>`;
   document.body.style.overflow = "hidden";
-  const book = await api(`/api/books/${bookId}`);
+  let book;
+  try { book = await api(`/api/books/${bookId}`); } catch (e) {
+    el.innerHTML = `<div class="endcard"><p>${esc(e.message)}</p><a class="btn" href="#/">Back</a></div>`;
+    // a locked library: ask for its password, then open the book
+    if (e.detail?.shelf) Alpine.store("app").openUnlock(e.detail.shelf, () => openReader(bookId, startPage, cameFromApp));
+    return;
+  }
   if (book.error) { el.innerHTML = `<div class="endcard"><p>${esc(book.error)}</p>
     <a class="btn" href="#/series/${book.series_id}">Back</a></div>`; return; }
   Object.assign(R, { book, mode: book.reader_mode === "vertical" ? "vertical" : "paged",

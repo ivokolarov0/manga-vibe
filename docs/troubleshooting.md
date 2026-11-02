@@ -17,8 +17,11 @@
   state after a stop or an edit. Restart **Container Manager** (Package Center → Stop, then Run), or
   the NAS. Your library and settings are kept; they live in the `/data` folder.
 - **Adding another library folder:** mount it into the container, e.g. as `/manga2`, and
-  restart. Then go to **Settings** → **Library folders** → **+ Add folder** and pick it. **Remove**
-  takes it out of the library again; your files are not touched.
+  restart. Then go to **Settings** → **Library folders** → **+ Add folder** and pick it. Its series
+  show in a new library named like the folder; its **Library** setting can point it at another one.
+  **Remove** takes it out of the app again; your files are not touched.
+- **Forgot a library's password:** set `CLEAR_LIBRARY_PASSWORD` to the library's name (or `all`), restart
+  once, then remove the variable again. Outside Docker: `python -m app.shelves clear-password <name>`.
 - **A file is broken or can't be read:** it's listed in **Settings → Needs attention → Errors**, with
   what's inside it. Replace the file; the next scan picks the new one up.
 - **A new version doesn't start:** after 3 failed starts in a row, MangaVibe goes back to the previous

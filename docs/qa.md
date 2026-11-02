@@ -27,8 +27,8 @@ At most there will be a PIN page or a simple password.
 
 **Why only manga and not comics?**
 I'm making it for myself, and I mostly read manga. That said, you can already read comics with it:
-a series matched as a western comic reads left to right by itself, and a library folder of comics
-can be set to left to right in Settings → Library folders. If you want more comic-specific features,
+put them in a library of their own (Settings → Libraries, then point the comics folder at it, or move
+single series there with Edit), with its own reading mode. If you want more comic-specific features,
 there's a plugin system, so you can vibe code a plugin for them.
 
 **Why is there no option to rename or optimize files?**

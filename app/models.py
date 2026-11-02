@@ -14,12 +14,37 @@ class Base(DeclarativeBase):
     pass
 
 
+class Shelf(Base):
+    """What the app calls a *library* (Manga, Comics...): a set of series shown together, with its own
+    reader default and an optional password. Called a shelf in the code, because `Library` below is
+    a scanned library folder (the name it has had since the start). Series are on their folder's
+    shelf unless the owner put them on another one (`Series.shelf_id`). See app/shelves.py."""
+    __tablename__ = "shelf"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    # reading mode (paged or vertical) for its series (see app/direction.py); None: Settings → Reader
+    reader_mode: Mapped[str | None] = mapped_column(String)
+    # "scrypt$n$r$p$salt$hash" (app/shelves.py), never the password itself; None: not locked
+    password_hash: Mapped[str | None] = mapped_column(String)
+    # goes up whenever the password changes, so browsers unlocked with the old one are locked again
+    lock_version: Mapped[int] = mapped_column(Integer, default=0)
+    # the folder this shelf was made for by the app (named like it); removing that folder removes the
+    # shelf too while it's empty. None once the owner renames or sets it up, or if they made it.
+    made_for_folder: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 class Library(Base):
+    """A library folder (LIBRARY_PATHS, or added in Settings): what the scanner reads. Its series show
+    on its shelf (the app's "library", see Shelf)."""
     __tablename__ = "library"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     root_path: Mapped[str] = mapped_column(String, unique=True)
-    # reading mode (paged or vertical) for its series (see app/direction.py); None: Settings → Reader
+    # the library its series show in, unless a series picks another one
+    shelf_id: Mapped[int | None] = mapped_column(ForeignKey("shelf.id", ondelete="SET NULL"))
+    # no longer used: the reading mode moved to the shelf (copied there and cleared by
+    # shelves.shelf_for_folder() after migration 14)
     reader_mode: Mapped[str | None] = mapped_column(String)
     # the same folder outside Docker (e.g. /volume1/manga or \\NAS\manga), typed by the owner:
     # the app only sees root_path, the mount inside the container
@@ -30,7 +55,9 @@ class Library(Base):
 class Series(Base):
     __tablename__ = "series"
     id: Mapped[int] = mapped_column(primary_key=True)
-    library_id: Mapped[int] = mapped_column(ForeignKey("library.id", ondelete="CASCADE"), index=True)
+    library_id: Mapped[int] = mapped_column(ForeignKey("library.id", ondelete="CASCADE"), index=True)  # its folder
+    # the library (shelf) the owner moved it to; None: its folder's. Never changed by a scan.
+    shelf_id: Mapped[int | None] = mapped_column(ForeignKey("shelf.id", ondelete="SET NULL"), index=True)
     folder_path: Mapped[str] = mapped_column(String, unique=True)
     folder_name: Mapped[str] = mapped_column(String)
     sort_title: Mapped[str] = mapped_column(String, index=True)

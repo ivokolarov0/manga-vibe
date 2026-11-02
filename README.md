@@ -51,6 +51,9 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
   archives and files with the wrong extension work too.
 - **Several library folders**, each scanned every few hours and on start. New files show up by
   themselves; a removed file disappears.
+- **Separate libraries**, e.g. Manga and Comics, as tabs on the home screen. A whole folder goes in
+  one, and a single series can be moved to another without moving its files. Each library has its own
+  reading mode, and an optional password that hides it until it's unlocked.
 - **Covers and details** (titles in three languages, description, genres, tags, authors, status,
   score, links) from **AniList** and **MangaUpdates**, matched automatically with a match score.
   If it picked the wrong series, **Fix match** lets you search or paste a link.
@@ -61,13 +64,14 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 - **Search** titles, alternative names and authors.
 - **Filter** by genre and tag (include or exclude), reading status, format, favorites, first
   letter, and complete or incomplete collections (finished series with volumes missing); **sort** by title, date added, last updated, last read, score, year or unread count.
+  **Save a search** (e.g. only Isekai) and pick it again from the Saved button, in any library.
 - **Continue**: everything you're in the middle of, to pick up where you left off.
 - **Reading status** worked out from your progress (reading, completed, …), or set by hand, plus
   favorites. Mark a book read or unread, or everything before it.
 
 ### A reader made for phones
 - **Pages or vertical** (webtoons). Pages turn like every digital reader: the next one is on the
-  right (→, a tap on the right, a swipe to the left). Set per series or per library folder.
+  right (→, a tap on the right, a swipe to the left). Set per series or per library.
 - **Swipe or tap** to turn pages (or the volume buttons, in the Android app). Tap zones can be
   one-handed, and the buttons move to your reading hand; pinch and double-tap to zoom, with a lock
   to keep the page fitted.

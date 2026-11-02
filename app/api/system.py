@@ -10,11 +10,10 @@ from pydantic import BaseModel
 
 from sqlalchemy import func
 
-from app import config, plugin_updates
+from app import config, plugin_updates, shelves
 from app.api.common import get_or_404
 from app.db import get_db, get_setting, set_setting
-from app.direction import MODES
-from app.models import Library, Series
+from app.models import Library, Series, Shelf
 from app.plugins import Context, OpenUrl, action_result, implements, manager as plugins
 from app.scanner import walker
 from app.scanner.parser import natural_key
@@ -54,31 +53,36 @@ def health():
 
 
 @router.get("/libraries")
-def libraries(db=Depends(get_db)):
+def libraries(request: Request, db=Depends(get_db)):
+    """The library folders. series: how many of the folder's series are shown (a locked library's
+    aren't counted). shelf_id: the library its series show in (app/shelves.py)."""
+    visible = shelves.visible(shelves.locked_for(db, request))
     counts = dict(db.query(Series.library_id, func.count(Series.id))
-                  .filter(Series.missing_since.is_(None)).group_by(Series.library_id).all())
+                  .filter(Series.missing_since.is_(None), visible).group_by(Series.library_id).all())
     return [{"id": l.id, "name": l.name, "root_path": l.root_path, "series": counts.get(l.id, 0),
-             "available": Path(l.root_path).is_dir(), "reader_mode": l.reader_mode,
+             "available": Path(l.root_path).is_dir(), "shelf_id": l.shelf_id,
              "host_path": l.host_path} for l in db.query(Library)]
 
 
 class LibraryPatch(BaseModel):
-    reader_mode: str | None = None  # paged | vertical, or "default" (Settings → Reader)
-    host_path: str | None = None    # the folder outside Docker; "" clears it
+    shelf_id: int | None = None   # the library its series show in
+    host_path: str | None = None  # the folder outside Docker; "" clears it
 
 
 @router.patch("/libraries/{lib_id}")
-def patch_library(lib_id: int, body: LibraryPatch, db=Depends(get_db)):
-    """The reading mode (paged or vertical) of the library's series (app/direction.py), and the
+def patch_library(lib_id: int, body: LibraryPatch, request: Request, db=Depends(get_db)):
+    """The library the folder's series show in (series moved by hand stay where they are), and the
     folder's path outside Docker (shown and copied on the series page)."""
     lib = get_or_404(db, Library, lib_id)
-    if body.reader_mode is not None:
-        if body.reader_mode != "default" and body.reader_mode not in MODES:
-            raise HTTPException(400, "Unknown reading mode")
-        lib.reader_mode = None if body.reader_mode == "default" else body.reader_mode
+    if body.shelf_id is not None and body.shelf_id != lib.shelf_id:
+        get_or_404(db, Shelf, body.shelf_id)
+        if lib.shelf_id in shelves.locked_for(db, request):  # would show the locked library's series
+            raise HTTPException(403, "Unlock the folder's library first")
+        lib.shelf_id = body.shelf_id
     if body.host_path is not None:
         lib.host_path = body.host_path.strip() or None
     db.commit()
+    shelves.invalidate()
     return {"ok": True}
 
 
@@ -89,6 +93,8 @@ class LibraryBody(BaseModel):
 
 @router.post("/libraries")
 def add_library(body: LibraryBody, db=Depends(get_db)):
+    """Add a folder. Its series show in the library named like it (made if there's none yet); the
+    owner can point it at another one."""
     root = Path(body.root_path)
     if not root.is_absolute() or not root.is_dir():
         raise HTTPException(400, f"Folder {body.root_path} does not exist inside the container. "
@@ -101,6 +107,7 @@ def add_library(body: LibraryBody, db=Depends(get_db)):
         raise HTTPException(400, "Library already exists")
     lib = Library(name=body.name or root.name, root_path=str(root))
     db.add(lib)
+    lib.shelf_id = shelves.shelf_for_folder(db, lib).id
     removed = set(get_setting(db, "removed_libraries", []) or [])
     removed.discard(str(root))
     set_setting(db, "removed_libraries", sorted(removed))
@@ -110,15 +117,27 @@ def add_library(body: LibraryBody, db=Depends(get_db)):
 
 
 @router.delete("/libraries/{lib_id}")
-def delete_library(lib_id: int, db=Depends(get_db)):
-    """Removes the library from the app's database only. Files are never touched.
-    Remembered, so a folder from LIBRARY_PATHS isn't added back on the next start."""
+def delete_library(lib_id: int, request: Request, db=Depends(get_db)):
+    """Removes the library folder from the app's database only (its series and their progress go
+    with it). Files are never touched. Remembered, so a folder from LIBRARY_PATHS isn't added back on
+    the next start. Refused while its library is locked: that would remove series without the password."""
     lib = get_or_404(db, Library, lib_id)
+    if lib.shelf_id in shelves.locked_for(db, request):
+        raise HTTPException(403, "Unlock the folder's library first")
     removed = set(get_setting(db, "removed_libraries", []) or [])
     removed.add(lib.root_path)
     set_setting(db, "removed_libraries", sorted(removed))
+    shelf = db.get(Shelf, lib.shelf_id) if lib.shelf_id else None
     db.delete(lib)
+    db.flush()
+    # the library the app made for this folder goes too, if the owner never set it up and it's empty
+    if (shelf and shelf.made_for_folder == lib.id and not shelf.password_hash
+            and db.query(Shelf).count() > 1
+            and not db.query(Library).filter(Library.shelf_id == shelf.id).first()
+            and not db.query(Series).filter(Series.shelf_id == shelf.id).first()):
+        db.delete(shelf)
     db.commit()
+    shelves.invalidate()
     return {"ok": True}
 
 

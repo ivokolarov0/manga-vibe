@@ -42,9 +42,10 @@ prints a LAN address for testing on a phone. Several worktrees can run at once.
 app/main.py             startup, routes
 app/config.py           environment variables
 app/models.py, db.py    SQLite tables, first start, migrations
-app/direction.py        how a series reads, paged or vertical (its own, library folder, default)
+app/direction.py        how a series reads, paged or vertical (its own, its library, default)
+app/shelves.py          libraries (Manga, Comics...; "shelves" in the code), passwords, LockGuard
 app/scanner/            parser.py (file names), archives.py (reading), walker.py (scanning)
-app/api/                series.py, books.py, system.py
+app/api/                series.py, books.py, system.py, shelves.py, filters.py, saved.py
 app/plugins/            plugin system
 app/updater.py          auto-update from the newest GitHub release
 app/images.py           thumbnails, resized page cache

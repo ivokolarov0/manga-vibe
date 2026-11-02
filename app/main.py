@@ -9,8 +9,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app import config, db as database, plugin_updates, updater
-from app.api import attention, books, edit, series, system, update
+from app import config, db as database, plugin_updates, shelves, updater
+from app.api import attention, books, edit, saved, series, shelves as shelves_api, system, update
 from app.metadata import worker as metadata_worker
 from app.plugins import manager as plugins
 from app.posters import MAX_UPLOAD
@@ -37,6 +37,7 @@ async def lifespan(app):
     database.init_db()
     with database.SessionLocal() as s:
         walker.ensure_libraries(s, config.LIBRARY_PATHS)
+        shelves.clear_from_env(s, config.CLEAR_LIBRARY_PASSWORD)
         walker.fill_numbering(s)
         plugins.load()
         plugins.disabled = set(database.get_setting(s, "plugins_disabled", []) or [])
@@ -127,9 +128,12 @@ class RememberAddress:
 app = FastAPI(title="MangaVibe", lifespan=lifespan)
 app.add_middleware(UploadSizeLimit, limit=MAX_UPLOAD + 64 * 1024)  # + room for the multipart headers
 app.add_middleware(RememberAddress)
+app.add_middleware(shelves.LockGuard)  # a locked library's series, books and pages are refused
 
 
 app.include_router(system.router)
+app.include_router(shelves_api.router)
+app.include_router(saved.router)
 app.include_router(series.router)
 app.include_router(books.router)
 app.include_router(attention.router)
