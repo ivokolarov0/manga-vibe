@@ -13,6 +13,8 @@ LIBRARY_PATHS = [p.strip() for p in _env("LIBRARY_PATHS", "/manga").split(",") i
 CACHE_MAX_GB = float(_env("CACHE_MAX_GB", "2"))
 RESCAN_HOURS = float(_env("RESCAN_HOURS", "6"))
 START_WORKERS = _env("START_WORKERS", "1") == "1"  # tests turn background metadata off
+# forgot a library's password: its name (or "all") removes the password on the next start
+CLEAR_LIBRARY_PASSWORD = _env("CLEAR_LIBRARY_PASSWORD", "")
 
 DB_PATH = DATA_DIR / "mangavibe.db"
 COVERS_DIR = DATA_DIR / "covers"

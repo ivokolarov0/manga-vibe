@@ -44,6 +44,22 @@
       <button class="icon" aria-label="Don't show again" title="Don't show again" @click="dismissAppBanner()">✕</button>
     </div>
 
+    <!-- ============ libraries (Manga, Comics...): the library grid and Continue show the one picked
+         here; + adds one. See shelfTabs() in app.js ============ -->
+    <div class="tabs shelf-tabs" x-data="shelfTabs()" role="tablist" aria-label="Libraries" x-cloak
+         x-show="['library', 'continue'].includes($store.app.view) && list.length">
+      <button role="tab" x-show="showAll" :class="{ active: on(0) }" :aria-selected="on(0)" @click="pick(0)">All</button>
+      <template x-for="s in list" :key="s.id">
+        <button role="tab" :class="{ active: on(s.id) }" :aria-selected="on(s.id)" @click="pick(s.id)"
+                :title="s.locked ? 'Locked: asks for the password' : ''">
+          <span x-text="s.name"></span>
+          <span class="lock" x-show="s.has_password" x-text="s.locked ? '🔒' : '🔓'"
+                :aria-label="s.locked ? 'locked' : 'unlocked'"></span></button>
+      </template>
+      <button class="add" @click="add()" title="New library" aria-label="New library">+</button>
+      <button class="lock-now" x-show="anyOpen" @click="lockNow()" title="Ask for the passwords again">🔒 Lock now</button>
+    </div>
+
     <!-- ============ library ============ -->
     <section class="view" x-data="library()" x-show="$store.app.view === 'library'">
       <div class="lib-head">
@@ -58,6 +74,9 @@
                   :aria-label="letter ? 'Title starts with ' + letter : 'Filter by first letter'">
             <i class="az" aria-hidden="true">A<small>z</small></i>
             <span x-text="letter ? 'Starts with ' + letter : 'Letter'"></span></button>
+          <button class="tool" :class="{ on: savedOn }" @click="openSheet('saved')" title="Saved searches">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+            <span>Saved</span></button>
         </div>
         <div class="quick">
           <template x-for="[v, label] in quick" :key="v">
@@ -65,11 +84,19 @@
           </template>
         </div>
       </div>
-      <div class="chips" x-show="chips.length" x-cloak>
+      <!-- the filters on (tap one to drop it), then Clear all and Save search -->
+      <div class="active-filters" x-show="chips.length || canSave" x-cloak>
         <template x-for="c in chips" :key="c.k + c.v">
-          <span class="chip filter-chip" :class="{ ex: c.ex }" @click="removeChip(c)" x-text="c.label + ' ✕'"></span>
+          <button class="filter-chip" :class="{ ex: c.ex }" @click="removeChip(c)" :aria-label="'Remove ' + c.label">
+            <span x-text="c.label"></span>
+            <i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i></button>
         </template>
-        <button class="link-btn" @click="clearAll()">Clear all</button>
+        <button class="clear-all" x-show="chips.length" @click="clearAll()">Clear all</button>
+        <!-- keep these filters and sort under a name (the Saved button lists them) -->
+        <button class="save-search" x-show="canSave && !savedOn" @click="saveSearch()"
+                title="Keep these filters under a name: the Saved button brings them back">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+          <span>Save search</span></button>
       </div>
       <div class="page-info" x-show="paged && total > 0" x-cloak>
         <span x-text="pageInfo"></span>
@@ -99,6 +126,24 @@
             <button @click="bulk('favorite', (n) => `Added ${n} series to favorites`)">★ Add to favorites</button>
             <button @click="bulk('unfavorite', (n) => `Removed ${n} series from favorites`)">☆ Remove from favorites</button>
             <button @click="bulk('refresh', (n) => `Refreshing metadata for ${n} series in the background`)">⟳ Refresh metadata</button>
+            <button @click="selMenu = false; moveOpen = true">📚 Move to library…</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- move the selected series to another library (their files stay where they are) -->
+      <div class="modal" x-show="moveOpen" x-cloak @click.self="moveOpen = false" @keydown.escape.window="moveOpen = false">
+        <div class="small-dialog">
+          <div class="sheet-head"><b x-text="`Move ${selCount} series to`"></b>
+            <button class="btn small" @click="moveOpen = false">Cancel</button></div>
+          <p class="muted">Only where they show: their files stay in their folders, and a rescan keeps them there.</p>
+          <div class="options">
+            <template x-for="sh in $store.app.shelves" :key="sh.id">
+              <button @click="moveTo(sh.id)"><span class="text"><span x-text="sh.name + (sh.locked ? ' 🔒' : '')"></span>
+                <small x-text="sh.locked ? 'Locked: they disappear until it is unlocked' : ''"></small></span></button>
+            </template>
+            <button @click="moveTo(0)"><span class="text"><span>Their folder's library</span>
+              <small>Undo a move: each follows its folder again</small></span></button>
           </div>
         </div>
       </div>
@@ -252,8 +297,8 @@
               <div class="small-dialog">
                 <div class="sheet-head"><b>Reading mode</b>
                   <button class="btn small" @click="readerOpen = false">Close</button></div>
-                <p class="muted">Only for this series. “Automatic” follows its library folder (Settings → Library
-                  folders), else Settings → Reader.</p>
+                <p class="muted">Only for this series. “Automatic” follows its library (Settings → Libraries),
+                  else Settings → Reader.</p>
                 <div class="options" role="radiogroup" aria-label="Reading mode">
                   <template x-for="[v, label, hint] in readerModes" :key="v">
                     <button role="radio" :aria-checked="(s.reader_mode || '') === v"
@@ -462,7 +507,7 @@
           </div>
         </div>
       </template>
-      <p class="muted" x-show="!s">Loading…</p>
+      <p class="muted" x-show="!s" x-text="error || 'Loading…'"></p>
     </section>
 
     <!-- ============ settings (with Needs attention) ============ -->
@@ -491,6 +536,75 @@
       </nav>
 
       <div class="settings-content">
+        <!-- libraries (Manga, Comics...): "shelves" in the API -->
+        <section x-show="section === 'shelves'">
+          <h2>Libraries</h2>
+          <p class="muted">Each library shows its own series, picked with the tabs on the home screen. A folder's
+            series show in its library (Settings → Library folders); one series can be moved to another
+            with Edit, or several at once by holding a card. Files never move.</p>
+          <template x-for="sh in $store.app.shelves" :key="sh.id">
+            <div class="lib-card shelf-card">
+              <div class="libcard-head">
+                <span class="libcard-icon" aria-hidden="true"
+                      x-text="sh.has_password ? (sh.locked ? '🔒' : '🔓') : '📚'"></span>
+                <div class="libcard-title">
+                  <input type="text" class="shelf-name" :value="sh.name" maxlength="60" spellcheck="false"
+                         :aria-label="'Name of ' + sh.name" @change="renameShelf(sh, $event.target.value)"
+                         @keydown.enter="$event.target.blur()">
+                  <small x-text="(sh.locked ? 'Locked' : sh.series + ' series') + ' · ' + shelfFolders(sh)"></small>
+                </div>
+                <div class="row-buttons">
+                  <button class="btn small" x-show="sh.locked" @click="unlockShelf(sh)">Unlock</button>
+                  <button class="btn small" x-show="sh.has_password && !sh.locked" @click="lockShelf(sh)">Lock now</button>
+                  <button class="btn small danger" @click="deleteShelf(sh)">Delete</button>
+                </div>
+              </div>
+              <label class="lib-option">
+                <span class="lib-option-text"><span>Reading mode</span>
+                  <small>For its series that don't set their own</small></span>
+                <select :value="sh.reader_mode || 'default'" @change="patchShelf(sh, { reader_mode: $event.target.value })"
+                        :aria-label="'Reading mode for ' + sh.name">
+                  <option value="default">Like Settings → Reader</option>
+                  <option value="paged">Pages</option>
+                  <option value="vertical">Vertical (webtoons)</option>
+                </select></label>
+              <div class="lib-option">
+                <span class="lib-option-text"><span>Password</span>
+                  <small x-text="sh.has_password ? 'Asked for when the library is opened. Its series are hidden everywhere until then.'
+                    : 'Optional: keeps this library private from others using the app'"></small></span>
+                <button class="btn small" x-show="pw?.id !== sh.id" @click="openPassword(sh)"
+                        x-text="sh.has_password ? 'Change or remove…' : 'Set a password…'"></button>
+              </div>
+              <form class="password-form" x-show="pw?.id === sh.id" @submit.prevent="savePassword(sh)" x-cloak>
+                <template x-if="pw?.id === sh.id">
+                  <div class="password-fields">
+                    <label x-show="sh.has_password">Current password
+                      <input type="password" x-model="pw.current" autocomplete="current-password"></label>
+                    <label>New password
+                      <input type="password" x-model="pw.password" autocomplete="new-password" maxlength="200"></label>
+                    <label>New password again
+                      <input type="password" x-model="pw.again" autocomplete="new-password" maxlength="200"></label>
+                    <div class="btn-row">
+                      <button class="btn small primary" type="submit">Save password</button>
+                      <button class="btn small danger" type="button" x-show="sh.has_password" @click="savePassword(sh, true)">Remove password</button>
+                      <button class="btn small" type="button" @click="pw = null">Cancel</button>
+                    </div>
+                    <p class="muted">Forgot it? Start MangaVibe once with <code x-text="'CLEAR_LIBRARY_PASSWORD=' + sh.name"></code>.
+                      The app has no accounts, so this keeps the library from others using it; anyone who can open
+                      the files or the database still can.</p>
+                  </div>
+                </template>
+              </form>
+            </div>
+          </template>
+          <div class="setting-row">
+            <div class="label"><span>Add a library</span>
+              <small>For example Manga, Comics, Manhwa. Then point a folder at it, or move series to it.
+                Just a set of filters (e.g. only Isekai)? Filter the home screen and use “☆ Save search”.</small></div>
+            <button class="btn small primary" @click="addShelf()">+ New library</button>
+          </div>
+        </section>
+
         <!-- library folders -->
         <section x-show="section === 'library'">
           <h2>Library folders</h2>
@@ -510,13 +624,12 @@
                 </div>
               </div>
               <label class="lib-option">
-                <span class="lib-option-text"><span>Reading mode</span>
-                  <small>For series in this folder that don't set their own</small></span>
-                <select :value="l.reader_mode || 'default'" @change="setLibraryMode(l, $event.target.value)"
-                        :aria-label="'Reading mode for the series in ' + l.name">
-                  <option value="default">Like Settings → Reader</option>
-                  <option value="paged">Pages</option>
-                  <option value="vertical">Vertical (webtoons)</option>
+                <span class="lib-option-text"><span>Library</span>
+                  <small>Where this folder's series show. Series moved to another library by hand stay there.</small></span>
+                <select @change="setFolderShelf(l, $event.target.value)" :aria-label="'Library for the series in ' + l.name">
+                  <template x-for="sh in $store.app.shelves" :key="sh.id">
+                    <option :value="sh.id" :selected="sh.id === l.shelf_id" x-text="sh.name + (sh.locked ? ' 🔒' : '')"></option>
+                  </template>
                 </select></label>
               <label class="lib-option">
                 <span class="lib-option-text"><span>Path outside Docker</span>
@@ -560,8 +673,8 @@
         <section x-show="section === 'reader'">
           <h2>Reader</h2>
           <label class="setting-row"><span class="label">Default reading mode<small>Pages: one at a time, the next one on the right
-              (→, a tap on the right, a swipe to the left). For series whose library folder has no mode of its own; each
-              series can be set by hand</small></span>
+              (→, a tap on the right, a swipe to the left). For series whose library has no mode of its own
+              (Settings → Libraries); each series can be set by hand</small></span>
             <select x-model="st.reader_mode" @change="save('reader_mode')"><option value="paged">Pages</option><option value="vertical">Vertical</option></select></label>
           <label class="setting-row"><span class="label">Fit</span>
             <select x-model="st.reader_fit" @change="save('reader_fit')"><option value="screen">Fit screen</option><option value="width">Fit width</option><option value="height">Fit height</option><option value="original">Original</option></select></label>
@@ -812,6 +925,10 @@
                     x-text="$store.app.showIgnored ? 'Hide ignored rows' : `Show ${ignoredCount} ignored`"></button>
           </div>
           <p class="muted" x-text="help"></p>
+          <!-- follows the library picked on the home screen -->
+          <p class="muted" x-show="$store.app.shelf && $store.app.shelves.length > 1">Only
+            <b x-text="$store.app.shelfName($store.app.shelf)"></b>, the library picked on the home screen
+            (<button class="link-btn" @click="showAllShelves()">show all libraries</button>).</p>
           <p class="empty" x-show="a && !rows.length">Nothing here. 🎉</p>
 
           <!-- errors / not supported: grouped by series -->
@@ -992,6 +1109,41 @@
     </div>
   </div>
 
+  <!-- saved searches: a name for a set of filters and sort, e.g. Isekai (savedSheet() in app.js) -->
+  <div class="sheet saved-sheet" x-data="savedSheet()" x-show="$store.app.sheet === 'saved'" x-cloak
+       @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
+    <div>
+      <div class="sheet-head"><b>Saved searches</b>
+        <span class="btn-row"><button class="btn small primary" x-show="canSave" @click="save()">+ Save this search</button>
+          <button class="btn small" @click="$store.app.sheet = null">Done</button></span></div>
+      <div class="saved-empty" x-show="!items.length">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+        <b>No saved searches yet</b>
+        <span>Pick filters (for example the tag Isekai) and a sort, then save them here.
+          A saved search works in every library.</span>
+      </div>
+      <div class="saved-list">
+        <template x-for="x in items" :key="x.id">
+          <div class="saved-item" :class="{ on: isOn(x) }">
+            <button class="saved-main" :aria-pressed="isOn(x)" @click="pick(x)"
+                    :title="isOn(x) ? 'Shown now: tap to clear it' : 'Show these series'">
+              <span class="saved-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></span>
+              <span class="saved-text">
+                <b x-text="x.name"></b>
+                <span class="saved-pills"><template x-for="(p, i) in parts(x.query)" :key="i">
+                  <i x-text="p"></i></template></span>
+              </span>
+              <span class="saved-check" x-show="isOn(x)" aria-hidden="true">✓</span>
+            </button>
+            <button class="saved-del" :aria-label="'Delete ' + x.name" title="Delete" @click="remove(x)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
   <div class="sheet letter-sheet" x-data="letterSheet()" x-show="$store.app.sheet === 'letter'" x-cloak
        @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
     <div>
@@ -1130,6 +1282,10 @@
             <p class="muted">Changed fields get a 🔒 and are kept when metadata is refreshed.
               <button type="button" class="link-btn" x-show="lockedCount" @click="unlockAll()"
                       x-text="`Unlock ${lockedCount} field${lockedCount > 1 ? 's' : ''}`"></button></p>
+            <label class="wide" title="Which library it shows in. The files stay in their folder.">Library
+              <select x-model="f.shelf">
+                <template x-for="[v, label] in shelfOptions" :key="v"><option :value="v" x-text="label" :selected="v === f.shelf"></option></template>
+              </select></label>
             <label class="wide">English title <span x-show="locked('title_english')">🔒</span>
               <input x-model="f.title_english" maxlength="300"></label>
             <label>Romaji title <span x-show="locked('title_romaji')">🔒</span>
@@ -1218,6 +1374,23 @@
       </template>
       <p class="muted" x-show="!s">Loading…</p>
     </div>
+  </div>
+
+  <!-- ============ a locked library's password ($store.app.openUnlock) ============ -->
+  <div class="modal" x-data="unlockDialog()" x-show="$store.app.unlock.open" x-cloak
+       @click.self="close()" @keydown.escape.window="close()">
+    <div class="small-dialog unlock-dialog"><form @submit.prevent="submit()">
+      <div class="sheet-head"><b x-text="`🔒 ${name}`"></b>
+        <button class="btn small" type="button" @click="close()">Cancel</button></div>
+      <p class="muted">This library is locked. Its series show again in this browser after the password,
+        until “Lock now” or a new tab.</p>
+      <input type="password" x-ref="pw" x-model="password" autocomplete="current-password" maxlength="200"
+             aria-label="Password" placeholder="Password">
+      <p class="err" x-show="error" x-text="error"></p>
+      <div class="btn-row">
+        <button class="btn primary" type="submit" :class="{ busy: busy }" :disabled="busy || !password">Unlock</button>
+      </div>
+    </form></div>
   </div>
 
   <!-- ============ folder picker ============ -->

@@ -65,6 +65,12 @@ MIGRATIONS = [
     lambda conn: [conn.execute(text(q)) for q in (
         "UPDATE series SET numbering = NULL",
         "UPDATE book SET mtime = -1 WHERE volume IS NULL AND chapter IS NULL")],
+    # 14: libraries (Manga, Comics...) apart from the folders: the shelf table comes from create_all;
+    # each folder gets one, named like it and with its reading mode (shelves.ensure_folder_shelves())
+    lambda conn: [conn.execute(text(q)) for q in (
+        "ALTER TABLE library ADD COLUMN shelf_id INTEGER REFERENCES shelf(id) ON DELETE SET NULL",
+        "ALTER TABLE series ADD COLUMN shelf_id INTEGER REFERENCES shelf(id) ON DELETE SET NULL",
+        "CREATE INDEX IF NOT EXISTS ix_series_shelf_id ON series (shelf_id)")],
 ]
 
 

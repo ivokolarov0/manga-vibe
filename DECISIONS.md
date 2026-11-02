@@ -418,7 +418,7 @@ Choices made where the spec was open. Newest at the bottom.
   the next page, a tap on the right goes forward, a swipe to the left brings the next page in. A right to
   left mode only made the controls disagree with every other reader (and needed an "invert tap zones"
   setting to undo it), so it's gone. `reader_mode` is `paged` or `vertical`, set on the series, else its
-  library folder, else Settings → Reader; the metadata (from Japan or not) no longer decides anything.
+  library folder (since issue #145: its library), else Settings → Reader; the metadata (from Japan or not) no longer decides anything.
   Migration 4 turns stored `rtl`/`ltr` into `paged` and drops `reader_tap_invert`. What stays is the
   reading hand (Settings → Reader): it moves the buttons to the left or right thumb, not the page order.
   `ctx.reading_direction` keeps its name and returns `paged` or `vertical`.
@@ -466,3 +466,81 @@ Choices made where the spec was open. Newest at the bottom.
 - **Extras aren't guessed from file names** (owner's choice). They are written too many ways
   (`12+extra`, `12+omake`, `12.5`, chapter titles like "Something Special"), and a wrong guess left
   the chapter out of the count. A name's number is its chapter; the owner marks extras by hand.
+
+## Libraries: Manga, Comics... apart from the folders (issue #145)
+
+- **A library is a shelf in the code.** `Library` has been a scanned folder from the start, and plugins
+  read `series.library_id` as the folder, so that stays. The new idea, what the app calls a *library*,
+  is `Shelf` (table `shelf`, `/api/shelves`, `app/shelves.py`). Folders and series point to one:
+  `Library.shelf_id` (every folder has one) and `Series.shelf_id` (only when the owner moved it; None
+  follows the folder). The SQL for "the series' library" is `shelves.shelf_column()`.
+- **Moves never touch files and survive rescans.** The scanner never writes `Series.shelf_id`, so a
+  rescan or restart can't move a series back. Edit, the multi-select's "Move to library" and the
+  folder's Library setting are the only ways to change it.
+- **Upgrade: one library per folder, named like it**, with the folder's old reading mode (migration 14
+  adds the columns, `ensure_folder_shelves()` fills them at start). An install with one folder sees one
+  library and nothing else changes. Two folders with the same name get two libraries ("manga (2)"),
+  each keeping its own mode. The folder's `reader_mode` is cleared once copied, so it can't come back.
+- **New folders get their own library too** (`shelf_for_folder()`), unless the owner already made one
+  with that name and no folder in it ("Comics" made before adding /comics). `made_for_folder` marks the
+  ones the app made: removing the folder removes such a library while it's empty, unless the owner
+  renamed it, set its mode or gave it a password; a library the owner made always stays.
+- **Deleting a library deletes no series.** Its folders go to another library (one without a password if
+  there is one), series moved to it follow their folder again. The last library can't be deleted.
+- **Reading mode per library, not per folder:** series, then its library, then Settings → Reader
+  (`app/direction.py`). Right to left stays gone (see above), so it's only Pages or Vertical.
+- **Home screen tabs.** The libraries are tabs above the library grid and Continue (with + to add one).
+  With one library it's picked and "All" is left out; with more, "All" comes first and the last pick is
+  remembered in the browser. The grid, filters, tag counts, Continue reading and Needs attention follow
+  the pick (`shelf=` on the API).
+
+## Library passwords
+
+- **No accounts, so a password per library.** It keeps a library private from others using the same app;
+  it isn't protection from anyone who can read the files or `/data`. Settings → Libraries says so.
+- **Only a hash is stored**: `hashlib.scrypt` (n=2^14, r=8, p=1, 16-byte salt), as
+  `scrypt$n$r$p$salt$hash`. Changing or removing it needs the current one.
+- **Unlocking gives the browser a signed token** in the HttpOnly `mv_unlocked` cookie, one per library:
+  `id.lock_version.expiry.hmac`, signed with a random key kept in the `unlock_secret` setting, good for
+  12 hours. A session cookie, so closing the browser forgets it. A changed password raises
+  `lock_version`, which makes every old token useless.
+- **"Until the tab closes"**: cookies can't follow a tab, so the page itself sends "lock everything" when
+  a new tab starts (a flag in sessionStorage, which a reload keeps). "Lock now" takes the token out.
+- **The server checks, not only the page.** `LockGuard` (ASGI middleware) refuses everything under
+  `/api/series/<id>`, `/api/books/<id>` and `/api/links/<id>` of a locked library's series: details,
+  pages, thumbnails, posters, progress, plugin buttons, link icons, changes. The lists (grid, search,
+  tags, Continue, Needs attention, counts) leave its series out (`shelves.visible()`). Renaming it,
+  changing its mode, deleting it, moving its folder away or removing that folder all need it unlocked,
+  since each would show or remove its series. The 403 says which library, so the page asks for its
+  password and carries on.
+- **Cheap for the reader.** LockGuard does nothing until some library has a password. After that it keeps
+  the protected libraries and the library of each series, book and link it looked up for 10 seconds, and
+  every move, password change or delete clears that at once; pages and thumbnails mostly don't touch the
+  database.
+- **Guessing is slow**: after 5 wrong passwords in a row each try waits (30 s, doubling, up to 15 min),
+  per library, in memory.
+- **Forgot it:** `CLEAR_LIBRARY_PASSWORD=<name or all>` for one start (the main way: it works whatever
+  code the auto-update runs), or `python -m app.shelves clear-password <name>`.
+
+## Saved searches instead of filter libraries
+
+- **Tried first: a library made of filters** ("Isekai": the series of a library that match saved filters),
+  with its own tab. The owner found it looked wrong next to real libraries, so a set of filters is
+  a **saved search** instead: a name for the library page's query string (filters and sort, not the page),
+  in the `saved_searches` setting (`app/api/saved.py`). The Saved button next to Filter / Sort / Letter
+  lists them; picking one sets them on whichever library tab is shown. The same name again replaces it.
+- **No new table**: a short list the page reads whole, like the ignored Needs attention rows.
+- **The filters moved to `app/api/filters.py`** (from `app/api/series.py`) so the grid and every other list
+  use the same code; `shelf_filter()` there adds the library and lock conditions.
+
+## Plugins and libraries
+
+- **Nothing a plugin uses changed.** `series.library_id` is still the folder; `ctx.reading_direction()`
+  now goes series → library → Settings → Reader; the plugin API version stays 6. A plugin's own database
+  work (sync all, background queues) still sees every series: it runs on the server, and a password only
+  decides what a browser sees.
+- **Plugin buttons, overlays and pages of a locked library's series are refused** like the rest of its
+  content (they live under `/api/series/<id>` and `/api/books/<id>`), until the library is unlocked.
+- Checked against the owner's plugins (accessibility, MyAnimeList sync, official chapters, translate) and
+  the examples: none read `Library`, the moved filter functions or the changed page markup. Their
+  `/api/tags`, `/api/chat` calls go to Ollama, not to MangaVibe.

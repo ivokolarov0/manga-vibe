@@ -149,6 +149,16 @@ document.addEventListener("alpine:init", () => {
     appBanner: ANDROID && !androidApp && !appBannerDismissed(),  // "Read in the app" on the library
     openFix(seriesId, onDone) { this.fix = { open: true, seriesId, onDone }; },
     openEdit(seriesId, onDone, tab = "info") { this.edit = { open: true, seriesId, onDone, tab }; },
+    // libraries (Manga, Comics...; "shelves" in the API, see app/shelves.py)
+    shelves: [],         // GET /api/shelves
+    shelf: savedShelf(), // the library the home screen shows: its id, or 0 for All
+    unlock: { open: false, shelfId: null, onDone: null },  // the password dialog
+    openUnlock(shelfId, onDone) { this.unlock = { open: true, shelfId, onDone }; },
+    shelfName(id) { return this.shelves.find((s) => s.id === id)?.name || ""; },
+    // which libraries there are and which are locked: what the lists depend on (a reload of the
+    // libraries makes a new array even when nothing changed)
+    get shelvesKey() { return this.shelves.map((s) => `${s.id}:${s.locked ? 1 : 0}`).join(","); },
+    saved: [],           // saved searches (GET /api/saved-searches), see savedSheet()
   });
 
   let lastView = null, libraryScroll = 0;
@@ -206,15 +216,18 @@ document.addEventListener("alpine:init", () => {
     const app = Alpine.store("app");
     try {
       if (app.view === "settings") {
-        app.att = await api(`/api/attention${app.showIgnored ? "?ignored=true" : ""}`);
+        app.att = await api(`/api/attention?${shelfParam()}${app.showIgnored ? "ignored=true" : ""}`);
         app.attentionCount = app.att.count;
       } else {
-        app.attentionCount = (await api("/api/attention/count")).count;
+        app.attentionCount = (await api(`/api/attention/count?${shelfParam()}`)).count;
       }
     } catch {}
   }
   queueMicrotask(async () => {
     await loadSettings().catch(() => {});
+    await lockOnNewTab();
+    await loadShelves().catch(() => {});
+    loadSaved();
     api("/api/providers").then((p) => (Alpine.store("app").providers = p)).catch(() => {});
     route();
     refreshAttentionCount();
@@ -337,6 +350,128 @@ function updateToast() {
   };
 }
 
+/* ---------------- libraries: Manga, Comics... ("shelves" in the API, see app/shelves.py) ----------------
+   The home screen's tabs pick one (or All); the library grid, filters, Continue reading and Needs
+   attention follow it. A library with a password asks for it first; the server then lets this
+   browser in for a while (a cookie), until "Lock now" or a new tab. */
+
+const SHELF_KEY = "shelf";
+
+function savedShelf() {
+  try { return +localStorage.getItem(SHELF_KEY) || 0; } catch { return 0; }
+}
+
+// "shelf=3&" for the API calls that follow the picked library; "" for All
+function shelfParam() {
+  const id = Alpine.store("app").shelf;
+  return id ? `shelf=${id}&` : "";
+}
+
+function setShelf(id, remember = true) {
+  const app = Alpine.store("app");
+  if (remember) try { localStorage.setItem(SHELF_KEY, String(id)); } catch {}
+  if (app.shelf === id) return;
+  app.shelf = id;
+  window.refreshAttentionCount?.();
+}
+
+/* Load the libraries, and keep the picked one if it can be shown: else the only library there is
+   (with one library, "All" would be the same), else All. A locked one isn't kept. */
+async function loadShelves() {
+  const app = Alpine.store("app");
+  app.shelves = await api("/api/shelves");
+  const open = app.shelves.filter((s) => !s.locked);
+  let id = open.some((s) => s.id === app.shelf) ? app.shelf : 0;
+  if (app.shelves.length === 1 && open.length === 1) id = open[0].id;
+  setShelf(id, false);  // the owner's own pick stays saved for when it's unlocked again
+}
+
+function pickShelf(id) {
+  const app = Alpine.store("app");
+  if (app.shelves.find((s) => s.id === id)?.locked) return app.openUnlock(id, () => setShelf(id));
+  setShelf(id);
+}
+
+/* after unlocking, locking, adding or removing a library: everything shown may change */
+async function shelvesChanged() {
+  await loadShelves().catch(() => {});
+  Alpine.store("app").libraryDirty++;  // Continue reading watches the list of libraries itself
+  window.refreshAttentionCount?.();
+}
+
+/* A new tab starts with every library locked again ("until the tab closes"). sessionStorage lives
+   as long as the tab, so a reload doesn't lock. */
+async function lockOnNewTab() {
+  try {
+    if (sessionStorage.getItem("tab")) return;
+    sessionStorage.setItem("tab", "1");
+  } catch { return; }
+  await api("/api/shelves/lock", { method: "POST" }).catch(() => {});
+}
+
+async function addShelf() {
+  const name = prompt("Name of the new library, e.g. Comics");
+  if (!name?.trim()) return null;
+  try {
+    const r = await api("/api/shelves", { method: "POST", body: { name } });
+    await loadShelves();
+    toast(`${r.name} added. Move series to it with Edit, or several at once: hold a card to select them. `
+      + "A whole folder: Settings → Library folders.", 9000);
+    return r;
+  } catch (e) { toast(e.message, 6000, "error"); return null; }
+}
+
+function shelfTabs() {
+  return {
+    get list() { return this.$store.app.shelves; },
+    get showAll() { return this.list.length > 1; },
+    // unlocked libraries with a password: "Lock now" locks them again
+    get anyOpen() { return this.list.some((s) => s.has_password && !s.locked); },
+    on(id) { return this.$store.app.shelf === id; },
+    pick(id) { pickShelf(id); },
+    async add() {
+      const r = await addShelf();
+      if (r) setShelf(r.id);
+    },
+    async lockNow() {
+      await api("/api/shelves/lock", { method: "POST" }).catch(() => {});
+      toast("Locked. The password is needed again.");
+      await shelvesChanged();
+    },
+  };
+}
+
+/* the password dialog of a locked library ($store.app.openUnlock) */
+function unlockDialog() {
+  return {
+    password: "", error: "", busy: false,
+    get name() { return this.$store.app.shelfName(this.$store.app.unlock.shelfId) || "This library"; },
+    init() {
+      this.$watch("$store.app.unlock.open", (open) => {
+        if (!open) return;
+        Object.assign(this, { password: "", error: "", busy: false });
+        this.$nextTick(() => this.$refs.pw?.focus());
+      });
+    },
+    close() { this.$store.app.unlock.open = false; },
+    async submit() {
+      if (this.busy || !this.password) return;
+      const u = this.$store.app.unlock;
+      this.busy = true;
+      this.error = "";
+      try {
+        await api(`/api/shelves/${u.shelfId}/unlock`, { method: "POST", body: { password: this.password } });
+        this.close();
+        await shelvesChanged();
+        u.onDone?.();
+      } catch (e) {
+        this.error = e.message;
+        this.password = "";
+      } finally { this.busy = false; }
+    },
+  };
+}
+
 /* ---------------- top bar ---------------- */
 
 function topbar() {
@@ -383,6 +518,7 @@ function library() {
       this.$watch("$store.app.query", () => this.sync());
       this.$watch("$store.app.view", () => this.sync());
       this.$watch("$store.app.libraryDirty", () => { this.key = null; this.sync(); });
+      this.$watch("$store.app.shelf", () => { this.endSelect(); this.sync(); });  // another library
       // after reading: update the cards in place (now, or when the library is next shown)
       this.$watch("$store.app.progressDirty", () => { this.stale = true; this.refresh(); });
       this.$watch("$store.app.view", () => this.refresh());
@@ -393,8 +529,13 @@ function library() {
         if (entries[0].isIntersecting && this.$store.app.view === "library" && !this.paged) this.loadMore();
       }, { rootMargin: "800px" }).observe(this.$refs.sentinel);
     },
-    // the filters without the page number: what the API gets besides cursor/limit
-    get filters() { const p = new URLSearchParams(this.$store.app.query); p.delete("page"); return p.toString(); },
+    // the filters without the page number, and the library picked: what the API gets besides cursor/limit
+    get filters() {
+      const p = new URLSearchParams(this.$store.app.query);
+      p.delete("page");
+      if (this.$store.app.shelf) p.set("shelf", this.$store.app.shelf);
+      return p.toString();
+    },
     sync() {
       if (this.$store.app.view !== "library") return;
       document.title = "MangaVibe";
@@ -535,8 +676,24 @@ function library() {
       const q = this.params.get("q");
       navigateLibrary(new URLSearchParams(q ? { q } : {}));
     },
+
+    // filters on: they can be saved as a search (the Saved button lists them)
+    get canSave() { return !!searchQuery(this.params); },
+    get savedOn() { return !!currentSaved(this.params); },
+    saveSearch() { saveSearch(this.params); },
     get emptyText() {
-      return this.filters ? "No series match these filters." : "No series yet. The first scan may still be running; see Settings.";
+      const app = this.$store.app;
+      if (this.params.toString()) return "No series match these filters.";
+      // every library is locked (e.g. the only one has a password): nothing can be shown until one is opened
+      if (app.shelves.length && app.shelves.every((s) => s.locked)) {
+        const one = app.shelves.length === 1;
+        return `${one ? app.shelves[0].name + " is" : "Every library is"} locked. Tap ${one ? "its" : "a"} tab above to unlock it.`;
+      }
+      if (app.shelf && app.shelves.length > 1) {
+        return `Nothing in ${app.shelfName(app.shelf)} yet. Move series here with Edit, or select several `
+          + "(hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders.";
+      }
+      return "No series yet. The first scan may still be running; see Settings.";
     },
     cardSub,
 
@@ -602,7 +759,7 @@ function library() {
     },
     endSelect() {
       if (this.working) return;
-      Object.assign(this, { selecting: false, sel: {}, anchor: null, selMenu: false, delOpen: false });
+      Object.assign(this, { selecting: false, sel: {}, anchor: null, selMenu: false, delOpen: false, moveOpen: false });
     },
     async selectAll() {  // every series matching the filters, also the ones not loaded yet
       this.selMenu = false;
@@ -611,11 +768,18 @@ function library() {
         this.sel = Object.fromEntries(ids.map((id) => [id, true]));
       } catch (e) { toast(e.message, 6000, "error"); }
     },
-    async bulk(action, msg) {
+    // ⋯ → Move to library: the dialog lists the libraries, and "their folder's library"
+    moveOpen: false,
+    moveTo(shelfId) {
+      this.moveOpen = false;
+      const name = shelfId ? this.$store.app.shelfName(shelfId) : "their folders' libraries";
+      this.bulk("shelf", (n) => `Moved ${n} series to ${name}`, { shelf_id: shelfId });
+    },
+    async bulk(action, msg, extra = {}) {
       this.selMenu = false;
       this.working = "Working…";
       try {
-        const r = await api("/api/series/bulk", { method: "POST", body: { ids: Object.keys(this.sel).map(Number), action } });
+        const r = await api("/api/series/bulk", { method: "POST", body: { ids: Object.keys(this.sel).map(Number), action, ...extra } });
         toast(msg(r.done) + (r.skipped && action === "refresh" ? ` (${r.skipped} without metadata skipped)` : ""));
         this.working = "";
         this.endSelect();
@@ -664,7 +828,7 @@ function filterSheet() {
         if (sheet !== "filter") return;
         // unfold the groups that have something selected, so nothing chosen is hidden
         for (const [k] of FILTER_GROUPS) if (this.selected(k)) this.open[k] = true;
-        this.tags = await api("/api/tags").catch(() => this.tags);
+        this.tags = await api(`/api/tags?${shelfParam()}`).catch(() => this.tags);
         for (const k of ["genres", "tags"]) if (this.selected(k)) this.open[k] = true;
       });
     },
@@ -746,6 +910,77 @@ function sortSheet() {
   };
 }
 
+/* ---------------- saved searches (the Saved button) ----------------
+   A name for the library page's filters and sort, e.g. "Isekai" for the Isekai tag. Picking one sets
+   them on the library shown (any library tab). Kept on the server (app/api/saved.py). */
+
+const SEARCH_PARAMS = ["q", ...LIST_KEYS, "fav", "letter", "year_min", "year_max", "score_min", "sort", "order"];
+
+// the filters and sort of a query (no page), always in the same order, so two can be compared
+function searchQuery(p) {
+  return [...p].filter(([k, v]) => SEARCH_PARAMS.includes(k) && v)
+    .sort(([a, x], [b, y]) => a.localeCompare(b) || x.localeCompare(y))
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
+}
+
+// the saved search the page shows right now, if any
+function currentSaved(p) {
+  const now = searchQuery(p);
+  return now ? Alpine.store("app").saved.find((x) => searchQuery(new URLSearchParams(x.query)) === now) : null;
+}
+
+// what a saved search does, one short label each: ["Isekai", "not Horror", "Reading", "↓ Recently added"]
+function searchParts(qs) {
+  const p = new URLSearchParams(qs || ""), out = [];
+  if (p.get("q")) out.push(`“${p.get("q")}”`);
+  for (const v of getList(p, "genre")) out.push(v);
+  for (const v of getList(p, "exclude")) out.push("not " + v);
+  for (const [k, , labels] of FILTER_GROUPS) for (const v of getList(p, k)) out.push(labels[v] || v);
+  if (p.get("fav")) out.push("★ Favorites");
+  if (p.get("letter")) out.push("Starts with " + p.get("letter"));
+  const sort = SORTS.find(([k]) => k === p.get("sort"))?.[1];
+  if (sort) out.push("↓ " + sort);
+  return out;
+}
+
+const describeSearch = (qs) => searchParts(qs).join(", ");
+
+async function loadSaved() {
+  Alpine.store("app").saved = await api("/api/saved-searches").catch(() => Alpine.store("app").saved);
+}
+
+async function saveSearch(p) {
+  const query = searchQuery(p);
+  const name = prompt(`Name for this search (${describeSearch(query)})`, getList(p, "genre")[0] || "");
+  if (!name?.trim()) return;
+  try {
+    const r = await api("/api/saved-searches", { method: "POST", body: { name, query } });
+    await loadSaved();
+    toast(`Saved as “${r.name}”. The Saved button brings it back, in any library.`, 5000);
+  } catch (e) { toast(e.message, 6000, "error"); }
+}
+
+function savedSheet() {
+  return {
+    get items() { return this.$store.app.saved; },
+    get params() { return new URLSearchParams(this.$store.app.query); },
+    get canSave() { return !!searchQuery(this.params); },
+    isOn(x) { return currentSaved(this.params)?.id === x.id; },
+    parts: searchParts,
+    init() { this.$watch("$store.app.sheet", (s) => s === "saved" && loadSaved()); },
+    pick(x) {  // like a menu: pick and close; picking the one shown clears it
+      navigateLibrary(this.isOn(x) ? new URLSearchParams() : new URLSearchParams(x.query));
+      this.$store.app.sheet = null;
+    },
+    save() { saveSearch(this.params); },
+    async remove(x) {
+      if (!confirm(`Delete the saved search “${x.name}”?`)) return;
+      await api(`/api/saved-searches/${x.id}`, { method: "DELETE" }).catch((e) => toast(e.message, 6000, "error"));
+      await loadSaved();
+    },
+  };
+}
+
 /* ---------------- continue reading ---------------- */
 
 function continueView() {
@@ -754,12 +989,14 @@ function continueView() {
     init() {
       this.$watch("$store.app.view", (v) => v === "continue" && this.load());
       this.$watch("$store.app.progressDirty", () => this.load());
+      this.$watch("$store.app.shelf", () => this.load());     // another library
+      this.$watch("$store.app.shelvesKey", () => this.load());  // one was added, removed, unlocked or locked
       this.load();
     },
     async load() {
       if (this.$store.app.view !== "continue") return;
       document.title = "Continue reading";
-      this.items = await api("/api/continue-reading");
+      this.items = await api(`/api/continue-reading?${shelfParam()}`).catch(() => this.items);
     },
   };
 }
@@ -785,11 +1022,21 @@ function seriesView() {
       this.$watch("$store.app.progressDirty", () => { this.loadedFor = null; check(); });  // back from the reader
       check();
     },
+    error: "",  // shown instead of the page, e.g. when its library is locked
     async load() {
       const app = this.$store.app, id = app.id, tab = app.params.tab || "";
       this.loadedFor = `${id}|${tab}`;
-      const [s, books] = await Promise.all([api(`/api/series/${id}`),
-        api(`/api/series/${id}/books${tab === "files" ? "?all=1" : ""}`)]);
+      this.error = "";
+      let s, books;
+      try {
+        [s, books] = await Promise.all([api(`/api/series/${id}`),
+          api(`/api/series/${id}/books${tab === "files" ? "?all=1" : ""}`)]);
+      } catch (e) {
+        if (this.loadedFor !== `${id}|${tab}`) return;
+        Object.assign(this, { s: null, error: e.message });
+        if (e.detail?.shelf) app.openUnlock(e.detail.shelf, () => this.reload());  // a locked library
+        return;
+      }
       if (this.loadedFor !== `${id}|${tab}`) return;
       const sameSeries = this.s?.id === s.id;
       Object.assign(this, { s, books, tab });
@@ -853,6 +1100,9 @@ function seriesView() {
         ["Edition", editionText(s.collection)],
         ["Score", s.average_score && `${s.average_score}%`],
         ["In library", `${s.book_count} books · ${s.unread_count} unread`],
+        // which library it shows in, once there is more than one
+        ["Library", this.$store.app.shelves.length > 1 && s.shelf
+          && s.shelf.name + (s.shelf_override ? ` (moved here; its folder's is ${s.folder_shelf?.name || "gone"})` : "")],
         ...s.plugin_fields.map((f) => [f.label, typeof f.value === "object" ? JSON.stringify(f.value) : f.value]),
         ["Folder", s.folder_path],
       ].filter(([, v]) => v);
@@ -890,9 +1140,9 @@ function seriesView() {
       const d = this.s?.direction;
       if (!d) return "";
       const names = { paged: "Pages", vertical: "Vertical" };
-      const why = { library: "the library folder's mode", default: "Settings → Reader" };
-      // with a mode set by hand, "Automatic" would be what the library folder etc. say: not known here
-      return d.source === "series" ? "Like the library folder, else Settings → Reader"
+      const why = { library: `the mode of ${this.s.shelf?.name || "its library"}`, default: "Settings → Reader" };
+      // with a mode set by hand, "Automatic" would be what the library etc. say: not known here
+      return d.source === "series" ? "Like its library, else Settings → Reader"
         : `${names[d.mode]} · ${why[d.source] || ""}`;
     },
     async setReader(v) {
@@ -1226,13 +1476,14 @@ function attentionView() {
       }
     },
     afterChange() { refreshAttentionCount(); this.$store.app.libraryDirty++; },
+    showAllShelves() { setShelf(0); },  // the home screen shows All too
     scoreCls,
   };
 }
 
 /* ---------------- settings ---------------- */
 
-const SETTINGS_NAV = [["library", "Library folders", "📁"], ["display", "Display", "🎨"],
+const SETTINGS_NAV = [["shelves", "Libraries", "📚"], ["library", "Library folders", "📁"], ["display", "Display", "🎨"],
   ["reader", "Reader", "📖"], ["metadata", "Metadata", "🏷"], ["plugins", "Plugins", "🧩"], ["updates", "Updates", "⟳"]];
 const ANDROID = /Android/i.test(navigator.userAgent);
 // on Android phones (in the app or the browser) Settings gets an "Android app" page
@@ -1243,7 +1494,7 @@ function settingsView() {
     nav: SETTINGS_NAV,
     attNav: ATT_TABS,
     get section() {
-      const s = this.$store.app.sub || "library";
+      const s = this.$store.app.sub || "shelves";
       return s.startsWith("plugin-") ? "plugin" : s;
     },
     // the plugin whose page is open (#/settings/plugin-<id>)
@@ -1287,7 +1538,7 @@ function settingsView() {
       if (this.$store.app.view !== "settings") return;
       document.title = "Settings";
       const [libs, plug, providers] = await Promise.all([api("/api/libraries"), api("/api/plugins"),
-        api("/api/metadata/providers")]);
+        api("/api/metadata/providers"), loadShelves()]);
       // selects compare strings, so keep every value as text here; save() converts back
       this.st = Object.fromEntries(Object.entries(settings).map(([k, v]) => [k, String(v)]));
       Object.assign(this, { libs, providers, plugins: plug.plugins, pluginErrors: plug.errors });
@@ -1339,12 +1590,62 @@ function settingsView() {
       if (!st.running || (st.library_id != null ? st.library_id !== l.id : st.library !== l.name)) return "";
       return st.library_id != null ? `Scanning ${st.done}/${st.total}…` : "Scanning…";
     },
-    async setLibraryMode(l, v) {
+    /* ---- Settings → Libraries (shelves in the API) ---- */
+    async addShelf() { if (await addShelf()) this.libs = await api("/api/libraries").catch(() => this.libs); },
+    async patchShelf(s, body, msg = "Saved") {
       try {
-        await api(`/api/libraries/${l.id}`, { method: "PATCH", body: { reader_mode: v } });
-        l.reader_mode = v === "default" ? null : v;
-        toast("Saved");
+        await api(`/api/shelves/${s.id}`, { method: "PATCH", body });
+        await loadShelves();
+        toast(msg);
+      } catch (e) { toast(e.message, 6000, "error"); await loadShelves().catch(() => {}); }
+    },
+    renameShelf(s, v) {
+      v = v.trim();
+      if (v && v !== s.name) this.patchShelf(s, { name: v }, `Renamed to ${v}`);
+    },
+    async deleteShelf(s) {
+      if (s.locked) return this.$store.app.openUnlock(s.id, () => this.deleteShelf(this.$store.app.shelves.find((x) => x.id === s.id)));
+      const others = this.$store.app.shelves.filter((x) => x.id !== s.id);
+      if (!others.length) return toast("This is the only library. Add another one first.", 5000);
+      if (!confirm(`Delete the library "${s.name}"?\n\nNo series or files are deleted: its folders and the series `
+        + "moved to it show in another library.")) return;
+      try {
+        const r = await api(`/api/shelves/${s.id}`, { method: "DELETE" });
+        toast(`Deleted. Its series are in ${r.moved_to.name} now.`, 5000);
+        this.libs = await api("/api/libraries").catch(() => this.libs);
+        await shelvesChanged();
       } catch (e) { toast(e.message, 6000, "error"); }
+    },
+    // the password form of one library: { id, current, password, again }
+    pw: null,
+    openPassword(s) { this.pw = { id: s.id, current: "", password: "", again: "" }; },
+    async savePassword(s, remove = false) {
+      const f = this.pw;
+      if (!remove && !f.password) return toast("Type the new password");
+      if (!remove && f.password !== f.again) return toast("The two new passwords are different");
+      try {
+        await api(`/api/shelves/${s.id}/password`, { method: "PUT",
+          body: { current: f.current, password: remove ? "" : f.password } });
+        this.pw = null;
+        toast(remove ? "Password removed" : "Password saved. This browser stays unlocked until “Lock now” or a new tab.", 6000);
+        await shelvesChanged();
+      } catch (e) { toast(e.message, 6000, "error"); }
+    },
+    unlockShelf(s) { this.$store.app.openUnlock(s.id); },
+    async lockShelf(s) {
+      await api(`/api/shelves/${s.id}/lock`, { method: "POST" }).catch(() => {});
+      toast(`${s.name} is locked`);
+      await shelvesChanged();
+    },
+    shelfFolders(s) { return s.folders.map((f) => f.root_path).join(", ") || "No folders: only series moved here by hand"; },
+    // a folder's library (Settings → Library folders)
+    async setFolderShelf(l, v) {
+      try {
+        await api(`/api/libraries/${l.id}`, { method: "PATCH", body: { shelf_id: +v } });
+        l.shelf_id = +v;
+        toast(`Its series show in ${this.$store.app.shelfName(+v)} now`);
+        await shelvesChanged();
+      } catch (e) { toast(e.message, 6000, "error"); this.libs = await api("/api/libraries").catch(() => this.libs); }
     },
     async setLibraryHostPath(l, v) {
       v = v.trim();
@@ -1360,10 +1661,10 @@ function settingsView() {
 
 Your files are not touched. `
         + `Its ${l.series} series and their reading progress are removed from the app.`)) return;
-      await api(`/api/libraries/${l.id}`, { method: "DELETE" });
+      try { await api(`/api/libraries/${l.id}`, { method: "DELETE" }); }
+      catch (e) { return toast(e.message, 6000, "error"); }  // e.g. its library is locked
       toast("Folder removed");
-      this.$store.app.libraryDirty++;
-      refreshAttentionCount();
+      await shelvesChanged();  // its library goes too when nothing else is in it
       this.load();
     },
     checking: false,
@@ -1523,9 +1824,10 @@ function folderPicker() {
       this.busy = true;
       try {
         await api("/api/libraries", { method: "POST", body: { root_path: this.path } });
-        toast("Folder added. Scanning…");
+        toast("Folder added. Scanning… Its series show in the library named like the folder; "
+          + "Settings → Library folders can point it at another one.", 7000);
         this.close();
-        this.$store.app.libraryDirty++;
+        await shelvesChanged();
         window.dispatchEvent(new Event("libraries-changed"));
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.busy = false; }
     },
@@ -1569,8 +1871,15 @@ function editSeries() {
         links: lines(s.links.map((l) => `${l.site} | ${l.url}`)),
         collection_complete: s.collection?.manual ? "complete" : "auto",
         edition_volumes: String(s.edition_volumes || 0),
+        shelf: String(s.shelf_override ? s.shelf?.id || 0 : 0),  // "0": its folder's library
       };
       this.orig = { ...this.f };
+    },
+    // the Library choices: [value, label]; "0" follows the folder
+    get shelfOptions() {
+      const own = this.s?.folder_shelf?.name;
+      return [["0", own ? `Like its folder: ${own}` : "Like its folder"],
+        ...this.$store.app.shelves.map((x) => [String(x.id), x.name + (x.locked ? " 🔒" : "")])];
     },
     close() { this.clearFile(); this.$store.app.edit.open = false; },
     locked(field) { return this.s?.locked_fields.includes(field); },
@@ -1604,12 +1913,26 @@ function editSeries() {
       return b;
     },
     async save() {
-      const body = this.body();
-      if (!Object.keys(body).length) return this.close();
+      const body = this.body(), shelfChanged = this.f.shelf !== this.orig.shelf;
+      if (!Object.keys(body).length && !shelfChanged) return this.close();
       this.saving = true;
       try {
-        await api(`/api/series/${this.s.id}/metadata`, { method: "PUT", body });
-        toast("Saved. Your changes are kept when metadata is refreshed.");
+        // the metadata first: moved to a locked library, the series can't be changed any more
+        if (Object.keys(body).length) await api(`/api/series/${this.s.id}/metadata`, { method: "PUT", body });
+        // not metadata: which library it shows in (survives rescans and refreshes)
+        if (shelfChanged) await api(`/api/series/${this.s.id}`, { method: "PATCH", body: { shelf_id: +this.f.shelf } });
+        const target = this.$store.app.shelves.find((x) => x.id === +this.f.shelf);
+        if (shelfChanged) await loadShelves().catch(() => {});  // the series counts
+        if (shelfChanged && target?.locked) {
+          // it can't be shown here any more: back to the library instead of a password prompt
+          toast(`Saved. It's in ${target.name} now, which is locked.`, 6000);
+          this.close();
+          this.$store.app.libraryDirty++;
+          location.hash = "#/";
+          return;
+        }
+        if (Object.keys(body).length) toast("Saved. Your changes are kept when metadata is refreshed.");
+        else toast(`Saved. It shows in ${target?.name || "its folder's library"} now.`);
         this.done();
       } catch (e) { toast(e.message, 7000, "error"); } finally { this.saving = false; }
     },

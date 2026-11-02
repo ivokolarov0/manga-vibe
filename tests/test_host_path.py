@@ -37,11 +37,10 @@ def test_set_and_clear_it(client):
         assert client.patch(f"/api/libraries/{l['id']}", json={"host_path": "  /volume1/manga/ "}).status_code == 200
         assert client.get("/api/libraries").json()[0]["host_path"] == "/volume1/manga/"
         assert client.get(f"/api/series/{sid}").json()["host_path"] == "/volume1/manga/" + rest
-        # the reading mode is left alone when only the path changes, and the other way round
-        mode = client.get("/api/libraries").json()[0]["reader_mode"]
-        client.patch(f"/api/libraries/{l['id']}", json={"reader_mode": "vertical"})
+        # the folder's library is left alone when only the path changes, and the other way round
+        assert client.get("/api/libraries").json()[0]["shelf_id"] == l["shelf_id"]
+        client.patch(f"/api/libraries/{l['id']}", json={"shelf_id": l["shelf_id"]})
         assert client.get("/api/libraries").json()[0]["host_path"] == "/volume1/manga/"
-        client.patch(f"/api/libraries/{l['id']}", json={"reader_mode": mode or "default"})
     finally:
         client.patch(f"/api/libraries/{l['id']}", json={"host_path": ""})
     assert client.get("/api/libraries").json()[0]["host_path"] is None

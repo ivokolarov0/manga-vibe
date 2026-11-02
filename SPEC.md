@@ -271,7 +271,7 @@ The owner can edit any metadata field by hand (titles, description, tags, status
 ### 7.5 Reader
 - Opens a book at the saved page.
 - **Fullscreen:** button that calls the Fullscreen API; also enter fullscreen automatically on first tap if the setting is enabled. Hide UI chrome while reading; tap the centre to show/hide controls.
-- Modes (per-series setting, then the library folder's, then a global default): **Pages** (default; the next page is always on the right, like every digital reader) and **Vertical/webtoon** (continuous scroll, no gaps).
+- Modes (per-series setting, then its library's, then a global default): **Pages** (default; the next page is always on the right, like every digital reader) and **Vertical/webtoon** (continuous scroll, no gaps).
 - Pages: tap zones (left quarter back, right quarter forward; or a one-handed layout) and swipe to turn pages; volume keys are not available in browsers, ignore.
 - Fit: fit width, fit height, fit screen, original. Pinch-zoom and double-tap zoom in paged mode.
 - Double-page spread on landscape/desktop (nice to have, phase 5).
@@ -322,7 +322,10 @@ A list of: series with failed/low-confidence matches (with "Fix match"), series 
 
 ### 8.4 API (suggested)
 ```
-GET    /api/libraries                       POST /api/libraries   DELETE /api/libraries/{id}
+GET    /api/libraries                       POST /api/libraries   DELETE /api/libraries/{id}   (library folders)
+GET    /api/shelves                         POST /api/shelves     PATCH/DELETE /api/shelves/{id}   (libraries, issue #145)
+PUT    /api/shelves/{id}/password           POST /api/shelves/{id}/unlock|lock   POST /api/shelves/lock
+GET    /api/saved-searches                  POST /api/saved-searches   DELETE /api/saved-searches/{id}
 POST   /api/scan                            GET  /api/scan/status
 GET    /api/series?cursor=&limit=&q=&genre=&tag=&exclude_tag=&pub_status=&read_status=&match=&format=&sort=&order=
 GET    /api/series/{id}                     PATCH /api/series/{id}           (edit metadata, sets locks)

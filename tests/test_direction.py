@@ -1,4 +1,4 @@
-"""How a series reads (app/direction.py): paged or vertical. The owner's choice, its library folder, then
+"""How a series reads (app/direction.py): paged or vertical. The owner's choice, its library (shelf), then
 Settings → Reader. Paged always turns forward to the right, so there is no right to left any more."""
 from sqlalchemy import text
 
@@ -30,7 +30,7 @@ def direction(client, sid):
 
 def test_direction_in_order(client):
     sid = series_id()
-    lib = client.get("/api/libraries").json()[0]["id"]
+    lib = client.get("/api/shelves").json()[0]["id"]
     with SessionLocal() as db:
         s = db.get(Series, sid)
         old = {k: getattr(s, k) for k in ("country_of_origin", "format", "reader_mode")}
@@ -48,13 +48,13 @@ def test_direction_in_order(client):
         set_series(sid, country_of_origin="JP", format="MANGA")
         assert direction(client, sid) == ("paged", "default")
 
-        # the library folder's mode
-        for l in client.get("/api/libraries").json():
-            assert client.patch(f"/api/libraries/{l['id']}", json={"reader_mode": "vertical"}).status_code == 200
+        # the library's mode
+        for l in client.get("/api/shelves").json():
+            assert client.patch(f"/api/shelves/{l['id']}", json={"reader_mode": "vertical"}).status_code == 200
         assert direction(client, sid) == ("vertical", "library")
-        assert client.get("/api/libraries").json()[0]["reader_mode"] == "vertical"
+        assert client.get("/api/shelves").json()[0]["reader_mode"] == "vertical"
         for bad in ("sideways", "rtl", "ltr"):
-            assert client.patch(f"/api/libraries/{lib}", json={"reader_mode": bad}).status_code == 400
+            assert client.patch(f"/api/shelves/{lib}", json={"reader_mode": bad}).status_code == 400
             assert client.patch(f"/api/series/{sid}", json={"reader_mode": bad}).status_code == 400
 
         # the owner's choice wins; "default" works it out again
@@ -64,8 +64,8 @@ def test_direction_in_order(client):
         assert direction(client, sid) == ("vertical", "library")
     finally:
         client.put("/api/settings", json={"reader_mode": old_default})
-        for l in client.get("/api/libraries").json():
-            client.patch(f"/api/libraries/{l['id']}", json={"reader_mode": "default"})
+        for l in client.get("/api/shelves").json():
+            client.patch(f"/api/shelves/{l['id']}", json={"reader_mode": "default"})
         set_series(sid, **old)
 
 
@@ -92,7 +92,9 @@ def test_old_directions_become_pages(client):
             assert appdb.get_setting(db, "reader_tap_invert") is None
     finally:
         client.put("/api/settings", json={"reader_mode": old_default})
-        client.patch(f"/api/libraries/{lib}", json={"reader_mode": "default"})
+        with SessionLocal() as db:
+            db.get(Library, lib).reader_mode = None
+            db.commit()
         set_series(sid, reader_mode=None)
         set_series(other, reader_mode=None)
 

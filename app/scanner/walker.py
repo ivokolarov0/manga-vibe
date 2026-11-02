@@ -360,8 +360,10 @@ def _aware(dt):
 
 
 def ensure_libraries(db, paths):
-    """Add LIBRARY_PATHS as libraries (existing ones are kept, ones the owner removed stay removed)."""
+    """Add LIBRARY_PATHS as library folders (existing ones are kept, ones the owner removed stay
+    removed), and give every folder a library (app/shelves.py)."""
     from app.db import get_setting
+    from app.shelves import ensure_folder_shelves
     removed = set(get_setting(db, "removed_libraries", []) or [])
     for p in paths:
         root = str(Path(p))
@@ -369,5 +371,6 @@ def ensure_libraries(db, paths):
             continue
         if not db.query(Library).filter_by(root_path=root).one_or_none():
             db.add(Library(name=Path(root).name or root, root_path=root))
-            log.info("Added library %s", root)
+            log.info("Added library folder %s", root)
     db.commit()
+    ensure_folder_shelves(db)
