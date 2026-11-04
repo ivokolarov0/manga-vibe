@@ -20,6 +20,9 @@
   restart. Then go to **Settings** → **Library folders** → **+ Add folder** and pick it. Its series
   show in a new library named like the folder; its **Library** setting can point it at another one.
   **Remove** takes it out of the app again; your files are not touched.
+- **Forgot an account's password or PIN:** the admin sets a new one in Settings → Accounts. The admin's
+  own: set `CLEAR_PASSWORD` to the account's name and restart (or run
+  `docker exec mangavibe python -m app.users clear-password <name>`), then set a new one in Settings → Account.
 - **Forgot a library's password:** set `CLEAR_LIBRARY_PASSWORD` to the library's name (or `all`), restart
   once, then remove the variable again. Outside Docker: `python -m app.shelves clear-password <name>`.
 - **A file is broken or can't be read:** it's listed in **Settings → Needs attention → Errors**, with

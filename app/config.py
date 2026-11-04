@@ -15,6 +15,12 @@ RESCAN_HOURS = float(_env("RESCAN_HOURS", "6"))
 START_WORKERS = _env("START_WORKERS", "1") == "1"  # tests turn background metadata off
 # forgot a library's password: its name (or "all") removes the password on the next start
 CLEAR_LIBRARY_PASSWORD = _env("CLEAR_LIBRARY_PASSWORD", "")
+# the first account (app/users.py), made on the first start or the upgrade that added accounts:
+# its name and password. Without a password, nobody has to sign in while it's the only account.
+ADMIN_USER = _env("ADMIN_USER", "Admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+# forgot a password: the account's name removes its password on the next start
+CLEAR_PASSWORD = _env("CLEAR_PASSWORD", "")
 
 DB_PATH = DATA_DIR / "mangavibe.db"
 COVERS_DIR = DATA_DIR / "covers"

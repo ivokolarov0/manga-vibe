@@ -8,11 +8,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app import config, plugin_updates, shelves
+from app.access import Viewer, viewer
 from app.api.common import get_or_404
-from app.db import get_db, get_setting, set_setting
+from app.db import get_db, get_setting, get_user_setting, set_setting, set_user_setting
 from app.models import Library, Series, Shelf
 from app.plugins import Context, OpenUrl, action_result, implements, manager as plugins
 from app.scanner import walker
@@ -20,11 +21,13 @@ from app.scanner.parser import natural_key
 
 router = APIRouter(prefix="/api")
 
-DEFAULT_SETTINGS = {
+# each account's own (Settings → Display, Reader, Android app)
+USER_SETTINGS = {
     "title_language": "english",   # english | romaji | native
     "theme": "dark",               # dark | light
     "card_size": "medium",         # small | medium | large
     "nav_position": "bottom",      # bottom | top: where the Library / Continue bar sits
+    "account_button": "show",      # show | hide: the profile button in the top bar (with more than one account)
     "library_listing": "lazy",     # lazy (infinite scroll) | paged (numbered pages)
     "library_page_size": 60,       # series per page in paged mode
     "reader_mode": "paged",        # paged | vertical
@@ -40,10 +43,14 @@ DEFAULT_SETTINGS = {
     "reader_brightness": 100,      # page brightness in %: 100, 85, 70, 55, 40 (CSS filter on the page images)
     "reader_contrast": 100,        # page contrast in %: 75, 100, 125, 150
     "reader_colors": "normal",     # normal | dark (inverted) | warm (sepia) | dark-warm
+}
+# the server's, changed by the admin only (Settings → Metadata, Updates)
+SERVER_SETTINGS = {
     "auto_match": True,            # match new series automatically
     "match_threshold": 90,         # auto-accept score (0-100)
     "include_adult": False,        # include adult results from AniList
     "auto_update": True,           # check GitHub for a new version once a day
+    "profile_picker": True,        # the sign-in page lists the accounts ("Who's reading?"); off: type a name
 }
 
 
@@ -54,11 +61,13 @@ def health():
 
 @router.get("/libraries")
 def libraries(request: Request, db=Depends(get_db)):
-    """The library folders. series: how many of the folder's series are shown (a locked library's
-    aren't counted). shelf_id: the library its series show in (app/shelves.py)."""
-    visible = shelves.visible(shelves.locked_for(db, request))
+    """The library folders (the admin's, see app/access.py). series: how many of the folder's series
+    there are (a locked library's aren't counted). shelf_id: the library its series show in (app/shelves.py)."""
+    locked = shelves.locked_for(db, request)
+    col = shelves.shelf_column()
     counts = dict(db.query(Series.library_id, func.count(Series.id))
-                  .filter(Series.missing_since.is_(None), visible).group_by(Series.library_id).all())
+                  .filter(Series.missing_since.is_(None), or_(col.is_(None), col.not_in(locked)))
+                  .group_by(Series.library_id).all())
     return [{"id": l.id, "name": l.name, "root_path": l.root_path, "series": counts.get(l.id, 0),
              "available": Path(l.root_path).is_dir(), "shelf_id": l.shelf_id,
              "host_path": l.host_path} for l in db.query(Library)]
@@ -199,17 +208,24 @@ def scan_status():
 
 
 @router.get("/settings")
-def get_settings(db=Depends(get_db)):
-    return {k: get_setting(db, k, v) for k, v in DEFAULT_SETTINGS.items()}
+def get_settings(db=Depends(get_db), v: Viewer = Depends(viewer)):
+    """The account's own settings, and the server's."""
+    return {**{k: get_user_setting(db, v.id, k, d) for k, d in USER_SETTINGS.items()},
+            **{k: get_setting(db, k, d) for k, d in SERVER_SETTINGS.items()}}
 
 
 @router.put("/settings")
-def put_settings(body: dict, db=Depends(get_db)):
-    for k, v in body.items():
-        if k in DEFAULT_SETTINGS:
-            set_setting(db, k, v)
+def put_settings(body: dict, db=Depends(get_db), v: Viewer = Depends(viewer)):
+    """Change settings: an account's own for anyone, the server's only for the admin. Unknown keys are ignored."""
+    if not v.is_admin and any(k in SERVER_SETTINGS for k in body):
+        raise HTTPException(403, "Only the admin can change this")
+    for k, value in body.items():
+        if k in USER_SETTINGS:
+            set_user_setting(db, v.id, k, value)
+        elif k in SERVER_SETTINGS:
+            set_setting(db, k, value)
     db.commit()
-    return get_settings(db)
+    return get_settings(db, v)
 
 
 def _plugin_status(p, db):
@@ -286,13 +302,14 @@ def run_global_action(plugin_id: str, action_key: str, db=Depends(get_db)):
 
 
 @router.get("/plugins/{plugin_id}/web/{path:path}")
-def plugin_web(plugin_id: str, path: str, request: Request, db=Depends(get_db)):
-    """A page a plugin answers itself, e.g. where a website sends you back after logging in."""
+def plugin_web(plugin_id: str, path: str, request: Request, db=Depends(get_db), v: Viewer = Depends(viewer)):
+    """A page a plugin answers itself, e.g. where a website sends you back after logging in. Open to
+    every signed-in account (ctx.user_id says whose), unlike the rest of /api/plugins."""
     p = _enabled_plugin(plugin_id)
     if not implements(p, "handle_web"):
         raise HTTPException(404, "This plugin has no web pages")
     try:
-        result = p.handle_web(Context(p, db), path, dict(request.query_params))
+        result = p.handle_web(Context(p, db, v.id), path, dict(request.query_params))
         db.commit()
     except Exception as e:
         db.rollback()

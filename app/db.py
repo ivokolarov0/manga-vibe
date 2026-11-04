@@ -71,7 +71,54 @@ MIGRATIONS = [
         "ALTER TABLE library ADD COLUMN shelf_id INTEGER REFERENCES shelf(id) ON DELETE SET NULL",
         "ALTER TABLE series ADD COLUMN shelf_id INTEGER REFERENCES shelf(id) ON DELETE SET NULL",
         "CREATE INDEX IF NOT EXISTS ix_series_shelf_id ON series (shelf_id)")],
+    # 15: accounts (app/users.py). The account tables come from create_all; see _migrate_accounts()
+    lambda conn: _migrate_accounts(conn),
 ]
+
+# the settings that became each account's own in migration 15 (the rest stay the server's)
+_PERSONAL_IN_15 = ("title_language", "theme", "card_size", "nav_position", "library_listing",
+                   "library_page_size", "reader_mode", "reader_fit", "auto_fullscreen", "preload",
+                   "reader_autohide", "reader_drawer_side", "reader_tap_layout", "reader_volume_keys",
+                   "overlay_opacity", "overlay_outline", "reader_brightness", "reader_contrast",
+                   "reader_colors", "saved_searches")
+
+
+def _migrate_accounts(conn):
+    """The one admin account (ADMIN_USER / ADMIN_PASSWORD, else "Admin" without a password, so nothing
+    changes until a second account or a password is added) gets everything there was: the progress,
+    reading statuses, favorites, reading modes, personal settings, saved searches and every library."""
+    from app.models import Progress, User
+    from app.shelves import hash_password
+    password = config.ADMIN_PASSWORD
+    conn.execute(User.__table__.insert().values(
+        id=1, name=config.ADMIN_USER or "Admin", is_admin=True, session_version=0,
+        password_hash=hash_password(password) if password else None,
+        password_kind=("pin" if password.isdigit() else "password") if password else None))
+    for q in (
+            # progress per account: the old table had one row per book (book_id unique)
+            "DROP INDEX IF EXISTS ix_progress_book_state",
+            "DROP INDEX IF EXISTS ix_progress_updated_at",
+            "ALTER TABLE progress RENAME TO progress_old"):
+        conn.execute(text(q))
+    Progress.__table__.create(conn)
+    for q in (
+            "INSERT INTO progress (id, user_id, book_id, page, completed, updated_at) "
+            "SELECT id, 1, book_id, page, completed, updated_at FROM progress_old",
+            "DROP TABLE progress_old",
+            "INSERT INTO user_series (user_id, series_id, reading_status, reader_mode, favorite, last_read_at) "
+            "SELECT 1, id, reading_status, reader_mode, COALESCE(favorite, 0), last_read_at FROM series "
+            "WHERE reading_status IS NOT NULL OR reader_mode IS NOT NULL OR favorite = 1 OR last_read_at IS NOT NULL"):
+        conn.execute(text(q))
+    # upgrading from before libraries (schema 13 or older), create_all made the shelf table just now,
+    # owner_id included
+    if "owner_id" not in {row[1] for row in conn.execute(text("PRAGMA table_info(shelf)"))}:
+        conn.execute(text("ALTER TABLE shelf ADD COLUMN owner_id INTEGER REFERENCES account(id) ON DELETE SET NULL"))
+    conn.execute(text("CREATE INDEX IF NOT EXISTS ix_shelf_owner_id ON shelf (owner_id)"))
+    conn.execute(text("UPDATE shelf SET owner_id = 1"))
+    keys = ", ".join(f"'{k}'" for k in _PERSONAL_IN_15)
+    conn.execute(text(f"INSERT INTO user_setting (user_id, key, value) SELECT 1, key, value FROM setting "
+                      f"WHERE key IN ({keys})"))
+    conn.execute(text(f"DELETE FROM setting WHERE key IN ({keys})"))
 
 
 CUSTOM_CSS_TEMPLATE = """/*
@@ -175,6 +222,22 @@ def set_setting(db, key, value):
     row = db.get(Setting, key)
     if row is None:
         db.add(Setting(key=key, value=value))
+    else:
+        row.value = value
+
+
+def get_user_setting(db, user_id, key, default=None):
+    """One account's own setting (theme, reader...), see app/users.py."""
+    from app.models import UserSetting
+    row = db.get(UserSetting, (user_id, key)) if user_id is not None else None
+    return default if row is None else row.value
+
+
+def set_user_setting(db, user_id, key, value):
+    from app.models import UserSetting
+    row = db.get(UserSetting, (user_id, key))
+    if row is None:
+        db.add(UserSetting(user_id=user_id, key=key, value=value))
     else:
         row.value = value
 

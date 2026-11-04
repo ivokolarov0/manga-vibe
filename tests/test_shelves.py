@@ -296,7 +296,7 @@ def test_wrong_passwords_slow_down(client, comics):
         assert client.post(f"/api/shelves/{cid}/unlock", json={"password": "guess"}).status_code == 403
     r = client.post(f"/api/shelves/{cid}/unlock", json={"password": "secret"})
     assert r.status_code == 429 and "Try again in" in r.json()["detail"]
-    shelves._fails.clear()
+    shelves.throttle.forget()
     assert client.post(f"/api/shelves/{cid}/unlock", json={"password": "secret"}).status_code == 200
 
 

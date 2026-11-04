@@ -9,8 +9,9 @@ from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
 from app import images
+from app.access import Viewer, viewer
 from app.api.common import (book_dict, display_title, emit_reading_events, ensure_inside_library,
-                            get_or_404, now, status_of, title_lang, visible_books_query)
+                            get_or_404, now, status_of, title_lang, user_state, visible_books_query)
 from app.db import SessionLocal, get_db
 from app.direction import reading_direction
 from app.models import Book, OverlayHidden, Progress, Series
@@ -23,8 +24,12 @@ log = logging.getLogger("mangavibe.plugins")
 IMMUTABLE = "private, max-age=31536000, immutable"  # URLs carry ?v=<mtime>
 
 
+def _progress(db, user_id, book_id):
+    return db.query(Progress).filter_by(user_id=user_id, book_id=book_id).one_or_none()
+
+
 @router.get("/{book_id}")
-def get_book(book_id: int, db=Depends(get_db)):
+def get_book(book_id: int, db=Depends(get_db), v: Viewer = Depends(viewer)):
     b = get_or_404(db, Book, book_id)
     s = db.get(Series, b.series_id)
     books = visible_books_query(db, b.series_id).filter(Book.error.is_(None)).all()
@@ -32,9 +37,12 @@ def get_book(book_id: int, db=Depends(get_db)):
     i = ids.index(b.id) if b.id in ids else -1
     nxt = books[i + 1] if 0 <= i < len(books) - 1 else None
     prev = books[i - 1] if i > 0 else None
-    p = db.query(Progress).filter_by(book_id=b.id).one_or_none()
-    return {**book_dict(b, p), "series_title": display_title(s, title_lang(db)),
-            "reader_mode": reading_direction(db, s)[0],  # the series' own, or worked out (app/direction.py)
+    p = _progress(db, v.id, b.id)
+    return {**book_dict(b, p), "series_title": display_title(s, title_lang(db, v.id)),
+            # the account's for the series, or worked out (app/direction.py)
+            "reader_mode": reading_direction(db, s, v.id)[0],
+            # read only (shared with it): the reader leaves out what would change the book for everyone
+            "can_edit": v.can_edit(db, s.id),
             "next": {"id": nxt.id, "label": book_dict(nxt)["label"]} if nxt else None,
             "prev": {"id": prev.id, "label": book_dict(prev)["label"]} if prev else None,
             # reader toggles for plugins that draw over pages, and their buttons for this book
@@ -59,7 +67,8 @@ def _box_dict(b):
 
 
 @router.get("/{book_id}/overlays/{n}")
-def page_overlays(book_id: int, n: int, plugins_: str = Query("", alias="plugins"), db=Depends(get_db)):
+def page_overlays(book_id: int, n: int, plugins_: str = Query("", alias="plugins"), db=Depends(get_db),
+                  v: Viewer = Depends(viewer)):
     """What the plugins draw over page n. `plugins` (comma-separated ids) limits it to the
     overlays the reader has switched on. A plugin that fails gives a layer with only a message."""
     b = get_or_404(db, Book, book_id)
@@ -72,7 +81,7 @@ def page_overlays(book_id: int, n: int, plugins_: str = Query("", alias="plugins
         if wanted and p.id not in wanted:
             continue
         try:
-            result = p.page_overlay(Context(p, db), b, n)
+            result = p.page_overlay(Context(p, db, v.id), b, n)
             db.commit()
         except Exception as e:
             db.rollback()
@@ -124,13 +133,14 @@ def show_hidden_boxes(book_id: int, db=Depends(get_db)):
 
 
 @router.post("/{book_id}/actions/{plugin_id}/{action_key}")
-def run_book_action(book_id: int, plugin_id: str, action_key: str, db=Depends(get_db)):
+def run_book_action(book_id: int, plugin_id: str, action_key: str, db=Depends(get_db),
+                    v: Viewer = Depends(viewer)):
     b = get_or_404(db, Book, book_id)
     p = plugins.get(plugin_id)
     if p is None or action_key not in {a.key for a in p.book_actions}:
         raise HTTPException(404, "Action not found")
     try:
-        result = p.run_book_action(Context(p, db), action_key, b)
+        result = p.run_book_action(Context(p, db, v.id), action_key, b)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -200,19 +210,20 @@ class ProgressBody(BaseModel):
 
 
 @router.get("/{book_id}/progress")
-def get_progress(book_id: int, db=Depends(get_db)):
+def get_progress(book_id: int, db=Depends(get_db), v: Viewer = Depends(viewer)):
     get_or_404(db, Book, book_id)
-    p = db.query(Progress).filter_by(book_id=book_id).one_or_none()
+    p = _progress(db, v.id, book_id)
     return {"page": p.page if p else 0, "completed": bool(p and p.completed)}
 
 
 @router.put("/{book_id}/progress")
-def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
+def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db), v: Viewer = Depends(viewer)):
+    """The account's own progress in the book: nobody else's changes."""
     b = get_or_404(db, Book, book_id)
     page = max(0, min(body.page, max(b.page_count - 1, 0)))
-    p = db.query(Progress).filter_by(book_id=book_id).one_or_none()
+    p = _progress(db, v.id, book_id)
     series = db.get(Series, b.series_id)
-    old_status = status_of(db, series)
+    old_status = status_of(db, series, v.id)
     if body.completed is False and page == 0:
         # "mark unread": forget the book entirely, so Continue doesn't jump to it
         if p is not None:
@@ -220,15 +231,16 @@ def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
             db.flush()
             # nothing left read in the series: drop it from Continue reading
             others = (db.query(Progress.id).join(Book, Book.id == Progress.book_id)
-                      .filter(Book.series_id == b.series_id).first())
-            if others is None:
-                series.last_read_at = None
+                      .filter(Book.series_id == b.series_id, Progress.user_id == v.id).first())
+            state = user_state(db, v.id, series.id)
+            if others is None and state is not None:
+                state.last_read_at = None
             db.commit()
-            emit_reading_events(db, series, old_status)
+            emit_reading_events(db, series, old_status, v.id)
         return {"page": 0, "completed": False}
     started, was_completed = p is None, bool(p and p.completed)
     if p is None:
-        p = Progress(book_id=book_id)
+        p = Progress(user_id=v.id, book_id=book_id)
         db.add(p)
     p.page = page
     if body.completed is not None:
@@ -236,9 +248,9 @@ def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
     elif b.page_count and page >= b.page_count - 1:
         p.completed = True  # reaching the last page marks the book read
     p.updated_at = now()
-    series.last_read_at = p.updated_at
+    user_state(db, v.id, series.id, create=True).last_read_at = p.updated_at
     db.commit()
-    emit_reading_events(db, series, old_status, started=[b.id] if started else [],
+    emit_reading_events(db, series, old_status, v.id, started=[b.id] if started else [],
                         completed=[b.id] if p.completed and not was_completed else [])
     return {"page": p.page, "completed": p.completed}
 
@@ -254,7 +266,7 @@ class BookOverride(BaseModel):
 
 
 @router.patch("/{book_id}")
-def patch_book(book_id: int, body: BookOverride, db=Depends(get_db)):
+def patch_book(book_id: int, body: BookOverride, db=Depends(get_db), v: Viewer = Depends(viewer)):
     """Set the volume/chapter (or chapter range) of a file by hand, mark it extra or hidden.
     Stored in the database only: the file is never renamed. Survives rescans."""
     b = get_or_404(db, Book, book_id)
@@ -279,5 +291,4 @@ def patch_book(book_id: int, body: BookOverride, db=Depends(get_db)):
     series = db.get(Series, b.series_id)
     apply_order(series)  # re-sort the series with the new numbers
     db.commit()
-    p = db.query(Progress).filter_by(book_id=b.id).one_or_none()
-    return book_dict(b, p)
+    return book_dict(b, _progress(db, v.id, b.id))

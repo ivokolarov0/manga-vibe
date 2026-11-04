@@ -43,7 +43,9 @@ app/main.py             startup, routes
 app/config.py           environment variables
 app/models.py, db.py    SQLite tables, first start, migrations
 app/direction.py        how a series reads, paged or vertical (its own, its library, default)
-app/shelves.py          libraries (Manga, Comics...; "shelves" in the code), passwords, LockGuard
+app/shelves.py          libraries (Manga, Comics...; "shelves" in the code), passwords
+app/users.py            accounts, sessions, sign-in
+app/access.py           who sees and changes what: the guard on every request, Viewer for the lists
 app/scanner/            parser.py (file names), archives.py (reading), walker.py (scanning)
 app/api/                series.py, books.py, system.py, shelves.py, filters.py, saved.py
 app/plugins/            plugin system

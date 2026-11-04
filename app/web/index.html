@@ -13,10 +13,22 @@
 </head>
 <body>
   <!-- ============ top bar ============ -->
-  <header id="topbar" x-data="topbar()" x-show="$store.app.view !== 'read'">
+  <header id="topbar" x-data="topbar()" x-show="!['read', 'signin', null].includes($store.app.view)">
     <a href="#/" class="brand">MangaVibe</a>
     <input id="search" x-ref="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search"
            x-model="q" @input="search()">
+    <!-- who is signed in (with more than one account): switch profile, sign out -->
+    <div class="menu account-menu" x-data="accountMenu()" x-show="$store.app.accounts && me" x-cloak
+         @click.outside="open = false" @keydown.escape="open = false">
+      <button class="avatar" :style="`background:${avatarColor(me?.id || 0)}`" @click="open = !open"
+              :aria-label="`Signed in as ${me?.name}`" :title="me?.name" x-text="avatarText(me?.name)"></button>
+      <div class="menu-pop" x-show="open" x-transition.opacity x-cloak>
+        <div class="menu-who"><b x-text="me?.name"></b><small x-text="me?.is_admin ? 'Admin' : 'Reader'"></small></div>
+        <button @click="open = false; location.hash = '#/settings/account'">👤 Account…</button>
+        <button @click="signOut()">⇄ Switch profile</button>
+        <button @click="signOut()">⎋ Sign out</button>
+      </div>
+    </div>
     <a href="#/settings" id="settings-link" class="iconbtn" :class="{ active: $store.app.view === 'settings' }"
        :aria-current="$store.app.view === 'settings' ? 'page' : null"
        :aria-label="$store.app.attentionCount ? `Settings, ${$store.app.attentionCount} need attention` : 'Settings'"
@@ -29,12 +41,57 @@
 
   <!-- ============ Library / Continue: fixed at the bottom, or under the top bar
        (Settings → Display → Navigation bar), so it comes right after the top bar ============ -->
-  <nav id="bottomnav" x-data x-show="$store.app.view !== 'read'">
+  <nav id="bottomnav" x-data x-show="!['read', 'signin', null].includes($store.app.view)">
     <a href="#/" :class="{ active: $store.app.view === 'library' }"><span>▦</span>Library</a>
     <a href="#/continue" :class="{ active: $store.app.view === 'continue' }"><span>▶</span>Continue</a>
   </nav>
 
   <main>
+    <!-- ============ sign in: "Who's reading?" (or a name and password when the admin hid the
+         profiles). See signInView() in app.js ============ -->
+    <section class="view signin" x-data="signInView()" x-show="$store.app.view === 'signin'" x-cloak>
+      <div class="signin-box">
+        <h1 class="brand">MangaVibe</h1>
+        <template x-if="picker && !pick">
+          <div>
+            <h2>Who's reading?</h2>
+            <div class="profiles">
+              <template x-for="p in profiles" :key="p.id">
+                <button class="profile" @click="choose(p)" :disabled="busy">
+                  <span class="avatar big" :style="`background:${avatarColor(p.id)}`" x-text="avatarText(p.name)"></span>
+                  <span class="profile-name" x-text="p.name"></span>
+                  <small x-text="p.password_kind === 'pin' ? 'PIN' : p.password_kind ? '🔒' : ''"></small>
+                </button>
+              </template>
+            </div>
+            <p class="err" x-show="error" x-text="error"></p>
+          </div>
+        </template>
+        <form x-show="!picker || pick" @submit.prevent="submit()" class="signin-form">
+          <template x-if="pick">
+            <div class="signin-who">
+              <span class="avatar big" :style="`background:${avatarColor(pick.id)}`" x-text="avatarText(pick.name)"></span>
+              <b x-text="pick.name"></b>
+            </div>
+          </template>
+          <!-- only required when shown: a hidden, empty required box makes the browser refuse to send the form -->
+          <label x-show="!pick">Name <input x-model="name" autocomplete="username" maxlength="40" :required="!pick"></label>
+          <label><span x-text="pick?.password_kind === 'pin' ? 'PIN' : 'Password'"></span>
+            <input x-ref="secret" x-model="password" maxlength="200" type="password"
+                   :inputmode="pick?.password_kind === 'pin' ? 'numeric' : 'text'"
+                   :autocomplete="pick?.password_kind === 'pin' ? 'off' : 'current-password'"></label>
+          <label class="check"><input type="checkbox" x-model="remember"> Stay signed in on this device</label>
+          <p class="err" x-show="error" x-text="error"></p>
+          <div class="btn-row">
+            <button class="btn primary" type="submit" :class="{ busy }" :disabled="busy">Sign in</button>
+            <button class="btn" type="button" x-show="pick" @click="back()">Other profile</button>
+          </div>
+          <p class="muted small-print">Forgot it? The admin can set a new one in Settings → Accounts. The admin's own:
+            start MangaVibe once with <code>CLEAR_PASSWORD=&lt;name&gt;</code>.</p>
+        </form>
+      </div>
+    </section>
+
     <!-- ============ Android browser: offer the app (android/) ============ -->
     <div class="app-banner" x-data x-show="$store.app.appBanner && $store.app.view === 'library'" x-cloak>
       <img src="/static/icons/icon-192.png" alt="">
@@ -51,8 +108,10 @@
       <button role="tab" x-show="showAll" :class="{ active: on(0) }" :aria-selected="on(0)" @click="pick(0)">All</button>
       <template x-for="s in list" :key="s.id">
         <button role="tab" :class="{ active: on(s.id) }" :aria-selected="on(s.id)" @click="pick(s.id)"
-                :title="s.locked ? 'Locked: asks for the password' : ''">
+                :title="s.locked ? 'Locked: asks for the password'
+                  : s.virtual ? 'Series shared with you on their own' : !s.mine && s.owner ? `Shared by ${s.owner.name}` : ''">
           <span x-text="s.name"></span>
+          <span class="shared-mark" x-show="!s.mine" aria-label="shared with you">⇄</span>
           <span class="lock" x-show="s.has_password" x-text="s.locked ? '🔒' : '🔓'"
                 :aria-label="s.locked ? 'locked' : 'unlocked'"></span></button>
       </template>
@@ -138,7 +197,7 @@
             <button class="btn small" @click="moveOpen = false">Cancel</button></div>
           <p class="muted">Only where they show: their files stay in their folders, and a rescan keeps them there.</p>
           <div class="options">
-            <template x-for="sh in $store.app.shelves" :key="sh.id">
+            <template x-for="sh in $store.app.ownShelves" :key="sh.id">
               <button @click="moveTo(sh.id)"><span class="text"><span x-text="sh.name + (sh.locked ? ' 🔒' : '')"></span>
                 <small x-text="sh.locked ? 'Locked: they disappear until it is unlocked' : ''"></small></span></button>
             </template>
@@ -229,8 +288,9 @@
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
             <span x-text="$store.app.seriesBack ? 'Back' : 'Library'"></span></button>
           <div class="sp">
-            <button class="sp-poster" title="Change poster" @click="editInfo('poster')"><img :src="s.poster_large" alt="">
-              <span class="poster-hint">✎ Poster</span></button>
+            <button class="sp-poster" :class="{ 'read-only': !canEdit }" :title="canEdit ? 'Change poster' : ''"
+                    @click="editInfo('poster')"><img :src="s.poster_large" alt="">
+              <span class="poster-hint" x-show="canEdit">✎ Poster</span></button>
             <header class="sp-head">
               <h1 x-text="s.title"></h1>
               <div class="alt-titles" x-show="alt.length" x-text="alt.join(' · ')"></div>
@@ -239,6 +299,9 @@
                 <span class="chip" x-text="s.book_count + ' books'"></span>
                 <span class="chip" x-text="s.unread_count + ' unread'"></span>
                 <span class="chip warn" x-show="s.has_duplicates">Duplicates</span>
+                <!-- shared with this account: it reads, keeps its own progress, but can't change the series -->
+                <span class="chip shared" x-show="!canEdit" x-text="sharedText"
+                      title="Your progress, status and favorite are your own. Only its owner can edit, move or delete it."></span>
               </div>
             </header>
             <div class="sp-tools">
@@ -248,7 +311,7 @@
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 3.2l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.1 6.6 20l1-6.1-4.4-4.3 6.1-.9z"/></svg>
               </button>
-              <button class="btn small" id="edit-series" @click="editInfo()">
+              <button class="btn small" id="edit-series" x-show="canEdit" @click="editInfo()">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M4 20h4L19 9l-4-4L4 16z M13.5 6.5l4 4"/></svg>
                 Edit</button>
@@ -260,9 +323,13 @@
                 <div class="menu-pop" x-show="menuOpen" x-transition.opacity x-cloak>
                   <button @click="menuOpen = false; readerOpen = true">📖 Reading mode…
                     <small x-text="readerModeLabel"></small></button>
-                  <button @click="menuOpen = false; rescan()">⟳ Rescan this series</button>
-                  <button @click="menuOpen = false; fixMatch()">🔎 Fix match…</button>
-                  <button class="danger" @click="menuOpen = false; openDelete()">🗑 Delete series…</button>
+                  <button x-show="canEdit && $store.app.accounts" @click="menuOpen = false; openShare()">⇄ Share with…
+                    <small>Only this series, to read</small></button>
+                  <button x-show="s.shared_alone" @click="menuOpen = false; placeOpen = true">📚 Show in library…
+                    <small x-text="s.shelf?.name"></small></button>
+                  <button x-show="canEdit" @click="menuOpen = false; rescan()">⟳ Rescan this series</button>
+                  <button x-show="canEdit" @click="menuOpen = false; fixMatch()">🔎 Fix match…</button>
+                  <button class="danger" x-show="canEdit" @click="menuOpen = false; openDelete()">🗑 Delete series…</button>
                 </div>
               </div>
             </div>
@@ -308,6 +375,49 @@
                     </button>
                   </template>
                 </div>
+              </div>
+            </div>
+
+            <!-- share only this series with other accounts (from the ⋯ menu) -->
+            <div class="modal" x-show="share.open" x-cloak @click.self="share.open = false"
+                 @keydown.escape.window="share.open = false">
+              <div class="small-dialog">
+                <div class="sheet-head"><b>Share this series</b>
+                  <button class="btn small" @click="share.open = false">Done</button></div>
+                <p class="muted">Only this series, without the rest of its library. They read it and keep their own
+                  progress, but can't change it. It shows in their “Shared with me”.</p>
+                <p class="muted" x-show="!share.list">Loading…</p>
+                <div class="options">
+                  <template x-for="u in share.list || []" :key="u.id">
+                    <button role="checkbox" :aria-checked="u.shared || u.via_library" :class="{ on: u.shared || u.via_library }"
+                            :disabled="share.busy || u.via_library" @click="toggleShare(u)">
+                      <span class="check-box" aria-hidden="true"></span>
+                      <span class="text"><span x-text="u.name"></span>
+                        <small x-text="u.via_library ? 'Sees it already: its library is shared with them' : ''"></small></span>
+                    </button>
+                  </template>
+                </div>
+                <p class="muted" x-show="share.list && !share.list.length">There are no other accounts. The admin adds
+                  them in Settings → Accounts.</p>
+              </div>
+            </div>
+
+            <!-- shared with this account on its own: which of its libraries it shows in -->
+            <div class="modal" x-show="placeOpen" x-cloak @click.self="placeOpen = false"
+                 @keydown.escape.window="placeOpen = false">
+              <div class="small-dialog">
+                <div class="sheet-head"><b>Show in library</b>
+                  <button class="btn small" @click="placeOpen = false">Cancel</button></div>
+                <p class="muted">Only for you. It stays where it is for its owner.</p>
+                <div class="options">
+                  <button @click="place(-1)" :class="{ on: s.shelf?.id === -1 }"><span class="text"><span>Shared with me</span></span></button>
+                  <template x-for="sh in $store.app.shelves.filter((x) => x.mine)" :key="sh.id">
+                    <button @click="place(sh.id)" :class="{ on: s.shelf?.id === sh.id }">
+                      <span class="text"><span x-text="sh.name"></span></span></button>
+                  </template>
+                </div>
+                <p class="muted" x-show="!$store.app.shelves.some((x) => x.mine)">You have no library of your own yet:
+                  + on the home screen's tabs adds one.</p>
               </div>
             </div>
 
@@ -375,7 +485,7 @@
                     Source: <span x-text="$store.app.providerName(s.metadata_source?.provider)"></span>
                     <span x-show="s.metadata_source?.retry_primary"> (AniList will be tried again when it's back online)</span>
                   </p>
-                  <div class="btn-row">
+                  <div class="btn-row" x-show="canEdit">
                     <button class="btn" @click="fixMatch()">Fix match</button>
                     <button class="btn" x-show="s.metadata_source" @click="refreshMeta($el)">Refresh metadata</button>
                   </div>
@@ -396,9 +506,9 @@
                       <span x-text="copied ? 'Copied' : 'Copy'"></span>
                     </button>
                   </div>
-                  <p class="muted path-hint" x-show="!s.host_path">This is the path inside Docker. To see the one on your
+                  <p class="muted path-hint" x-show="!s.host_path && $store.app.isAdmin">This is the path inside Docker. To see the one on your
                     NAS, set <a href="#/settings/library">Path outside Docker</a> for its library folder.</p>
-                  <div class="btn-row">
+                  <div class="btn-row" x-show="canEdit">
                     <button class="btn" :disabled="rescanning" @click="rescan()"
                             x-text="rescanning ? 'Rescanning…' : '⟳ Rescan this series'"></button>
                   </div>
@@ -466,8 +576,8 @@
 
                 <div x-show="tab === 'files'">
                   <p class="muted">Every file in the series folder, in reading order. Faded rows are older revisions or
-                    hidden. Use <b>Edit</b> when a file name has the wrong number or holds several chapters: your numbers
-                    re-order the list. The files themselves are never changed.</p>
+                    hidden.<span x-show="canEdit"> Use <b>Edit</b> when a file name has the wrong number or holds several
+                    chapters: your numbers re-order the list. The files themselves are never changed.</span></p>
                   <table class="files"><tbody>
                     <template x-for="b in books" :key="b.id">
                       <tr :class="{ 'hidden-row': b.hidden }">
@@ -475,7 +585,7 @@
                         <td>
                           <div class="file-head">
                             <div class="fname" x-text="b.file_name"></div>
-                            <button class="btn small" x-show="editing !== b.id" @click="startEdit(b)">Edit</button>
+                            <button class="btn small" x-show="canEdit && editing !== b.id" @click="startEdit(b)">Edit</button>
                           </div>
                           <span class="chip manual-chip" x-show="b.manual">✎ manual</span>
                           <div class="muted" x-text="`${b.label} · vol ${n(b.volume)} · ch ${n(b.chapter)}${b.chapter_end ? '–' + b.chapter_end : ''}${b.extra ? ' · extra' : ''} · rev ${b.revision} · ${mb(b.file_size)}`"></div>
@@ -541,24 +651,49 @@
           <h2>Libraries</h2>
           <p class="muted">Each library shows its own series, picked with the tabs on the home screen. A folder's
             series show in its library (Settings → Library folders); one series can be moved to another
-            with Edit, or several at once by holding a card. Files never move.</p>
-          <template x-for="sh in $store.app.shelves" :key="sh.id">
+            with Edit, or several at once by holding a card. Files never move.
+            <span x-show="$store.app.accounts">Share a library to let other accounts read it: they keep their own
+              progress, but can't change it.</span></p>
+          <template x-for="sh in shelfList" :key="sh.id">
             <div class="lib-card shelf-card">
               <div class="libcard-head">
                 <span class="libcard-icon" aria-hidden="true"
-                      x-text="sh.has_password ? (sh.locked ? '🔒' : '🔓') : '📚'"></span>
+                      x-text="sh.has_password ? (sh.locked ? '🔒' : '🔓') : sh.mine ? '📚' : '⇄'"></span>
                 <div class="libcard-title">
-                  <input type="text" class="shelf-name" :value="sh.name" maxlength="60" spellcheck="false"
+                  <input type="text" class="shelf-name" :value="sh.name" maxlength="60" spellcheck="false" x-show="canChange(sh)"
                          :aria-label="'Name of ' + sh.name" @change="renameShelf(sh, $event.target.value)"
                          @keydown.enter="$event.target.blur()">
-                  <small x-text="(sh.locked ? 'Locked' : sh.series + ' series') + ' · ' + shelfFolders(sh)"></small>
+                  <strong x-show="!canChange(sh)" x-text="sh.name"></strong>
+                  <small x-text="[sh.locked ? 'Locked' : sh.series + ' series', $store.app.isAdmin ? shelfFolders(sh) : '',
+                    !sh.mine && sh.owner ? (canChange(sh) ? `${sh.owner.name}'s` : `Shared by ${sh.owner.name} · read only`) : '']
+                    .filter(Boolean).join(' · ')"></small>
                 </div>
                 <div class="row-buttons">
                   <button class="btn small" x-show="sh.locked" @click="unlockShelf(sh)">Unlock</button>
                   <button class="btn small" x-show="sh.has_password && !sh.locked" @click="lockShelf(sh)">Lock now</button>
-                  <button class="btn small danger" @click="deleteShelf(sh)">Delete</button>
+                  <button class="btn small danger" x-show="canChange(sh)" @click="deleteShelf(sh)">Delete</button>
                 </div>
               </div>
+              <!-- the admin gives a library to another account -->
+              <label class="lib-option" x-show="$store.app.isAdmin && users.length > 1">
+                <span class="lib-option-text"><span>Owner</span>
+                  <small>Its owner sees it, changes it and shares it</small></span>
+                <select @change="setShelfOwner(sh, $event.target.value)" :aria-label="'Owner of ' + sh.name">
+                  <template x-for="u in users" :key="u.id">
+                    <option :value="u.id" :selected="u.id === sh.owner?.id" x-text="u.name"></option>
+                  </template>
+                </select></label>
+              <div class="lib-option share-option" x-show="canChange(sh) && shareTargets(sh).length">
+                <span class="lib-option-text"><span>Shared with</span>
+                  <small>To read: their own progress, no changes. Series added later are shared too.</small></span>
+                <div class="share-checks">
+                  <template x-for="u in shareTargets(sh)" :key="u.id">
+                    <label class="check"><input type="checkbox" :checked="sh.shared_with.includes(u.id)"
+                           @change="toggleShelfShare(sh, u)"> <span x-text="u.name"></span></label>
+                  </template>
+                </div>
+              </div>
+              <template x-if="canChange(sh)"><div>
               <label class="lib-option">
                 <span class="lib-option-text"><span>Reading mode</span>
                   <small>For its series that don't set their own</small></span>
@@ -590,11 +725,12 @@
                       <button class="btn small" type="button" @click="pw = null">Cancel</button>
                     </div>
                     <p class="muted">Forgot it? Start MangaVibe once with <code x-text="'CLEAR_LIBRARY_PASSWORD=' + sh.name"></code>.
-                      The app has no accounts, so this keeps the library from others using it; anyone who can open
-                      the files or the database still can.</p>
+                      It keeps the library private on a device several people use with one account; anyone who can
+                      open the files or the database still can.</p>
                   </div>
                 </template>
               </form>
+              </div></template>
             </div>
           </template>
           <div class="setting-row">
@@ -627,8 +763,9 @@
                 <span class="lib-option-text"><span>Library</span>
                   <small>Where this folder's series show. Series moved to another library by hand stay there.</small></span>
                 <select @change="setFolderShelf(l, $event.target.value)" :aria-label="'Library for the series in ' + l.name">
-                  <template x-for="sh in $store.app.shelves" :key="sh.id">
-                    <option :value="sh.id" :selected="sh.id === l.shelf_id" x-text="sh.name + (sh.locked ? ' 🔒' : '')"></option>
+                  <template x-for="sh in allShelves" :key="sh.id">
+                    <option :value="sh.id" :selected="sh.id === l.shelf_id"
+                            x-text="sh.name + (sh.locked ? ' 🔒' : '') + (!sh.mine && sh.owner ? ` (${sh.owner.name}'s)` : '')"></option>
                   </template>
                 </select></label>
               <label class="lib-option">
@@ -661,6 +798,9 @@
             <select x-model="st.card_size" @change="save('card_size')"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
           <label class="setting-row"><span class="label">Navigation bar<small>Where Library and Continue sit</small></span>
             <select x-model="st.nav_position" @change="save('nav_position')"><option value="bottom">Bottom</option><option value="top">Top</option></select></label>
+          <label class="setting-row" x-show="$store.app.accounts"><span class="label">Profile button<small>The round button at the top right:
+              switch profile, sign out. Hidden, Settings → Account has the same</small></span>
+            <select x-model="st.account_button" @change="save('account_button')"><option value="show">Show</option><option value="hide">Hide</option></select></label>
           <label class="setting-row"><span class="label">Library listing<small>Load more while scrolling, or show numbered pages</small></span>
             <select x-model="st.library_listing" @change="save('library_listing')"><option value="lazy">Lazy load</option><option value="paged">Paginated</option></select></label>
           <label class="setting-row" x-show="st.library_listing === 'paged'"><span class="label">Series per page</span>
@@ -699,6 +839,121 @@
             <select x-model="st.reader_contrast" @change="save('reader_contrast')"><option value="75">Less</option><option value="100">Normal</option><option value="125">More</option><option value="150">Most</option></select></label>
           <label class="setting-row"><span class="label">Page colours<small>Inverted turns white pages black with white lines. Warm takes out the blue light</small></span>
             <select x-model="st.reader_colors" @change="save('reader_colors')"><option value="normal">Normal</option><option value="dark">Inverted</option><option value="warm">Warm</option><option value="dark-warm">Inverted, warm</option></select></label>
+        </section>
+
+        <!-- the signed-in account: name, password or PIN, signing out -->
+        <section x-show="section === 'account'">
+          <h2>Account</h2>
+          <template x-if="me">
+            <div class="lib-card shelf-card account-card">
+              <div class="libcard-head">
+                <span class="avatar big-ish" :style="`background:${avatarColor(me.id)}`" aria-hidden="true" x-text="avatarText(me.name)"></span>
+                <div class="libcard-title">
+                  <input type="text" class="shelf-name" :value="me.name" maxlength="40" spellcheck="false" autocomplete="off"
+                         aria-label="Your name" @change="renameMe($event.target.value)" @keydown.enter="$event.target.blur()">
+                  <small x-text="(me.is_admin ? 'Admin' : 'Reader') + ' · the name on the sign-in screen'"></small>
+                </div>
+              </div>
+              <div class="lib-option">
+                <span class="lib-option-text"><span x-text="me.has_password ? (me.password_kind === 'pin' ? 'PIN' : 'Password') : 'No password'"></span>
+                  <small x-text="me.has_password ? 'Asked for when you sign in'
+                    : $store.app.accounts ? 'Picking your profile on the sign-in screen is enough'
+                    : 'Nobody has to sign in while this is the only account. Set one to add more accounts.'"></small></span>
+                <button class="btn small" x-show="!acctOpen" @click="acctOpen = true"
+                        x-text="me.has_password ? 'Change or remove…' : 'Set a password or PIN…'"></button>
+              </div>
+              <form class="password-form" x-show="acctOpen" @submit.prevent="saveMyPassword()">
+                <div class="password-fields">
+                  <label>Kind
+                    <select x-model="acct.kind"><option value="password">Password</option><option value="pin">PIN (4 to 12 digits)</option></select></label>
+                  <label x-show="me.has_password"><span x-text="me.password_kind === 'pin' ? 'Current PIN' : 'Current password'"></span>
+                    <input type="password" x-model="acct.current" autocomplete="current-password" maxlength="200"></label>
+                  <label><span x-text="acct.kind === 'pin' ? 'New PIN' : 'New password'"></span>
+                    <input type="password" x-model="acct.password" autocomplete="new-password" maxlength="200"
+                           :inputmode="acct.kind === 'pin' ? 'numeric' : 'text'"></label>
+                  <label>Again
+                    <input type="password" x-model="acct.again" autocomplete="new-password" maxlength="200"
+                           :inputmode="acct.kind === 'pin' ? 'numeric' : 'text'"></label>
+                  <div class="btn-row">
+                    <button class="btn small primary" type="submit" x-text="me.has_password ? 'Change' : 'Set'"></button>
+                    <button class="btn small danger" type="button" x-show="me.has_password && !(me.is_admin && $store.app.auth?.accounts > 1)"
+                            @click="saveMyPassword(true)">Remove</button>
+                    <button class="btn small" type="button" @click="acctOpen = false">Cancel</button>
+                  </div>
+                </div>
+              </form>
+              <div class="lib-option" x-show="$store.app.accounts">
+                <span class="lib-option-text"><span>Sign out</span>
+                  <small>Back to the sign-in screen, e.g. to switch profile. Everywhere: every browser and app too</small></span>
+                <div class="btn-row">
+                  <button class="btn small" @click="signOutEverywhere()">Everywhere</button>
+                  <button class="btn small primary" @click="signOut()">Sign out</button>
+                </div>
+              </div>
+            </div>
+          </template>
+        </section>
+
+        <!-- every account (the admin) -->
+        <section x-show="section === 'users'">
+          <h2>Accounts</h2>
+          <p class="muted">Everyone has their own progress, Continue reading, statuses, favorites and settings. A new
+            account sees nothing until you share a library (Settings → Libraries) or a series (⋯ → Share with…) with
+            it, or give it a library of its own. Only admins see the server's settings.</p>
+          <p class="err" x-show="me && !me.has_password">Set a password or PIN for your own account first
+            (<a href="#/settings/account">Settings → Account</a>): with more than one account, people sign in.</p>
+          <template x-for="u in users" :key="u.id">
+            <div class="lib-card shelf-card">
+              <div class="libcard-head">
+                <span class="avatar" :style="`background:${avatarColor(u.id)}`" aria-hidden="true" x-text="avatarText(u.name)"></span>
+                <div class="libcard-title">
+                  <input type="text" class="shelf-name" :value="u.name" maxlength="40" spellcheck="false"
+                         :aria-label="'Name of ' + u.name" @change="renameUser(u, $event.target.value)"
+                         @keydown.enter="$event.target.blur()">
+                  <small x-text="[u.me ? 'You' : '', u.is_admin ? 'Admin' : 'Reader', passwordLabel(u),
+                    `${u.libraries} ${u.libraries === 1 ? 'library' : 'libraries'}`].filter(Boolean).join(' · ')"></small>
+                </div>
+                <div class="row-buttons" x-show="!u.me">
+                  <button class="btn small danger" @click="removeUser(u)">Remove</button>
+                </div>
+              </div>
+              <div class="lib-option" x-show="!u.me">
+                <span class="lib-option-text"><span>Password</span><small>A new one signs them out everywhere</small></span>
+                <div class="btn-row">
+                  <button class="btn small" @click="resetPassword(u, 'pin')">New PIN…</button>
+                  <button class="btn small" @click="resetPassword(u, 'password')">New password…</button>
+                  <button class="btn small" x-show="u.has_password && !u.is_admin" @click="resetPassword(u, 'none')">None</button>
+                </div>
+              </div>
+              <label class="lib-option" x-show="!u.me">
+                <span class="lib-option-text"><span>Admin</span><small>Runs the server: folders, scans, plugins, updates, accounts</small></span>
+                <input type="checkbox" :checked="u.is_admin"
+                       @change="patchUser(u, { is_admin: $event.target.checked }, $event.target.checked ? `${u.name} is an admin now` : `${u.name} isn't an admin any more`)"></label>
+            </div>
+          </template>
+          <form class="lib-card shelf-card add-user" @submit.prevent="addUser()">
+            <div class="libcard-head">
+              <span class="libcard-icon" aria-hidden="true">＋</span>
+              <div class="libcard-title"><strong>Add an account</strong>
+                <small>It sees nothing until you share something with it</small></div>
+            </div>
+            <div class="password-form"><div class="password-fields">
+              <label>Name <input x-model="nu.name" maxlength="40" autocomplete="off" spellcheck="false"></label>
+              <label>Signs in with
+                <select x-model="nu.kind"><option value="pin">A PIN</option><option value="password">A password</option>
+                  <option value="none">Nothing (a click on the profile)</option></select></label>
+              <label x-show="nu.kind !== 'none'"><span x-text="nu.kind === 'pin' ? 'PIN (4 to 12 digits)' : 'Password'"></span>
+                <input type="password" x-model="nu.password" autocomplete="new-password" maxlength="200"
+                       :inputmode="nu.kind === 'pin' ? 'numeric' : 'text'"></label>
+              <div class="add-user-end">
+                <label class="check" x-show="nu.kind !== 'none'"><input type="checkbox" x-model="nu.is_admin"> Admin</label>
+                <button class="btn small primary" type="submit">+ Add account</button>
+              </div>
+            </div></div>
+          </form>
+          <label class="setting-row"><span class="label">Profiles on the sign-in screen<small>“Who's reading?” lists every
+              account. Off: people type their name</small></span>
+            <select x-model="st.profile_picker" @change="save('profile_picker')"><option value="true">Show</option><option value="false">Hide</option></select></label>
         </section>
 
         <!-- Android app (only on Android: see SETTINGS_NAV) -->

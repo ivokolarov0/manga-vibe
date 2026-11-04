@@ -20,7 +20,7 @@ def rows(sid, book_ids):
     from app.db import SessionLocal
     out = {}
     with SessionLocal() as db:
-        for table in ("series", "series_tag", "link", "plugin_field", "plugin_series"):
+        for table in ("series", "series_tag", "link", "plugin_field", "plugin_series", "user_series"):
             col = "id" if table == "series" else "series_id"
             out[table] = db.execute(text(f"SELECT COUNT(*) FROM {table} WHERE {col} = :s"), {"s": sid}).scalar()
         ids = ",".join(map(str, book_ids)) or "0"
@@ -35,7 +35,7 @@ def add_everything(sid, book_ids):
     from app import config
     from app.db import SessionLocal, set_setting
     from app.models import (Link, OverlayHidden, PluginField, PluginPage, PluginSeriesData, Progress,
-                            SeriesTag, Tag)
+                            SeriesTag, Tag, UserSeries)
     with SessionLocal() as db:
         tag = db.query(Tag).filter_by(name="Delete-test tag").one_or_none() or Tag(name="Delete-test tag")
         db.add(tag)
@@ -43,7 +43,8 @@ def add_everything(sid, book_ids):
         db.add_all([SeriesTag(series_id=sid, tag_id=tag.id), Link(series_id=sid, site="AniList", url="x"),
                     PluginField(series_id=sid, plugin="p", key="k", label="K", value=1),
                     PluginSeriesData(series_id=sid, plugin="p", key="k", value=1),
-                    Progress(book_id=book_ids[0], page=2),
+                    Progress(user_id=1, book_id=book_ids[0], page=2),
+                    UserSeries(user_id=1, series_id=sid, favorite=True),
                     PluginPage(plugin="p", book_id=book_ids[0], page=0, value=1),
                     OverlayHidden(book_id=book_ids[0], plugin="p", page=0, box="1,1")])
         set_setting(db, "attention_ignored", [f"gap:{sid}", f"err:{book_ids[0]}", f"same:{sid}-999999",

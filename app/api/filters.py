@@ -1,11 +1,10 @@
-"""What decides which series a list shows: the library filters (search, tags, status...), and the
-libraries (shelves) with their passwords."""
-from fastapi import HTTPException
+"""What decides which series a list shows: the library filters (search, tags, status...). Which series
+an account may see at all comes from app/access.py (Viewer.tab_conds()). The reading status and
+favorites are the account's own: queries join UserSeries for it (state_join())."""
 from sqlalchemy import String, and_, case, cast, exists, func, or_, select
 
-from app import shelves
 from app.api.common import TITLE_FIELDS, collection_of, numberings
-from app.models import Book, Progress, Series, SeriesTag, Tag
+from app.models import Book, Progress, Series, SeriesTag, Tag, UserSeries
 
 FORMATS = {  # filter value -> SQL condition (AniList format + country of origin)
     "manga": lambda: and_(or_(Series.format.is_(None), Series.format == "MANGA"),
@@ -49,8 +48,14 @@ def _have_filter(db, wanted):
     return or_(*conds)
 
 
-def reading_aggregates():
-    """Per-series counts of visible books, used for reading status, unread count and sorting."""
+def state_join(query, user_id):
+    """The query with the account's UserSeries row joined (outer: most series have none)."""
+    return query.outerjoin(UserSeries, and_(UserSeries.series_id == Series.id, UserSeries.user_id == user_id))
+
+
+def reading_aggregates(user_id):
+    """Per-series counts of visible books and the account's progress, used for reading status,
+    unread count and sorting."""
     visible = and_(Book.missing_since.is_(None), Book.hidden.is_(False))
     done = case((Progress.completed.is_(True), 1), else_=0)
     return (select(Book.series_id.label("sid"),
@@ -59,7 +64,7 @@ def reading_aggregates():
                    func.sum(case((and_(Progress.completed.is_not(True), Progress.page > 0), 1), else_=0)).label("started"),
                    func.sum(case((func.coalesce(Book.override_extra, Book.extra).is_(False), 1), else_=0)).label("total_main"),
                    func.sum(case((and_(func.coalesce(Book.override_extra, Book.extra).is_(False), Progress.completed.is_(True)), 1), else_=0)).label("done_main"))
-            .outerjoin(Progress, Progress.book_id == Book.id)
+            .outerjoin(Progress, and_(Progress.book_id == Book.id, Progress.user_id == user_id))
             .where(visible).group_by(Book.series_id).subquery())
 
 
@@ -71,9 +76,10 @@ def title_expr(lang):
 
 
 def status_expr(agg):
+    """The reading status as SQL: needs agg and the account's UserSeries (state_join()) joined."""
     total_c, done_c = func.coalesce(agg.c.total, 0), func.coalesce(agg.c.done, 0)
     return case(
-        (Series.reading_status.is_not(None), Series.reading_status),
+        (UserSeries.reading_status.is_not(None), UserSeries.reading_status),
         (and_(total_c > 0, agg.c.total_main > 0, agg.c.done_main == agg.c.total_main), "completed"),
         (or_(done_c > 0, func.coalesce(agg.c.started, 0) > 0), "reading"),
         else_="unread")
@@ -81,7 +87,8 @@ def status_expr(agg):
 
 def filter_query(db, query, f, title, agg):
     """The query with the filters in f added: the GET /api/series filters (q, genre, exclude, pub, read,
-    match, format, have, fav, year_min, year_max, score_min, letter). The read filter needs agg joined."""
+    match, format, have, fav, year_min, year_max, score_min, letter). The query must have the account's
+    UserSeries joined (state_join()); the read filter needs agg joined too."""
     if f.get("q"):
         like = f"%{f['q']}%"
         query = query.filter(or_(Series.folder_name.ilike(like), Series.title_english.ilike(like),
@@ -106,7 +113,7 @@ def filter_query(db, query, f, title, agg):
     if wanted:
         query = query.filter(_have_filter(db, wanted))
     if f.get("fav"):
-        query = query.filter(Series.favorite.is_(True))
+        query = query.filter(UserSeries.favorite.is_(True))
     if f.get("year_min"):
         query = query.filter(Series.start_year >= f["year_min"])
     if f.get("year_max"):
@@ -120,15 +127,3 @@ def filter_query(db, query, f, title, agg):
     elif letter == "#":
         query = query.filter(~first.between("a", "z"))
     return query
-
-
-def shelf_filter(db, request, shelf: int | None):
-    """SQL conditions on Series for what a page shows: never a locked library's series, and only this
-    library's (the home screen's library tabs) when one is given. A locked one asked for gets a 403."""
-    locked = shelves.locked_for(db, request)
-    if shelf in locked:
-        raise HTTPException(403, "This library is locked")
-    conds = [shelves.visible(locked)]
-    if shelf:
-        conds.append(shelves.shelf_column() == shelf)
-    return conds

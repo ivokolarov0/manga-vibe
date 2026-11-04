@@ -42,7 +42,7 @@ class Hello(Plugin):
 | **Buttons on the plugin's page** (Settings → Plugins → Settings) | `global_actions = [Action("sync", "Sync all")]` and `run_global_action(ctx, key)` returning a message |
 | **Status line** under the plugin in Settings | `status(ctx)` returning a short text, e.g. `"Connected as Ivo"` |
 | **Open a page** (e.g. a login) from a button | return `OpenUrl(url, message="")` from `run_action` or `run_global_action` |
-| **A web address of its own** (e.g. an OAuth callback) | `handle_web(ctx, path, params)` answers `GET /api/plugins/<id>/web/<path>`. Return a message (shown on a small page with a link back) or `OpenUrl(url)` to redirect; `None` = 404 |
+| **A web address of its own** (e.g. an OAuth callback) | `handle_web(ctx, path, params)` answers `GET /api/plugins/<id>/web/<path>`. Return a message (shown on a small page with a link back) or `OpenUrl(url)` to redirect; `None` = 404. Any signed-in account can open it (the rest of a plugin's settings are the admin's), and `ctx.user_id` says whose it is, so each account can log in to its own tracker account. Plugin API 7 |
 | **Updates** from its GitHub releases | `repo = "owner/name"` (see [Updates](#updates)) |
 | **Say what it uses** | `permissions = ["Connects to api.myanimelist.net"]`: shown in Settings; an update that adds one asks first (see [Updates](#updates)) |
 | **Draw over reader pages** (e.g. a translation) | `overlay_label = "Translation"` and `page_overlay(ctx, book, page)` returning `Overlay(boxes=[Box(...)])` (see [Drawing on pages](#drawing-on-pages)) |
@@ -67,8 +67,9 @@ class Hello(Plugin):
 | `ctx.read_series_file(series, name)` | bytes of a sidecar file in the series folder (e.g. `series.json`), or `None` |
 | `ctx.db` | the database session (advanced; MangaVibe commits after hooks) |
 | `ctx.reading_direction(series)` | `paged` or `vertical` (webtoons): the way the reader shows the series. Paged always turns forward to the right (there is no right to left). Set on the series, else its library (Settings → Libraries), else Settings → Reader. Plugin API 5 |
-| `ctx.reading_status(series)` | the status the app shows: `unread`, `reading`, `completed`, `plan_to_read`, `on_hold`, `dropped` |
-| `ctx.set_reading_status(series, status)` | set it by hand (`None` = work it out from progress again). Does **not** fire `on_series_status_changed`, so a sync can't loop |
+| `ctx.user_id`, `ctx.user_name` | the account the call is for: who read the book (reading events), pressed the button or opened the page. `None` for scans and background work. Each account has its own progress, status and reading mode, so a tracker sync should keep one login per account. Plugin API 7 |
+| `ctx.reading_status(series)` | the status the account (`ctx.user_id`, else the first admin) sees: `unread`, `reading`, `completed`, `plan_to_read`, `on_hold`, `dropped` |
+| `ctx.set_reading_status(series, status)` | set it by hand for that account (`None` = work it out from progress again). Does **not** fire `on_series_status_changed`, so a sync can't loop |
 | `ctx.http` | the app's HTTP client: `ctx.http.request(method, url, headers=..., data=...)`, `get_json`, `post_json`. Throttled per site, retries, raises `ctx.http.ProviderError` (its `status` is the HTTP code, e.g. `404`, or `None` if the site couldn't be reached) |
 | `ctx.web_url(path)` | full address of this plugin's `handle_web` page, as the browser reaches the app (e.g. `http://192.168.1.5:8080/api/plugins/mal/web/callback`) |
 | `ctx.run_in_background(fn, *args)` | run `fn(ctx, *args)` later with its own database session. Pass ids, not rows. Use it for long work started from a button |

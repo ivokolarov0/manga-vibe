@@ -151,7 +151,7 @@ document.addEventListener("alpine:init", () => {
     openEdit(seriesId, onDone, tab = "info") { this.edit = { open: true, seriesId, onDone, tab }; },
     // libraries (Manga, Comics...; "shelves" in the API, see app/shelves.py)
     shelves: [],         // GET /api/shelves
-    shelf: savedShelf(), // the library the home screen shows: its id, or 0 for All
+    shelf: 0,            // the library the home screen shows: its id, 0 for All, -1 for Shared with me
     unlock: { open: false, shelfId: null, onDone: null },  // the password dialog
     openUnlock(shelfId, onDone) { this.unlock = { open: true, shelfId, onDone }; },
     shelfName(id) { return this.shelves.find((s) => s.id === id)?.name || ""; },
@@ -159,17 +159,30 @@ document.addEventListener("alpine:init", () => {
     // libraries makes a new array even when nothing changed)
     get shelvesKey() { return this.shelves.map((s) => `${s.id}:${s.locked ? 1 : 0}`).join(","); },
     saved: [],           // saved searches (GET /api/saved-searches), see savedSheet()
+    // accounts (app/users.py): GET /api/auth, and the signed-in account (null: the sign-in screen)
+    auth: null,
+    me: null,
+    get isAdmin() { return !!this.me?.is_admin; },
+    // more than one account (or a password): the account menu, sharing and "Shared by" show
+    get accounts() { return !!this.auth && !this.auth.open; },
+    // the libraries this account may put series in: its own (an admin: every one it sees)
+    get ownShelves() { return this.shelves.filter((s) => !s.virtual && (s.mine || this.isAdmin)); },
   });
 
   let lastView = null, libraryScroll = 0;
   history.scrollRestoration = "manual";  // we restore the library position ourselves
   function route() {
     const app = Alpine.store("app");
+    if (!app.me) return;  // the sign-in screen stays until someone signs in
     const [path, query] = location.hash.slice(1).split("?");
     const parts = (path || "/").split("/").filter(Boolean);
     const params = new URLSearchParams(query || "");
     if (parts[0] === "attention") {  // old address: Needs attention now lives in Settings
       return location.replace(`#/settings/att-${params.get("tab") || "unreadable"}`);
+    }
+    // the server's settings are the admin's: others land on Libraries
+    if (parts[0] === "settings" && !app.isAdmin && ADMIN_SECTIONS.some((k) => (parts[1] || "").startsWith(k))) {
+      return location.replace("#/settings/shelves");
     }
     const view = parts[0] || "library";
     if (view === "read") Reader.open(+parts[1], params.get("page"),
@@ -224,18 +237,28 @@ document.addEventListener("alpine:init", () => {
     } catch {}
   }
   queueMicrotask(async () => {
+    if (!(await loadAuth())) {  // nobody signed in: only the sign-in screen
+      Alpine.store("app").view = "signin";
+      document.title = "Sign in · MangaVibe";
+      return;
+    }
     await loadSettings().catch(() => {});
     await lockOnNewTab();
+    Alpine.store("app").shelf = savedShelf();
     await loadShelves().catch(() => {});
     loadSaved();
     api("/api/providers").then((p) => (Alpine.store("app").providers = p)).catch(() => {});
     route();
     refreshAttentionCount();
     setInterval(refreshAttentionCount, 60000);
-    refreshUpdate();
-    setInterval(refreshUpdate, 3600000);  // the server asks GitHub once a day; this only reads its answer
+    if (Alpine.store("app").isAdmin) {
+      refreshUpdate();
+      setInterval(refreshUpdate, 3600000);  // the server asks GitHub once a day; this only reads its answer
+    }
   });
   window.refreshAttentionCount = refreshAttentionCount;
+  // a request found this browser signed out (common.js): the sign-in screen again
+  addEventListener("mv-signed-out", () => { if (Alpine.store("app").me) location.reload(); });
 });
 
 /* ---------------- Android app (android/) ----------------
@@ -285,6 +308,74 @@ window.MangaVibeApp = {
   },
 };
 
+/* ---------------- accounts (app/users.py): sign in, the profile picker, the account menu ----------------
+   Each account has its own progress, statuses, favorites and settings, and sees its own libraries and
+   what others share with it. One account without a password: nobody signs in (auth.open). */
+
+/* Who this browser is. False when nobody is signed in (the sign-in screen shows instead of the app). */
+async function loadAuth() {
+  const app = Alpine.store("app");
+  try { app.auth = await api("/api/auth"); } catch { return true; }  // the server is down: let the pages say so
+  app.me = app.auth.user;
+  return !!app.me;
+}
+
+async function signOut() {
+  await api("/api/auth/sign-out", { method: "POST" }).catch(() => {});
+  // nothing shown until the sign-in screen loads: changing the hash first showed the library for a moment
+  Alpine.store("app").view = null;
+  location.replace("/");  // a new page without the old address (#/settings...)
+}
+
+// a profile's round picture: its first letter on a colour of its own
+const avatarText = (name) => (name || "?").trim().charAt(0).toUpperCase();
+const avatarColor = (id) => `hsl(${(id * 67) % 360} 55% 42%)`;
+
+function signInView() {
+  return {
+    pick: null, password: "", name: "", remember: true, error: "", busy: false,
+    avatarText, avatarColor,
+    get auth() { return this.$store.app.auth; },
+    get profiles() { return this.auth?.profiles || []; },
+    get picker() { return !!this.auth?.picker; },
+    choose(p) {
+      this.error = "";
+      // no password: a click is enough. The PIN/password form stays hidden (pick is only for profiles
+      // that ask for something), so it doesn't flash up while signing in.
+      if (!p.password_kind) return this.submit(p);
+      Object.assign(this, { pick: p, password: "" });
+      this.$nextTick(() => this.$refs.secret?.focus());
+    },
+    back() { Object.assign(this, { pick: null, password: "", error: "" }); },
+    async submit(profile = this.pick) {
+      if (this.busy) return;
+      const body = profile ? { user_id: profile.id, password: this.password, remember: this.remember }
+        : { name: this.name, password: this.password, remember: this.remember };
+      this.busy = true;
+      this.error = "";
+      try {
+        await api("/api/auth/sign-in", { method: "POST", body });
+        try { sessionStorage.removeItem("tab"); } catch {}  // another person: their libraries start locked
+        location.reload();
+      } catch (e) {
+        this.error = e.message;
+        this.password = "";
+        this.busy = false;
+        this.$nextTick(() => this.$refs.secret?.focus());
+      }
+    },
+  };
+}
+
+/* the round button in the top bar: who is signed in, switch profile, sign out */
+function accountMenu() {
+  return {
+    open: false, avatarText, avatarColor,
+    get me() { return this.$store.app.me; },
+    signOut,
+  };
+}
+
 /* ---------------- updates (toast + Settings → Updates) ---------------- */
 
 async function refreshUpdate() {
@@ -330,6 +421,7 @@ function updateToast() {
     get show() {
       if (this.busy) return true;
       const u = this.$store.app.update, a = this.a;
+      if (!this.$store.app.isAdmin) return false;  // updating is the admin's
       if (!u?.supported || !a || a.skipped || a.failed || settings.auto_update === false) return false;
       const app = this.$store.app;
       if (app.view === "read" || (app.view === "settings" && app.sub === "updates")) return false;  // same buttons there
@@ -355,10 +447,16 @@ function updateToast() {
    attention follow it. A library with a password asks for it first; the server then lets this
    browser in for a while (a cookie), until "Lock now" or a new tab. */
 
-const SHELF_KEY = "shelf";
+// the library picked last, per account (several can use one browser)
+const shelfKey = () => `shelf:${Alpine.store("app").me?.id ?? ""}`;
+const SHARED_SHELF = -1;  // "Shared with me": series shared with this account on their own
 
 function savedShelf() {
-  try { return +localStorage.getItem(SHELF_KEY) || 0; } catch { return 0; }
+  // the pick from before accounts ("shelf") was the admin's: no one else starts on it
+  try {
+    const old = Alpine.store("app").isAdmin ? localStorage.getItem("shelf") : null;
+    return +(localStorage.getItem(shelfKey()) ?? old) || 0;
+  } catch { return 0; }
 }
 
 // "shelf=3&" for the API calls that follow the picked library; "" for All
@@ -369,7 +467,7 @@ function shelfParam() {
 
 function setShelf(id, remember = true) {
   const app = Alpine.store("app");
-  if (remember) try { localStorage.setItem(SHELF_KEY, String(id)); } catch {}
+  if (remember) try { localStorage.setItem(shelfKey(), String(id)); } catch {}
   if (app.shelf === id) return;
   app.shelf = id;
   window.refreshAttentionCount?.();
@@ -684,11 +782,18 @@ function library() {
     get emptyText() {
       const app = this.$store.app;
       if (this.params.toString()) return "No series match these filters.";
+      // a new account: nothing of its own and nothing shared with it yet
+      if (!app.shelves.length && !app.isAdmin) {
+        return "Nothing here yet. Ask the admin to share a library or a few series with you.";
+      }
       // every library is locked (e.g. the only one has a password): nothing can be shown until one is opened
       if (app.shelves.length && app.shelves.every((s) => s.locked)) {
         const one = app.shelves.length === 1;
         return `${one ? app.shelves[0].name + " is" : "Every library is"} locked. Tap ${one ? "its" : "a"} tab above to unlock it.`;
       }
+      if (app.shelf === SHARED_SHELF) return "Nothing is shared with you on its own any more.";
+      const tab = app.shelves.find((s) => s.id === app.shelf);
+      if (tab && !tab.mine && !app.isAdmin) return `Nothing in ${tab.name} yet.`;
       if (app.shelf && app.shelves.length > 1) {
         return `Nothing in ${app.shelfName(app.shelf)} yet. Move series here with Edit, or select several `
           + "(hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders.";
@@ -1120,6 +1225,38 @@ function seriesView() {
     },
     tagUrl(name) { return libraryUrl({ genre: name }); },
 
+    /* ---- accounts: a series shared with this account is read only; its owner shares it ---- */
+    get canEdit() { return this.s?.access === "edit"; },
+    get sharedText() {
+      return this.s?.owner ? `Shared by ${this.s.owner} · read only` : "Shared with you · read only";
+    },
+    share: { open: false, list: null, busy: false },
+    async openShare() {
+      this.share = { open: true, list: null, busy: false };
+      try { this.share.list = await api(`/api/series/${this.s.id}/shares`); }
+      catch (e) { this.share.open = false; toast(e.message, 6000, "error"); }
+    },
+    async toggleShare(u) {
+      this.share.busy = true;
+      const ids = this.share.list.filter((x) => (x.id === u.id ? !x.shared : x.shared)).map((x) => x.id);
+      try {
+        await api(`/api/series/${this.s.id}/shares`, { method: "PUT", body: { user_ids: ids } });
+        u.shared = !u.shared;
+        toast(u.shared ? `Shared with ${u.name}. It shows in their “Shared with me”.` : `Not shared with ${u.name} any more`);
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.share.busy = false; }
+    },
+    // shared with this account on its own: which of its libraries it shows in
+    placeOpen: false,
+    async place(shelfId) {
+      this.placeOpen = false;
+      try {
+        await api(`/api/series/${this.s.id}`, { method: "PATCH", body: { shelf_id: shelfId } });
+        await shelvesChanged();
+        toast(shelfId === SHARED_SHELF ? "Back in Shared with me" : `It shows in ${this.$store.app.shelfName(shelfId)} now`);
+        this.reload();
+      } catch (e) { toast(e.message, 6000, "error"); }
+    },
+
     async patch(body, reloadAfter = false) {
       await api(`/api/series/${this.s.id}`, { method: "PATCH", body });
       this.$store.app.libraryDirty++;
@@ -1172,7 +1309,7 @@ function seriesView() {
       catch (e) { toast(e.message, 6000, "error"); btn.disabled = false; btn.textContent = "Refresh metadata"; }
     },
     fixMatch() { this.$store.app.openFix(this.s.id, () => this.reload()); },
-    editInfo(tab = "info") { this.$store.app.openEdit(this.s.id, () => this.reload(), tab); },
+    editInfo(tab = "info") { if (this.canEdit) this.$store.app.openEdit(this.s.id, () => this.reload(), tab); },
     actionBusy: "",  // plugin + key of the plugin button that is running (it can take a while)
     async runAction(a) {
       if (a.confirm && !confirm(a.confirm)) return;
@@ -1484,14 +1621,19 @@ function attentionView() {
 /* ---------------- settings ---------------- */
 
 const SETTINGS_NAV = [["shelves", "Libraries", "📚"], ["library", "Library folders", "📁"], ["display", "Display", "🎨"],
-  ["reader", "Reader", "📖"], ["metadata", "Metadata", "🏷"], ["plugins", "Plugins", "🧩"], ["updates", "Updates", "⟳"]];
+  ["reader", "Reader", "📖"], ["account", "Account", "👤"], ["users", "Accounts", "👥"], ["metadata", "Metadata", "🏷"],
+  ["plugins", "Plugins", "🧩"], ["updates", "Updates", "⟳"]];
+// the server's settings: only the admin sees them (the server refuses them to others too, app/access.py)
+const ADMIN_SECTIONS = ["library", "users", "metadata", "plugins", "plugin-", "updates"];
 const ANDROID = /Android/i.test(navigator.userAgent);
 // on Android phones (in the app or the browser) Settings gets an "Android app" page
 if (ANDROID) SETTINGS_NAV.splice(3, 0, ["app", "Android app", "📱"]);
 
 function settingsView() {
   return {
-    nav: SETTINGS_NAV,
+    get nav() {
+      return SETTINGS_NAV.filter(([k]) => this.$store.app.isAdmin || !ADMIN_SECTIONS.includes(k));
+    },
     attNav: ATT_TABS,
     get section() {
       const s = this.$store.app.sub || "shelves";
@@ -1537,16 +1679,140 @@ function settingsView() {
     async load() {
       if (this.$store.app.view !== "settings") return;
       document.title = "Settings";
-      const [libs, plug, providers] = await Promise.all([api("/api/libraries"), api("/api/plugins"),
-        api("/api/metadata/providers"), loadShelves()]);
+      const admin = this.$store.app.isAdmin, none = Promise.resolve(null);
+      // the server's parts are the admin's (the server refuses them to others)
+      const [libs, plug, providers, users, allShelves] = await Promise.all([
+        admin ? api("/api/libraries") : none, admin ? api("/api/plugins") : none,
+        admin ? api("/api/metadata/providers") : none, api("/api/users").catch(() => []),
+        admin ? api("/api/shelves?all=true") : none, loadShelves()]);
       // selects compare strings, so keep every value as text here; save() converts back
       this.st = Object.fromEntries(Object.entries(settings).map(([k, v]) => [k, String(v)]));
-      Object.assign(this, { libs, providers, plugins: plug.plugins, pluginErrors: plug.errors });
+      Object.assign(this, { libs: libs || [], providers: providers || [], plugins: plug?.plugins || [],
+        pluginErrors: plug?.errors || {}, users, allShelves: allShelves || [] });
       this.stop();
+      if (!admin) return;
       this.pollScan();
       this.pollMeta();
       this.pollPluginStatus();
     },
+    users: [], allShelves: [], avatarText, avatarColor,
+    /* ---- Settings → Libraries with accounts: whose each is, who it's shared with ---- */
+    // the admin sees every library here (to give them to accounts); the others their own and shared ones
+    get shelfList() {
+      const app = this.$store.app;
+      return app.isAdmin ? this.allShelves : app.shelves.filter((s) => !s.virtual);
+    },
+    canChange(sh) { return sh.mine || this.$store.app.isAdmin; },
+    // the other accounts a library can be shared with (not its owner)
+    shareTargets(sh) { return this.users.filter((u) => u.id !== sh.owner?.id); },
+    async reloadShelfLists() {
+      await shelvesChanged();
+      if (this.$store.app.isAdmin) this.allShelves = await api("/api/shelves?all=true").catch(() => this.allShelves);
+    },
+    async toggleShelfShare(sh, u) {
+      const now = sh.shared_with.includes(u.id);
+      const ids = now ? sh.shared_with.filter((x) => x !== u.id) : [...sh.shared_with, u.id];
+      try {
+        await api(`/api/shelves/${sh.id}/shares`, { method: "PUT", body: { user_ids: ids } });
+        sh.shared_with = ids;
+        toast(now ? `${sh.name} isn't shared with ${u.name} any more. Their progress is kept.`
+          : `${sh.name} is shared with ${u.name}, to read`, 5000);
+        await this.reloadShelfLists();
+      } catch (e) { toast(e.message, 6000, "error"); }
+    },
+    async setShelfOwner(sh, v) {
+      const owner = this.users.find((u) => u.id === +v);
+      if (!owner || owner.id === sh.owner?.id) return;
+      if (!confirm(`Give ${sh.name} to ${owner.name}?\n\nIt becomes theirs: they see it, change it and share it. `
+        + "You see it only if they share it with you.")) return this.reloadShelfLists();
+      try {
+        await api(`/api/shelves/${sh.id}`, { method: "PATCH", body: { owner_id: owner.id } });
+        toast(`${sh.name} is ${owner.name}'s now`);
+      } catch (e) { toast(e.message, 6000, "error"); }
+      await this.reloadShelfLists();
+    },
+
+    /* ---- Settings → Account: the signed-in account's name and password or PIN ---- */
+    acct: { name: "", kind: "password", current: "", password: "", again: "" },
+    acctOpen: false,  // the password form is open
+    get me() { return this.$store.app.me; },
+    async renameMe(v) {
+      v = v.trim();
+      if (!v || v === this.me.name) return;
+      try {
+        await api("/api/account", { method: "PATCH", body: { name: v } });
+        this.$store.app.me.name = v;
+        toast(`Renamed to ${v}`);
+      } catch (e) { toast(e.message, 6000, "error"); }
+    },
+    async saveMyPassword(remove = false) {
+      const f = this.acct;
+      if (!remove && !f.password) return toast(f.kind === "pin" ? "Type the new PIN" : "Type the new password");
+      if (!remove && f.password !== f.again) return toast("The two new ones are different");
+      try {
+        await api("/api/account/password", { method: "PUT",
+          body: { current: f.current, password: remove ? "" : f.password, kind: f.kind } });
+        this.acct = { ...this.acct, current: "", password: "", again: "" };
+        this.acctOpen = false;
+        await loadAuth();
+        toast(remove ? "Removed. Picking your profile is enough to sign in now."
+          : "Saved. Other browsers signed in to this account have to sign in again.", 6000);
+      } catch (e) { toast(e.message, 6000, "error"); }
+    },
+    async signOutEverywhere() {
+      if (!confirm("Sign out of this account in every browser and app, this one too?")) return;
+      await api("/api/account/sign-out-everywhere", { method: "POST" }).catch(() => {});
+      location.reload();
+    },
+    signOut,
+
+    /* ---- Settings → Accounts (the admin): add, rename, make admin, reset the password, remove ---- */
+    nu: { name: "", kind: "pin", password: "", is_admin: false },
+    async addUser() {
+      const f = this.nu;
+      if (!f.name.trim()) return toast("Give the account a name");
+      try {
+        await api("/api/users/admin", { method: "POST",
+          body: { name: f.name, kind: f.kind === "none" ? "password" : f.kind,
+                  password: f.kind === "none" ? "" : f.password, is_admin: f.kind !== "none" && f.is_admin } });
+        toast(`${f.name} added. Share a library with them (Settings → Libraries), or give them one.`, 7000);
+        this.nu = { name: "", kind: "pin", password: "", is_admin: false };
+        await this.reloadUsers();
+      } catch (e) { toast(e.message, 7000, "error"); }
+    },
+    async reloadUsers() {
+      this.users = await api("/api/users").catch(() => this.users);
+      await loadAuth();
+    },
+    async patchUser(u, body, msg) {
+      try {
+        await api(`/api/users/admin/${u.id}`, { method: "PATCH", body });
+        toast(msg);
+      } catch (e) { toast(e.message, 6000, "error"); }
+      await this.reloadUsers();
+    },
+    renameUser(u, v) {
+      v = v.trim();
+      if (v && v !== u.name) this.patchUser(u, { name: v }, `Renamed to ${v}`);
+    },
+    resetPassword(u, kind) {
+      const what = kind === "pin" ? "PIN (4 to 12 digits)" : "password";
+      const v = kind === "none" ? "" : prompt(`New ${what} for ${u.name}. They are signed out everywhere.`);
+      if (v === null || (kind !== "none" && !v)) return;
+      this.patchUser(u, { password: v, kind: kind === "none" ? "password" : kind },
+        kind === "none" ? `${u.name} has no password now` : `${u.name}'s ${kind === "pin" ? "PIN" : "password"} is changed`);
+    },
+    async removeUser(u) {
+      if (!confirm(`Remove the account ${u.name}?\n\nTheir progress, statuses, favorites and settings go. `
+        + `Their libraries become yours; no files are deleted.`)) return;
+      try {
+        const r = await api(`/api/users/admin/${u.id}`, { method: "DELETE" });
+        toast(r.libraries_moved ? `Removed. Their ${r.libraries_moved} libraries are yours now.` : "Removed");
+      } catch (e) { toast(e.message, 6000, "error"); }
+      await this.reloadUsers();
+      await this.reloadShelfLists();
+    },
+    passwordLabel(u) { return { pin: "PIN", password: "Password" }[u.password_kind] || "No password"; },
     stop() { this.timers.forEach(clearTimeout); this.timers = []; clearTimeout(this.statusTimer); },
     // the plugins' status lines (e.g. "Queue: 12 pages") stay live while a plugins page is open: asked
     // every 3 s, every 15 s after a minute without a change. Only the status changes, so a setting
@@ -1591,29 +1857,29 @@ function settingsView() {
       return st.library_id != null ? `Scanning ${st.done}/${st.total}…` : "Scanning…";
     },
     /* ---- Settings → Libraries (shelves in the API) ---- */
-    async addShelf() { if (await addShelf()) this.libs = await api("/api/libraries").catch(() => this.libs); },
+    async addShelf() { if (await addShelf()) await this.reloadShelfLists(); },
     async patchShelf(s, body, msg = "Saved") {
       try {
         await api(`/api/shelves/${s.id}`, { method: "PATCH", body });
-        await loadShelves();
         toast(msg);
-      } catch (e) { toast(e.message, 6000, "error"); await loadShelves().catch(() => {}); }
+      } catch (e) { toast(e.message, 6000, "error"); }
+      await this.reloadShelfLists().catch(() => {});
     },
     renameShelf(s, v) {
       v = v.trim();
       if (v && v !== s.name) this.patchShelf(s, { name: v }, `Renamed to ${v}`);
     },
     async deleteShelf(s) {
-      if (s.locked) return this.$store.app.openUnlock(s.id, () => this.deleteShelf(this.$store.app.shelves.find((x) => x.id === s.id)));
-      const others = this.$store.app.shelves.filter((x) => x.id !== s.id);
+      if (s.locked) return this.$store.app.openUnlock(s.id, () => this.deleteShelf(this.shelfList.find((x) => x.id === s.id)));
+      const others = this.shelfList.filter((x) => x.id !== s.id);
       if (!others.length) return toast("This is the only library. Add another one first.", 5000);
       if (!confirm(`Delete the library "${s.name}"?\n\nNo series or files are deleted: its folders and the series `
         + "moved to it show in another library.")) return;
       try {
         const r = await api(`/api/shelves/${s.id}`, { method: "DELETE" });
         toast(`Deleted. Its series are in ${r.moved_to.name} now.`, 5000);
-        this.libs = await api("/api/libraries").catch(() => this.libs);
-        await shelvesChanged();
+        if (this.$store.app.isAdmin) this.libs = await api("/api/libraries").catch(() => this.libs);
+        await this.reloadShelfLists();
       } catch (e) { toast(e.message, 6000, "error"); }
     },
     // the password form of one library: { id, current, password, again }
@@ -1628,14 +1894,14 @@ function settingsView() {
           body: { current: f.current, password: remove ? "" : f.password } });
         this.pw = null;
         toast(remove ? "Password removed" : "Password saved. This browser stays unlocked until “Lock now” or a new tab.", 6000);
-        await shelvesChanged();
+        await this.reloadShelfLists();
       } catch (e) { toast(e.message, 6000, "error"); }
     },
-    unlockShelf(s) { this.$store.app.openUnlock(s.id); },
+    unlockShelf(s) { this.$store.app.openUnlock(s.id, () => this.reloadShelfLists()); },
     async lockShelf(s) {
       await api(`/api/shelves/${s.id}/lock`, { method: "POST" }).catch(() => {});
       toast(`${s.name} is locked`);
-      await shelvesChanged();
+      await this.reloadShelfLists();
     },
     shelfFolders(s) { return s.folders.map((f) => f.root_path).join(", ") || "No folders: only series moved here by hand"; },
     // a folder's library (Settings → Library folders)
@@ -1643,8 +1909,8 @@ function settingsView() {
       try {
         await api(`/api/libraries/${l.id}`, { method: "PATCH", body: { shelf_id: +v } });
         l.shelf_id = +v;
-        toast(`Its series show in ${this.$store.app.shelfName(+v)} now`);
-        await shelvesChanged();
+        toast(`Its series show in ${this.allShelves.find((x) => x.id === +v)?.name || "it"} now`);
+        await this.reloadShelfLists();
       } catch (e) { toast(e.message, 6000, "error"); this.libs = await api("/api/libraries").catch(() => this.libs); }
     },
     async setLibraryHostPath(l, v) {
@@ -1664,7 +1930,7 @@ Your files are not touched. `
       try { await api(`/api/libraries/${l.id}`, { method: "DELETE" }); }
       catch (e) { return toast(e.message, 6000, "error"); }  // e.g. its library is locked
       toast("Folder removed");
-      await shelvesChanged();  // its library goes too when nothing else is in it
+      await this.reloadShelfLists();  // its library goes too when nothing else is in it
       this.load();
     },
     checking: false,
@@ -1879,7 +2145,7 @@ function editSeries() {
     get shelfOptions() {
       const own = this.s?.folder_shelf?.name;
       return [["0", own ? `Like its folder: ${own}` : "Like its folder"],
-        ...this.$store.app.shelves.map((x) => [String(x.id), x.name + (x.locked ? " 🔒" : "")])];
+        ...this.$store.app.ownShelves.map((x) => [String(x.id), x.name + (x.locked ? " 🔒" : "")])];
     },
     close() { this.clearFile(); this.$store.app.edit.open = false; },
     locked(field) { return this.s?.locked_fields.includes(field); },

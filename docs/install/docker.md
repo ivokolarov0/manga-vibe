@@ -43,6 +43,9 @@ All optional:
 | `CACHE_MAX_GB` | `2` | Space for resized pages and thumbnails |
 | `PUID` / `PGID` | `1000` | User the app runs as, if that user can read your manga folder |
 | `AUTO_UPDATE` | `1` | `0` turns off update checks |
+| `ADMIN_USER` | `Admin` | Name of the first account (the admin), made on the first start or the update that added accounts |
+| `ADMIN_PASSWORD` | | Its password. Without one, nobody signs in while it's the only account |
+| `CLEAR_PASSWORD` | | Forgot an account's password: its name removes it on the next start. Remove the variable again afterwards |
 | `CLEAR_LIBRARY_PASSWORD` | | Forgot a library's password: its name (or `all`) removes it on the next start. Remove the variable again afterwards |
 
 ## When a version needs a new image

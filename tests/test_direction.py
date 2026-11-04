@@ -33,10 +33,10 @@ def test_direction_in_order(client):
     lib = client.get("/api/shelves").json()[0]["id"]
     with SessionLocal() as db:
         s = db.get(Series, sid)
-        old = {k: getattr(s, k) for k in ("country_of_origin", "format", "reader_mode")}
+        old = {k: getattr(s, k) for k in ("country_of_origin", "format")}
     old_default = client.get("/api/settings").json()["reader_mode"]
     try:
-        set_series(sid, reader_mode=None)
+        client.patch(f"/api/series/{sid}", json={"reader_mode": "default"})
         client.put("/api/settings", json={"reader_mode": "paged"})
         # nothing set: Settings → Reader
         assert direction(client, sid) == ("paged", "default")
@@ -70,13 +70,13 @@ def test_direction_in_order(client):
 
 
 def test_old_directions_become_pages(client):
-    """Migration 4: rtl and ltr (series, library folders, the default) all become paged; vertical stays."""
+    """Migration 4: rtl and ltr (series, library folders, the default) all become paged; vertical stays.
+    (The series' and the default's columns are the old ones: migration 15 moved them to each account.)"""
     sid, other = series_id(), series_id("Hana to Akuma")
     lib = client.get("/api/libraries").json()[0]["id"]
-    old_default = client.get("/api/settings").json()["reader_mode"]
     try:
-        set_series(sid, reader_mode="rtl")
-        set_series(other, reader_mode="vertical")
+        set_series(sid, old_reader_mode="rtl")
+        set_series(other, old_reader_mode="vertical")
         with SessionLocal() as db:
             db.get(Library, lib).reader_mode = "ltr"
             db.commit()
@@ -85,18 +85,19 @@ def test_old_directions_become_pages(client):
             conn.execute(text("INSERT OR REPLACE INTO setting (key, value) VALUES ('reader_tap_invert', 'true')"))
             appdb.MIGRATIONS[3](conn)
         with SessionLocal() as db:
-            assert db.get(Series, sid).reader_mode == "paged"
-            assert db.get(Series, other).reader_mode == "vertical"
+            assert db.get(Series, sid).old_reader_mode == "paged"
+            assert db.get(Series, other).old_reader_mode == "vertical"
             assert db.get(Library, lib).reader_mode == "paged"
             assert appdb.get_setting(db, "reader_mode") == "paged"
             assert appdb.get_setting(db, "reader_tap_invert") is None
     finally:
-        client.put("/api/settings", json={"reader_mode": old_default})
+        with appdb.engine.begin() as conn:
+            conn.execute(text("DELETE FROM setting WHERE key = 'reader_mode'"))
         with SessionLocal() as db:
             db.get(Library, lib).reader_mode = None
             db.commit()
-        set_series(sid, reader_mode=None)
-        set_series(other, reader_mode=None)
+        set_series(sid, old_reader_mode=None)
+        set_series(other, old_reader_mode=None)
 
 
 def test_plugins_get_the_direction(client):

@@ -1,13 +1,14 @@
 """Saved searches: a name for a set of library filters and sort ("Isekai": genre=Isekai), picked from
 the library page's Saved button. Only the query string is kept, the same one the page's URL has; it
-applies to whichever library is shown. Kept in the saved_searches setting:
+applies to whichever library is shown. Each account has its own, in its saved_searches setting:
 [{"id": 1, "name": "Isekai", "query": "genre=Isekai&sort=year"}]."""
 from urllib.parse import parse_qsl, urlencode
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from app.db import get_db, get_setting, set_setting
+from app.access import Viewer, viewer
+from app.db import get_db, get_user_setting, set_user_setting
 
 router = APIRouter(prefix="/api/saved-searches")
 KEY = "saved_searches"
@@ -17,8 +18,8 @@ PARAMS = {"q", "genre", "exclude", "pub", "read", "match", "format", "have", "fa
           "year_min", "year_max", "score_min", "sort", "order"}
 
 
-def _all(db):
-    return list(get_setting(db, KEY, []) or [])
+def _all(db, user_id):
+    return list(get_user_setting(db, user_id, KEY, []) or [])
 
 
 def _clean(query: str) -> str:
@@ -26,8 +27,8 @@ def _clean(query: str) -> str:
 
 
 @router.get("")
-def list_saved(db=Depends(get_db)):
-    return _all(db)
+def list_saved(db=Depends(get_db), v: Viewer = Depends(viewer)):
+    return _all(db, v.id)
 
 
 class SavedBody(BaseModel):
@@ -36,14 +37,14 @@ class SavedBody(BaseModel):
 
 
 @router.post("")
-def add_saved(body: SavedBody, db=Depends(get_db)):
+def add_saved(body: SavedBody, db=Depends(get_db), v: Viewer = Depends(viewer)):
     """Save a search. The same name again replaces that one's filters."""
     name, query = body.name.strip(), _clean(body.query)
     if not name:
         raise HTTPException(400, "Give the search a name")
     if not query:
         raise HTTPException(400, "Pick some filters first")
-    items = _all(db)
+    items = _all(db, v.id)
     same = next((x for x in items if x["name"].lower() == name.lower()), None)
     if same:
         same["query"] = query
@@ -52,16 +53,16 @@ def add_saved(body: SavedBody, db=Depends(get_db)):
             raise HTTPException(400, f"At most {MAX} saved searches")
         same = {"id": max((x["id"] for x in items), default=0) + 1, "name": name, "query": query}
         items.append(same)
-    set_setting(db, KEY, items)
+    set_user_setting(db, v.id, KEY, items)
     db.commit()
     return same
 
 
 @router.delete("/{saved_id}")
-def delete_saved(saved_id: int, db=Depends(get_db)):
-    items = _all(db)
+def delete_saved(saved_id: int, db=Depends(get_db), v: Viewer = Depends(viewer)):
+    items = _all(db, v.id)
     if not any(x["id"] == saved_id for x in items):
         raise HTTPException(404, "Saved search not found")
-    set_setting(db, KEY, [x for x in items if x["id"] != saved_id])
+    set_user_setting(db, v.id, KEY, [x for x in items if x["id"] != saved_id])
     db.commit()
     return {"ok": True}

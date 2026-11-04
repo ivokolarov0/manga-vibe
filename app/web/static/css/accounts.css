@@ -1,0 +1,257 @@
+/* Accounts: the sign-in screen ("Who's reading?"), the account button in the top bar, what is
+   shared (read only), and the checkboxes for sharing. */
+@layer pages {
+  /* a profile's round picture: its first letter on its own colour (avatarColor() in app.js) */
+  .avatar {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+
+    &.big {
+      width: 84px;
+      height: 84px;
+      font-size: 36px;
+    }
+  }
+
+  /* Settings → Display → Profile button: Hide */
+  [data-account-button="hide"] #topbar .account-menu {
+    display: none !important;
+  }
+
+  #topbar .account-menu {
+    flex: none;
+
+    & > .avatar {
+      cursor: pointer;
+    }
+
+    & .menu-who {
+      display: grid;
+      padding: 8px 10px 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+
+      & small {
+        color: var(--muted);
+      }
+    }
+  }
+
+  /* ---- sign in ---- */
+  .signin {
+    display: grid;
+    min-height: calc(100dvh - 40px);
+    place-items: center;
+  }
+
+  .signin-box {
+    width: min(560px, 100%);
+    text-align: center;
+
+    & .brand {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 28px;
+    }
+
+    & h2 {
+      margin: 0 0 24px;
+      font-size: 20px;
+      font-weight: 600;
+    }
+  }
+
+  .profiles {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .profile {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    width: 110px;
+    padding: 10px 6px;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: var(--radius-panel);
+    color: var(--text);
+
+    & .avatar {
+      transition: transform 0.15s;
+    }
+
+    & .profile-name {
+      overflow: hidden;
+      max-width: 100%;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & small {
+      min-height: 1.2em;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    &:focus-visible {
+      border-color: var(--accent);
+    }
+
+    @media (hover: hover) {
+      &:hover .avatar {
+        transform: scale(1.06);
+      }
+    }
+  }
+
+  .signin-form {
+    display: grid;
+    gap: 12px;
+    max-width: 320px;
+    margin: 0 auto;
+    text-align: left;
+
+    & label:not(.check) {
+      display: grid;
+      gap: 4px;
+    }
+
+    & .btn-row {
+      justify-content: flex-start;
+    }
+
+    & .small-print {
+      font-size: 12px;
+    }
+  }
+
+  .signin-who {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 18px;
+  }
+
+  /* ---- shared with you ---- */
+  .chip.shared {
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+    color: var(--text);
+  }
+
+  .shelf-tabs .shared-mark {
+    margin-left: 4px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .sp-poster.read-only {
+    cursor: default;
+  }
+
+  /* who a library is shared with (Settings → Libraries) */
+  .share-option {
+    flex-wrap: wrap;
+  }
+
+  .share-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+
+  /* a checkbox in a dialog's .options list (Share this series) */
+  .options .check-box {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--muted);
+    border-radius: 5px;
+
+    &::after {
+      content: "✓";
+      color: var(--accent-text);
+      font-size: 13px;
+      font-weight: 700;
+      transform: scale(0);
+    }
+  }
+
+  .options button.on .check-box {
+    background: var(--accent);
+    border-color: var(--accent);
+
+    &::after {
+      transform: scale(1);
+    }
+  }
+
+  /* Settings → Account and Accounts: the library cards' layout (settings.css .lib-card, .shelf-card) */
+  .avatar.big-ish {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .shelf-card .password-fields {
+    & select {
+      background: var(--surface);
+    }
+
+    /* a checkbox with its text on one line, not stacked like the other fields */
+    & label.check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+  }
+
+  .add-user {
+    & .libcard-icon {
+      color: var(--accent);
+    }
+
+    /* everything on one line, the fields sharing the width; it wraps on a narrow screen */
+    & .password-fields {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 10px 14px;
+      max-width: none;
+
+      & > label {
+        flex: 1 1 170px;
+      }
+
+      & input:not([type="checkbox"]),
+      & select {
+        width: 100%;
+        min-width: 0;
+      }
+    }
+
+    & .add-user-end {
+      display: flex;
+      flex: none;
+      align-items: center;
+      gap: 14px;
+      min-height: var(--control-height);
+    }
+  }
+}

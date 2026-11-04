@@ -14,6 +14,62 @@ class Base(DeclarativeBase):
     pass
 
 
+class User(Base):
+    """An account (app/users.py). The first one is the admin. Each has its own reading progress,
+    reading status, favorites and settings, and sees only its own libraries and what is shared with it."""
+    __tablename__ = "account"
+    # ids are never used again: a removed account's sessions must not fit a new one
+    __table_args__ = {"sqlite_autoincrement": True}
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    # "scrypt$n$r$p$salt$hash" (shelves.hash_password); None: no password (a click on the profile is enough)
+    password_hash: Mapped[str | None] = mapped_column(String)
+    # what the sign-in page asks for: "pin" (digits, a number pad) or "password"; None without one
+    password_kind: Mapped[str | None] = mapped_column(String)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    # goes up when the password changes or the account is signed out everywhere: older sessions stop working
+    session_version: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class UserSeries(Base):
+    """One account's own state for a series: what used to sit on Series for everybody."""
+    __tablename__ = "user_series"
+    user_id: Mapped[int] = mapped_column(ForeignKey("account.id", ondelete="CASCADE"), primary_key=True)
+    series_id: Mapped[int] = mapped_column(ForeignKey("series.id", ondelete="CASCADE"), primary_key=True,
+                                           index=True)
+    reading_status: Mapped[str | None] = mapped_column(String)  # a manual choice; None: from progress
+    reader_mode: Mapped[str | None] = mapped_column(String)     # paged | vertical; None: its library's
+    favorite: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class UserSetting(Base):
+    """One account's settings (theme, reader, home screen...); server settings stay in Setting."""
+    __tablename__ = "user_setting"
+    user_id: Mapped[int] = mapped_column(ForeignKey("account.id", ondelete="CASCADE"), primary_key=True)
+    key: Mapped[str] = mapped_column(String, primary_key=True)
+    value: Mapped[dict | list | str | int | float | bool | None] = mapped_column(JSON)
+
+
+class ShelfShare(Base):
+    """A whole library shared with another account, read only. Series added to it later are shared too."""
+    __tablename__ = "shelf_share"
+    shelf_id: Mapped[int] = mapped_column(ForeignKey("shelf.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("account.id", ondelete="CASCADE"), primary_key=True,
+                                         index=True)
+
+
+class SeriesShare(Base):
+    """One series shared with another account without the rest of its library, read only. It shows in
+    their "Shared with me" library, or in one of their own (shelf_id) if they put it there."""
+    __tablename__ = "series_share"
+    series_id: Mapped[int] = mapped_column(ForeignKey("series.id", ondelete="CASCADE"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("account.id", ondelete="CASCADE"), primary_key=True,
+                                         index=True)
+    shelf_id: Mapped[int | None] = mapped_column(ForeignKey("shelf.id", ondelete="SET NULL"))
+
+
 class Shelf(Base):
     """What the app calls a *library* (Manga, Comics...): a set of series shown together, with its own
     reader default and an optional password. Called a shelf in the code, because `Library` below is
@@ -22,6 +78,8 @@ class Shelf(Base):
     __tablename__ = "shelf"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
+    # the account it belongs to: they see it, change it and share it (app/access.py)
+    owner_id: Mapped[int | None] = mapped_column(ForeignKey("account.id", ondelete="SET NULL"), index=True)
     # reading mode (paged or vertical) for its series (see app/direction.py); None: Settings → Reader
     reader_mode: Mapped[str | None] = mapped_column(String)
     # "scrypt$n$r$p$salt$hash" (app/shelves.py), never the password itself; None: not locked
@@ -90,9 +148,11 @@ class Series(Base):
     metadata_source: Mapped[dict | None] = mapped_column(JSON)    # {"provider": "anilist", "id": "123"}
     banner_url: Mapped[str | None] = mapped_column(String)
 
-    reading_status: Mapped[str | None] = mapped_column(String)
-    reader_mode: Mapped[str | None] = mapped_column(String)  # per-series reading mode (paged or vertical)
-    favorite: Mapped[bool] = mapped_column(Boolean, default=False)
+    # no longer used: each account's reading status, reading mode, favorite and last read moved to
+    # UserSeries (migration 15). Named apart so nothing reads them by mistake.
+    old_reading_status: Mapped[str | None] = mapped_column("reading_status", String)
+    old_reader_mode: Mapped[str | None] = mapped_column("reader_mode", String)
+    old_favorite: Mapped[bool] = mapped_column("favorite", Boolean, default=False)
     # the owner says the collection is complete whatever the numbers say (e.g. omnibus editions);
     # not metadata, so a refresh never changes it
     collection_complete: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -103,7 +163,7 @@ class Series(Base):
     has_duplicates: Mapped[bool] = mapped_column(Boolean, default=False)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
-    last_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    old_last_read_at: Mapped[datetime | None] = mapped_column("last_read_at", DateTime(timezone=True), index=True)
     missing_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # what the books' numbers say (app/api/common.py numbering()), stored whenever they change;
     # None until worked out
@@ -182,8 +242,8 @@ class Book(Base):
         return any(v is not None for v in (self.override_volume, self.override_chapter,
                                             self.override_extra)) or self.hidden_by_owner
 
-    progress: Mapped["Progress | None"] = relationship(back_populates="book", uselist=False,
-                                                       cascade="all, delete-orphan")
+    progress: Mapped[list["Progress"]] = relationship(back_populates="book", cascade="all, delete-orphan",
+                                                      passive_deletes=True)
 
 
 class Tag(Base):
@@ -210,11 +270,14 @@ class Link(Base):
 
 
 class Progress(Base):
+    """How far one account has read one book."""
     __tablename__ = "progress"
-    # covering: the per-series counts read only these columns
-    __table_args__ = (Index("ix_progress_book_state", "book_id", "completed", "page"),)
+    __table_args__ = (UniqueConstraint("user_id", "book_id"),
+                      # covering: the per-series counts read only these columns
+                      Index("ix_progress_book_state", "user_id", "book_id", "completed", "page"))
     id: Mapped[int] = mapped_column(primary_key=True)
-    book_id: Mapped[int] = mapped_column(ForeignKey("book.id", ondelete="CASCADE"), unique=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("account.id", ondelete="CASCADE"))
+    book_id: Mapped[int] = mapped_column(ForeignKey("book.id", ondelete="CASCADE"), index=True)
     page: Mapped[int] = mapped_column(Integer, default=0)
     completed: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)

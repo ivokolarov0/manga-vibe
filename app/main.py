@@ -9,8 +9,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app import config, db as database, plugin_updates, shelves, updater
+from app import access, config, db as database, plugin_updates, shelves, updater, users
 from app.api import attention, books, edit, saved, series, shelves as shelves_api, system, update
+from app.api import users as users_api
 from app.metadata import worker as metadata_worker
 from app.plugins import manager as plugins
 from app.posters import MAX_UPLOAD
@@ -36,6 +37,8 @@ async def lifespan(app):
              ", ".join(config.LIBRARY_PATHS))
     database.init_db()
     with database.SessionLocal() as s:
+        users.ensure_admin(s)  # before the folders: a library made for a new one is the admin's
+        users.clear_from_env(s, config.CLEAR_PASSWORD)
         walker.ensure_libraries(s, config.LIBRARY_PATHS)
         shelves.clear_from_env(s, config.CLEAR_LIBRARY_PASSWORD)
         walker.fill_numbering(s)
@@ -128,9 +131,11 @@ class RememberAddress:
 app = FastAPI(title="MangaVibe", lifespan=lifespan)
 app.add_middleware(UploadSizeLimit, limit=MAX_UPLOAD + 64 * 1024)  # + room for the multipart headers
 app.add_middleware(RememberAddress)
-app.add_middleware(shelves.LockGuard)  # a locked library's series, books and pages are refused
+# signed in? admin? may this account see (or change) this series, book, page...? See app/access.py
+app.add_middleware(access.Guard)
 
 
+app.include_router(users_api.router)
 app.include_router(system.router)
 app.include_router(shelves_api.router)
 app.include_router(saved.router)

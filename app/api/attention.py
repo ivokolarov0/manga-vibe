@@ -8,13 +8,12 @@ Keys: err:<book id>, dup:<series id>:<chapter or volume>, gap:<series id>, same:
 import hashlib
 import re
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 
+from app.access import Viewer, viewer
 from app.api.common import book_label, chapter_gaps, display_title, numberings, poster_version, title_lang
-from app import shelves
-from app.api.filters import shelf_filter
 from app.db import get_db, get_setting, set_setting
 from app.metadata.service import ID_FIELDS
 from app.models import Book, Library, Series
@@ -100,12 +99,18 @@ def _book_counts(db, series_ids):
     return dict(q.all())
 
 
+def _shown(v, shelf):
+    """The series the lists are about: the ones the account may fix (its own libraries, or all it
+    sees for an admin), in one library or all of them; a locked library's are left out."""
+    return [v.edit_cond(), *v.tab_conds(shelf)]
+
+
 @router.get("/attention")
-def attention(request: Request, ignored: bool = False, shelf: int | None = None, db=Depends(get_db)):
-    """The lists, for one library (shelf) or all of them; a locked library's series are left out.
+def attention(ignored: bool = False, shelf: int | None = None, db=Depends(get_db), v: Viewer = Depends(viewer)):
+    """The lists, for one library (shelf) or all of them (see _shown()).
     With ignored=true, ignored rows are included (marked "ignored": true)."""
-    shown = shelf_filter(db, request, shelf)
-    lang = title_lang(db)
+    shown = _shown(v, shelf)
+    lang = title_lang(db, v.id)
     skip = set(get_setting(db, "attention_ignored", []) or [])
     lists = {k: [] for k in ("matches", "same", "unreadable", "unsupported", "duplicates", "gaps")}
     hidden = {k: 0 for k in lists}
@@ -177,10 +182,10 @@ def attention(request: Request, ignored: bool = False, shelf: int | None = None,
 
 
 @router.get("/attention/count")
-def attention_count(request: Request, shelf: int | None = None, db=Depends(get_db)):
+def attention_count(shelf: int | None = None, db=Depends(get_db), v: Viewer = Depends(viewer)):
     """Just the badge number (same rules as attention()["count"]), loading only flagged rows,
     so polling it every minute stays cheap on a big library."""
-    shown = shelf_filter(db, request, shelf)
+    shown = _shown(v, shelf)
     skip = set(get_setting(db, "attention_ignored", []) or [])
     live = {sid for (sid,) in db.query(Series.id).filter(Series.missing_since.is_(None), *shown)}
     errors = sum(
@@ -221,14 +226,13 @@ def _key_series(db, key):
 
 
 @router.post("/attention/ignore")
-def ignore_row(body: IgnoreBody, request: Request, db=Depends(get_db)):
-    """Hide one row as a false alarm (or bring it back with ignore=false). Not for a row of a locked
-    library's series."""
+def ignore_row(body: IgnoreBody, db=Depends(get_db), v: Viewer = Depends(viewer)):
+    """Hide one row as a false alarm (or bring it back with ignore=false), for everybody. Only for rows
+    about series the account may change (not a locked library's)."""
     if not KEY_RE.match(body.key):
         raise HTTPException(400, "Unknown row")
-    locked = shelves.locked_for(db, request)
-    if locked and any(shelves.series_shelf(db, sid) in locked for sid in _key_series(db, body.key)):
-        raise HTTPException(403, "This library is locked")
+    if not all(v.can_edit(db, sid) for sid in _key_series(db, body.key)):
+        raise HTTPException(403, "Only the owner of its library can change this")
     keys = set(get_setting(db, "attention_ignored", []) or [])
     (keys.add if body.ignore else keys.discard)(body.key)
     if len(keys) > MAX_IGNORED:

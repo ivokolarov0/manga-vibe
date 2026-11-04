@@ -10,7 +10,8 @@ What a plugin can do:
 - custom actions:     declare `actions` and implement run_action()
 - dropdowns:          declare `choices`, implement get_choice() and set_choice()
 - styling:            set `css` to change how the app looks (see examples/plugins/sakura_theme.py)
-- reading events:     on_book_started(), on_book_completed(), on_series_status_changed()
+- reading events:     on_book_started(), on_book_completed(), on_series_status_changed(); ctx.user_id
+                      says whose (each account has its own progress and status)
 - settings:           declare `settings_fields`, `global_actions` (buttons in Settings) and status()
 - web callback:       handle_web() answers GET /api/plugins/<id>/web/<path> (e.g. an OAuth login)
 - permissions:        list what it uses in `permissions`; an update that adds one asks first
@@ -36,7 +37,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 6
+API_VERSION = 7  # 7: accounts (ctx.user_id, ctx.user_name; status and progress are per account)
 
 
 @dataclass
@@ -242,14 +243,32 @@ def implements(plugin, hook):
 
 
 class Context:
-    """What plugins may use. Read-only for library files."""
+    """What plugins may use. Read-only for library files.
 
-    def __init__(self, plugin, db):
+    user_id: the account the call is for (who pressed the button, read the book...). Reading status,
+    progress and reading mode are each account's own; without an account (scans, background work),
+    the ctx methods use the first admin's. Plugin API 7."""
+
+    def __init__(self, plugin, db, user_id=None):
         from app.metadata import http
         self.plugin = plugin
         self.db = db
+        self.user_id = user_id
         self.log = logging.getLogger(f"mangavibe.plugin.{plugin.id}")
         self.http = http  # http.request/get_json/...: throttled, retries; raises http.ProviderError
+
+    @property
+    def user_name(self):
+        """The name of the account the call is for, or None."""
+        from app.models import User
+        user = self.db.get(User, self.user_id) if self.user_id is not None else None
+        return user.name if user else None
+
+    def _account(self):
+        if self.user_id is not None:
+            return self.user_id
+        from app.users import main_admin_id
+        return main_admin_id(self.db)
 
     def web_url(self, path=""):
         """Full address of this plugin's handle_web() page as the browser reaches the app
@@ -266,19 +285,20 @@ class Context:
         """paged or vertical (webtoons): the way the reader shows the series (its own setting, its
         library's default, then Settings → Reader). Paged always turns forward to the right. Plugin API 5."""
         from app.direction import reading_direction
-        return reading_direction(self.db, series)[0]
+        return reading_direction(self.db, series, self._account())[0]
 
     def reading_status(self, series):
-        from app.api.common import derived_status, series_counts
-        return derived_status(series, series_counts(self.db, [series.id])[series.id])
+        """The status the account (user_id) sees for the series."""
+        from app.api.common import status_of
+        return status_of(self.db, series, self._account())
 
     def set_reading_status(self, series, status):
-        """Set the series' status by hand (None = work it out from progress again).
+        """Set the account's status for the series by hand (None = work it out from progress again).
         Does not fire on_series_status_changed, so a sync can't loop back to itself."""
-        from app.api.common import READING_STATUSES
+        from app.api.common import READING_STATUSES, user_state
         if status is not None and status not in READING_STATUSES:
             raise ValueError(f"unknown reading status {status!r}")
-        series.reading_status = status
+        user_state(self.db, self._account(), series.id, create=True).reading_status = status
 
     # settings stored in the DB under "plugin:<id>"
     @property
@@ -574,11 +594,12 @@ class PluginManager:
 
 
     # --- background worker for reading events and run_in_background() ------
-    def emit(self, event, *args):
-        """Queue a reading event: (book_id) for book events, (series_id, old, new) for status.
-        The worker loads fresh rows. Costs nothing when no plugin listens."""
+    def emit(self, event, *args, user_id=None):
+        """Queue a reading event: (book_id) for book events, (series_id, old, new) for status, by the
+        account user_id (the hook's ctx.user_id). The worker loads fresh rows. Costs nothing when no
+        plugin listens."""
         if any(implements(p, event) for p in self.enabled()):
-            self._put(("event", event, args))
+            self._put(("event", event, args, user_id))
 
     def submit(self, plugin, fn, args):
         self._put(("job", plugin, fn, args))
@@ -599,7 +620,7 @@ class PluginManager:
             item = self._queue.get()
             try:
                 if item[0] == "event":
-                    self._run_event(item[1], item[2])
+                    self._run_event(*item[1:])
                 else:
                     self._run_job(*item[1:])
             except Exception:
@@ -607,7 +628,7 @@ class PluginManager:
             finally:
                 self._queue.task_done()
 
-    def _run_event(self, event, args):
+    def _run_event(self, event, args, user_id=None):
         from app.db import SessionLocal
         from app.models import Book, Series
         for p in self.enabled():
@@ -626,7 +647,7 @@ class PluginManager:
                         return
                     hook_args = (book, db.get(Series, book.series_id))
                 try:
-                    getattr(p, event)(Context(p, db), *hook_args)
+                    getattr(p, event)(Context(p, db, user_id), *hook_args)
                     db.commit()
                 except Exception:
                     db.rollback()

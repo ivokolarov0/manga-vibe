@@ -2,21 +2,23 @@
 import logging
 import traceback
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import func
 
+from app.access import SHARED, Viewer, viewer
 from app.api import filters
 from app.api.common import (READING_STATUSES, book_dict, continue_target, emit_reading_events, get_or_404, now,
-                            series_card, series_counts, status_of, title_lang, visible_books_query)
-from app.api.filters import shelf_filter
+                            progress_of, series_card, series_counts, status_of, title_lang, user_state,
+                            user_states, visible_books_query)
 from app import config, shelves
 from app.db import get_db
 from app.direction import MODES, reading_direction
 from app.metadata import service as metadata, worker as metadata_worker
 from app.metadata.http import ProviderError
-from app.models import Book, Library, Link, PluginField, Progress, Series, SeriesTag, Shelf, Tag
+from app.models import (Book, Library, Link, PluginField, Progress, Series, SeriesShare, SeriesTag, Shelf, Tag,
+                        User, UserSeries)
 from app.plugins import Context, action_result, implements, manager as plugins
 
 router = APIRouter(prefix="/api")
@@ -28,30 +30,31 @@ BLANK_PNG = bytes.fromhex("89504e470d0a1a0a0000000d49484452000000010000000108060
 
 
 @router.get("/series")
-def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "", library: int | None = None,
+def list_series(cursor: int = 0, limit: int = 60, q: str = "", library: int | None = None,
                 shelf: int | None = None,
                 sort: str = "title", order: str = "", genre: list[str] = Query(default=[]),
                 exclude: list[str] = Query(default=[]),
                 pub: str = "", read: str = "", match: str = "", format: str = "", have: str = "",
                 fav: bool = False, year_min: int | None = None, year_max: int | None = None,
-                score_min: int | None = None, letter: str = "", ids_only: bool = False, db=Depends(get_db)):
+                score_min: int | None = None, letter: str = "", ids_only: bool = False, db=Depends(get_db),
+                v: Viewer = Depends(viewer)):
     """Library grid. Multi-value filters are comma-separated (genre=Romance,Comedy).
-    shelf=<id>: one library (Manga, Comics...); without it, every library this browser may see.
-    library=<id>: one library folder.
+    shelf=<id>: one library (Manga, Comics...; -1: Shared with me); without it, every series this
+    account sees in this browser. library=<id>: one library folder.
     letter=a..z keeps titles starting with that letter, letter=# the rest (numbers, symbols, other scripts).
     have=complete,incomplete,unknown: finished series with every volume/chapter here, or something missing.
     ids_only=true: just {"ids": [...]} of every match, in order (multi-select's "Select all")."""
     limit = max(1, min(limit, 200))
-    shown = shelf_filter(db, request, shelf)
-    lang = title_lang(db)
-    agg = filters.reading_aggregates()
+    shown = v.tab_conds(shelf)
+    lang = title_lang(db, v.id)
+    agg = filters.reading_aggregates(v.id)
     total_c, done_c = func.coalesce(agg.c.total, 0), func.coalesce(agg.c.done, 0)
     title = filters.title_expr(lang)
 
     # Adding up every series' books is the expensive part, so it is joined only when the reading
     # status filter or the unread sort needs it. The cards' numbers come from series_counts()
     # for just the page's series.
-    query = db.query(Series)
+    query = filters.state_join(db.query(Series), v.id)
     if filters.split(read) or sort == "unread":
         query = query.outerjoin(agg, agg.c.sid == Series.id)
     query = query.filter(Series.missing_since.is_(None), *shown)
@@ -63,7 +66,7 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
     query = filters.filter_query(db, query, f, title, agg)
 
     sorts = {"title": title, "added": Series.added_at, "updated": Series.updated_at,
-             "read": Series.last_read_at, "score": Series.average_score, "year": Series.start_year,
+             "read": UserSeries.last_read_at, "score": Series.average_score, "year": Series.start_year,
              "unread": total_c - done_c}
     col = sorts.get(sort, title)
     desc = order == "desc" or (order == "" and sort not in ("title",))
@@ -76,13 +79,14 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
     ids = [sid for sid, _ in rows]
     total = rows[0][1] if rows else query.count()
     found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids))} if ids else {}
-    counts_of = series_counts(db, ids)
+    counts_of = series_counts(db, ids, v.id)
+    states = user_states(db, v.id, ids)
     page = [(found[sid], tuple(counts_of[sid])) for sid in ids]
     nxt = cursor + len(rows)
     have_of = filters.collections(db, [s for s, _ in page if s.publication_status == "FINISHED"])
     items = []
     for s, counts in page:
-        card = series_card(s, counts, lang)
+        card = series_card(s, counts, lang, states.get(s.id))
         card["incomplete"] = have_of.get(s.id, {}).get("state") == "incomplete"
         items.append(card)
     return {"items": items,
@@ -90,13 +94,13 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
 
 
 @router.get("/tags")
-def list_tags(request: Request, shelf: int | None = None, db=Depends(get_db)):
+def list_tags(shelf: int | None = None, db=Depends(get_db), v: Viewer = Depends(viewer)):
     """Genres and tags with the number of series using them (for the filter panel), in one library
     or all of them."""
     rows = (db.query(Tag.name, Tag.kind, func.count(SeriesTag.series_id))
             .join(SeriesTag, SeriesTag.tag_id == Tag.id)
             .join(Series, Series.id == SeriesTag.series_id)
-            .filter(Series.missing_since.is_(None), *shelf_filter(db, request, shelf))
+            .filter(Series.missing_since.is_(None), *v.tab_conds(shelf))
             .group_by(Tag.id).order_by(Tag.name).all())
     return [{"name": n, "kind": k, "count": c} for n, k, c in rows]
 
@@ -116,14 +120,15 @@ def host_path(lib, folder):
 
 
 @router.get("/series/{series_id}")
-def get_series(series_id: int, db=Depends(get_db)):
+def get_series(series_id: int, db=Depends(get_db), v: Viewer = Depends(viewer)):
     s = get_or_404(db, Series, series_id)
-    counts = series_counts(db, [s.id])[s.id]
-    lang = title_lang(db)
-    book, page = continue_target(db, s.id)
+    counts = series_counts(db, [s.id], v.id)[s.id]
+    lang = title_lang(db, v.id)
+    state = user_state(db, v.id, s.id)
+    book, page = continue_target(db, s.id, v.id)
     tags = (db.query(Tag, SeriesTag).join(SeriesTag, SeriesTag.tag_id == Tag.id)
             .filter(SeriesTag.series_id == s.id).order_by(SeriesTag.rank.desc().nulls_last()).all())
-    choices = _series_choices(db, s)
+    choices = _series_choices(db, s, v.id)
     shown = {(c["plugin"], c["key"]) for c in choices}  # a dropdown replaces the field with its key
     fields = [f for f in db.query(PluginField).filter_by(series_id=s.id) if (f.plugin, f.key) not in shown]
     folder = db.get(Library, s.library_id)
@@ -132,13 +137,23 @@ def get_series(series_id: int, db=Depends(get_db)):
         x = db.get(Shelf, shelf_id) if shelf_id is not None else None
         return {"id": x.id, "name": x.name} if x else None
 
+    on = shelves.shelf_id_of(db, s)
+    owner_id = db.get(Shelf, on).owner_id if on is not None else None
+    owner = db.get(User, owner_id) if owner_id not in (None, v.id) else None
+    # shared on its own (not seen through its library): where the account put it, else Shared with me
+    alone = on not in v.open_shelves and s.id in v.targets
+    target = v.targets.get(s.id)
     return {
-        **series_card(s, counts, lang),
+        **series_card(s, counts, lang, state),
         "folder_name": s.folder_name, "folder_path": s.folder_path,
         "host_path": host_path(folder, s.folder_path),
         # the library it shows in: its own (moved by hand) or its folder's
-        "shelf": shelf_of(shelves.shelf_id_of(db, s)), "shelf_override": s.shelf_id is not None,
-        "folder_shelf": shelf_of(folder.shelf_id if folder else None),
+        "shelf": (shelf_of(target) or {"id": SHARED, "name": "Shared with me"}) if alone else shelf_of(on),
+        "shelf_override": s.shelf_id is not None if not alone else target is not None,
+        "folder_shelf": shelf_of(folder.shelf_id if folder else None) if not alone else None,
+        # "edit": the account may change it; "read": shared with it by its owner, read only
+        "access": v.access(s.id, on), "shared_alone": alone,
+        "owner": owner.name if owner else None,  # whose library it's in, when not this account's
         "titles": {"english": s.title_english, "romaji": s.title_romaji, "native": s.title_native},
         "synonyms": s.synonyms or [], "description": s.description, "start_year": s.start_year,
         "format": s.format, "chapters_total": s.chapters_total, "volumes_total": s.volumes_total,
@@ -149,9 +164,9 @@ def get_series(series_id: int, db=Depends(get_db)):
         "metadata_source": s.metadata_source, "match_candidates": s.match_candidates or [],
         "publication_status": s.publication_status, "country_of_origin": s.country_of_origin,
         "banner_url": s.banner_url, "has_duplicates": s.has_duplicates,
-        "reader_mode": s.reader_mode, "manual_reading_status": s.reading_status,
+        "reader_mode": state and state.reader_mode, "manual_reading_status": state and state.reading_status,
         # the reading mode the reader uses, and what decided it: series, library or default
-        "direction": dict(zip(("mode", "source"), reading_direction(db, s))),
+        "direction": dict(zip(("mode", "source"), reading_direction(db, s, v.id))),
         "tags": [{"name": t.name, "kind": t.kind, "spoiler": st.is_spoiler} for t, st in tags],
         "links": [{"id": l.id, "site": l.site, "url": l.url} for l in db.query(Link).filter_by(series_id=s.id)],
         "locked_fields": s.locked_fields or [], "poster_source": s.poster_source,
@@ -166,6 +181,7 @@ def get_series(series_id: int, db=Depends(get_db)):
 
 
 class SeriesPatch(BaseModel):
+    """The account's own state for the series (anyone who sees it), and which library it shows in."""
     reading_status: str | None = None
     reader_mode: str | None = None
     favorite: bool | None = None
@@ -176,55 +192,84 @@ class SeriesPatch(BaseModel):
 READER_MODES = set(MODES)
 
 
-def _shelf_choice(db, shelf_id):
-    """What a series' shelf_id becomes: None for 0 (its folder's), else an existing library's id."""
+def _shelf_choice(db, v, shelf_id):
+    """What a series' shelf_id becomes: None for 0 (its folder's), else a library of the account's own
+    (any library for an admin)."""
     if shelf_id == 0:
         return None
-    get_or_404(db, Shelf, shelf_id)
-    return shelf_id
+    return v.own_shelf_or_403(db, shelf_id).id
+
+
+def _move(db, v, s, shelf_id):
+    """Show the series in another library. The owner (or an admin) moves it for everybody; an account
+    a series was shared with on its own only puts it in one of its own libraries (0 or -1: back to
+    Shared with me). Not committed."""
+    on = shelves.shelf_id_of(db, s)
+    if on not in v.open_shelves and s.id in v.targets:
+        share = db.get(SeriesShare, (s.id, v.id))
+        if share is None:  # stopped meanwhile (the caches hadn't caught up yet)
+            shelves.invalidate()
+            raise HTTPException(404, "This series isn't shared with you any more")
+        if shelf_id in (0, SHARED):
+            share.shelf_id = None
+        else:
+            shelf = v.own_shelf_or_403(db, shelf_id)
+            if shelf.owner_id != v.id:
+                raise HTTPException(403, "Pick a library of your own")
+            share.shelf_id = shelf.id
+        return
+    v.edit_or_403(db, s.id)
+    s.shelf_id = _shelf_choice(db, v, shelf_id)
+
+
+def _set_state(db, v, s, body):
+    """The account's own status, reading mode and favorite (not committed)."""
+    if body.reading_status is not None and body.reading_status not in READING_STATUSES:
+        raise HTTPException(400, "Unknown reading status")
+    if body.reader_mode not in (None, "default") and body.reader_mode not in READER_MODES:
+        raise HTTPException(400, "Unknown reader mode")
+    if body.reading_status is None and not body.clear_reading_status and body.reader_mode is None \
+            and body.favorite is None:
+        return
+    state = user_state(db, v.id, s.id, create=True)
+    if body.reading_status is not None:
+        state.reading_status = body.reading_status
+    if body.clear_reading_status:
+        state.reading_status = None
+    if body.reader_mode is not None:  # "default": work it out again (app/direction.py)
+        state.reader_mode = None if body.reader_mode == "default" else body.reader_mode
+    if body.favorite is not None:
+        state.favorite = body.favorite
 
 
 @router.patch("/series/{series_id}")
-def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db)):
+def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db), v: Viewer = Depends(viewer)):
     s = get_or_404(db, Series, series_id)
-    old_status = status_of(db, s)
+    old_status = status_of(db, s, v.id)
     if body.shelf_id is not None:
-        s.shelf_id = _shelf_choice(db, body.shelf_id)
-    if body.reading_status is not None:
-        if body.reading_status not in READING_STATUSES:
-            raise HTTPException(400, "Unknown reading status")
-        s.reading_status = body.reading_status
-    if body.clear_reading_status:
-        s.reading_status = None
-    if body.reader_mode == "default":
-        s.reader_mode = None  # work it out again (app/direction.py)
-    elif body.reader_mode is not None:
-        if body.reader_mode not in READER_MODES:
-            raise HTTPException(400, "Unknown reader mode")
-        s.reader_mode = body.reader_mode
-    if body.favorite is not None:
-        s.favorite = body.favorite
+        _move(db, v, s, body.shelf_id)
+    _set_state(db, v, s, body)
     db.commit()
     if body.shelf_id is not None:
-        shelves.invalidate()  # LockGuard's idea of where it is
-    emit_reading_events(db, s, old_status)
+        shelves.invalidate()  # the access guard's idea of where it is
+    emit_reading_events(db, s, old_status, v.id)
     return {"ok": True}
 
 
 @router.get("/series/{series_id}/books")
-def series_books(series_id: int, all: bool = False, db=Depends(get_db)):
+def series_books(series_id: int, all: bool = False, db=Depends(get_db), v: Viewer = Depends(viewer)):
     get_or_404(db, Series, series_id)
     q = db.query(Book).filter(Book.series_id == series_id, Book.missing_since.is_(None))
     if not all:
         q = q.filter(Book.hidden.is_(False))
     books = q.order_by(Book.sort_index).all()
-    prog = {p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]))}
-    badges = _book_badges(db, books)
+    prog = progress_of(db, v.id, [b.id for b in books])
+    badges = _book_badges(db, books, v.id)
     return [{**book_dict(b, prog.get(b.id)), "badges": badges.get(b.id, [])} for b in books]
 
 
 @router.get("/series/{series_id}/badges")
-def series_badges(series_id: int, all: bool = False, db=Depends(get_db)):
+def series_badges(series_id: int, all: bool = False, db=Depends(get_db), v: Viewer = Depends(viewer)):
     """Only the plugins' labels on the books, so the series page can keep them live (e.g. a translation
     going "Translated 12/40", "13/40", …) without reloading the whole list. `live` is False when no
     plugin labels books, so there's nothing to keep asking for."""
@@ -233,18 +278,18 @@ def series_badges(series_id: int, all: bool = False, db=Depends(get_db)):
     if not all:
         q = q.filter(Book.hidden.is_(False))
     live = any(implements(p, "book_badges") for p in plugins.enabled())
-    badges = _book_badges(db, q.all()) if live else {}
-    return {"live": live, "badges": {str(k): v for k, v in badges.items()}}
+    badges = _book_badges(db, q.all(), v.id) if live else {}
+    return {"live": live, "badges": {str(k): x for k, x in badges.items()}}
 
 
-def _book_badges(db, books):
+def _book_badges(db, books, user_id):
     """{book_id: [{"plugin", "text"}]} from the plugins' book_badges(). A broken one shows no badges."""
     out = {}
     for p in plugins.enabled():
         if not implements(p, "book_badges"):
             continue
         try:
-            labels = p.book_badges(Context(p, db), books) or {}
+            labels = p.book_badges(Context(p, db, user_id), books) or {}
         except Exception:
             log.error("Plugin %s failed in book_badges:\n%s", p.id, traceback.format_exc())
             continue
@@ -271,18 +316,18 @@ def series_poster(series_id: int, size: str = "", db=Depends(get_db, scope="func
     return FileResponse(path, headers={"Cache-Control": "private, max-age=86400"})
 
 
-def _set_read(db, series_id, completed: bool, up_to_book: int | None = None):
+def _set_read(db, user_id, series_id, completed: bool, up_to_book: int | None = None):
     series = get_or_404(db, Series, series_id)
-    old_status = status_of(db, series)
-    books, newly_read = _apply_read(db, series, completed, up_to_book)
+    old_status = status_of(db, series, user_id)
+    books, newly_read = _apply_read(db, user_id, series, completed, up_to_book)
     db.commit()
-    emit_reading_events(db, series, old_status, completed=newly_read)
+    emit_reading_events(db, series, old_status, user_id, completed=newly_read)
     return {"ok": True, "count": len(books)}
 
 
-def _apply_read(db, series, completed: bool, up_to_book: int | None = None):
-    """Mark the series' visible books read (or unread), all or those before up_to_book. Doesn't commit.
-    Returns (the books, ids of the ones that weren't read before)."""
+def _apply_read(db, user_id, series, completed: bool, up_to_book: int | None = None):
+    """Mark the series' visible books read (or unread) for this account, all or those before
+    up_to_book. Doesn't commit. Returns (the books, ids of the ones that weren't read before)."""
     newly_read = []
     books = visible_books_query(db, series.id).all()
     if up_to_book is not None:
@@ -290,13 +335,12 @@ def _apply_read(db, series, completed: bool, up_to_book: int | None = None):
         if idx is None:
             raise HTTPException(404, "Book not in this series")
         books = books[:idx]
-    prog = ({p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]))}
-            if books else {})
+    prog = progress_of(db, user_id, [b.id for b in books])
     for b in books:
         p = prog.get(b.id)
         if completed:
             if p is None:
-                p = Progress(book_id=b.id)
+                p = Progress(user_id=user_id, book_id=b.id)
                 db.add(p)
             if not p.completed:
                 newly_read.append(b.id)
@@ -307,17 +351,18 @@ def _apply_read(db, series, completed: bool, up_to_book: int | None = None):
 
 
 @router.post("/series/{series_id}/mark-read")
-def mark_read(series_id: int, before_book: int | None = None, db=Depends(get_db)):
+def mark_read(series_id: int, before_book: int | None = None, db=Depends(get_db), v: Viewer = Depends(viewer)):
     """Mark all books read, or only those before `before_book` ("mark previous as read")."""
-    return _set_read(db, series_id, True, before_book)
+    return _set_read(db, v.id, series_id, True, before_book)
 
 
 @router.post("/series/{series_id}/mark-unread")
-def mark_unread(series_id: int, db=Depends(get_db)):
-    """Clear all progress; the series also drops out of Continue reading."""
-    s = get_or_404(db, Series, series_id)
-    s.last_read_at = None
-    return _set_read(db, series_id, False)
+def mark_unread(series_id: int, db=Depends(get_db), v: Viewer = Depends(viewer)):
+    """Clear the account's progress; the series also drops out of its Continue reading."""
+    get_or_404(db, Series, series_id)
+    if state := user_state(db, v.id, series_id):
+        state.last_read_at = None
+    return _set_read(db, v.id, series_id, False)
 
 
 class BulkBody(BaseModel):
@@ -330,36 +375,42 @@ BULK_ACTIONS = ("read", "unread", "favorite", "unfavorite", "refresh", "shelf")
 
 
 @router.post("/series/bulk")
-def bulk(body: BulkBody, request: Request, db=Depends(get_db)):
+def bulk(body: BulkBody, db=Depends(get_db), v: Viewer = Depends(viewer)):
     """One action for many series (the library's multi-select). Deleting goes one series at a time
     through DELETE /api/series/{id}, so the page can show progress and stop on a read-only folder.
     refresh queues the series that have a metadata source for the background worker.
-    Series in a locked library are skipped."""
+    Series the account doesn't see (another account's, a locked library) are skipped, and so are
+    shared ones for refresh and shelf (only their owner changes them)."""
     if body.action not in BULK_ACTIONS:
         raise HTTPException(400, "Unknown action")
-    shelf_id = None
-    if body.action == "shelf":
-        if body.shelf_id is None:
-            raise HTTPException(400, "Pick a library")
-        shelf_id = _shelf_choice(db, body.shelf_id)
+    if body.action == "shelf" and body.shelf_id is None:
+        raise HTTPException(400, "Pick a library")
+    if body.action == "shelf" and body.shelf_id not in (0, SHARED):
+        v.own_shelf_or_403(db, body.shelf_id)
     ids = list(dict.fromkeys(body.ids))[:10000]
-    visible = shelves.visible(shelves.locked_for(db, request))
-    found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids), visible)} if ids else {}
+    found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids), v.series_cond())} if ids else {}
+    states = user_states(db, v.id, list(found))
     done, events = 0, []
     for sid in ids:
         s = found.get(sid)
         if s is None:
             continue
         if body.action in ("read", "unread"):
-            old_status = status_of(db, s)
-            if body.action == "unread":
-                s.last_read_at = None
-            _, newly_read = _apply_read(db, s, body.action == "read")
+            old_status = status_of(db, s, v.id)
+            if body.action == "unread" and sid in states:
+                states[sid].last_read_at = None
+            _, newly_read = _apply_read(db, v.id, s, body.action == "read")
             events.append((s, old_status, newly_read))
         elif body.action in ("favorite", "unfavorite"):
-            s.favorite = body.action == "favorite"
+            states[sid] = states.get(sid) or user_state(db, v.id, sid, create=True)
+            states[sid].favorite = body.action == "favorite"
         elif body.action == "shelf":
-            s.shelf_id = shelf_id
+            try:
+                _move(db, v, s, body.shelf_id)
+            except HTTPException:
+                continue  # shared with the account through its library: not its to move
+        elif not v.can_edit(db, sid):
+            continue
         elif s.metadata_source:
             metadata_worker.enqueue("refresh", sid)
         else:
@@ -369,24 +420,25 @@ def bulk(body: BulkBody, request: Request, db=Depends(get_db)):
     if body.action == "shelf":
         shelves.invalidate()
     for s, old_status, newly_read in events:
-        emit_reading_events(db, s, old_status, completed=newly_read)
+        emit_reading_events(db, s, old_status, v.id, completed=newly_read)
     return {"done": done, "skipped": len(ids) - done}
 
 
 @router.get("/continue-reading")
-def continue_reading(request: Request, limit: int = 30, shelf: int | None = None, db=Depends(get_db)):
-    """Series being read, the last read first; in one library (shelf) or all of them."""
-    rows = (db.query(Series).filter(Series.last_read_at.is_not(None), Series.missing_since.is_(None),
-                                    *shelf_filter(db, request, shelf))
-            .order_by(Series.last_read_at.desc()).limit(limit * 2).all())
-    lang = title_lang(db)
-    counts = series_counts(db, [s.id for s in rows])
+def continue_reading(limit: int = 30, shelf: int | None = None, db=Depends(get_db), v: Viewer = Depends(viewer)):
+    """Series the account is reading, the last read first; in one library (shelf) or all of them."""
+    rows = (db.query(Series, UserSeries).join(UserSeries, UserSeries.series_id == Series.id)
+            .filter(UserSeries.user_id == v.id, UserSeries.last_read_at.is_not(None),
+                    Series.missing_since.is_(None), *v.tab_conds(shelf))
+            .order_by(UserSeries.last_read_at.desc()).limit(limit * 2).all())
+    lang = title_lang(db, v.id)
+    counts = series_counts(db, [s.id for s, _ in rows], v.id)
     out = []
-    for s in rows:
-        book, page = continue_target(db, s.id)
+    for s, state in rows:
+        book, page = continue_target(db, s.id, v.id)
         if book is None:
             continue
-        card = series_card(s, counts[s.id], lang)
+        card = series_card(s, counts[s.id], lang, state)
         card["continue"] = {"book_id": book.id, "page": page, "label": book_dict(book)["label"],
                             "page_count": book.page_count}
         out.append(card)
@@ -395,13 +447,13 @@ def continue_reading(request: Request, limit: int = 30, shelf: int | None = None
     return out
 
 
-def _series_choices(db, series):
+def _series_choices(db, series, user_id):
     """The plugins' dropdowns for the series page. A broken get_choice() only hides its dropdown."""
     out = []
     for p in plugins.enabled():
         for c in p.choices:
             try:
-                value = p.get_choice(Context(p, db), c.key, series)
+                value = p.get_choice(Context(p, db, user_id), c.key, series)
             except Exception:
                 log.error("Plugin %s failed in get_choice:\n%s", p.id, traceback.format_exc())
                 continue
@@ -418,16 +470,17 @@ class ChoiceBody(BaseModel):
 
 
 @router.put("/series/{series_id}/choices/{plugin_id}/{key}")
-def set_choice(series_id: int, plugin_id: str, key: str, body: ChoiceBody, db=Depends(get_db)):
+def set_choice(series_id: int, plugin_id: str, key: str, body: ChoiceBody, db=Depends(get_db),
+               v: Viewer = Depends(viewer)):
     s = get_or_404(db, Series, series_id)
     p = plugins.get(plugin_id)
     c = next((c for c in p.choices if c.key == key), None) if p else None
     if c is None:
         raise HTTPException(404, "Dropdown not found")
-    if body.value not in {str(v) for v, _ in c.options}:
+    if body.value not in {str(x) for x, _ in c.options}:
         raise HTTPException(400, "Not one of the options")
     try:
-        result = p.set_choice(Context(p, db), key, s, body.value)
+        result = p.set_choice(Context(p, db, v.id), key, s, body.value)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -436,13 +489,13 @@ def set_choice(series_id: int, plugin_id: str, key: str, body: ChoiceBody, db=De
 
 
 @router.post("/series/{series_id}/actions/{plugin_id}/{action_key}")
-def run_action(series_id: int, plugin_id: str, action_key: str, db=Depends(get_db)):
+def run_action(series_id: int, plugin_id: str, action_key: str, db=Depends(get_db), v: Viewer = Depends(viewer)):
     s = get_or_404(db, Series, series_id)
     p = next((p for p in plugins.enabled() if p.id == plugin_id), None)
     if p is None or action_key not in {a.key for a in p.actions}:
         raise HTTPException(404, "Action not found")
     try:
-        result = p.run_action(Context(p, db), action_key, s)
+        result = p.run_action(Context(p, db, v.id), action_key, s)
         db.commit()
     except Exception as e:
         db.rollback()
@@ -513,12 +566,12 @@ def _metadata_call(db, fn, *args, **kw):
 
 
 @router.post("/series/{series_id}/match")
-def match(series_id: int, body: MatchBody, db=Depends(get_db)):
+def match(series_id: int, body: MatchBody, db=Depends(get_db), v: Viewer = Depends(viewer)):
     s = get_or_404(db, Series, series_id)
     if not body.url and not (body.provider and body.provider_id):
         raise HTTPException(400, "Give a provider and id, or a URL")
     _metadata_call(db, metadata.manual_match, s, body.provider, body.provider_id, body.url)
-    return get_series(series_id, db)
+    return get_series(series_id, db, v)
 
 
 @router.post("/series/{series_id}/unmatch")
@@ -544,9 +597,9 @@ def retry_auto_match(series_id: int, db=Depends(get_db)):
 
 
 @router.post("/series/{series_id}/refresh")
-def refresh(series_id: int, db=Depends(get_db)):
+def refresh(series_id: int, db=Depends(get_db), v: Viewer = Depends(viewer)):
     _metadata_call(db, metadata.refresh, get_or_404(db, Series, series_id))
-    return get_series(series_id, db)
+    return get_series(series_id, db, v)
 
 
 @router.get("/series/{series_id}/delete-info")

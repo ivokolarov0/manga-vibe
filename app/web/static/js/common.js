@@ -18,6 +18,9 @@ async function api(path, opts = {}) {
     const err = new Error(typeof detail === "string" ? detail : detail.message || res.statusText);
     err.status = res.status;
     err.detail = detail;
+    // signed out meanwhile (another browser changed the password, the session ran out): app.js
+    // shows the sign-in screen again
+    if (res.status === 401 && detail?.sign_in) dispatchEvent(new Event("mv-signed-out"));
     throw err;
   }
   return res.json();
@@ -70,13 +73,15 @@ function formatText(text) {
     .replace(/(^|[^\w_])_(?=\S)([^_\n]+?)(?<=\S)_(?![\w_])/g, "$1<em>$2</em>");
 }
 
-/* App settings (theme, reader defaults, ...). One shared object; reload with loadSettings(). */
+/* App settings (theme, reader defaults, ...): the signed-in account's own, and the server's.
+   One shared object; reload with loadSettings(). */
 const settings = {};
 async function loadSettings() {
   Object.assign(settings, await api("/api/settings"));
   document.documentElement.dataset.theme = settings.theme;
   document.documentElement.dataset.card = settings.card_size;
   document.documentElement.dataset.nav = settings.nav_position;
+  document.documentElement.dataset.accountButton = settings.account_button;
   return settings;
 }
 

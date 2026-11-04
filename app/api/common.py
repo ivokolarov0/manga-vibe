@@ -7,9 +7,9 @@ from typing import NamedTuple
 from fastapi import HTTPException
 from sqlalchemy import case, func
 
-from app.db import get_setting
+from app.db import get_user_setting
 from app.metadata import editions
-from app.models import Book, Library, Progress
+from app.models import Book, Library, Progress, UserSeries
 
 READING_STATUSES = {"plan_to_read", "reading", "completed", "on_hold", "dropped"}  # manual choices
 TITLE_FIELDS = {"english": ["title_english", "title_romaji", "title_native"],
@@ -28,8 +28,25 @@ def display_title(series, lang="english"):
     return series.folder_name
 
 
-def title_lang(db):
-    return get_setting(db, "title_language", "english")
+def title_lang(db, user_id):
+    return get_user_setting(db, user_id, "title_language", "english")
+
+
+def user_states(db, user_id, series_ids) -> dict:
+    """{series id: UserSeries} of the account's own state (status, favorite...) for these series."""
+    if not series_ids:
+        return {}
+    return {u.series_id: u for u in db.query(UserSeries).filter(UserSeries.user_id == user_id,
+                                                                 UserSeries.series_id.in_(series_ids))}
+
+
+def user_state(db, user_id, series_id, create=False):
+    """The account's UserSeries for a series: None when there's none yet, unless create (not committed)."""
+    row = db.get(UserSeries, (user_id, series_id))
+    if row is None and create:
+        row = UserSeries(user_id=user_id, series_id=series_id, favorite=False)
+        db.add(row)
+    return row
 
 
 def visible_books_query(db, series_id):
@@ -38,12 +55,20 @@ def visible_books_query(db, series_id):
             .order_by(Book.sort_index))
 
 
-def series_counts(db, series_ids):
-    """{series_id: (total, completed, in_progress, completed_non_extra, total_non_extra)}"""
+def progress_of(db, user_id, book_ids) -> dict:
+    """{book id: Progress} of the account for these books."""
+    if not book_ids:
+        return {}
+    return {p.book_id: p for p in db.query(Progress).filter(Progress.user_id == user_id,
+                                                             Progress.book_id.in_(book_ids))}
+
+
+def series_counts(db, series_ids, user_id):
+    """{series_id: (total, completed, in_progress, completed_non_extra, total_non_extra)} for one account"""
     if not series_ids:
         return {}
     rows = (db.query(Book.series_id, func.coalesce(Book.override_extra, Book.extra), Progress.completed, Progress.page)
-            .outerjoin(Progress, Progress.book_id == Book.id)
+            .outerjoin(Progress, (Progress.book_id == Book.id) & (Progress.user_id == user_id))
             .filter(Book.series_id.in_(series_ids), Book.missing_since.is_(None),
                     Book.hidden.is_(False))
             .all())
@@ -62,9 +87,10 @@ def series_counts(db, series_ids):
     return out
 
 
-def derived_status(series, counts):
-    if series.reading_status:
-        return series.reading_status
+def derived_status(manual, counts):
+    """The reading status shown: the account's own choice (manual), else worked out from its progress."""
+    if manual:
+        return manual
     total, done, started, done_main, total_main = counts
     if total and total_main and done_main == total_main:
         return "completed"
@@ -73,21 +99,22 @@ def derived_status(series, counts):
     return "unread"
 
 
-def status_of(db, series):
-    """The reading status the app shows for one series."""
-    return derived_status(series, series_counts(db, [series.id])[series.id])
+def status_of(db, series, user_id):
+    """The reading status one account sees for one series."""
+    state = user_state(db, user_id, series.id)
+    return derived_status(state and state.reading_status, series_counts(db, [series.id], user_id)[series.id])
 
 
-def emit_reading_events(db, series, old_status, started=(), completed=()):
-    """Tell plugins what the owner just changed. Call after commit; plugins run in the background."""
+def emit_reading_events(db, series, old_status, user_id, started=(), completed=()):
+    """Tell plugins what the account just changed. Call after commit; plugins run in the background."""
     from app.plugins import manager as plugins
     for book_id in started:
-        plugins.emit("on_book_started", book_id)
+        plugins.emit("on_book_started", book_id, user_id=user_id)
     for book_id in completed:
-        plugins.emit("on_book_completed", book_id)
-    new = status_of(db, series)
+        plugins.emit("on_book_completed", book_id, user_id=user_id)
+    new = status_of(db, series, user_id)
     if new != old_status:
-        plugins.emit("on_series_status_changed", series.id, old_status, new)
+        plugins.emit("on_series_status_changed", series.id, old_status, new, user_id=user_id)
 
 
 def poster_version(series):
@@ -101,7 +128,8 @@ def poster_version(series):
     return int(t.timestamp()) if t else 0
 
 
-def series_card(series, counts, lang):
+def series_card(series, counts, lang, state=None):
+    """A library card. state: the account's UserSeries for it (None: nothing set)."""
     total, done = counts[0], counts[1]
     return {
         "id": series.id,
@@ -110,8 +138,8 @@ def series_card(series, counts, lang):
         "unread_count": total - done,
         "progress": round(done / total, 3) if total else 0,
         "publication_status": series.publication_status,
-        "reading_status": derived_status(series, counts),
-        "favorite": series.favorite,
+        "reading_status": derived_status(state and state.reading_status, counts),
+        "favorite": bool(state and state.favorite),
         "poster": f"/api/series/{series.id}/poster?size=sm&v={poster_version(series)}",
         "poster_large": f"/api/series/{series.id}/poster?v={poster_version(series)}",
         "match_status": series.match_status,
@@ -153,12 +181,12 @@ def book_dict(b: Book, progress: Progress | None = None):
     }
 
 
-def continue_target(db, series_id):
-    """(book, page) to continue reading, or (None, 0) when everything is read."""
+def continue_target(db, series_id, user_id):
+    """(book, page) for this account to continue reading, or (None, 0) when it has read everything."""
     books = visible_books_query(db, series_id).filter(Book.error.is_(None)).all()
     if not books:
         return None, 0
-    prog = {p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]))}
+    prog = progress_of(db, user_id, [b.id for b in books])
     if not prog:
         return books[0], 0
     latest = max(prog.values(), key=lambda p: p.updated_at)

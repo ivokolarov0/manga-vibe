@@ -770,7 +770,7 @@ function ovUpdateButtons() {
     b.querySelector("b").textContent = b.dataset.ovLook === "opacity" ? OV_OPACITY[ovOpacity()] : OV_OUTLINE[ovOutline()];
   });
   el.querySelectorAll("[data-ov-unhide]").forEach((b) => {
-    b.hidden = !n || !any;
+    b.hidden = !n || !any || R.book.can_edit === false;
     b.querySelector("span").textContent = `Show ${n} hidden ${n === 1 ? "box" : "boxes"}`;
   });
   sayButtons();
@@ -866,9 +866,11 @@ function ovDraw(i) {
     + `width:${pct(b.w)};height:${pct(b.h)}"${b.title ? ` title="${esc(b.title)}"` : ""}>`
     + `<span>${esc(b.text)}</span>`
     // the × goes to the corner away from the nearer screen edge: the title bar is at the top, the
-    // controls card at the bottom, and either would cover it
-    + `<button class="ov-hide${b.y + b.h / 2 < 0.5 ? " low" : ""}" data-plugin="${esc(l.plugin)}" data-box="${esc(b.id)}" `
-    + `aria-label="Hide this box" title="Hide this box">×</button></div>`)).join("");
+    // controls card at the bottom, and either would cover it. Hiding is for everybody, so only for
+    // those who may change the book (not when it's shared with you to read).
+    + (R.book.can_edit === false ? "" : `<button class="ov-hide${b.y + b.h / 2 < 0.5 ? " low" : ""}" `
+      + `data-plugin="${esc(l.plugin)}" data-box="${esc(b.id)}" aria-label="Hide this box" title="Hide this box">×</button>`)
+    + "</div>")).join("");
   // the × must not count as a tap on the page (turning it or toggling the controls)
   layer.querySelectorAll(".ov-hide").forEach((btn) => {
     for (const type of ["pointerdown", "pointerup"]) btn.addEventListener(type, (e) => e.stopPropagation());

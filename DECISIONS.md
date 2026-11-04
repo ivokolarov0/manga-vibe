@@ -522,6 +522,63 @@ Choices made where the spec was open. Newest at the bottom.
 - **Forgot it:** `CLEAR_LIBRARY_PASSWORD=<name or all>` for one start (the main way: it works whatever
   code the auto-update runs), or `python -m app.shelves clear-password <name>`.
 
+With accounts (below), the password stays: it keeps a library private on a device several people use
+with one account. `LockGuard` became part of the access guard (`app/access.py`), and its lists'
+condition part of `Viewer.series_cond()`.
+
+## Accounts, own progress, sharing (issue #146)
+
+- **Nothing changes for one person.** The update makes one admin account (`ADMIN_USER`, else "Admin";
+  `ADMIN_PASSWORD`, else none) and gives it every progress row, status, favorite, reading mode,
+  personal setting, saved search and library (migration 15). One account without a password means
+  nobody signs in. Before a second account is added the admin must set a password or PIN, and an admin
+  can't remove theirs while others exist, or anyone could pick the admin's profile.
+- **Per account:** `progress` gets `user_id` (unique with `book_id`; the table is rebuilt, since SQLite
+  can't drop the old unique), `user_series` holds status, reading mode, favorite and last read (the old
+  `series` columns stay, renamed `old_*` in the model so nothing reads them by mistake), `user_setting`
+  the reader, display and home screen settings and saved searches. Server settings (matching, updates,
+  the profile picker) stay in `setting`, the admin's to change.
+- **Signing in:** a password, a PIN (digits, a number pad) or nothing per account, scrypt-hashed like the
+  library passwords, slow after 5 wrong tries. A signed session cookie (`mv_session`, HttpOnly,
+  SameSite=Lax): `id.session_version.expiry.hmac`, 180 days with "Stay signed in", else until the browser
+  closes (and a day at most). A new password raises `session_version`, which ends the other sessions.
+  Account ids are never reused (AUTOINCREMENT), so a removed account's cookie can't fit a new one.
+  The key also signs the libraries' unlock tokens, which look the same, so a session signs
+  "session." + its body: neither can pass for the other. Signing in drops the unlock cookie, so the
+  libraries the last person unlocked in that browser lock again.
+- **Giving a library away** (or removing its owner's account): its shares with the new owner go, and so
+  do the new owner's shares of its series on their own (or they'd show twice); series others had put in
+  it go back to their Shared with me; a name the new owner already uses gets " (2)"
+  (`shelves.owner_changed()`).
+- **Profile picker** ("Who's reading?") lists the accounts on the sign-in screen; the admin can turn it
+  off, and the page then asks for a name.
+- **One guard for every request** (`access.Guard`, ASGI): signed out → 401 for every `/api/` call but
+  `/api/auth` and `/api/health`; the server's settings (folders, scans, plugins, updates, accounts) →
+  admin only; every `/api/series|books|links/<id>/...` (pages, thumbnails, posters, downloads included) →
+  404 when the account doesn't see the series, 403 when it only reads it and the request would change
+  it. What a reader may still send is a short list per method (its own progress, status, favorite,
+  reading mode, plugin buttons). It answers from caches (accounts, who sees which library, where each
+  series is), without a thread or a database session; anything that changes those clears them.
+- **Who sees a series:** the owner of its library (`shelf.owner_id`), the accounts the library is shared
+  with (`shelf_share`: series added later are shared too), and the accounts the series alone is shared
+  with (`series_share`). Lists use `Viewer.series_cond()`, so search, Recently added, tags and counts
+  can't show more. Shared on its own, a series shows in the account's "Shared with me" tab (id -1) until
+  it puts it in a library of its own (`series_share.shelf_id`); one library is never another's.
+  Reached both ways, it's one row in the query, so it shows once.
+- **Shared means read only.** Changing metadata, poster, file numbers, match, which library, or
+  deleting is for the library's owner, or an admin. Needs attention lists only what the account may fix.
+  Stopping a share keeps the other account's progress, so sharing again brings it back.
+- **The admin sees what's theirs and what's shared with them** like everyone, plus every library in
+  Settings → Libraries / Library folders, to point folders at them and give them to accounts. Removing an
+  account gives its libraries to the admin who removed it. Only the admin adds folders: they're the
+  server's (the open question in the issue).
+- **Plugins** (API 7): `ctx.user_id` / `ctx.user_name` say whose reading event, button or page it is, and
+  `ctx.reading_status()` / `set_reading_status()` work on that account (the first admin's without one).
+  Plugin settings stay the server's for now; a tracker sync that wants one login per account keys its
+  data by `ctx.user_id`.
+- **Forgot a password:** the admin sets a new one; the admin's own: `CLEAR_PASSWORD=<name>` for one
+  start, or `python -m app.users clear-password <name>`.
+
 ## Saved searches instead of filter libraries
 
 - **Tried first: a library made of filters** ("Isekai": the series of a library that match saved filters),

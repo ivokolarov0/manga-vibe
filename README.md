@@ -54,6 +54,9 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 - **Separate libraries**, e.g. Manga and Comics, as tabs on the home screen. A whole folder goes in
   one, and a single series can be moved to another without moving its files. Each library has its own
   reading mode, and an optional password that hides it until it's unlocked.
+- **Accounts for the whole family**: everyone picks their profile ("Who's reading?"), with a PIN, a
+  password or nothing, and has their own progress, Continue reading, statuses, favorites and settings.
+  Share a whole library, or just a few series, with someone to read. Alone? Nothing changes: no sign-in.
 - **Covers and details** (titles in three languages, description, genres, tags, authors, status,
   score, links) from **AniList** and **MangaUpdates**, matched automatically with a match score.
   If it picked the wrong series, **Fix match** lets you search or paste a link.
