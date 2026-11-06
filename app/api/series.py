@@ -10,13 +10,13 @@ from sqlalchemy import func
 from app.api import filters
 from app.api.common import (READING_STATUSES, book_dict, continue_target, emit_reading_events, get_or_404, now,
                             series_card, series_counts, status_of, title_lang, visible_books_query)
-from app.api.filters import shelf_filter
-from app import config, shelves
+from app.api.filters import visible_series
+from app import config
 from app.db import get_db
 from app.direction import MODES, reading_direction
 from app.metadata import service as metadata, worker as metadata_worker
 from app.metadata.http import ProviderError
-from app.models import Book, Library, Link, PluginField, Progress, Series, SeriesTag, Shelf, Tag
+from app.models import Book, Library, Link, PluginField, Progress, Series, SeriesTag, Tag
 from app.plugins import Context, action_result, implements, manager as plugins
 
 router = APIRouter(prefix="/api")
@@ -29,20 +29,19 @@ BLANK_PNG = bytes.fromhex("89504e470d0a1a0a0000000d49484452000000010000000108060
 
 @router.get("/series")
 def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "", library: int | None = None,
-                shelf: int | None = None,
                 sort: str = "title", order: str = "", genre: list[str] = Query(default=[]),
                 exclude: list[str] = Query(default=[]),
                 pub: str = "", read: str = "", match: str = "", format: str = "", have: str = "",
                 fav: bool = False, year_min: int | None = None, year_max: int | None = None,
                 score_min: int | None = None, letter: str = "", ids_only: bool = False, db=Depends(get_db)):
     """Library grid. Multi-value filters are comma-separated (genre=Romance,Comedy).
-    shelf=<id>: one library (Manga, Comics...); without it, every library this browser may see.
+    Plugins narrow it further (filters.visible_series), e.g. the libraries plugin's shelf=<id>.
     library=<id>: one library folder.
     letter=a..z keeps titles starting with that letter, letter=# the rest (numbers, symbols, other scripts).
     have=complete,incomplete,unknown: finished series with every volume/chapter here, or something missing.
     ids_only=true: just {"ids": [...]} of every match, in order (multi-select's "Select all")."""
     limit = max(1, min(limit, 200))
-    shown = shelf_filter(db, request, shelf)
+    shown = visible_series(db, request)
     lang = title_lang(db)
     agg = filters.reading_aggregates()
     total_c, done_c = func.coalesce(agg.c.total, 0), func.coalesce(agg.c.done, 0)
@@ -90,13 +89,13 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
 
 
 @router.get("/tags")
-def list_tags(request: Request, shelf: int | None = None, db=Depends(get_db)):
-    """Genres and tags with the number of series using them (for the filter panel), in one library
-    or all of them."""
+def list_tags(request: Request, db=Depends(get_db)):
+    """Genres and tags with the number of series using them (for the filter panel), of the series the
+    request may see (e.g. one library)."""
     rows = (db.query(Tag.name, Tag.kind, func.count(SeriesTag.series_id))
             .join(SeriesTag, SeriesTag.tag_id == Tag.id)
             .join(Series, Series.id == SeriesTag.series_id)
-            .filter(Series.missing_since.is_(None), *shelf_filter(db, request, shelf))
+            .filter(Series.missing_since.is_(None), *visible_series(db, request))
             .group_by(Tag.id).order_by(Tag.name).all())
     return [{"name": n, "kind": k, "count": c} for n, k, c in rows]
 
@@ -127,18 +126,14 @@ def get_series(series_id: int, db=Depends(get_db)):
     shown = {(c["plugin"], c["key"]) for c in choices}  # a dropdown replaces the field with its key
     fields = [f for f in db.query(PluginField).filter_by(series_id=s.id) if (f.plugin, f.key) not in shown]
     folder = db.get(Library, s.library_id)
-
-    def shelf_of(shelf_id):
-        x = db.get(Shelf, shelf_id) if shelf_id is not None else None
-        return {"id": x.id, "name": x.name} if x else None
+    mode, source, why = reading_direction(db, s)
 
     return {
         **series_card(s, counts, lang),
         "folder_name": s.folder_name, "folder_path": s.folder_path,
         "host_path": host_path(folder, s.folder_path),
-        # the library it shows in: its own (moved by hand) or its folder's
-        "shelf": shelf_of(shelves.shelf_id_of(db, s)), "shelf_override": s.shelf_id is not None,
-        "folder_shelf": shelf_of(folder.shelf_id if folder else None),
+        # what plugins add, e.g. the library it shows in: {"libraries": {"shelf": {...}, ...}}
+        "plugin_data": _series_info(db, s),
         "titles": {"english": s.title_english, "romaji": s.title_romaji, "native": s.title_native},
         "synonyms": s.synonyms or [], "description": s.description, "start_year": s.start_year,
         "format": s.format, "chapters_total": s.chapters_total, "volumes_total": s.volumes_total,
@@ -150,8 +145,8 @@ def get_series(series_id: int, db=Depends(get_db)):
         "publication_status": s.publication_status, "country_of_origin": s.country_of_origin,
         "banner_url": s.banner_url, "has_duplicates": s.has_duplicates,
         "reader_mode": s.reader_mode, "manual_reading_status": s.reading_status,
-        # the reading mode the reader uses, and what decided it: series, library or default
-        "direction": dict(zip(("mode", "source"), reading_direction(db, s))),
+        # the reading mode the reader uses, what decided it (series, plugin or default) and in words
+        "direction": {"mode": mode, "source": source, "why": why},
         "tags": [{"name": t.name, "kind": t.kind, "spoiler": st.is_spoiler} for t, st in tags],
         "links": [{"id": l.id, "site": l.site, "url": l.url} for l in db.query(Link).filter_by(series_id=s.id)],
         "locked_fields": s.locked_fields or [], "poster_source": s.poster_source,
@@ -170,26 +165,15 @@ class SeriesPatch(BaseModel):
     reader_mode: str | None = None
     favorite: bool | None = None
     clear_reading_status: bool = False
-    shelf_id: int | None = None  # show it in this library; 0: its folder's library again
 
 
 READER_MODES = set(MODES)
-
-
-def _shelf_choice(db, shelf_id):
-    """What a series' shelf_id becomes: None for 0 (its folder's), else an existing library's id."""
-    if shelf_id == 0:
-        return None
-    get_or_404(db, Shelf, shelf_id)
-    return shelf_id
 
 
 @router.patch("/series/{series_id}")
 def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     old_status = status_of(db, s)
-    if body.shelf_id is not None:
-        s.shelf_id = _shelf_choice(db, body.shelf_id)
     if body.reading_status is not None:
         if body.reading_status not in READING_STATUSES:
             raise HTTPException(400, "Unknown reading status")
@@ -205,8 +189,6 @@ def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db)):
     if body.favorite is not None:
         s.favorite = body.favorite
     db.commit()
-    if body.shelf_id is not None:
-        shelves.invalidate()  # LockGuard's idea of where it is
     emit_reading_events(db, s, old_status)
     return {"ok": True}
 
@@ -323,10 +305,9 @@ def mark_unread(series_id: int, db=Depends(get_db)):
 class BulkBody(BaseModel):
     ids: list[int]
     action: str
-    shelf_id: int | None = None  # action "shelf": the library to show them in; 0: their folder's
 
 
-BULK_ACTIONS = ("read", "unread", "favorite", "unfavorite", "refresh", "shelf")
+BULK_ACTIONS = ("read", "unread", "favorite", "unfavorite", "refresh")
 
 
 @router.post("/series/bulk")
@@ -334,17 +315,12 @@ def bulk(body: BulkBody, request: Request, db=Depends(get_db)):
     """One action for many series (the library's multi-select). Deleting goes one series at a time
     through DELETE /api/series/{id}, so the page can show progress and stop on a read-only folder.
     refresh queues the series that have a metadata source for the background worker.
-    Series in a locked library are skipped."""
+    Series the request may not see (e.g. in a locked library) are skipped."""
     if body.action not in BULK_ACTIONS:
         raise HTTPException(400, "Unknown action")
-    shelf_id = None
-    if body.action == "shelf":
-        if body.shelf_id is None:
-            raise HTTPException(400, "Pick a library")
-        shelf_id = _shelf_choice(db, body.shelf_id)
     ids = list(dict.fromkeys(body.ids))[:10000]
-    visible = shelves.visible(shelves.locked_for(db, request))
-    found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids), visible)} if ids else {}
+    visible = visible_series(db, request)
+    found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids), *visible)} if ids else {}
     done, events = 0, []
     for sid in ids:
         s = found.get(sid)
@@ -358,26 +334,22 @@ def bulk(body: BulkBody, request: Request, db=Depends(get_db)):
             events.append((s, old_status, newly_read))
         elif body.action in ("favorite", "unfavorite"):
             s.favorite = body.action == "favorite"
-        elif body.action == "shelf":
-            s.shelf_id = shelf_id
         elif s.metadata_source:
             metadata_worker.enqueue("refresh", sid)
         else:
             continue
         done += 1
     db.commit()  # once for the whole batch: committing per series made big selections slow
-    if body.action == "shelf":
-        shelves.invalidate()
     for s, old_status, newly_read in events:
         emit_reading_events(db, s, old_status, completed=newly_read)
     return {"done": done, "skipped": len(ids) - done}
 
 
 @router.get("/continue-reading")
-def continue_reading(request: Request, limit: int = 30, shelf: int | None = None, db=Depends(get_db)):
-    """Series being read, the last read first; in one library (shelf) or all of them."""
+def continue_reading(request: Request, limit: int = 30, db=Depends(get_db)):
+    """Series being read, the last read first, of the series the request may see (e.g. one library)."""
     rows = (db.query(Series).filter(Series.last_read_at.is_not(None), Series.missing_since.is_(None),
-                                    *shelf_filter(db, request, shelf))
+                                    *visible_series(db, request))
             .order_by(Series.last_read_at.desc()).limit(limit * 2).all())
     lang = title_lang(db)
     counts = series_counts(db, [s.id for s in rows])
@@ -392,6 +364,21 @@ def continue_reading(request: Request, limit: int = 30, shelf: int | None = None
         out.append(card)
         if len(out) >= limit:
             break
+    return out
+
+
+def _series_info(db, series):
+    """{plugin id: what its series_info() adds}; a broken one is left out."""
+    out = {}
+    for p in plugins.enabled():
+        if implements(p, "series_info"):
+            try:
+                info = p.series_info(Context(p, db), series)
+            except Exception:
+                log.error("Plugin %s failed in series_info:\n%s", p.id, traceback.format_exc())
+                continue
+            if info is not None:
+                out[p.id] = info
     return out
 
 

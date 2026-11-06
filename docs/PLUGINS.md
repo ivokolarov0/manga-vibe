@@ -54,6 +54,7 @@ class Hello(Plugin):
 | **Work for hours** without holding up other plugins | `ctx.run_in_thread(fn)`; the loop returns when `ctx.should_stop()` |
 | **An API of its own** | `router = APIRouter()` (FastAPI), served at `/api/plugins/<id>/api/...` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 7 |
 | **Its own buttons, sheets and scripts in the app** | `html = {"library-tools": "<button>…</button>"}` and `js = "…"` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 7 |
+| **Decide what the lists show** (e.g. libraries, accounts) | `series_filter(ctx, request)`, `middleware`, `reading_mode()`, `series_info()`, `on_start()`, `can_switch_off()` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 8 |
 
 ## The `ctx` object
 
@@ -68,7 +69,7 @@ class Hello(Plugin):
 | `ctx.read_entry(book, name)` | bytes of one entry, e.g. `"ComicInfo.xml"` |
 | `ctx.read_series_file(series, name)` | bytes of a sidecar file in the series folder (e.g. `series.json`), or `None` |
 | `ctx.db` | the database session (advanced; MangaVibe commits after hooks) |
-| `ctx.reading_direction(series)` | `paged` or `vertical` (webtoons): the way the reader shows the series. Paged always turns forward to the right (there is no right to left). Set on the series, else its library (Settings → Libraries), else Settings → Reader. Plugin API 5 |
+| `ctx.reading_direction(series)` | `paged` or `vertical` (webtoons): the way the reader shows the series. Paged always turns forward to the right (there is no right to left). Set on the series, else a plugin's default (e.g. its library's, Settings → Libraries), else Settings → Reader. Plugin API 5 |
 | `ctx.reading_status(series)` | the status the app shows: `unread`, `reading`, `completed`, `plan_to_read`, `on_hold`, `dropped` |
 | `ctx.set_reading_status(series, status)` | set it by hand (`None` = work it out from progress again). Does **not** fire `on_series_status_changed`, so a sync can't loop |
 | `ctx.http` | the app's HTTP client: `ctx.http.request(method, url, headers=..., data=...)`, `get_json`, `post_json`. Throttled per site, retries, raises `ctx.http.ProviderError` (its `status` is the HTTP code, e.g. `404`, or `None` if the site couldn't be reached) |
@@ -274,9 +275,11 @@ class Tracker(Plugin):
 
 ## Your own API and UI
 
-Plugin API 7. Some of the app's own features are plugins built this way, so you can switch them off in
-Settings → Plugins or replace them: see **`app/plugins/builtin/saved_searches/`** (the Saved button) for
-a complete one.
+Plugin API 7 (API and markup) and 8 (the hooks below). Some of the app's own features are plugins built
+this way, so you can switch them off in Settings → Plugins or replace them: see
+**`app/plugins/builtin/saved_searches/`** (the Saved button) for a small one and
+**`app/plugins/builtin/libraries/`** (libraries with passwords) for one that uses everything here. A
+plugin folder can use relative imports (`from . import core`).
 
 **API.** Give the plugin a FastAPI router. It answers `/api/plugins/<id>/api/<its paths>`, only while
 the plugin is on (otherwise 404). `plugin_ctx` gives your handlers the usual `ctx`; commit what you change.
@@ -303,9 +306,16 @@ markup like the rest of the page (`x-show`, `@click`, `$store.app`…).
 
 | Slot | Where |
 |---|---|
+| `home-top` | above the library grid and Continue reading (the library tabs). Not inside a component: give your markup `x-data` |
 | `library-tools` | the library page's buttons, after Filter / Sort / Letter |
 | `library-filters` | the row of filters on, after Clear all (the row shows while filters are on) |
-| `sheets` | the end of the page: sheets and dialogs of your own. Open one with `$store.app.sheet = "<name>"` and show it with `x-show="$store.app.sheet === '<name>'"` |
+| `select-menu` | the ⋯ menu of the library's multi-select. `selCount`, `selMenu` and `bulk(action, msg, extra, url)` are there: `bulk` POSTs `{ ids, action, ...extra }` to your `url` and wants `{ done, skipped }` back |
+| `library-end` | the end of the library page, for its dialogs (same names as `select-menu`) |
+| `series-edit` | the series Edit dialog's fields, saved with its Save button (events `edit-open`, `edit-changed`, `edit-save`) |
+| `settings` | a Settings page of your own: add it with `MangaVibe.settingsPage()` and show it with `x-show="section === '<key>'"` |
+| `folder-row` | each folder in Settings → Library folders; `l` is the folder (`l.id`, `l.name`, `l.root_path`) |
+| `attention-note` | under the explanation of a Needs attention list |
+| `sheets` | the end of the page: sheets and dialogs of your own. Open one with `$store.app.sheet = "<name>"` and show it with `x-show="$store.app.sheet === '<name>'"`. Not inside a component: give it `x-data` |
 
 More slots are added as more of the app becomes plugins.
 
@@ -323,12 +333,44 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `filterQuery(params)` | just its filters and sort, in a fixed order (`""` when none are on), to compare two |
 | `filterLabels(query)` | short labels for them: `["Isekai", "not Horror", "Reading"]` |
 | `showLibrary(params)` | show the library page with these filters |
+| `on(pluginId, event, fn)` | listen to the app (events below); only while your plugin is on |
+| `setListScope(pluginId, params)` | query parameters for every list's API call (grid, tags, Continue, Needs attention), e.g. `{ shelf: 3 }`, for your `series_filter()` to read. The lists reload. Taken away when the plugin is switched off |
+| `listsChanged()` | the same lists show something else now (e.g. a library was unlocked): they reload |
+| `settingsPage(pluginId, key, label, icon, at)` | a page of your own in Settings at `#/settings/<key>`, at place `at` in the menu (0: first). Call it in `start`; it goes away when the plugin is switched off |
+| `denied(error, retry)` | used by the app when the server answered 403: the `denied` event gets the answer's `detail` |
+
+**Events** (`MangaVibe.on(pluginId, event, fn)`). `fn` may be async unless it says otherwise.
+
+| Event | When / what to return |
+|---|---|
+| `start` | the page loads (the app waits for it before showing anything), or the plugin is switched on |
+| `stop` | the plugin is switched off: forget what it showed |
+| `denied (detail, retry)` | the server refused something (403) with this `detail`: return `true` if you deal with it (e.g. ask for a password, then call `retry()`) |
+| `series-info (series)` | not async: rows for the series page's details, `[["Library", "Comics"]]`. `series.plugin_data[<id>]` is what your `series_info()` sent |
+| `empty-library ()` | not async: the text for an empty library page, or nothing |
+| `edit-open (series)` | not async: the Edit dialog opened; fill in your fields |
+| `edit-changed (series)` | not async: `true` if your fields changed (else Save just closes) |
+| `edit-save (series)` | Save, after the metadata: save your fields, return `{ message }`, or `{ message, leave: true }` when the series can't be shown any more (the app goes back to the library). Throw to show an error |
+| `settings-open ()` | Settings opened: refresh what you show there |
+| `folders-changed ()` | a library folder was added or removed |
 
 Switching the plugin on or off in Settings adds or takes out its markup in place, without reloading the
 page. Once your script has run it stays loaded until the next page load, so keep what it does to its
 stores and components. **Reload plugins** reloads the page, so a changed plugin shows its new version.
 Put styles in `css` as usual. A plugin folder can keep these in
 files of their own and read them in (the saved searches plugin does).
+
+**On the server** (Plugin API 8), a plugin can shape what everyone sees:
+
+| Hook | |
+|---|---|
+| `series_filter(ctx, request)` | SQL conditions on `models.Series` for what this request may see, in every list and count. Read your own query parameters (`request.query_params`). Raise `HTTPException` to refuse. Not caught: if it fails, the request fails, so nothing shows by mistake. Keep it fast |
+| `middleware = SomeAsgiMiddleware` | put in front of every request while the plugin is on, e.g. to refuse a locked library's pages and images |
+| `reading_mode(ctx, series)` | a default reading mode for series without their own: `("vertical", "the mode of Webtoons")`, or `None` |
+| `series_info(ctx, series)` | a dict sent with the series page as `plugin_data[<id>]` |
+| `on_start(ctx)` | at app start, after Reload plugins and when switched on |
+| `can_switch_off(ctx)` | a reason it can't be switched off now (shown to the owner), or `None` |
+| `on_folders_changed(ctx)` / `on_folder_removed(ctx, folder)` | a library folder was added, or just removed |
 
 ## Styling: plugins and your own custom.css
 

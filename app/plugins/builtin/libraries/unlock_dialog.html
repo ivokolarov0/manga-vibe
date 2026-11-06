@@ -1,0 +1,16 @@
+<!-- a locked library's password ($store.libraries.openUnlock) -->
+<div class="modal" x-data="libraryUnlock" x-show="$store.libraries.unlock.open" x-cloak
+     @click.self="close()" @keydown.escape.window="close()">
+  <div class="small-dialog unlock-dialog"><form @submit.prevent="submit()">
+    <div class="sheet-head"><b x-text="`🔒 ${name}`"></b>
+      <button class="btn small" type="button" @click="close()">Cancel</button></div>
+    <p class="muted">This library is locked. Its series show again in this browser after the password,
+      until “Lock now” or a new tab.</p>
+    <input type="password" x-ref="pw" x-model="password" autocomplete="current-password" maxlength="200"
+           aria-label="Password" placeholder="Password">
+    <p class="err" x-show="error" x-text="error"></p>
+    <div class="btn-row">
+      <button class="btn primary" type="submit" :class="{ busy: busy }" :disabled="busy || !password">Unlock</button>
+    </div>
+  </form></div>
+</div>

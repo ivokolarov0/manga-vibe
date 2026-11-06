@@ -3,23 +3,22 @@ or vertical (webtoons, one long strip).
 
 In this order:
   1. the owner's choice for the series (series page → ⋯ → Reading mode)
-  2. its library's default (Settings → Libraries; the series' own library, else its folder's)
+  2. a plugin's default (Plugin.reading_mode), e.g. the libraries plugin: its library's mode
   3. Settings → Reader → Default reading mode (paged unless changed)
 """
 from app.db import get_setting
-from app.models import Shelf
-from app.shelves import shelf_id_of
 
 MODES = ("paged", "vertical")
 
 
-def reading_direction(db, series) -> tuple[str, str]:
-    """(mode, source): source is series, library or default (what decided it)."""
+def reading_direction(db, series) -> tuple[str, str, str]:
+    """(mode, source, why): source is series, plugin or default (what decided it), why says it in
+    words for the series page, e.g. "the mode of Webtoons"."""
     if series.reader_mode in MODES:
-        return series.reader_mode, "series"
-    shelf_id = shelf_id_of(db, series)
-    shelf = db.get(Shelf, shelf_id) if shelf_id is not None else None
-    if shelf is not None and shelf.reader_mode in MODES:
-        return shelf.reader_mode, "library"
+        return series.reader_mode, "series", "set for this series"
+    from app.plugins import manager as plugins
+    found = plugins.reading_mode(db, series)
+    if found and found[0] in MODES:
+        return found[0], "plugin", found[1]
     mode = get_setting(db, "reader_mode", "paged")
-    return (mode if mode in MODES else "paged"), "default"
+    return (mode if mode in MODES else "paged"), "default", "Settings → Reader"

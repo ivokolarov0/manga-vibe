@@ -1,0 +1,68 @@
+<!-- Settings → Libraries (#/settings/shelves): librarySettings in libraries.js -->
+<section x-show="section === 'shelves'" x-data="librarySettings">
+  <h2>Libraries</h2>
+  <p class="muted">Each library shows its own series, picked with the tabs on the home screen. A folder's
+    series show in its library (Settings → Library folders); one series can be moved to another
+    with Edit, or several at once by holding a card. Files never move.</p>
+  <template x-for="sh in store.list" :key="sh.id">
+    <div class="lib-card shelf-card">
+      <div class="libcard-head">
+        <span class="libcard-icon" aria-hidden="true"
+              x-text="sh.has_password ? (sh.locked ? '🔒' : '🔓') : '📚'"></span>
+        <div class="libcard-title">
+          <input type="text" class="shelf-name" :value="sh.name" maxlength="60" spellcheck="false"
+                 :aria-label="'Name of ' + sh.name" @change="rename(sh, $event.target.value)"
+                 @keydown.enter="$event.target.blur()">
+          <small x-text="(sh.locked ? 'Locked' : sh.series + ' series') + ' · ' + folders(sh)"></small>
+        </div>
+        <div class="row-buttons">
+          <button class="btn small" x-show="sh.locked" @click="store.openUnlock(sh.id)">Unlock</button>
+          <button class="btn small" x-show="sh.has_password && !sh.locked" @click="lock(sh)">Lock now</button>
+          <button class="btn small danger" @click="remove(sh)">Delete</button>
+        </div>
+      </div>
+      <label class="lib-option">
+        <span class="lib-option-text"><span>Reading mode</span>
+          <small>For its series that don't set their own</small></span>
+        <select :value="sh.reader_mode || 'default'" @change="patch(sh, { reader_mode: $event.target.value })"
+                :aria-label="'Reading mode for ' + sh.name">
+          <option value="default">Like Settings → Reader</option>
+          <option value="paged">Pages</option>
+          <option value="vertical">Vertical (webtoons)</option>
+        </select></label>
+      <div class="lib-option">
+        <span class="lib-option-text"><span>Password</span>
+          <small x-text="sh.has_password ? 'Asked for when the library is opened. Its series are hidden everywhere until then.'
+            : 'Optional: keeps this library private from others using the app'"></small></span>
+        <button class="btn small" x-show="pw?.id !== sh.id" @click="openPassword(sh)"
+                x-text="sh.has_password ? 'Change or remove…' : 'Set a password…'"></button>
+      </div>
+      <form class="password-form" x-show="pw?.id === sh.id" @submit.prevent="savePassword(sh)" x-cloak>
+        <template x-if="pw?.id === sh.id">
+          <div class="password-fields">
+            <label x-show="sh.has_password">Current password
+              <input type="password" x-model="pw.current" autocomplete="current-password"></label>
+            <label>New password
+              <input type="password" x-model="pw.password" autocomplete="new-password" maxlength="200"></label>
+            <label>New password again
+              <input type="password" x-model="pw.again" autocomplete="new-password" maxlength="200"></label>
+            <div class="btn-row">
+              <button class="btn small primary" type="submit">Save password</button>
+              <button class="btn small danger" type="button" x-show="sh.has_password" @click="savePassword(sh, true)">Remove password</button>
+              <button class="btn small" type="button" @click="pw = null">Cancel</button>
+            </div>
+            <p class="muted">Forgot it? Start MangaVibe once with <code x-text="'CLEAR_LIBRARY_PASSWORD=' + sh.name"></code>.
+              The app has no accounts, so this keeps the library from others using it; anyone who can open
+              the files or the database still can.</p>
+          </div>
+        </template>
+      </form>
+    </div>
+  </template>
+  <div class="setting-row">
+    <div class="label"><span>Add a library</span>
+      <small>For example Manga, Comics, Manhwa. Then point a folder at it, or move series to it.
+        Just a set of filters (e.g. only Isekai)? Filter the home screen and use “☆ Save search”.</small></div>
+    <button class="btn small primary" @click="store.add()">+ New library</button>
+  </div>
+</section>

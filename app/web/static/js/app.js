@@ -151,15 +151,13 @@ document.addEventListener("alpine:init", () => {
     appBanner: ANDROID && !androidApp && !appBannerDismissed(),  // "Read in the app" on the library
     openFix(seriesId, onDone) { this.fix = { open: true, seriesId, onDone }; },
     openEdit(seriesId, onDone, tab = "info") { this.edit = { open: true, seriesId, onDone, tab }; },
-    // libraries (Manga, Comics...; "shelves" in the API, see app/shelves.py)
-    shelves: [],         // GET /api/shelves
-    shelf: savedShelf(), // the library the home screen shows: its id, or 0 for All
-    unlock: { open: false, shelfId: null, onDone: null },  // the password dialog
-    openUnlock(shelfId, onDone) { this.unlock = { open: true, shelfId, onDone }; },
-    shelfName(id) { return this.shelves.find((s) => s.id === id)?.name || ""; },
-    // which libraries there are and which are locked: what the lists depend on (a reload of the
-    // libraries makes a new array even when nothing changed)
-    get shelvesKey() { return this.shelves.map((s) => `${s.id}:${s.locked ? 1 : 0}`).join(","); },
+    // what plugins add to every list's API call, per plugin: { libraries: { shelf: 3 } } (MangaVibe.setListScope)
+    listScope: {},
+    listsDirty: 0,       // bumped when what the lists show changed for another reason (MangaVibe.listsChanged)
+    // what the lists depend on besides their own filters: they reload when it changes
+    get listKey() { return `${JSON.stringify(this.listScope)}:${this.listsDirty}`; },
+    // Settings' pages: [key, label, icon, plugin id (a plugin's own page)] (MangaVibe.settingsPage)
+    settingsNav: SETTINGS_NAV.map((x) => [...x]),
   });
 
   let lastView = null, libraryScroll = 0;
@@ -217,17 +215,17 @@ document.addEventListener("alpine:init", () => {
     const app = Alpine.store("app");
     try {
       if (app.view === "settings") {
-        app.att = await api(`/api/attention?${shelfParam()}${app.showIgnored ? "ignored=true" : ""}`);
+        app.att = await api(`/api/attention?${scopeParam()}${app.showIgnored ? "ignored=true" : ""}`);
         app.attentionCount = app.att.count;
       } else {
-        app.attentionCount = (await api(`/api/attention/count?${shelfParam()}`)).count;
+        app.attentionCount = (await api(`/api/attention/count?${scopeParam()}`)).count;
       }
     } catch {}
   }
   queueMicrotask(async () => {
     await loadSettings().catch(() => {});
-    await lockOnNewTab();
-    await loadShelves().catch(() => {});
+    // plugins get ready before anything is shown, e.g. libraries: lock them on a new tab, pick one
+    await emitPlugins("start");
     api("/api/providers").then((p) => (Alpine.store("app").providers = p)).catch(() => {});
     route();
     refreshAttentionCount();
@@ -350,126 +348,18 @@ function updateToast() {
   };
 }
 
-/* ---------------- libraries: Manga, Comics... ("shelves" in the API, see app/shelves.py) ----------------
-   The home screen's tabs pick one (or All); the library grid, filters, Continue reading and Needs
-   attention follow it. A library with a password asks for it first; the server then lets this
-   browser in for a while (a cookie), until "Lock now" or a new tab. */
+/* ---------------- what plugins add to every list ----------------
+   e.g. the libraries plugin: shelf=3 for the library picked with its tabs (MangaVibe.setListScope). */
 
-const SHELF_KEY = "shelf";
-
-function savedShelf() {
-  try { return +localStorage.getItem(SHELF_KEY) || 0; } catch { return 0; }
+// "shelf=3&" for the list API calls; "" when no plugin adds anything
+function scopeParam() {
+  const p = new URLSearchParams(scopeEntries());
+  return p.toString() ? `${p}&` : "";
 }
 
-// "shelf=3&" for the API calls that follow the picked library; "" for All
-function shelfParam() {
-  const id = Alpine.store("app").shelf;
-  return id ? `shelf=${id}&` : "";
-}
-
-function setShelf(id, remember = true) {
-  const app = Alpine.store("app");
-  if (remember) try { localStorage.setItem(SHELF_KEY, String(id)); } catch {}
-  if (app.shelf === id) return;
-  app.shelf = id;
-  window.refreshAttentionCount?.();
-}
-
-/* Load the libraries, and keep the picked one if it can be shown: else the only library there is
-   (with one library, "All" would be the same), else All. A locked one isn't kept. */
-async function loadShelves() {
-  const app = Alpine.store("app");
-  app.shelves = await api("/api/shelves");
-  const open = app.shelves.filter((s) => !s.locked);
-  let id = open.some((s) => s.id === app.shelf) ? app.shelf : 0;
-  if (app.shelves.length === 1 && open.length === 1) id = open[0].id;
-  setShelf(id, false);  // the owner's own pick stays saved for when it's unlocked again
-}
-
-function pickShelf(id) {
-  const app = Alpine.store("app");
-  if (app.shelves.find((s) => s.id === id)?.locked) return app.openUnlock(id, () => setShelf(id));
-  setShelf(id);
-}
-
-/* after unlocking, locking, adding or removing a library: everything shown may change */
-async function shelvesChanged() {
-  await loadShelves().catch(() => {});
-  Alpine.store("app").libraryDirty++;  // Continue reading watches the list of libraries itself
-  window.refreshAttentionCount?.();
-}
-
-/* A new tab starts with every library locked again ("until the tab closes"). sessionStorage lives
-   as long as the tab, so a reload doesn't lock. */
-async function lockOnNewTab() {
-  try {
-    if (sessionStorage.getItem("tab")) return;
-    sessionStorage.setItem("tab", "1");
-  } catch { return; }
-  await api("/api/shelves/lock", { method: "POST" }).catch(() => {});
-}
-
-async function addShelf() {
-  const name = prompt("Name of the new library, e.g. Comics");
-  if (!name?.trim()) return null;
-  try {
-    const r = await api("/api/shelves", { method: "POST", body: { name } });
-    await loadShelves();
-    toast(`${r.name} added. Move series to it with Edit, or several at once: hold a card to select them. `
-      + "A whole folder: Settings → Library folders.", 9000);
-    return r;
-  } catch (e) { toast(e.message, 6000, "error"); return null; }
-}
-
-function shelfTabs() {
-  return {
-    get list() { return this.$store.app.shelves; },
-    get showAll() { return this.list.length > 1; },
-    // unlocked libraries with a password: "Lock now" locks them again
-    get anyOpen() { return this.list.some((s) => s.has_password && !s.locked); },
-    on(id) { return this.$store.app.shelf === id; },
-    pick(id) { pickShelf(id); },
-    async add() {
-      const r = await addShelf();
-      if (r) setShelf(r.id);
-    },
-    async lockNow() {
-      await api("/api/shelves/lock", { method: "POST" }).catch(() => {});
-      toast("Locked. The password is needed again.");
-      await shelvesChanged();
-    },
-  };
-}
-
-/* the password dialog of a locked library ($store.app.openUnlock) */
-function unlockDialog() {
-  return {
-    password: "", error: "", busy: false,
-    get name() { return this.$store.app.shelfName(this.$store.app.unlock.shelfId) || "This library"; },
-    init() {
-      this.$watch("$store.app.unlock.open", (open) => {
-        if (!open) return;
-        Object.assign(this, { password: "", error: "", busy: false });
-        this.$nextTick(() => this.$refs.pw?.focus());
-      });
-    },
-    close() { this.$store.app.unlock.open = false; },
-    async submit() {
-      if (this.busy || !this.password) return;
-      const u = this.$store.app.unlock;
-      this.busy = true;
-      this.error = "";
-      try {
-        await api(`/api/shelves/${u.shelfId}/unlock`, { method: "POST", body: { password: this.password } });
-        this.close();
-        await shelvesChanged();
-        u.onDone?.();
-      } catch (e) {
-        this.error = e.message;
-        this.password = "";
-      } finally { this.busy = false; }
-    },
-  };
+function scopeEntries() {
+  return Object.values(Alpine.store("app").listScope).flatMap((o) => Object.entries(o))
+    .filter(([, v]) => v !== null && v !== undefined && v !== "").map(([k, v]) => [k, String(v)]);
 }
 
 /* ---------------- top bar ---------------- */
@@ -518,7 +408,8 @@ function library() {
       this.$watch("$store.app.query", () => this.sync());
       this.$watch("$store.app.view", () => this.sync());
       this.$watch("$store.app.libraryDirty", () => { this.key = null; this.sync(); });
-      this.$watch("$store.app.shelf", () => { this.endSelect(); this.sync(); });  // another library
+      // a plugin changed what the lists show (e.g. another library, or one was unlocked)
+      this.$watch("$store.app.listKey", () => { this.endSelect(); this.sync(); });
       // after reading: update the cards in place (now, or when the library is next shown)
       this.$watch("$store.app.progressDirty", () => { this.stale = true; this.refresh(); });
       this.$watch("$store.app.view", () => this.refresh());
@@ -529,11 +420,12 @@ function library() {
         if (entries[0].isIntersecting && this.$store.app.view === "library" && !this.paged) this.loadMore();
       }, { rootMargin: "800px" }).observe(this.$refs.sentinel);
     },
-    // the filters without the page number, and the library picked: what the API gets besides cursor/limit
+    // the filters without the page number, and what plugins add (e.g. the library picked): what the API
+    // gets besides cursor/limit
     get filters() {
       const p = new URLSearchParams(this.$store.app.query);
       p.delete("page");
-      if (this.$store.app.shelf) p.set("shelf", this.$store.app.shelf);
+      for (const [k, v] of scopeEntries()) p.set(k, v);
       return p.toString();
     },
     sync() {
@@ -542,7 +434,9 @@ function library() {
       const paged = settings.library_listing === "paged";
       const page = paged ? Math.max(1, parseInt(new URLSearchParams(this.$store.app.query).get("page")) || 1) : 1;
       const size = +settings.library_page_size || 60;
-      const base = `${paged ? "paged" : "lazy"}:${size}:${this.filters}`, key = `${base}:${page}`;
+      // listsDirty: a plugin said the same filters now show something else (e.g. a library was unlocked)
+      const base = `${paged ? "paged" : "lazy"}:${size}:${this.filters}:${this.$store.app.listsDirty}`;
+      const key = `${base}:${page}`;
       if (key === this.key) return;
       const pageChange = paged && base === this.base && this.key !== null;  // same list, other page
       Object.assign(this, { cursor: 0, done: false, loading: false, key, base, paged, page, size });
@@ -680,18 +574,9 @@ function library() {
     // any filter or sort on (a plugin can add to their row, e.g. Save search)
     get filtersOn() { return !!searchQuery(this.params); },
     get emptyText() {
-      const app = this.$store.app;
       if (this.params.toString()) return "No series match these filters.";
-      // every library is locked (e.g. the only one has a password): nothing can be shown until one is opened
-      if (app.shelves.length && app.shelves.every((s) => s.locked)) {
-        const one = app.shelves.length === 1;
-        return `${one ? app.shelves[0].name + " is" : "Every library is"} locked. Tap ${one ? "its" : "a"} tab above to unlock it.`;
-      }
-      if (app.shelf && app.shelves.length > 1) {
-        return `Nothing in ${app.shelfName(app.shelf)} yet. Move series here with Edit, or select several `
-          + "(hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders.";
-      }
-      return "No series yet. The first scan may still be running; see Settings.";
+      // a plugin may know why (e.g. libraries: this one is locked, or nothing was moved here yet)
+      return collectPlugins("empty-library")[0] || "No series yet. The first scan may still be running; see Settings.";
     },
     cardSub,
 
@@ -757,7 +642,7 @@ function library() {
     },
     endSelect() {
       if (this.working) return;
-      Object.assign(this, { selecting: false, sel: {}, anchor: null, selMenu: false, delOpen: false, moveOpen: false });
+      Object.assign(this, { selecting: false, sel: {}, anchor: null, selMenu: false, delOpen: false });
     },
     async selectAll() {  // every series matching the filters, also the ones not loaded yet
       this.selMenu = false;
@@ -766,18 +651,13 @@ function library() {
         this.sel = Object.fromEntries(ids.map((id) => [id, true]));
       } catch (e) { toast(e.message, 6000, "error"); }
     },
-    // ⋯ → Move to library: the dialog lists the libraries, and "their folder's library"
-    moveOpen: false,
-    moveTo(shelfId) {
-      this.moveOpen = false;
-      const name = shelfId ? this.$store.app.shelfName(shelfId) : "their folders' libraries";
-      this.bulk("shelf", (n) => `Moved ${n} series to ${name}`, { shelf_id: shelfId });
-    },
-    async bulk(action, msg, extra = {}) {
+    // one action for the selected series. Plugin markup in the select-menu slot can use it with its own
+    // address: it gets { ids, action, ...extra } and answers { done, skipped } (e.g. libraries' Move)
+    async bulk(action, msg, extra = {}, url = "/api/series/bulk") {
       this.selMenu = false;
       this.working = "Working…";
       try {
-        const r = await api("/api/series/bulk", { method: "POST", body: { ids: Object.keys(this.sel).map(Number), action, ...extra } });
+        const r = await api(url, { method: "POST", body: { ids: Object.keys(this.sel).map(Number), action, ...extra } });
         toast(msg(r.done) + (r.skipped && action === "refresh" ? ` (${r.skipped} without metadata skipped)` : ""));
         this.working = "";
         this.endSelect();
@@ -826,7 +706,7 @@ function filterSheet() {
         if (sheet !== "filter") return;
         // unfold the groups that have something selected, so nothing chosen is hidden
         for (const [k] of FILTER_GROUPS) if (this.selected(k)) this.open[k] = true;
-        this.tags = await api(`/api/tags?${shelfParam()}`).catch(() => this.tags);
+        this.tags = await api(`/api/tags?${scopeParam()}`).catch(() => this.tags);
         for (const k of ["genres", "tags"]) if (this.selected(k)) this.open[k] = true;
       });
     },
@@ -939,6 +819,9 @@ function searchParts(qs) {
    register their stores and components in MangaVibe.onStart(). Keep to these names: everything else
    in app.js can change in any version. */
 let alpineStarted = false;
+const pluginHandlers = [];         // [plugin id, event, fn] (MangaVibe.on)
+const stoppedPlugins = new Set();  // switched off since the page loaded: their handlers don't run
+
 window.MangaVibe = {
   // run fn when Alpine starts (Alpine.store, Alpine.data), or now if it already has
   onStart(fn) { alpineStarted ? fn() : document.addEventListener("alpine:init", fn); },
@@ -949,13 +832,105 @@ window.MangaVibe = {
   filterQuery: searchQuery,   // its filters and sort only, in a fixed order: "" when none are on
   filterLabels: searchParts,  // "genre=Isekai&read=reading" -> ["Isekai", "Reading"]
   showLibrary: navigateLibrary,  // show the library page with these URLSearchParams (back to page 1)
+  // listen to the app (docs/PLUGINS.md, "Events"): only while the plugin is on
+  on(pluginId, event, fn) { pluginHandlers.push([pluginId, event, fn]); },
+  // what this plugin adds to every list's API call (grid, tags, Continue, Needs attention), e.g.
+  // { shelf: 3 }; {} for nothing. The lists reload.
+  setListScope(pluginId, params) {
+    const app = Alpine.store("app");
+    app.listScope = { ...app.listScope, [pluginId]: { ...params } };
+    window.refreshAttentionCount?.();
+  },
+  // what the lists show changed on the server (e.g. a library was unlocked): they reload
+  listsChanged() {
+    Alpine.store("app").listsDirty++;
+    window.refreshAttentionCount?.();
+  },
+  // a page of the plugin's own in Settings (#/settings/<key>), at this place in the menu; its markup
+  // goes into the "settings" slot with x-show="section === '<key>'". Add it in the "start" event.
+  settingsPage(pluginId, key, label, icon, at = Infinity) {
+    const app = Alpine.store("app"), nav = app.settingsNav.filter(([k]) => k !== key);
+    nav.splice(Math.min(at, nav.length), 0, [key, label, icon, pluginId]);
+    app.settingsNav = nav;
+  },
+  // the server refused something (an api() error): a plugin may know what to do, e.g. ask for a
+  // library's password and then call retry(). Whether one did.
+  async denied(err, retry) {
+    if (err?.status !== 403) return false;
+    return (await emitPlugins("denied", [err.detail, retry])).length > 0;
+  },
 };
 
+function liveHandlers(event, only = null) {
+  return pluginHandlers.filter(([id, e]) => e === event && !stoppedPlugins.has(id) && (!only || id === only))
+    .map(([, , fn]) => fn);
+}
+
+// run the plugins' handlers for an event in turn and give their answers (null/undefined/false left
+// out). A failing handler is logged and skipped, unless strict (the caller shows the error).
+async function emitPlugins(event, args = [], { only = null, strict = false } = {}) {
+  const out = [];
+  for (const fn of liveHandlers(event, only)) {
+    try {
+      const r = await fn(...args);
+      if (r !== undefined && r !== null && r !== false) out.push(r);
+    } catch (e) {
+      if (strict) throw e;
+      console.error(`A plugin failed in "${event}"`, e);
+    }
+  }
+  return out;
+}
+
+// the same for events whose answer is needed at once (getters): handlers mustn't be async
+function collectPlugins(event, ...args) {
+  const out = [];
+  for (const fn of liveHandlers(event)) {
+    try {
+      const r = fn(...args);
+      if (r !== undefined && r !== null && r !== false) out.push(r);
+    } catch (e) { console.error(`A plugin failed in "${event}"`, e); }
+  }
+  return out;
+}
+
 /* A plugin switched on or off in Settings: add or take out its markup, script and style in place
-   (the page loads with the switched-on ones already in, app/plugins/web.py). Its script stays loaded
-   once it ran; with its markup gone it has nothing to show. */
+   (the page loads with the switched-on ones already in, app/plugins/web.py), and tell it ("start",
+   "stop"). Its script stays loaded once it ran; switched off, its handlers don't run. A slot can be in a
+   repeated part of the page (e.g. each folder's row in Settings): it's filled in the shown copies and in
+   the <template> they're made from. */
+function eachRoot(fn, root = document) {
+  fn(root);
+  for (const t of root.querySelectorAll("template")) eachRoot(fn, t.content);
+}
+
 function filledSlots() {
-  return [...document.querySelectorAll(".plugin-slot")].filter((s) => s.children.length).map((s) => s.dataset.slot);
+  const out = new Set();
+  eachRoot((root) => root.querySelectorAll(".plugin-slot").forEach((s) => s.children.length && out.add(s.dataset.slot)));
+  return [...out];
+}
+
+// Alpine's own watch for new elements is paused while plugin markup goes in or out: each box is set up
+// (or taken down) here, one at a time, so a mistake in one doesn't stop the others
+function removeMarkup(id) {
+  eachRoot((root) => root.querySelectorAll(".plugin-ui").forEach((box) => {
+    if (box.dataset.plugin !== id) return;
+    if (root === document) Alpine.destroyTree(box);
+    Alpine.mutateDom(() => box.remove());
+  }));
+}
+
+function addMarkup(id, slot, markup) {
+  eachRoot((root) => root.querySelectorAll(`.plugin-slot[data-slot="${slot}"]`).forEach((host) => {
+    const box = Object.assign(document.createElement("div"), { className: "plugin-ui", innerHTML: markup });
+    box.dataset.plugin = id;
+    Alpine.mutateDom(() => host.append(box));
+    // in the page: set it up now, with what's around it (e.g. a folder row's l); in a <template>:
+    // Alpine sets it up when it makes a copy
+    if (root === document) {
+      try { Alpine.initTree(box); } catch (e) { console.error(`Plugin ${id}: its ${slot} markup failed`, e); }
+    }
+  }));
 }
 
 async function addPluginUi(id) {
@@ -969,18 +944,25 @@ async function addPluginUi(id) {
     await new Promise((ok, fail) => document.body.append(
       Object.assign(document.createElement("script"), { src: ui.js, onload: ok, onerror: fail })));
   }
-  removePluginUi(id);  // never twice
-  for (const [slot, markup] of Object.entries(ui.html)) {
-    const box = Object.assign(document.createElement("div"), { className: "plugin-ui", innerHTML: markup });
-    box.dataset.plugin = id;
-    document.querySelector(`.plugin-slot[data-slot="${slot}"]`)?.append(box);  // Alpine sets it up
-  }
+  removeMarkup(id);  // never twice
+  for (const [slot, markup] of Object.entries(ui.html)) addMarkup(id, slot, markup);
   Alpine.store("app").pluginSlots = filledSlots();
+  stoppedPlugins.delete(id);
+  await emitPlugins("start", [], { only: id });
 }
 
-function removePluginUi(id) {
-  document.querySelectorAll(".plugin-ui").forEach((box) => box.dataset.plugin === id && box.remove());
-  Alpine.store("app").pluginSlots = filledSlots();
+async function removePluginUi(id) {
+  await emitPlugins("stop", [], { only: id });
+  stoppedPlugins.add(id);
+  removeMarkup(id);
+  const app = Alpine.store("app");
+  if (id in app.listScope) {
+    const { [id]: _, ...rest } = app.listScope;
+    app.listScope = rest;
+  }
+  app.settingsNav = app.settingsNav.filter((x) => x[3] !== id);
+  app.pluginSlots = filledSlots();
+  window.refreshAttentionCount?.();
 }
 
 /* ---------------- continue reading ---------------- */
@@ -991,14 +973,13 @@ function continueView() {
     init() {
       this.$watch("$store.app.view", (v) => v === "continue" && this.load());
       this.$watch("$store.app.progressDirty", () => this.load());
-      this.$watch("$store.app.shelf", () => this.load());     // another library
-      this.$watch("$store.app.shelvesKey", () => this.load());  // one was added, removed, unlocked or locked
+      this.$watch("$store.app.listKey", () => this.load());  // e.g. another library, or one was unlocked
       this.load();
     },
     async load() {
       if (this.$store.app.view !== "continue") return;
       document.title = "Continue reading";
-      this.items = await api(`/api/continue-reading?${shelfParam()}`).catch(() => this.items);
+      this.items = await api(`/api/continue-reading?${scopeParam()}`).catch(() => this.items);
     },
   };
 }
@@ -1036,7 +1017,7 @@ function seriesView() {
       } catch (e) {
         if (this.loadedFor !== `${id}|${tab}`) return;
         Object.assign(this, { s: null, error: e.message });
-        if (e.detail?.shelf) app.openUnlock(e.detail.shelf, () => this.reload());  // a locked library
+        MangaVibe.denied(e, () => this.reload());  // e.g. a locked library: its plugin asks for the password
         return;
       }
       if (this.loadedFor !== `${id}|${tab}`) return;
@@ -1102,9 +1083,8 @@ function seriesView() {
         ["Edition", editionText(s.collection)],
         ["Score", s.average_score && `${s.average_score}%`],
         ["In library", `${s.book_count} books · ${s.unread_count} unread`],
-        // which library it shows in, once there is more than one
-        ["Library", this.$store.app.shelves.length > 1 && s.shelf
-          && s.shelf.name + (s.shelf_override ? ` (moved here; its folder's is ${s.folder_shelf?.name || "gone"})` : "")],
+        // what plugins add, e.g. libraries: which library it shows in
+        ...collectPlugins("series-info", s).flat(),
         ...s.plugin_fields.map((f) => [f.label, typeof f.value === "object" ? JSON.stringify(f.value) : f.value]),
         ["Folder", s.folder_path],
       ].filter(([, v]) => v);
@@ -1142,10 +1122,9 @@ function seriesView() {
       const d = this.s?.direction;
       if (!d) return "";
       const names = { paged: "Pages", vertical: "Vertical" };
-      const why = { library: `the mode of ${this.s.shelf?.name || "its library"}`, default: "Settings → Reader" };
       // with a mode set by hand, "Automatic" would be what the library etc. say: not known here
-      return d.source === "series" ? "Like its library, else Settings → Reader"
-        : `${names[d.mode]} · ${why[d.source] || ""}`;
+      return d.source === "series" ? "Its default (e.g. its library's), else Settings → Reader"
+        : `${names[d.mode]} · ${d.why}`;
     },
     async setReader(v) {
       await api(`/api/series/${this.s.id}`, { method: "PATCH", body: { reader_mode: v || "default" } });
@@ -1478,25 +1457,25 @@ function attentionView() {
       }
     },
     afterChange() { refreshAttentionCount(); this.$store.app.libraryDirty++; },
-    showAllShelves() { setShelf(0); },  // the home screen shows All too
     scoreCls,
   };
 }
 
 /* ---------------- settings ---------------- */
 
-const SETTINGS_NAV = [["shelves", "Libraries", "📚"], ["library", "Library folders", "📁"], ["display", "Display", "🎨"],
+// Settings' own pages; plugins add theirs to $store.app.settingsNav (e.g. libraries: Libraries, first)
+const SETTINGS_NAV = [["library", "Library folders", "📁"], ["display", "Display", "🎨"],
   ["reader", "Reader", "📖"], ["metadata", "Metadata", "🏷"], ["plugins", "Plugins", "🧩"], ["updates", "Updates", "⟳"]];
 const ANDROID = /Android/i.test(navigator.userAgent);
 // on Android phones (in the app or the browser) Settings gets an "Android app" page
-if (ANDROID) SETTINGS_NAV.splice(3, 0, ["app", "Android app", "📱"]);
+if (ANDROID) SETTINGS_NAV.splice(2, 0, ["app", "Android app", "📱"]);
 
 function settingsView() {
   return {
-    nav: SETTINGS_NAV,
+    get nav() { return this.$store.app.settingsNav; },
     attNav: ATT_TABS,
     get section() {
-      const s = this.$store.app.sub || "shelves";
+      const s = this.$store.app.sub || this.nav[0][0];
       return s.startsWith("plugin-") ? "plugin" : s;
     },
     // the plugin whose page is open (#/settings/plugin-<id>)
@@ -1511,7 +1490,7 @@ function settingsView() {
     navOpen: false,
     get current() {
       if (this.section === "plugin") return ["🧩", this.plugin?.name || "Plugin"];
-      const n = SETTINGS_NAV.find(([k]) => k === this.section);
+      const n = this.nav.find(([k]) => k === this.section);
       if (n) return [n[2], n[1]];
       const a = ATT_TABS.find(([k]) => "att-" + k === this.section);
       return a ? ["⚠", a[1]] : ["⚙", "Settings"];
@@ -1540,7 +1519,7 @@ function settingsView() {
       if (this.$store.app.view !== "settings") return;
       document.title = "Settings";
       const [libs, plug, providers] = await Promise.all([api("/api/libraries"), api("/api/plugins"),
-        api("/api/metadata/providers"), loadShelves()]);
+        api("/api/metadata/providers"), emitPlugins("settings-open")]);
       // selects compare strings, so keep every value as text here; save() converts back
       this.st = Object.fromEntries(Object.entries(settings).map(([k, v]) => [k, String(v)]));
       Object.assign(this, { libs, providers, plugins: plug.plugins, pluginErrors: plug.errors });
@@ -1592,63 +1571,6 @@ function settingsView() {
       if (!st.running || (st.library_id != null ? st.library_id !== l.id : st.library !== l.name)) return "";
       return st.library_id != null ? `Scanning ${st.done}/${st.total}…` : "Scanning…";
     },
-    /* ---- Settings → Libraries (shelves in the API) ---- */
-    async addShelf() { if (await addShelf()) this.libs = await api("/api/libraries").catch(() => this.libs); },
-    async patchShelf(s, body, msg = "Saved") {
-      try {
-        await api(`/api/shelves/${s.id}`, { method: "PATCH", body });
-        await loadShelves();
-        toast(msg);
-      } catch (e) { toast(e.message, 6000, "error"); await loadShelves().catch(() => {}); }
-    },
-    renameShelf(s, v) {
-      v = v.trim();
-      if (v && v !== s.name) this.patchShelf(s, { name: v }, `Renamed to ${v}`);
-    },
-    async deleteShelf(s) {
-      if (s.locked) return this.$store.app.openUnlock(s.id, () => this.deleteShelf(this.$store.app.shelves.find((x) => x.id === s.id)));
-      const others = this.$store.app.shelves.filter((x) => x.id !== s.id);
-      if (!others.length) return toast("This is the only library. Add another one first.", 5000);
-      if (!confirm(`Delete the library "${s.name}"?\n\nNo series or files are deleted: its folders and the series `
-        + "moved to it show in another library.")) return;
-      try {
-        const r = await api(`/api/shelves/${s.id}`, { method: "DELETE" });
-        toast(`Deleted. Its series are in ${r.moved_to.name} now.`, 5000);
-        this.libs = await api("/api/libraries").catch(() => this.libs);
-        await shelvesChanged();
-      } catch (e) { toast(e.message, 6000, "error"); }
-    },
-    // the password form of one library: { id, current, password, again }
-    pw: null,
-    openPassword(s) { this.pw = { id: s.id, current: "", password: "", again: "" }; },
-    async savePassword(s, remove = false) {
-      const f = this.pw;
-      if (!remove && !f.password) return toast("Type the new password");
-      if (!remove && f.password !== f.again) return toast("The two new passwords are different");
-      try {
-        await api(`/api/shelves/${s.id}/password`, { method: "PUT",
-          body: { current: f.current, password: remove ? "" : f.password } });
-        this.pw = null;
-        toast(remove ? "Password removed" : "Password saved. This browser stays unlocked until “Lock now” or a new tab.", 6000);
-        await shelvesChanged();
-      } catch (e) { toast(e.message, 6000, "error"); }
-    },
-    unlockShelf(s) { this.$store.app.openUnlock(s.id); },
-    async lockShelf(s) {
-      await api(`/api/shelves/${s.id}/lock`, { method: "POST" }).catch(() => {});
-      toast(`${s.name} is locked`);
-      await shelvesChanged();
-    },
-    shelfFolders(s) { return s.folders.map((f) => f.root_path).join(", ") || "No folders: only series moved here by hand"; },
-    // a folder's library (Settings → Library folders)
-    async setFolderShelf(l, v) {
-      try {
-        await api(`/api/libraries/${l.id}`, { method: "PATCH", body: { shelf_id: +v } });
-        l.shelf_id = +v;
-        toast(`Its series show in ${this.$store.app.shelfName(+v)} now`);
-        await shelvesChanged();
-      } catch (e) { toast(e.message, 6000, "error"); this.libs = await api("/api/libraries").catch(() => this.libs); }
-    },
     async setLibraryHostPath(l, v) {
       v = v.trim();
       if (v === (l.host_path || "")) return;
@@ -1666,7 +1588,7 @@ Your files are not touched. `
       try { await api(`/api/libraries/${l.id}`, { method: "DELETE" }); }
       catch (e) { return toast(e.message, 6000, "error"); }  // e.g. its library is locked
       toast("Folder removed");
-      await shelvesChanged();  // its library goes too when nothing else is in it
+      await emitPlugins("folders-changed");  // e.g. its library goes too when nothing else is in it
       this.load();
     },
     checking: false,
@@ -1696,7 +1618,11 @@ Your files are not touched. `
     installUpdate() { installUpdate(this.upd.available.sha); },
     async loadProviders() { this.providers = await api("/api/metadata/providers").catch(() => this.providers); },
     async togglePlugin(p) {
-      await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } });
+      try { await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } }); }
+      catch (e) {  // e.g. Libraries while one has a password
+        p.enabled = !p.enabled;
+        return toast(e.message, 8000, "error");
+      }
       if (p.ui) {  // it adds to the page (e.g. Saved searches): show that, or take it away
         try { await (p.enabled ? addPluginUi(p.id) : removePluginUi(p.id)); }
         catch (e) { toast(`Reload the page to see the change (${e.message})`, 6000, "error"); }
@@ -1833,10 +1759,9 @@ function folderPicker() {
       this.busy = true;
       try {
         await api("/api/libraries", { method: "POST", body: { root_path: this.path } });
-        toast("Folder added. Scanning… Its series show in the library named like the folder; "
-          + "Settings → Library folders can point it at another one.", 7000);
+        toast("Folder added. Scanning…", 5000);
         this.close();
-        await shelvesChanged();
+        await emitPlugins("folders-changed");  // e.g. libraries: the one named like the folder
         window.dispatchEvent(new Event("libraries-changed"));
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.busy = false; }
     },
@@ -1880,15 +1805,9 @@ function editSeries() {
         links: lines(s.links.map((l) => `${l.site} | ${l.url}`)),
         collection_complete: s.collection?.manual ? "complete" : "auto",
         edition_volumes: String(s.edition_volumes || 0),
-        shelf: String(s.shelf_override ? s.shelf?.id || 0 : 0),  // "0": its folder's library
       };
       this.orig = { ...this.f };
-    },
-    // the Library choices: [value, label]; "0" follows the folder
-    get shelfOptions() {
-      const own = this.s?.folder_shelf?.name;
-      return [["0", own ? `Like its folder: ${own}` : "Like its folder"],
-        ...this.$store.app.shelves.map((x) => [String(x.id), x.name + (x.locked ? " 🔒" : "")])];
+      collectPlugins("edit-open", s);  // plugin fields in the series-edit slot fill themselves in
     },
     close() { this.clearFile(); this.$store.app.edit.open = false; },
     locked(field) { return this.s?.locked_fields.includes(field); },
@@ -1922,26 +1841,25 @@ function editSeries() {
       return b;
     },
     async save() {
-      const body = this.body(), shelfChanged = this.f.shelf !== this.orig.shelf;
-      if (!Object.keys(body).length && !shelfChanged) return this.close();
+      const body = this.body(), metadata = Object.keys(body).length > 0;
+      const pluginChanged = collectPlugins("edit-changed", this.s).some(Boolean);  // e.g. its library
+      if (!metadata && !pluginChanged) return this.close();
       this.saving = true;
       try {
         // the metadata first: moved to a locked library, the series can't be changed any more
-        if (Object.keys(body).length) await api(`/api/series/${this.s.id}/metadata`, { method: "PUT", body });
-        // not metadata: which library it shows in (survives rescans and refreshes)
-        if (shelfChanged) await api(`/api/series/${this.s.id}`, { method: "PATCH", body: { shelf_id: +this.f.shelf } });
-        const target = this.$store.app.shelves.find((x) => x.id === +this.f.shelf);
-        if (shelfChanged) await loadShelves().catch(() => {});  // the series counts
-        if (shelfChanged && target?.locked) {
-          // it can't be shown here any more: back to the library instead of a password prompt
-          toast(`Saved. It's in ${target.name} now, which is locked.`, 6000);
+        if (metadata) await api(`/api/series/${this.s.id}/metadata`, { method: "PUT", body });
+        // then the plugins' fields: each answers { message, leave } (leave: the series can't be shown now)
+        const done = await emitPlugins("edit-save", [this.s], { strict: true });
+        const leave = done.find((r) => r.leave);
+        if (leave) {  // e.g. moved to a locked library: back to the library instead of a password prompt
+          toast(leave.message, 6000);
           this.close();
           this.$store.app.libraryDirty++;
           location.hash = "#/";
           return;
         }
-        if (Object.keys(body).length) toast("Saved. Your changes are kept when metadata is refreshed.");
-        else toast(`Saved. It shows in ${target?.name || "its folder's library"} now.`);
+        toast(metadata ? "Saved. Your changes are kept when metadata is refreshed."
+          : done.map((r) => r.message).filter(Boolean).join(" ") || "Saved");
         this.done();
       } catch (e) { toast(e.message, 7000, "error"); } finally { this.saving = false; }
     },

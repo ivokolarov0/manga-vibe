@@ -1,0 +1,16 @@
+<!-- the libraries: the library grid and Continue show the one picked here; + adds one -->
+<div class="tabs shelf-tabs" x-data role="tablist" aria-label="Libraries" x-cloak
+     x-show="['library', 'continue'].includes($store.app.view) && $store.libraries.list.length">
+  <button role="tab" x-show="$store.libraries.showAll" :class="{ active: $store.libraries.picked === 0 }"
+          :aria-selected="$store.libraries.picked === 0" @click="$store.libraries.pick(0)">All</button>
+  <template x-for="s in $store.libraries.list" :key="s.id">
+    <button role="tab" :class="{ active: $store.libraries.picked === s.id }" :aria-selected="$store.libraries.picked === s.id"
+            @click="$store.libraries.pick(s.id)" :title="s.locked ? 'Locked: asks for the password' : ''">
+      <span x-text="s.name"></span>
+      <span class="lock" x-show="s.has_password" x-text="s.locked ? '🔒' : '🔓'"
+            :aria-label="s.locked ? 'locked' : 'unlocked'"></span></button>
+  </template>
+  <button class="add" @click="$store.libraries.addAndPick()" title="New library" aria-label="New library">+</button>
+  <button class="lock-now" x-show="$store.libraries.anyOpen" @click="$store.libraries.lockNow()"
+          title="Ask for the passwords again">🔒 Lock now</button>
+</div>

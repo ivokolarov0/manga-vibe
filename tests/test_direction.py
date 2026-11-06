@@ -1,5 +1,5 @@
-"""How a series reads (app/direction.py): paged or vertical. The owner's choice, its library (shelf), then
-Settings → Reader. Paged always turns forward to the right, so there is no right to left any more."""
+"""How a series reads (app/direction.py): paged or vertical. The owner's choice, a plugin's default (the
+libraries plugin: its library's), then Settings → Reader. Paged always turns forward to the right, so there is no right to left any more."""
 from sqlalchemy import text
 
 from app import db as appdb
@@ -30,7 +30,7 @@ def direction(client, sid):
 
 def test_direction_in_order(client):
     sid = series_id()
-    lib = client.get("/api/shelves").json()[0]["id"]
+    lib = client.get("/api/plugins/libraries/api/shelves").json()[0]["id"]
     with SessionLocal() as db:
         s = db.get(Series, sid)
         old = {k: getattr(s, k) for k in ("country_of_origin", "format", "reader_mode")}
@@ -49,23 +49,23 @@ def test_direction_in_order(client):
         assert direction(client, sid) == ("paged", "default")
 
         # the library's mode
-        for l in client.get("/api/shelves").json():
-            assert client.patch(f"/api/shelves/{l['id']}", json={"reader_mode": "vertical"}).status_code == 200
-        assert direction(client, sid) == ("vertical", "library")
-        assert client.get("/api/shelves").json()[0]["reader_mode"] == "vertical"
+        for l in client.get("/api/plugins/libraries/api/shelves").json():
+            assert client.patch(f"/api/plugins/libraries/api/shelves/{l['id']}", json={"reader_mode": "vertical"}).status_code == 200
+        assert direction(client, sid) == ("vertical", "plugin")
+        assert client.get("/api/plugins/libraries/api/shelves").json()[0]["reader_mode"] == "vertical"
         for bad in ("sideways", "rtl", "ltr"):
-            assert client.patch(f"/api/shelves/{lib}", json={"reader_mode": bad}).status_code == 400
+            assert client.patch(f"/api/plugins/libraries/api/shelves/{lib}", json={"reader_mode": bad}).status_code == 400
             assert client.patch(f"/api/series/{sid}", json={"reader_mode": bad}).status_code == 400
 
         # the owner's choice wins; "default" works it out again
         client.patch(f"/api/series/{sid}", json={"reader_mode": "paged"})
         assert direction(client, sid) == ("paged", "series")
         client.patch(f"/api/series/{sid}", json={"reader_mode": "default"})
-        assert direction(client, sid) == ("vertical", "library")
+        assert direction(client, sid) == ("vertical", "plugin")
     finally:
         client.put("/api/settings", json={"reader_mode": old_default})
-        for l in client.get("/api/shelves").json():
-            client.patch(f"/api/shelves/{l['id']}", json={"reader_mode": "default"})
+        for l in client.get("/api/plugins/libraries/api/shelves").json():
+            client.patch(f"/api/plugins/libraries/api/shelves/{l['id']}", json={"reader_mode": "default"})
         set_series(sid, **old)
 
 

@@ -1,45 +1,5 @@
 /* Library grid, poster cards, toolbar (Filter/Sort/Letter), quick filters, active filter chips, filter/sort sheets. */
 @layer pages {
-  /* the libraries (Manga, Comics...) above the library grid and Continue: tabs, + and Lock now */
-  .shelf-tabs {
-    margin: 0 0 12px;
-    overflow-x: auto;
-    scrollbar-width: none;
-
-    & button {
-      display: inline-flex;
-      flex-shrink: 0;
-      align-items: center;
-      gap: 6px;
-      font-size: 15px;
-    }
-
-    & .lock {
-      font-size: 12px;
-    }
-
-    & button.add {
-      padding: 6px 12px;
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    & button.lock-now {
-      margin-left: auto;
-      font-size: 13px;
-    }
-  }
-
-  /* the password dialog of a locked library */
-  .unlock-dialog form {
-    display: grid;
-    gap: 12px;
-
-    & p {
-      margin: 0;
-    }
-  }
-
   .quick {
     display: flex;
     gap: 8px;
