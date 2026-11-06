@@ -15,6 +15,7 @@ from app.api.common import get_or_404
 from app.db import get_db, get_setting, set_setting
 from app.models import Library, Series, Shelf
 from app.plugins import Context, OpenUrl, action_result, implements, manager as plugins
+from app.plugins.web import ui_of, with_ui
 from app.scanner import walker
 from app.scanner.parser import natural_key
 
@@ -227,7 +228,7 @@ def _plugin_dict(p, db):
     return {"id": p.id, "name": p.name, "version": p.version,
             "description": p.description, "enabled": p.id not in plugins.disabled,
             "provider": p.is_provider, "fields": [f.label for f in p.fields],
-            "actions": [a.label for a in p.actions],
+            "ui": with_ui(p),  # adds to the page: switching it on or off adds or removes that (app.js)            "actions": [a.label for a in p.actions],
             "settings": [{"key": f.key, "label": f.label, "help": f.help, "secret": f.secret,
                           "options": [[str(v), str(label)] for v, label in f.options],
                           "value": "" if f.secret else str(ctx.setting(f.key) or ""),
@@ -283,6 +284,13 @@ def run_global_action(plugin_id: str, action_key: str, db=Depends(get_db)):
         db.rollback()
         raise HTTPException(500, f"Plugin error: {type(e).__name__}: {e}")
     return action_result(result)
+
+
+@router.get("/plugins/{plugin_id}/ui")
+def plugin_ui(plugin_id: str):
+    """What a switched-on plugin adds to the page (markup per slot, script, style), so the page can add
+    it without reloading (app.js, app/plugins/web.py)."""
+    return ui_of(_enabled_plugin(plugin_id))
 
 
 @router.get("/plugins/{plugin_id}/web/{path:path}")

@@ -1,5 +1,11 @@
 /* Page frame: top bar, content area, bottom navigation, sheets/dialogs, toast. */
 @layer layout {
+  /* where plugins add to the page (app/plugins/web.py): boxes that don't change the layout */
+  .plugin-slot,
+  .plugin-ui {
+    display: contents;
+  }
+
   #topbar {
     position: sticky;
     top: 0;
