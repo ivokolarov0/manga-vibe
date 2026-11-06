@@ -10,8 +10,9 @@ from pydantic import BaseModel
 
 from sqlalchemy import func
 
-from app import config, plugin_updates
+from app import config, plugin_updates, users
 from app.api.common import get_or_404
+from app.users import manage
 from app.api.filters import visible_series
 from app.db import get_db, get_setting, set_setting
 from app.models import Library, Series
@@ -69,7 +70,7 @@ class LibraryPatch(BaseModel):
     host_path: str | None = None  # the folder outside Docker; "" clears it
 
 
-@router.patch("/libraries/{lib_id}")
+@router.patch("/libraries/{lib_id}", dependencies=[manage])
 def patch_library(lib_id: int, body: LibraryPatch, db=Depends(get_db)):
     """The folder's path outside Docker (shown and copied on the series page)."""
     lib = get_or_404(db, Library, lib_id)
@@ -84,7 +85,7 @@ class LibraryBody(BaseModel):
     name: str | None = None
 
 
-@router.post("/libraries")
+@router.post("/libraries", dependencies=[manage])
 def add_library(body: LibraryBody, db=Depends(get_db)):
     """Add a folder and scan it. Plugins hear about it (on_folders_changed), e.g. the libraries plugin
     gives it the library named like it."""
@@ -110,7 +111,7 @@ def add_library(body: LibraryBody, db=Depends(get_db)):
     return {"id": lib.id}
 
 
-@router.delete("/libraries/{lib_id}")
+@router.delete("/libraries/{lib_id}", dependencies=[manage])
 def delete_library(lib_id: int, request: Request, db=Depends(get_db)):
     """Removes the library folder from the app's database only (its series and their progress go
     with it). Files are never touched. Remembered, so a folder from LIBRARY_PATHS isn't added back on
@@ -137,7 +138,7 @@ SYSTEM_DIRS = {"bin", "boot", "dev", "etc", "lib", "lib32", "lib64", "libx32", "
                "usr", "var", "tmp", "app", "root", "srv", "opt", "home", "snap", "lost+found"}
 
 
-@router.get("/folders")
+@router.get("/folders", dependencies=[manage])
 def folders(path: str = "", db=Depends(get_db)):
     """Folders inside the container, for the 'Add folder' picker. Only names of folders, nothing else."""
     libs = {l.root_path for l in db.query(Library)}
@@ -172,12 +173,12 @@ def folders(path: str = "", db=Depends(get_db)):
     return {"path": str(base), "parent": parent, "dirs": out}
 
 
-@router.post("/scan")
+@router.post("/scan", dependencies=[manage])
 def scan():
     return {"started": walker.start_scan_in_background(), **walker.status}
 
 
-@router.post("/libraries/{lib_id}/scan")
+@router.post("/libraries/{lib_id}/scan", dependencies=[manage])
 def scan_one_library(lib_id: int, db=Depends(get_db)):
     """Scan only this library folder. Only one scan runs at a time: started is False if one is running."""
     get_or_404(db, Library, lib_id)
@@ -189,16 +190,38 @@ def scan_status():
     return walker.status
 
 
+# Settings → Reader: each user's own (app/users.py), starting from the shared ones (the owner's). The rest
+# is the app's, changed by admins only.
+PERSONAL_SETTINGS = {"reader_mode", "reader_fit", "auto_fullscreen", "preload", "reader_autohide",
+                     "reader_drawer_side", "reader_tap_layout", "reader_volume_keys", "overlay_opacity",
+                     "overlay_outline", "reader_brightness", "reader_contrast", "reader_colors",
+                     "library_page_size"}  # the library page's own "per page" picker, there for everyone
+
+
+def personal_setting(db, key):
+    """A Settings → Reader value for the current user: their own, else the shared one, else the default."""
+    shared = get_setting(db, key, DEFAULT_SETTINGS[key])
+    return get_setting(db, users.personal_key(key), shared)
+
+
 @router.get("/settings")
 def get_settings(db=Depends(get_db)):
-    return {k: get_setting(db, k, v) for k, v in DEFAULT_SETTINGS.items()}
+    """The settings as the current user sees them, and who that is ("me": with accounts, a person;
+    without, the owner who may do everything)."""
+    out = {k: personal_setting(db, k) if k in PERSONAL_SETTINGS else get_setting(db, k, v)
+           for k, v in DEFAULT_SETTINGS.items()}
+    me = users.current()
+    return {**out, "me": {"id": me.id, "name": me.name, "can_manage": me.can_manage}}
 
 
 @router.put("/settings")
 def put_settings(body: dict, db=Depends(get_db)):
-    for k, v in body.items():
-        if k in DEFAULT_SETTINGS:
-            set_setting(db, k, v)
+    """Settings → Reader are saved for the current user; the others only by an admin."""
+    known = {k: v for k, v in body.items() if k in DEFAULT_SETTINGS}
+    if any(k not in PERSONAL_SETTINGS for k in known) and not users.current().can_manage:
+        raise HTTPException(403, "Only an admin can change these settings")
+    for k, v in known.items():
+        set_setting(db, users.personal_key(k) if k in PERSONAL_SETTINGS else k, v)
     db.commit()
     return get_settings(db)
 
@@ -229,7 +252,7 @@ def _plugin_dict(p, db):
             "status": _plugin_status(p, db), "update": plugin_updates.info(db, p)}
 
 
-@router.get("/plugins")
+@router.get("/plugins", dependencies=[manage])
 def list_plugins(db=Depends(get_db)):
     return {"plugins": [_plugin_dict(p, db) for p in plugins.plugins.values()],
             "errors": plugins.errors}
@@ -242,7 +265,7 @@ def _enabled_plugin(plugin_id):
     return p
 
 
-@router.put("/plugins/{plugin_id}/settings")
+@router.put("/plugins/{plugin_id}/settings", dependencies=[manage])
 def save_plugin_settings(plugin_id: str, body: dict, db=Depends(get_db)):
     """Save the plugin's Settings boxes. Only the keys it declared; "" clears a value."""
     p = _enabled_plugin(plugin_id)
@@ -262,7 +285,7 @@ def save_plugin_settings(plugin_id: str, body: dict, db=Depends(get_db)):
     return _plugin_dict(p, db)
 
 
-@router.post("/plugins/{plugin_id}/actions/{action_key}")
+@router.post("/plugins/{plugin_id}/actions/{action_key}", dependencies=[manage])
 def run_global_action(plugin_id: str, action_key: str, db=Depends(get_db)):
     p = _enabled_plugin(plugin_id)
     if action_key not in {a.key for a in p.global_actions}:
@@ -276,14 +299,14 @@ def run_global_action(plugin_id: str, action_key: str, db=Depends(get_db)):
     return action_result(result)
 
 
-@router.get("/plugins/{plugin_id}/ui")
+@router.get("/plugins/{plugin_id}/ui", dependencies=[manage])
 def plugin_ui(plugin_id: str):
     """What a switched-on plugin adds to the page (markup per slot, script, style), so the page can add
     it without reloading (app.js, app/plugins/web.py)."""
     return ui_of(_enabled_plugin(plugin_id))
 
 
-@router.get("/plugins/{plugin_id}/web/{path:path}")
+@router.get("/plugins/{plugin_id}/web/{path:path}", dependencies=[manage])
 def plugin_web(plugin_id: str, path: str, request: Request, db=Depends(get_db)):
     """A page a plugin answers itself, e.g. where a website sends you back after logging in."""
     p = _enabled_plugin(plugin_id)
@@ -314,7 +337,7 @@ class PluginToggle(BaseModel):
     enabled: bool
 
 
-@router.put("/plugins/{plugin_id}")
+@router.put("/plugins/{plugin_id}", dependencies=[manage])
 def toggle_plugin(plugin_id: str, body: PluginToggle, db=Depends(get_db)):
     """Switch a plugin on or off. Off is refused while the plugin says it can't be (e.g. libraries
     while one has a password: its series would show to everyone)."""
@@ -344,28 +367,28 @@ def _installed_plugin(plugin_id):
     return p
 
 
-@router.post("/plugins/{plugin_id}/updates/skip")
+@router.post("/plugins/{plugin_id}/updates/skip", dependencies=[manage])
 def skip_plugin_update(plugin_id: str, db=Depends(get_db)):
     p = _installed_plugin(plugin_id)
     plugin_updates.skip(db, p.id)
     return _plugin_dict(p, db)
 
 
-@router.delete("/plugins/{plugin_id}/updates/skip")
+@router.delete("/plugins/{plugin_id}/updates/skip", dependencies=[manage])
 def unskip_plugin_update(plugin_id: str, db=Depends(get_db)):
     p = _installed_plugin(plugin_id)
     plugin_updates.unskip(db, p.id)
     return _plugin_dict(p, db)
 
 
-@router.post("/plugins/{plugin_id}/updates/check")
+@router.post("/plugins/{plugin_id}/updates/check", dependencies=[manage])
 def check_plugin_update(plugin_id: str, db=Depends(get_db)):
     p = _installed_plugin(plugin_id)
     plugin_updates.check(db, p)
     return _plugin_dict(p, db)
 
 
-@router.post("/plugins/{plugin_id}/updates/install")
+@router.post("/plugins/{plugin_id}/updates/install", dependencies=[manage])
 def install_plugin_update(plugin_id: str, body: dict | None = None, db=Depends(get_db)):
     _installed_plugin(plugin_id)
     accepted = (body or {}).get("accept_permissions") or []
@@ -381,9 +404,9 @@ def install_plugin_update(plugin_id: str, body: dict | None = None, db=Depends(g
     return {"message": message, **list_plugins(db)}
 
 
-@router.post("/plugins/reload")
+@router.post("/plugins/reload", dependencies=[manage])
 def reload_plugins(db=Depends(get_db)):
     plugins.load()
-    plugins.disabled = set(get_setting(db, "plugins_disabled", []) or [])
+    plugins.load_switches(db)
     plugins.start(db)
     return list_plugins(db)

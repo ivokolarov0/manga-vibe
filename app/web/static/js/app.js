@@ -156,8 +156,11 @@ document.addEventListener("alpine:init", () => {
     listsDirty: 0,       // bumped when what the lists show changed for another reason (MangaVibe.listsChanged)
     // what the lists depend on besides their own filters: they reload when it changes
     get listKey() { return `${JSON.stringify(this.listScope)}:${this.listsDirty}`; },
-    // Settings' pages: [key, label, icon, plugin id (a plugin's own page)] (MangaVibe.settingsPage)
+    // Settings' pages: [key, label, icon, plugin id (a plugin's own page), personal] (MangaVibe.settingsPage)
     settingsNav: SETTINGS_NAV.map((x) => [...x]),
+    // who is using the app (GET /api/settings "me"): without accounts, the owner, who may do everything
+    me: { id: 1, name: "", can_manage: true },
+    get admin() { return this.me.can_manage; },  // settings, folders, metadata, deleting...
   });
 
   let lastView = null, libraryScroll = 0;
@@ -213,6 +216,7 @@ document.addEventListener("alpine:init", () => {
   /* the badge polls a cheap count; the full lists (all books, for gaps) only load inside Settings */
   async function refreshAttentionCount() {
     const app = Alpine.store("app");
+    if (!app.admin) return (app.attentionCount = 0);  // accounts: only admins fix what needs attention
     try {
       if (app.view === "settings") {
         app.att = await api(`/api/attention?${scopeParam()}${app.showIgnored ? "ignored=true" : ""}`);
@@ -223,8 +227,9 @@ document.addEventListener("alpine:init", () => {
     } catch {}
   }
   queueMicrotask(async () => {
-    await loadSettings().catch(() => {});
-    // plugins get ready before anything is shown, e.g. libraries: lock them on a new tab, pick one
+    await loadSettings().then((s) => s.me && (Alpine.store("app").me = s.me)).catch(() => {});
+    // plugins get ready before anything is shown, e.g. accounts: the login; libraries: lock them on a
+    // new tab, pick one
     await emitPlugins("start");
     api("/api/providers").then((p) => (Alpine.store("app").providers = p)).catch(() => {});
     route();
@@ -848,9 +853,10 @@ window.MangaVibe = {
   },
   // a page of the plugin's own in Settings (#/settings/<key>), at this place in the menu; its markup
   // goes into the "settings" slot with x-show="section === '<key>'". Add it in the "start" event.
-  settingsPage(pluginId, key, label, icon, at = Infinity) {
+  // personal: everyone's (e.g. their own preferences); otherwise only admins see it
+  settingsPage(pluginId, key, label, icon, at = Infinity, { personal = false } = {}) {
     const app = Alpine.store("app"), nav = app.settingsNav.filter(([k]) => k !== key);
-    nav.splice(Math.min(at, nav.length), 0, [key, label, icon, pluginId]);
+    nav.splice(Math.min(at, nav.length), 0, [key, label, icon, pluginId, personal]);
     app.settingsNav = nav;
   },
   // the server refused something (an api() error): a plugin may know what to do, e.g. ask for a
@@ -1466,14 +1472,20 @@ function attentionView() {
 // Settings' own pages; plugins add theirs to $store.app.settingsNav (e.g. libraries: Libraries, first)
 const SETTINGS_NAV = [["library", "Library folders", "📁"], ["display", "Display", "🎨"],
   ["reader", "Reader", "📖"], ["metadata", "Metadata", "🏷"], ["plugins", "Plugins", "🧩"], ["updates", "Updates", "⟳"]];
+// Settings pages that are each person's own (with accounts, everyone sees them; the rest is for admins)
+const PERSONAL_PAGES = new Set(["reader", "app"]);
 const ANDROID = /Android/i.test(navigator.userAgent);
 // on Android phones (in the app or the browser) Settings gets an "Android app" page
 if (ANDROID) SETTINGS_NAV.splice(2, 0, ["app", "Android app", "📱"]);
 
 function settingsView() {
   return {
-    get nav() { return this.$store.app.settingsNav; },
-    attNav: ATT_TABS,
+    // everything for an admin; for others (accounts) only their own pages (Reader...), not the app's
+    get nav() {
+      const app = this.$store.app;
+      return app.admin ? app.settingsNav : app.settingsNav.filter((x) => x[4] || PERSONAL_PAGES.has(x[0]));
+    },
+    get attNav() { return this.$store.app.admin ? ATT_TABS : []; },
     get section() {
       const s = this.$store.app.sub || this.nav[0][0];
       return s.startsWith("plugin-") ? "plugin" : s;
@@ -1518,10 +1530,15 @@ function settingsView() {
     async load() {
       if (this.$store.app.view !== "settings") return;
       document.title = "Settings";
+      // selects compare strings, so keep every value as text here; save() converts back
+      const strings = () => Object.fromEntries(Object.entries(settings).map(([k, v]) => [k, String(v)]));
+      if (!this.$store.app.admin) {  // accounts: only their own pages (Reader)
+        this.st = strings();
+        return emitPlugins("settings-open");
+      }
       const [libs, plug, providers] = await Promise.all([api("/api/libraries"), api("/api/plugins"),
         api("/api/metadata/providers"), emitPlugins("settings-open")]);
-      // selects compare strings, so keep every value as text here; save() converts back
-      this.st = Object.fromEntries(Object.entries(settings).map(([k, v]) => [k, String(v)]));
+      this.st = strings();
       Object.assign(this, { libs, providers, plugins: plug.plugins, pluginErrors: plug.errors });
       this.stop();
       this.pollScan();
@@ -1625,7 +1642,10 @@ Your files are not touched. `
       }
       if (p.ui) {  // it adds to the page (e.g. Saved searches): show that, or take it away
         try { await (p.enabled ? addPluginUi(p.id) : removePluginUi(p.id)); }
-        catch (e) { toast(`Reload the page to see the change (${e.message})`, 6000, "error"); }
+        catch (e) {
+          if (e.status === 401) return location.reload();  // e.g. Accounts: from now on, logging in first
+          toast(`Reload the page to see the change (${e.message})`, 6000, "error");
+        }
       }
       if (p.provider) this.loadProviders();
       this.refreshPlugins();  // a switched-on plugin shows its settings and status

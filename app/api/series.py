@@ -5,18 +5,20 @@ import traceback
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import and_, func
 
 from app.api import filters
 from app.api.common import (READING_STATUSES, book_dict, continue_target, emit_reading_events, get_or_404, now,
                             series_card, series_counts, status_of, title_lang, visible_books_query)
+from app.api.common import load_states, my_progress, my_state, retry_on_conflict
 from app.api.filters import visible_series
-from app import config
+from app import config, users
+from app.users import manage
 from app.db import get_db
 from app.direction import MODES, reading_direction
 from app.metadata import service as metadata, worker as metadata_worker
 from app.metadata.http import ProviderError
-from app.models import Book, Library, Link, PluginField, Progress, Series, SeriesTag, Tag
+from app.models import Book, Library, Link, PluginField, Progress, Series, SeriesState, SeriesTag, Tag
 from app.plugins import Context, action_result, implements, manager as plugins
 
 router = APIRouter(prefix="/api")
@@ -62,7 +64,7 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
     query = filters.filter_query(db, query, f, title, agg)
 
     sorts = {"title": title, "added": Series.added_at, "updated": Series.updated_at,
-             "read": Series.last_read_at, "score": Series.average_score, "year": Series.start_year,
+             "read": my_state("last_read_at"), "score": Series.average_score, "year": Series.start_year,
              "unread": total_c - done_c}
     col = sorts.get(sort, title)
     desc = order == "desc" or (order == "" and sort not in ("title",))
@@ -77,6 +79,7 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
     found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids))} if ids else {}
     counts_of = series_counts(db, ids)
     page = [(found[sid], tuple(counts_of[sid])) for sid in ids]
+    load_states(db, [s for s, _ in page])  # the user's favorites and statuses, in one go
     nxt = cursor + len(rows)
     have_of = filters.collections(db, [s for s, _ in page if s.publication_status == "FINISHED"])
     items = []
@@ -171,8 +174,12 @@ READER_MODES = set(MODES)
 
 
 @router.patch("/series/{series_id}")
+@retry_on_conflict
 def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db)):
+    """The current user's reading status and favorite; the series' reading mode (for everyone: admins)."""
     s = get_or_404(db, Series, series_id)
+    if body.reader_mode is not None and not users.current().can_manage:
+        raise HTTPException(403, "Only an admin can change the series' reading mode")
     old_status = status_of(db, s)
     if body.reading_status is not None:
         if body.reading_status not in READING_STATUSES:
@@ -200,7 +207,8 @@ def series_books(series_id: int, all: bool = False, db=Depends(get_db)):
     if not all:
         q = q.filter(Book.hidden.is_(False))
     books = q.order_by(Book.sort_index).all()
-    prog = {p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]))}
+    prog = {p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]),
+                                                             my_progress())}
     badges = _book_badges(db, books)
     return [{**book_dict(b, prog.get(b.id)), "badges": badges.get(b.id, [])} for b in books]
 
@@ -272,13 +280,14 @@ def _apply_read(db, series, completed: bool, up_to_book: int | None = None):
         if idx is None:
             raise HTTPException(404, "Book not in this series")
         books = books[:idx]
-    prog = ({p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]))}
+    prog = ({p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]),
+                                                              my_progress())}
             if books else {})
     for b in books:
         p = prog.get(b.id)
         if completed:
             if p is None:
-                p = Progress(book_id=b.id)
+                p = Progress(book_id=b.id, user_id=users.current_id())
                 db.add(p)
             if not p.completed:
                 newly_read.append(b.id)
@@ -289,12 +298,14 @@ def _apply_read(db, series, completed: bool, up_to_book: int | None = None):
 
 
 @router.post("/series/{series_id}/mark-read")
+@retry_on_conflict
 def mark_read(series_id: int, before_book: int | None = None, db=Depends(get_db)):
     """Mark all books read, or only those before `before_book` ("mark previous as read")."""
     return _set_read(db, series_id, True, before_book)
 
 
 @router.post("/series/{series_id}/mark-unread")
+@retry_on_conflict
 def mark_unread(series_id: int, db=Depends(get_db)):
     """Clear all progress; the series also drops out of Continue reading."""
     s = get_or_404(db, Series, series_id)
@@ -311,6 +322,7 @@ BULK_ACTIONS = ("read", "unread", "favorite", "unfavorite", "refresh")
 
 
 @router.post("/series/bulk")
+@retry_on_conflict
 def bulk(body: BulkBody, request: Request, db=Depends(get_db)):
     """One action for many series (the library's multi-select). Deleting goes one series at a time
     through DELETE /api/series/{id}, so the page can show progress and stop on a read-only folder.
@@ -318,9 +330,12 @@ def bulk(body: BulkBody, request: Request, db=Depends(get_db)):
     Series the request may not see (e.g. in a locked library) are skipped."""
     if body.action not in BULK_ACTIONS:
         raise HTTPException(400, "Unknown action")
+    if body.action == "refresh" and not users.current().can_manage:
+        raise HTTPException(403, "Only an admin can refresh metadata")
     ids = list(dict.fromkeys(body.ids))[:10000]
     visible = visible_series(db, request)
     found = {s.id: s for s in db.query(Series).filter(Series.id.in_(ids), *visible)} if ids else {}
+    load_states(db, list(found.values()))  # the user's statuses and favorites in one go, not one each
     done, events = 0, []
     for sid in ids:
         s = found.get(sid)
@@ -347,10 +362,15 @@ def bulk(body: BulkBody, request: Request, db=Depends(get_db)):
 
 @router.get("/continue-reading")
 def continue_reading(request: Request, limit: int = 30, db=Depends(get_db)):
-    """Series being read, the last read first, of the series the request may see (e.g. one library)."""
-    rows = (db.query(Series).filter(Series.last_read_at.is_not(None), Series.missing_since.is_(None),
-                                    *visible_series(db, request))
-            .order_by(Series.last_read_at.desc()).limit(limit * 2).all())
+    """Series the current user is reading, the last read first, of the series the request may see (e.g.
+    one library)."""
+    # from the user's own rows (index user_id, last_read_at), not a look at every series
+    rows = (db.query(Series)
+            .join(SeriesState, and_(SeriesState.series_id == Series.id, SeriesState.user_id == users.current_id()))
+            .filter(SeriesState.last_read_at.is_not(None), Series.missing_since.is_(None),
+                    *visible_series(db, request))
+            .order_by(SeriesState.last_read_at.desc()).limit(limit * 2).all())
+    load_states(db, rows)
     lang = title_lang(db)
     counts = series_counts(db, [s.id for s in rows])
     out = []
@@ -404,7 +424,7 @@ class ChoiceBody(BaseModel):
     value: str
 
 
-@router.put("/series/{series_id}/choices/{plugin_id}/{key}")
+@router.put("/series/{series_id}/choices/{plugin_id}/{key}", dependencies=[manage])
 def set_choice(series_id: int, plugin_id: str, key: str, body: ChoiceBody, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     p = plugins.get(plugin_id)
@@ -422,7 +442,7 @@ def set_choice(series_id: int, plugin_id: str, key: str, body: ChoiceBody, db=De
     return action_result(result)
 
 
-@router.post("/series/{series_id}/actions/{plugin_id}/{action_key}")
+@router.post("/series/{series_id}/actions/{plugin_id}/{action_key}", dependencies=[manage])
 def run_action(series_id: int, plugin_id: str, action_key: str, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     p = next((p for p in plugins.enabled() if p.id == plugin_id), None)
@@ -469,7 +489,7 @@ class SearchBody(BaseModel):
     provider: str = "anilist"
 
 
-@router.post("/series/{series_id}/match/search")
+@router.post("/series/{series_id}/match/search", dependencies=[manage])
 def match_search(series_id: int, body: SearchBody, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     try:
@@ -499,7 +519,7 @@ def _metadata_call(db, fn, *args, **kw):
         raise HTTPException(400, str(e))
 
 
-@router.post("/series/{series_id}/match")
+@router.post("/series/{series_id}/match", dependencies=[manage])
 def match(series_id: int, body: MatchBody, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     if not body.url and not (body.provider and body.provider_id):
@@ -508,19 +528,19 @@ def match(series_id: int, body: MatchBody, db=Depends(get_db)):
     return get_series(series_id, db)
 
 
-@router.post("/series/{series_id}/unmatch")
+@router.post("/series/{series_id}/unmatch", dependencies=[manage])
 def unmatch(series_id: int, db=Depends(get_db)):
     _metadata_call(db, metadata.unmatch, get_or_404(db, Series, series_id))
     return {"ok": True}
 
 
-@router.post("/series/{series_id}/ignore-match")
+@router.post("/series/{series_id}/ignore-match", dependencies=[manage])
 def ignore_match(series_id: int, db=Depends(get_db)):
     _metadata_call(db, metadata.unmatch, get_or_404(db, Series, series_id), ignore=True)
     return {"ok": True}
 
 
-@router.post("/series/{series_id}/auto-match")
+@router.post("/series/{series_id}/auto-match", dependencies=[manage])
 def retry_auto_match(series_id: int, db=Depends(get_db)):
     """Queue an automatic match again (e.g. after 'Unmatch')."""
     s = get_or_404(db, Series, series_id)
@@ -530,20 +550,20 @@ def retry_auto_match(series_id: int, db=Depends(get_db)):
     return {"ok": True}
 
 
-@router.post("/series/{series_id}/refresh")
+@router.post("/series/{series_id}/refresh", dependencies=[manage])
 def refresh(series_id: int, db=Depends(get_db)):
     _metadata_call(db, metadata.refresh, get_or_404(db, Series, series_id))
     return get_series(series_id, db)
 
 
-@router.get("/series/{series_id}/delete-info")
+@router.get("/series/{series_id}/delete-info", dependencies=[manage])
 def delete_info(series_id: int, db=Depends(get_db)):
     """For the confirmation: the folder, how many files and bytes, and whether it can be deleted."""
     from app.scanner import deleting
     return deleting.info(db, get_or_404(db, Series, series_id))
 
 
-@router.delete("/series/{series_id}")
+@router.delete("/series/{series_id}", dependencies=[manage])
 def delete_series(series_id: int, db=Depends(get_db)):
     """Delete the series' folder from the drive, then the series from the library."""
     get_or_404(db, Series, series_id)
@@ -563,7 +583,7 @@ def delete_series(series_id: int, db=Depends(get_db)):
     return result
 
 
-@router.post("/series/{series_id}/rescan")
+@router.post("/series/{series_id}/rescan", dependencies=[manage])
 def rescan(series_id: int, db=Depends(get_db)):
     """Re-read this series' folder now: new files, removed files, changed names, errors.
     If the folder itself was deleted, the series is removed from the library."""

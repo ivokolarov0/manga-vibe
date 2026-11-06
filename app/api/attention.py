@@ -18,6 +18,7 @@ from app.db import get_db, get_setting, set_setting
 from app.metadata.service import ID_FIELDS
 from app.models import Book, Library, Series
 from app.scanner.archives import SUPPORTED, TEXT_EPUB
+from app.users import manage
 
 router = APIRouter(prefix="/api")
 KEY_RE = re.compile(r"^(err|dup|gap|same):[0-9a-z:._-]{1,80}$")
@@ -219,7 +220,7 @@ def _key_series(db, key):
     return []
 
 
-@router.post("/attention/ignore")
+@router.post("/attention/ignore", dependencies=[manage])
 def ignore_row(body: IgnoreBody, request: Request, db=Depends(get_db)):
     """Hide one row as a false alarm (or bring it back with ignore=false). Not for a row about series
     the request may not see (e.g. in a locked library)."""

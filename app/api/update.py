@@ -4,8 +4,9 @@ from pydantic import BaseModel
 
 from app import updater
 from app.db import get_db, get_setting, set_setting
+from app.users import manage
 
-router = APIRouter(prefix="/api/update")
+router = APIRouter(prefix="/api/update", dependencies=[manage])  # admins only
 
 
 def _info(db):

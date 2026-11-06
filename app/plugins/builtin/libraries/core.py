@@ -36,62 +36,26 @@ from starlette.responses import JSONResponse
 
 from app.db import SessionLocal, get_setting, set_setting
 from app.models import Book, Library, Link, Series, Shelf
+from app.passwords import MAX_TRIES, Throttle, TooManyTries, check_password, hash_password
 
 log = logging.getLogger("mangavibe")
 
 COOKIE = "mv_unlocked"
 UNLOCK_HOURS = 12
-SCRYPT = (2 ** 14, 8, 1)  # n, r, p: about 50 ms and 16 MB per try
-MAX_TRIES = 5             # wrong passwords before each try has to wait (30 s, then doubling, up to 15 min)
 
 
-# ---------------------------------------------------------------- passwords
+# ---------------------------------------------------------------- passwords (app/passwords.py)
 
-def hash_password(password: str) -> str:
-    salt = secrets.token_bytes(16)
-    n, r, p = SCRYPT
-    digest = hashlib.scrypt(password.encode(), salt=salt, n=n, r=r, p=p, dklen=32)
-    return f"scrypt${n}${r}${p}${salt.hex()}${digest.hex()}"
-
-
-def check_password(password: str, stored: str | None) -> bool:
-    try:
-        kind, n, r, p, salt, digest = (stored or "").split("$")
-        if kind != "scrypt":
-            return False
-        got = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=int(n), r=int(r), p=int(p),
-                             dklen=len(digest) // 2)
-    except ValueError:
-        return False
-    return hmac.compare_digest(got.hex(), digest)
-
-
-class TooManyTries(Exception):
-    def __init__(self, seconds):
-        super().__init__(f"Too many wrong passwords. Try again in {seconds} seconds.")
-        self.seconds = seconds
-
-
-_fails = {}  # shelf id -> (wrong tries in a row, no tries before this time)
-_fails_lock = threading.Lock()
+_throttle = Throttle()
+_fails = _throttle.fails  # shelf id -> (wrong tries in a row, no tries before this time)
+# used as shelves.<name> by api.py and the tests
+REEXPORTED = (MAX_TRIES, TooManyTries, check_password, hash_password)
 
 
 def verify(shelf, password: str) -> bool:
     """Whether the password is the shelf's. After MAX_TRIES wrong ones in a row, each further try
     must wait (TooManyTries), so it can't be guessed quickly. The right one resets the count."""
-    with _fails_lock:
-        count, until = _fails.get(shelf.id, (0, 0.0))
-        if until > time.time():
-            raise TooManyTries(int(until - time.time()) + 1)
-    ok = check_password(password or "", shelf.password_hash)
-    with _fails_lock:
-        if ok:
-            _fails.pop(shelf.id, None)
-        else:
-            count = _fails.get(shelf.id, (0, 0.0))[0] + 1
-            wait = min(30 * 2 ** (count - MAX_TRIES), 900) if count >= MAX_TRIES else 0
-            _fails[shelf.id] = (count, time.time() + wait)
-    return ok
+    return _throttle.verify(shelf.id, password, shelf.password_hash)
 
 
 # ---------------------------------------------------------------- unlock tokens (the cookie)
@@ -149,13 +113,73 @@ protected_hint = None
 # protected shelves ({id: lock_version}) and which shelf a series, book or link is on. Anything that
 # changes those calls invalidate(); the time limit covers changes made by another process.
 CACHE_SECONDS = 10
-_cache = {"versions": None, "at": 0.0, "shelf_of": {}}
+_cache = {"versions": None, "at": 0.0, "shelf_of": {}, "access": None, "access_at": 0.0}
 _cache_lock = threading.Lock()
 
 
 def invalidate():
     with _cache_lock:
-        _cache.update(versions=None, at=0.0, shelf_of={})
+        _cache.update(versions=None, at=0.0, shelf_of={}, access=None, ids=None)
+
+
+# ---------------------------------------------------------------- who sees which (with accounts)
+# An admin picks the libraries an account sees (app/users.py, the accounts plugin): the others are hidden
+# from it everywhere, like a locked library that no password opens. Admins see every library.
+# Kept in the libraries_access setting: {"<user id>": [shelf ids]}; an account not in it sees all.
+
+ACCESS_KEY = "libraries_access"
+# False: no account has a limit, so LockGuard has nothing to check for that (None: not known yet)
+access_hint = None
+
+
+def access_rules(db) -> dict:
+    """{user id (str): [shelf ids]} (cached)."""
+    global access_hint
+    with _cache_lock:
+        if _cache.get("access") is not None and time.monotonic() - _cache.get("access_at", 0) < CACHE_SECONDS:
+            return _cache["access"]
+    rules = get_setting(db, ACCESS_KEY, {}) or {}
+    access_hint = bool(rules)
+    with _cache_lock:
+        _cache.update(access=rules, access_at=time.monotonic())
+    return rules
+
+
+def hidden_ids(db) -> set[int]:
+    """The libraries the current user may not see at all (with accounts); none for admins."""
+    from app import users
+    rules = access_rules(db)  # also tells LockGuard whether there is anything to check (access_hint)
+    user = users.current()
+    if user.can_manage:
+        return set()
+    allowed = rules.get(str(user.id))
+    if allowed is None:
+        return set()
+    return _all_shelf_ids(db) - set(allowed)
+
+
+def _all_shelf_ids(db) -> set[int]:
+    """Every library's id (cached: LockGuard asks for every page and image of a limited account)."""
+    with _cache_lock:
+        if _cache.get("ids") is not None and time.monotonic() - _cache.get("ids_at", 0) < CACHE_SECONDS:
+            return _cache["ids"]
+    ids = {sid for (sid,) in db.query(Shelf.id)}
+    with _cache_lock:
+        _cache.update(ids=ids, ids_at=time.monotonic())
+    return ids
+
+
+def set_access(db, user_id, shelf_ids):
+    """Which libraries an account sees: a list of ids, or None for all. Not committed."""
+    global access_hint
+    rules = dict(get_setting(db, ACCESS_KEY, {}) or {})
+    if shelf_ids is None:
+        rules.pop(str(user_id), None)
+    else:
+        rules[str(user_id)] = sorted(set(shelf_ids))
+        access_hint = True  # LockGuard checks from now on, not only once the cache is read again
+    set_setting(db, ACCESS_KEY, rules)
+    invalidate()
 
 
 def _protected(db):
@@ -189,7 +213,9 @@ def locked_ids(db, cookie) -> set[int]:
 
 
 def locked_for(db, request) -> set[int]:
-    return locked_ids(db, request.cookies.get(COOKIE))
+    """What this request can't see: libraries with a password it hasn't unlocked, and (with accounts)
+    the ones its user may not see."""
+    return locked_ids(db, request.cookies.get(COOKIE)) | hidden_ids(db)
 
 
 # ---------------------------------------------------------------- which shelf a series is on
@@ -280,14 +306,17 @@ def _shelf_of(db, kind, item_id):
 
 
 def _locked_shelf(kind, item_id, cookie):
-    """(id, name) of the locked shelf this series, book or link is on, else None. The session only
-    connects when something isn't cached."""
+    """(id, name, hidden) of the locked shelf this series, book or link is on, else None; hidden: the
+    user may not see it at all (no password opens it). The session only connects when something isn't
+    cached."""
     with SessionLocal() as db:
-        locked = locked_ids(db, cookie)
-        if not locked:
+        locked, hidden = locked_ids(db, cookie), hidden_ids(db)
+        if not locked and not hidden:
             return None
         shelf = _shelf_of(db, kind, item_id)
-        return (shelf, db.get(Shelf, shelf).name) if shelf in locked else None
+        if shelf in hidden:
+            return shelf, "", True
+        return (shelf, db.get(Shelf, shelf).name, False) if shelf in locked else None
 
 
 class LockGuard:
@@ -299,10 +328,13 @@ class LockGuard:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] == "http" and protected_hint is not False:
+        if scope["type"] == "http" and (protected_hint is not False or access_hint is not False):
             m = _PATH.match(scope["path"])
             if m:
                 found = await run_in_threadpool(_locked_shelf, m[1], int(m[2]), Request(scope).cookies.get(COOKIE))
+                if found and found[2]:  # not for this account: no password helps
+                    detail = {"message": "This series isn't in your libraries"}
+                    return await JSONResponse({"detail": detail}, status_code=403)(scope, receive, send)
                 if found:
                     # the page asks for this shelf's password (detail.shelf)
                     detail = {"message": f"The library {found[1]} is locked", "shelf": found[0]}

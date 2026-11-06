@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (JSON, Boolean, DateTime, Float, ForeignKey, Index, Integer, String, Text,
                         UniqueConstraint, text)
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, object_session, relationship
 
 
 def now():
@@ -90,9 +90,7 @@ class Series(Base):
     metadata_source: Mapped[dict | None] = mapped_column(JSON)    # {"provider": "anilist", "id": "123"}
     banner_url: Mapped[str | None] = mapped_column(String)
 
-    reading_status: Mapped[str | None] = mapped_column(String)
     reader_mode: Mapped[str | None] = mapped_column(String)  # per-series reading mode (paged or vertical)
-    favorite: Mapped[bool] = mapped_column(Boolean, default=False)
     # the owner says the collection is complete whatever the numbers say (e.g. omnibus editions);
     # not metadata, so a refresh never changes it
     collection_complete: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -103,13 +101,58 @@ class Series(Base):
     has_duplicates: Mapped[bool] = mapped_column(Boolean, default=False)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
-    last_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     missing_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # what the books' numbers say (app/api/common.py numbering()), stored whenever they change;
     # None until worked out
     numbering: Mapped[dict | None] = mapped_column(JSON(none_as_null=True))
 
     books: Mapped[list["Book"]] = relationship(back_populates="series", cascade="all, delete-orphan")
+
+    # --- the current user's own (SeriesState, app/users.py): read and set like columns. In SQL, join
+    # SeriesState for the user instead (filters.my_state()).
+    def state(self, create=False):
+        """The current user's SeriesState row for this series, or None (made when create=True).
+        Kept on the object per user, so a list asks the database once (filters.load_states())."""
+        from app import users
+        uid = users.current_id()
+        cache = self.__dict__.setdefault("_mv_states", {})
+        if uid in cache and (cache[uid] is not None or not create):
+            return cache[uid]
+        db = object_session(self)
+        st = db.get(SeriesState, (uid, self.id)) if db is not None and self.id is not None else None
+        if st is None and create:
+            st = SeriesState(user_id=uid, series_id=self.id, favorite=False)
+            db.add(st)
+        cache[uid] = st
+        return st
+
+    def _get(name, empty=None):
+        return lambda self: getattr(self.state(), name) if self.state() is not None else empty
+
+    def _set(name):
+        def setter(self, value):
+            st = self.state(create=value not in (None, False))  # clearing needs no row (bulk unread)
+            if st is not None:
+                setattr(st, name, value)
+        return setter
+
+    reading_status = property(_get("reading_status"), _set("reading_status"))  # set by hand; None: from progress
+    favorite = property(_get("favorite", False), _set("favorite"))
+    last_read_at = property(_get("last_read_at"), _set("last_read_at"))  # for Continue reading
+    del _get, _set
+
+
+class SeriesState(Base):
+    """One user's own about a series (app/users.py): reading status set by hand, favorite, last read.
+    The owner's (user 1) came from the series table (migration 15)."""
+    __tablename__ = "series_state"
+    __table_args__ = (Index("ix_series_state_read", "user_id", "last_read_at"),)
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    series_id: Mapped[int] = mapped_column(ForeignKey("series.id", ondelete="CASCADE"), primary_key=True,
+                                           index=True)
+    reading_status: Mapped[str | None] = mapped_column(String)
+    favorite: Mapped[bool] = mapped_column(Boolean, default=False)
+    last_read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 # Covering index for what the library grid, reading status and collection checks read about many
@@ -182,8 +225,8 @@ class Book(Base):
         return any(v is not None for v in (self.override_volume, self.override_chapter,
                                             self.override_extra)) or self.hidden_by_owner
 
-    progress: Mapped["Progress | None"] = relationship(back_populates="book", uselist=False,
-                                                       cascade="all, delete-orphan")
+    # every user's progress in it (one row each, app/users.py); deleted with the book
+    progress: Mapped[list["Progress"]] = relationship(back_populates="book", cascade="all, delete-orphan")
 
 
 class Tag(Base):
@@ -211,10 +254,12 @@ class Link(Base):
 
 class Progress(Base):
     __tablename__ = "progress"
-    # covering: the per-series counts read only these columns
-    __table_args__ = (Index("ix_progress_book_state", "book_id", "completed", "page"),)
+    # one row per user and book (app/users.py); covering: the per-series counts read only these columns
+    __table_args__ = (Index("ix_progress_user_book", "user_id", "book_id", unique=True),
+                      Index("ix_progress_user_state", "user_id", "book_id", "completed", "page"))
     id: Mapped[int] = mapped_column(primary_key=True)
-    book_id: Mapped[int] = mapped_column(ForeignKey("book.id", ondelete="CASCADE"), unique=True)
+    user_id: Mapped[int] = mapped_column(Integer, default=1)
+    book_id: Mapped[int] = mapped_column(ForeignKey("book.id", ondelete="CASCADE"), index=True)
     page: Mapped[int] = mapped_column(Integer, default=0)
     completed: Mapped[bool] = mapped_column(Boolean, default=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)

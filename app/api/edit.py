@@ -13,6 +13,7 @@ from app.models import Book, Link, Series, SeriesTag, Tag
 from app.plugins import Context
 from app.posters import MAX_UPLOAD, PosterError, remove_poster, save_poster_bytes
 from app.scanner import archives
+from app.users import manage
 
 router = APIRouter(prefix="/api")
 
@@ -77,7 +78,7 @@ def _clean(v):
     return v
 
 
-@router.put("/series/{series_id}/metadata")
+@router.put("/series/{series_id}/metadata", dependencies=[manage])
 def edit_metadata(series_id: int, body: MetadataEdit, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     locked = set(s.locked_fields or [])
@@ -129,7 +130,7 @@ def _lock_poster(s, lock: bool):
     s.locked_fields = sorted(locked)
 
 
-@router.post("/series/{series_id}/poster/upload")
+@router.post("/series/{series_id}/poster/upload", dependencies=[manage])
 def upload_poster(series_id: int, file: UploadFile = File(...), db=Depends(get_db)):
     """Upload an image as the poster. It is checked and re-encoded; the original is not kept."""
     s = get_or_404(db, Series, series_id)
@@ -149,7 +150,7 @@ class PosterChoice(BaseModel):
     page: int = Field(default=0, ge=0)
 
 
-@router.post("/series/{series_id}/poster")
+@router.post("/series/{series_id}/poster", dependencies=[manage])
 def choose_poster(series_id: int, body: PosterChoice, db=Depends(get_db)):
     """Poster from a page of one of this series' books, from the metadata provider, or automatic."""
     s = get_or_404(db, Series, series_id)

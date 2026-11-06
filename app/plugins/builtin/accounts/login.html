@@ -1,0 +1,36 @@
+<!-- the login over the whole page (or the first admin, while there is no account) -->
+<div class="account-gate" x-data="accountsLogin" x-show="$store.accounts.gate" x-cloak>
+  <form class="account-login" @submit.prevent="submit()">
+    <div class="brand">MangaVibe</div>
+    <template x-if="$store.accounts.setup">
+      <p class="muted">Accounts are on. Make the first account: an admin, who manages the app and the other
+        accounts. It keeps everything read so far.</p>
+    </template>
+    <label>Name
+      <input x-ref="name" x-model="name" autocomplete="username" maxlength="40" required></label>
+    <label>Password
+      <input type="password" x-model="password" maxlength="200" required
+             :autocomplete="$store.accounts.setup ? 'new-password' : 'current-password'"></label>
+    <label x-show="$store.accounts.setup">Password again
+      <input type="password" x-model="again" autocomplete="new-password" maxlength="200"></label>
+    <p class="err" x-show="error" x-text="error"></p>
+    <button class="btn primary" type="submit" :class="{ busy }" :disabled="busy || !name || !password"
+            x-text="$store.accounts.setup ? 'Make the admin account' : 'Log in'"></button>
+  </form>
+</div>
+
+<!-- the account menu's Change password -->
+<div class="modal" x-data="accountsPassword" x-show="$store.accounts.pwOpen" x-cloak
+     @click.self="$store.accounts.pwOpen = false" @keydown.escape.window="$store.accounts.pwOpen = false">
+  <div class="small-dialog"><form class="account-password" @submit.prevent="save()">
+    <div class="sheet-head"><b>Change your password</b>
+      <button class="btn small" type="button" @click="$store.accounts.pwOpen = false">Cancel</button></div>
+    <label>Current password
+      <input type="password" x-model="current" autocomplete="current-password" maxlength="200"></label>
+    <label>New password
+      <input type="password" x-model="password" autocomplete="new-password" maxlength="200" minlength="4"></label>
+    <label>New password again
+      <input type="password" x-model="again" autocomplete="new-password" maxlength="200"></label>
+    <div class="btn-row"><button class="btn primary" type="submit" :disabled="!current || password.length < 4">Save</button></div>
+  </form></div>
+</div>

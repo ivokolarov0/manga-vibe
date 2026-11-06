@@ -42,12 +42,15 @@ prints a LAN address for testing on a phone. Several worktrees can run at once.
 app/main.py             startup, routes
 app/config.py           environment variables
 app/models.py, db.py    SQLite tables, first start, migrations
+app/users.py            who is asking (the owner without accounts), admins-only routes (`manage`)
+app/passwords.py        password hashes and slowing down wrong guesses (libraries, accounts)
 app/direction.py        how a series reads, paged or vertical (its own, a plugin's e.g. its library's, default)
 app/scanner/            parser.py (file names), archives.py (reading), walker.py (scanning)
 app/api/                series.py, books.py, system.py, filters.py (what a list shows, with the plugins' say)
 app/plugins/            plugin system; web.py: plugins' own API, UI (page slots, scripts) and middleware
 app/plugins/builtin/    plugins that come with the app: AniList, MangaUpdates, saved_searches/, libraries/
-                        (libraries: Manga, Comics...; "shelves" in the code, passwords, LockGuard)
+                        (libraries: Manga, Comics...; "shelves" in the code, passwords, LockGuard),
+                        accounts/ (logins, AccountsGuard; off until switched on)
 app/updater.py          auto-update from the newest GitHub release
 app/images.py           thumbnails, resized page cache
 app/web/index.html      the page: Alpine templates for every view

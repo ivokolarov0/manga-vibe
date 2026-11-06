@@ -10,7 +10,8 @@
       <span class="lock" x-show="s.has_password" x-text="s.locked ? '🔒' : '🔓'"
             :aria-label="s.locked ? 'locked' : 'unlocked'"></span></button>
   </template>
-  <button class="add" @click="$store.libraries.addAndPick()" title="New library" aria-label="New library">+</button>
+  <button class="add" x-show="$store.app.admin" @click="$store.libraries.addAndPick()" title="New library"
+          aria-label="New library">+</button>
   <button class="lock-now" x-show="$store.libraries.anyOpen" @click="$store.libraries.lockNow()"
           title="Ask for the passwords again">🔒 Lock now</button>
 </div>

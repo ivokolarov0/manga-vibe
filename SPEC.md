@@ -327,6 +327,10 @@ GET    /api/libraries                       POST /api/libraries   DELETE /api/li
 GET    L/shelves                            POST L/shelves        PATCH/DELETE L/shelves/{id}
 PUT    L/shelves/{id}/password              POST L/shelves/{id}/unlock|lock   POST L/shelves/lock
 PUT    L/series/{id}  {shelf_id}            POST L/move {ids, shelf_id}       PUT L/folders/{id} {shelf_id}
+GET    L/access                             PUT L/access/{user_id} {shelves}   (which libraries an account sees)
+(the accounts plugin; U = /api/plugins/accounts/api)
+GET    U/me      POST U/setup|login|logout      PUT U/me/password
+GET    U/accounts   POST U/accounts   PATCH/DELETE U/accounts/{id}   (admins)
 GET    /api/plugins/saved-searches/api/searches   POST (same)   DELETE .../searches/{id}   (built-in plugin)
 POST   /api/scan                            GET  /api/scan/status
 GET    /api/series?cursor=&limit=&q=&genre=&tag=&exclude_tag=&pub_status=&read_status=&match=&format=&sort=&order=

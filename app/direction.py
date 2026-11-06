@@ -6,6 +6,7 @@ In this order:
   2. a plugin's default (Plugin.reading_mode), e.g. the libraries plugin: its library's mode
   3. Settings → Reader → Default reading mode (paged unless changed)
 """
+from app import users
 from app.db import get_setting
 
 MODES = ("paged", "vertical")
@@ -20,5 +21,6 @@ def reading_direction(db, series) -> tuple[str, str, str]:
     found = plugins.reading_mode(db, series)
     if found and found[0] in MODES:
         return found[0], "plugin", found[1]
-    mode = get_setting(db, "reader_mode", "paged")
+    # Settings → Reader: the user's own (app/users.py), else the shared one
+    mode = get_setting(db, users.personal_key("reader_mode"), get_setting(db, "reader_mode", "paged"))
     return (mode if mode in MODES else "paged"), "default", "Settings → Reader"
