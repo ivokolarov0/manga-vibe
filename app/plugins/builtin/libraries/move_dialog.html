@@ -1,0 +1,21 @@
+<!-- move the selected series to another library (their files stay where they are) -->
+<div class="modal" x-show="$store.libraries.moveOpen" x-cloak @click.self="$store.libraries.moveOpen = false"
+     @keydown.escape.window="$store.libraries.moveOpen = false">
+  <div class="small-dialog">
+    <div class="sheet-head"><b x-text="`Move ${selCount} series to`"></b>
+      <button class="btn small" @click="$store.libraries.moveOpen = false">Cancel</button></div>
+    <p class="muted">Only where they show: their files stay in their folders, and a rescan keeps them there.</p>
+    <div class="options">
+      <template x-for="sh in $store.libraries.list" :key="sh.id">
+        <button @click="$store.libraries.moveOpen = false;
+                        bulk('move', (n) => $store.libraries.movedText(n, sh.id), { shelf_id: sh.id }, $store.libraries.moveUrl)">
+          <span class="text"><span x-text="sh.name + (sh.locked ? ' 🔒' : '')"></span>
+          <small x-text="sh.locked ? 'Locked: they disappear until it is unlocked' : ''"></small></span></button>
+      </template>
+      <button @click="$store.libraries.moveOpen = false;
+                      bulk('move', (n) => $store.libraries.movedText(n, 0), { shelf_id: 0 }, $store.libraries.moveUrl)">
+        <span class="text"><span>Their folder's library</span>
+        <small>Undo a move: each follows its folder again</small></span></button>
+    </div>
+  </div>
+</div>

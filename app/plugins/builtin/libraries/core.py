@@ -1,6 +1,8 @@
-"""Libraries (Manga, Comics...): which series show together, their reader default and their password.
+"""Libraries (Manga, Comics...), the built-in libraries plugin: which series show together, their reader
+default and their password. The plugin's hooks are in __init__.py, its API in api.py.
 
 In the code a library is a *shelf* (models.Shelf), because `Library` has always been a scanned folder.
+The shelf table and the shelf_id columns stay in app/models.py: with the plugin off they're unused.
 A series shows on its own shelf (`Series.shelf_id`, set by the owner, never by a scan), else on its
 folder's (`Library.shelf_id`). Every folder has one.
 
@@ -16,7 +18,7 @@ keeps a library private from others using the same app: whoever can read the fil
 sees everything.
 
 Forgot the password: CLEAR_LIBRARY_PASSWORD=<name> (or "all") on the next start, or
-`python -m app.shelves clear-password <name>`.
+`python -m app.plugins.builtin.libraries.core clear-password <name>`.
 """
 import hashlib
 import hmac
@@ -342,9 +344,9 @@ def clear_from_env(db, which):
 
 
 def main(argv):
-    """python -m app.shelves clear-password <name | id | all>"""
+    """python -m app.plugins.builtin.libraries.core clear-password <name | id | all>"""
     if len(argv) != 2 or argv[0] != "clear-password":
-        print("Usage: python -m app.shelves clear-password <library name | all>")
+        print("Usage: python -m app.plugins.builtin.libraries.core clear-password <library name | all>")
         return 2
     from app import db as database
     database.init_db()

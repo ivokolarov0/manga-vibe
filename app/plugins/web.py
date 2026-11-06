@@ -23,8 +23,15 @@ from app.plugins import Context, manager
 
 # where plugin markup can go: slot name -> where it is in the page
 SLOTS = {
+    "home-top": "above the library grid and Continue reading (e.g. the library tabs)",
     "library-tools": "the library page's buttons, after Filter / Sort / Letter",
     "library-filters": "the row of filters on, after Clear all (shown while filters are on)",
+    "select-menu": "the ⋯ menu of the library's multi-select (can use bulk() and selCount)",
+    "library-end": "the end of the library page: its dialogs (can use bulk() and selCount)",
+    "series-edit": "the series Edit dialog's fields, saved with Save (events edit-open/-changed/-save)",
+    "settings": "Settings' pages: a plugin's own (MangaVibe.settingsPage), shown with section === '<key>'",
+    "folder-row": "each folder in Settings → Library folders (can use l: the folder)",
+    "attention-note": "under the explanation of a Needs attention list",
     "sheets": "the end of the page, for sheets and dialogs of the plugin's own",
 }
 
@@ -66,6 +73,26 @@ def plugin_ctx(request: Request):
     from app.db import SessionLocal
     with SessionLocal() as db:
         yield Context(request.scope["mangavibe.plugin"], db)
+
+
+class PluginMiddleware:
+    """Puts the switched-on plugins' `middleware` in front of every request (e.g. the libraries
+    plugin's password check). The chain is rebuilt only when that set of plugins changes, so switching
+    one off takes effect at once and costs nothing per request otherwise."""
+
+    def __init__(self, app):
+        self.app = app
+        self._key, self._chain = (), app
+
+    async def __call__(self, scope, receive, send):
+        found = tuple(p for p in manager.enabled() if p.middleware is not None)
+        key = tuple(id(p) for p in found)
+        if key != self._key:
+            chain = self.app
+            for p in reversed(found):
+                chain = p.middleware(chain)
+            self._key, self._chain = key, chain
+        await self._chain(scope, receive, send)
 
 
 class PluginApi:

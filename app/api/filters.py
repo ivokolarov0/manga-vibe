@@ -1,11 +1,10 @@
-"""What decides which series a list shows: the library filters (search, tags, status...), and the
-libraries (shelves) with their passwords."""
-from fastapi import HTTPException
+"""What decides which series a list shows: the library filters (search, tags, status...), and what
+plugins allow (e.g. the libraries plugin: one library, never a locked one)."""
 from sqlalchemy import String, and_, case, cast, exists, func, or_, select
 
-from app import shelves
 from app.api.common import TITLE_FIELDS, collection_of, numberings
 from app.models import Book, Progress, Series, SeriesTag, Tag
+from app.plugins import manager as plugins
 
 FORMATS = {  # filter value -> SQL condition (AniList format + country of origin)
     "manga": lambda: and_(or_(Series.format.is_(None), Series.format == "MANGA"),
@@ -122,13 +121,17 @@ def filter_query(db, query, f, title, agg):
     return query
 
 
-def shelf_filter(db, request, shelf: int | None):
-    """SQL conditions on Series for what a page shows: never a locked library's series, and only this
-    library's (the home screen's library tabs) when one is given. A locked one asked for gets a 403."""
-    locked = shelves.locked_for(db, request)
-    if shelf in locked:
-        raise HTTPException(403, "This library is locked")
-    conds = [shelves.visible(locked)]
-    if shelf:
-        conds.append(shelves.shelf_column() == shelf)
-    return conds
+def visible_series(db, request) -> list:
+    """SQL conditions on Series for what this request may see, from the plugins' series_filter()
+    (e.g. libraries: only the picked library, never a locked one). [] with no such plugin on."""
+    return plugins.series_conditions(db, request)
+
+
+def hidden_from(db, request, series_ids) -> bool:
+    """Whether any of these series is hidden from this request (e.g. in a locked library)."""
+    conds = visible_series(db, request)
+    ids = {i for i in series_ids if i is not None}
+    if not conds or not ids:
+        return False
+    found = db.query(Series.id).filter(Series.id.in_(ids))
+    return found.filter(*conds).count() < found.count()

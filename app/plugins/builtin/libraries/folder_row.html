@@ -1,0 +1,9 @@
+<label class="lib-option" x-show="$store.libraries.list.length">
+  <span class="lib-option-text"><span>Library</span>
+    <small>Where this folder's series show. Series moved to another library by hand stay there.</small></span>
+  <select @change="$store.libraries.setFolder(l, $event.target.value)" :aria-label="'Library for the series in ' + l.name">
+    <template x-for="sh in $store.libraries.list" :key="sh.id">
+      <option :value="sh.id" :selected="sh.id === $store.libraries.folderShelf(l.id)"
+              x-text="sh.name + (sh.locked ? ' 🔒' : '')"></option>
+    </template>
+  </select></label>

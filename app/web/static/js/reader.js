@@ -148,8 +148,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   let book;
   try { book = await api(`/api/books/${bookId}`); } catch (e) {
     el.innerHTML = `<div class="endcard"><p>${esc(e.message)}</p><a class="btn" href="#/">Back</a></div>`;
-    // a locked library: ask for its password, then open the book
-    if (e.detail?.shelf) Alpine.store("app").openUnlock(e.detail.shelf, () => openReader(bookId, startPage, cameFromApp));
+    // e.g. a locked library: its plugin asks for the password, then the book opens
+    MangaVibe.denied(e, () => openReader(bookId, startPage, cameFromApp));
     return;
   }
   if (book.error) { el.innerHTML = `<div class="endcard"><p>${esc(book.error)}</p>

@@ -21,7 +21,10 @@
   show in a new library named like the folder; its **Library** setting can point it at another one.
   **Remove** takes it out of the app again; your files are not touched.
 - **Forgot a library's password:** set `CLEAR_LIBRARY_PASSWORD` to the library's name (or `all`), restart
-  once, then remove the variable again. Outside Docker: `python -m app.shelves clear-password <name>`.
+  once, then remove the variable again. Outside Docker:
+  `python -m app.plugins.builtin.libraries.core clear-password <name>`.
+- **Don't want separate libraries at all:** switch off **Libraries** in **Settings → Plugins** (remove
+  the libraries' passwords first). Everything shows in one list; switch it on again to get them back.
 - **A file is broken or can't be read:** it's listed in **Settings → Needs attention → Errors**, with
   what's inside it. Replace the file; the next scan picks the new one up.
 - **A new version doesn't start:** after 3 failed starts in a row, MangaVibe goes back to the previous

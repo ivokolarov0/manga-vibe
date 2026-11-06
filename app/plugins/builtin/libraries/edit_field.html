@@ -1,0 +1,6 @@
+<label class="wide" title="Which library it shows in. The files stay in their folder."
+       x-show="$store.libraries.list.length">Library
+  <select x-model="$store.libraries.edit.value">
+    <template x-for="[v, label] in $store.libraries.editOptions" :key="v">
+      <option :value="v" x-text="label" :selected="v === $store.libraries.edit.value"></option></template>
+  </select></label>

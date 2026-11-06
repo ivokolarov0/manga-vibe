@@ -10,10 +10,11 @@ from pydantic import BaseModel
 
 from sqlalchemy import func
 
-from app import config, plugin_updates, shelves
+from app import config, plugin_updates
 from app.api.common import get_or_404
+from app.api.filters import visible_series
 from app.db import get_db, get_setting, set_setting
-from app.models import Library, Series, Shelf
+from app.models import Library, Series
 from app.plugins import Context, OpenUrl, action_result, implements, manager as plugins
 from app.plugins.web import ui_of, with_ui
 from app.scanner import walker
@@ -55,35 +56,26 @@ def health():
 
 @router.get("/libraries")
 def libraries(request: Request, db=Depends(get_db)):
-    """The library folders. series: how many of the folder's series are shown (a locked library's
-    aren't counted). shelf_id: the library its series show in (app/shelves.py)."""
-    visible = shelves.visible(shelves.locked_for(db, request))
+    """The library folders. series: how many of the folder's series the request may see (e.g. a
+    locked library's aren't counted)."""
     counts = dict(db.query(Series.library_id, func.count(Series.id))
-                  .filter(Series.missing_since.is_(None), visible).group_by(Series.library_id).all())
+                  .filter(Series.missing_since.is_(None), *visible_series(db, request))
+                  .group_by(Series.library_id).all())
     return [{"id": l.id, "name": l.name, "root_path": l.root_path, "series": counts.get(l.id, 0),
-             "available": Path(l.root_path).is_dir(), "shelf_id": l.shelf_id,
-             "host_path": l.host_path} for l in db.query(Library)]
+             "available": Path(l.root_path).is_dir(), "host_path": l.host_path} for l in db.query(Library)]
 
 
 class LibraryPatch(BaseModel):
-    shelf_id: int | None = None   # the library its series show in
     host_path: str | None = None  # the folder outside Docker; "" clears it
 
 
 @router.patch("/libraries/{lib_id}")
-def patch_library(lib_id: int, body: LibraryPatch, request: Request, db=Depends(get_db)):
-    """The library the folder's series show in (series moved by hand stay where they are), and the
-    folder's path outside Docker (shown and copied on the series page)."""
+def patch_library(lib_id: int, body: LibraryPatch, db=Depends(get_db)):
+    """The folder's path outside Docker (shown and copied on the series page)."""
     lib = get_or_404(db, Library, lib_id)
-    if body.shelf_id is not None and body.shelf_id != lib.shelf_id:
-        get_or_404(db, Shelf, body.shelf_id)
-        if lib.shelf_id in shelves.locked_for(db, request):  # would show the locked library's series
-            raise HTTPException(403, "Unlock the folder's library first")
-        lib.shelf_id = body.shelf_id
     if body.host_path is not None:
         lib.host_path = body.host_path.strip() or None
     db.commit()
-    shelves.invalidate()
     return {"ok": True}
 
 
@@ -94,8 +86,8 @@ class LibraryBody(BaseModel):
 
 @router.post("/libraries")
 def add_library(body: LibraryBody, db=Depends(get_db)):
-    """Add a folder. Its series show in the library named like it (made if there's none yet); the
-    owner can point it at another one."""
+    """Add a folder and scan it. Plugins hear about it (on_folders_changed), e.g. the libraries plugin
+    gives it the library named like it."""
     root = Path(body.root_path)
     if not root.is_absolute() or not root.is_dir():
         raise HTTPException(400, f"Folder {body.root_path} does not exist inside the container. "
@@ -108,10 +100,11 @@ def add_library(body: LibraryBody, db=Depends(get_db)):
         raise HTTPException(400, "Library already exists")
     lib = Library(name=body.name or root.name, root_path=str(root))
     db.add(lib)
-    lib.shelf_id = shelves.shelf_for_folder(db, lib).id
     removed = set(get_setting(db, "removed_libraries", []) or [])
     removed.discard(str(root))
     set_setting(db, "removed_libraries", sorted(removed))
+    db.commit()
+    plugins.run_hook(db, "on_folders_changed")
     db.commit()
     walker.start_scan_in_background(lib.id)  # only the new folder; the others are up to date
     return {"id": lib.id}
@@ -121,24 +114,21 @@ def add_library(body: LibraryBody, db=Depends(get_db)):
 def delete_library(lib_id: int, request: Request, db=Depends(get_db)):
     """Removes the library folder from the app's database only (its series and their progress go
     with it). Files are never touched. Remembered, so a folder from LIBRARY_PATHS isn't added back on
-    the next start. Refused while its library is locked: that would remove series without the password."""
+    the next start. Refused while some of its series are hidden from the request (e.g. in a locked
+    library): that would remove them without the password."""
     lib = get_or_404(db, Library, lib_id)
-    if lib.shelf_id in shelves.locked_for(db, request):
-        raise HTTPException(403, "Unlock the folder's library first")
+    conds = visible_series(db, request)
+    if conds:
+        mine = db.query(Series.id).filter(Series.library_id == lib.id)
+        if mine.filter(*conds).count() < mine.count():
+            raise HTTPException(403, "Unlock the folder's library first")
     removed = set(get_setting(db, "removed_libraries", []) or [])
     removed.add(lib.root_path)
     set_setting(db, "removed_libraries", sorted(removed))
-    shelf = db.get(Shelf, lib.shelf_id) if lib.shelf_id else None
     db.delete(lib)
     db.flush()
-    # the library the app made for this folder goes too, if the owner never set it up and it's empty
-    if (shelf and shelf.made_for_folder == lib.id and not shelf.password_hash
-            and db.query(Shelf).count() > 1
-            and not db.query(Library).filter(Library.shelf_id == shelf.id).first()
-            and not db.query(Series).filter(Series.shelf_id == shelf.id).first()):
-        db.delete(shelf)
+    plugins.run_hook(db, "on_folder_removed", lib)  # e.g. the library made for it goes when empty
     db.commit()
-    shelves.invalidate()
     return {"ok": True}
 
 
@@ -326,11 +316,21 @@ class PluginToggle(BaseModel):
 
 @router.put("/plugins/{plugin_id}")
 def toggle_plugin(plugin_id: str, body: PluginToggle, db=Depends(get_db)):
-    if plugin_id not in plugins.plugins:
+    """Switch a plugin on or off. Off is refused while the plugin says it can't be (e.g. libraries
+    while one has a password: its series would show to everyone)."""
+    p = plugins.plugins.get(plugin_id)
+    if p is None:
         raise HTTPException(404, "Plugin not found")
+    was_on = plugin_id not in plugins.disabled
+    if was_on and not body.enabled and implements(p, "can_switch_off"):
+        reason = p.can_switch_off(Context(p, db))
+        if reason:
+            raise HTTPException(409, reason)
     plugins.set_enabled(plugin_id, body.enabled)
     set_setting(db, "plugins_disabled", sorted(plugins.disabled))
     db.commit()
+    if body.enabled and not was_on:
+        plugins.start(db, p)
     return {"ok": True}
 
 
@@ -385,4 +385,5 @@ def install_plugin_update(plugin_id: str, body: dict | None = None, db=Depends(g
 def reload_plugins(db=Depends(get_db)):
     plugins.load()
     plugins.disabled = set(get_setting(db, "plugins_disabled", []) or [])
+    plugins.start(db)
     return list_plugins(db)

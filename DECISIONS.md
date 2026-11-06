@@ -471,7 +471,8 @@ Choices made where the spec was open. Newest at the bottom.
 
 - **A library is a shelf in the code.** `Library` has been a scanned folder from the start, and plugins
   read `series.library_id` as the folder, so that stays. The new idea, what the app calls a *library*,
-  is `Shelf` (table `shelf`, `/api/shelves`, `app/shelves.py`). Folders and series point to one:
+  is `Shelf` (table `shelf`; since Plugin API 8 the built-in plugin `app/plugins/builtin/libraries/`, see
+  [Libraries as a built-in plugin](#libraries-as-a-built-in-plugin-plugin-api-8)). Folders and series point to one:
   `Library.shelf_id` (every folder has one) and `Series.shelf_id` (only when the owner moved it; None
   follows the folder). The SQL for "the series' library" is `shelves.shelf_column()`.
 - **Moves never touch files and survive rescans.** The scanner never writes `Series.shelf_id`, so a
@@ -520,7 +521,7 @@ Choices made where the spec was open. Newest at the bottom.
 - **Guessing is slow**: after 5 wrong passwords in a row each try waits (30 s, doubling, up to 15 min),
   per library, in memory.
 - **Forgot it:** `CLEAR_LIBRARY_PASSWORD=<name or all>` for one start (the main way: it works whatever
-  code the auto-update runs), or `python -m app.shelves clear-password <name>`.
+  code the auto-update runs), or `python -m app.plugins.builtin.libraries.core clear-password <name>`.
 
 ## Saved searches instead of filter libraries
 
@@ -532,7 +533,8 @@ Choices made where the spec was open. Newest at the bottom.
   lists them; picking one sets them on whichever library tab is shown. The same name again replaces it.
 - **No new table**: a short list the page reads whole, like the ignored Needs attention rows.
 - **The filters moved to `app/api/filters.py`** (from `app/api/series.py`) so the grid and every other list
-  use the same code; `shelf_filter()` there adds the library and lock conditions.
+  use the same code; `visible_series()` there adds what plugins allow (the libraries plugin: the library
+  and lock conditions).
 
 ## Plugins and libraries
 
@@ -571,3 +573,39 @@ Choices made where the spec was open. Newest at the bottom.
   address moved from `/api/saved-searches` to `/api/plugins/saved-searches/api/searches`.
 - **Plugin CSS stays outside the layers**, after the built-in styles and before custom.css, so the
   owner's custom.css still wins over a built-in plugin's look.
+
+## Libraries as a built-in plugin (Plugin API 8)
+
+- **Libraries moved out of the core** into `app/plugins/builtin/libraries/` (core.py = the old
+  app/shelves.py, api.py = the old app/api/shelves.py plus moving series and folders). Switched off, the
+  app is one list of everything; the core no longer knows libraries exist.
+- **The core got general hooks instead**, the same ones accounts will use:
+  - `series_filter(ctx, request)`: SQL conditions for what a request may see, used by every list and
+    count (`filters.visible_series`), multi-select and the "is any of these hidden" checks (attention
+    ignore, removing a folder). **Not caught**: a failing filter fails the request rather than showing
+    what it hides.
+  - `middleware`: an ASGI middleware per plugin, chained by `PluginMiddleware` (rebuilt only when the set
+    of plugins changes). LockGuard is the libraries plugin's.
+  - `reading_mode(ctx, series)` → (mode, why): direction.py goes series → plugin → Settings → Reader;
+    the series page shows the why ("the mode of Comics") instead of knowing about libraries.
+  - `series_info()` (the series page's `plugin_data`), `on_start()` (start, Reload plugins, switched
+    on), `on_folders_changed()`, `on_folder_removed()`, `can_switch_off()`.
+- **Data stays where it was** (owner's choice): the `shelf` table and the `shelf_id` columns stay in
+  models.py, unused while the plugin is off. No migration, nothing to lose; switched back on, `on_start`
+  gives folders added meanwhile their library.
+- **Switching it off is refused while a library has a password** (owner's choice), with the names in the
+  message: off, those series would show to everyone.
+- **Built-in plugins are imported under their real name** (`app.plugins.builtin.<name>`), once, so a
+  folder plugin's modules and their state (password caches, the unlock key) exist one time, also after
+  Reload plugins. Other folder plugins can now use relative imports.
+- **The page:** more slots (home-top, select-menu, library-end, series-edit, settings, folder-row,
+  attention-note) and events (`MangaVibe.on`: start, stop, denied, series-info, edit-open/-changed/-save,
+  empty-library, folders-changed, settings-open). Lists follow `MangaVibe.setListScope()` (shelf=3 on the
+  grid, tags, Continue and Needs attention calls); Settings pages come from `$store.app.settingsNav`.
+  A 403 goes to `MangaVibe.denied()`, which the plugin answers by asking for the password.
+- **Markup switched on later is set up by the page, not by Alpine's watcher**: added with the watcher
+  paused, then `Alpine.initTree` box by box. With the watcher, one failing x-for stopped every other box
+  from being set up. Slots inside a repeated part (a folder's row) are filled in the shown copies and in
+  their `<template>`.
+- **The grid's load key includes `listsDirty`** instead of clearing the key to force a reload: clearing
+  it let two loads of the same page run at once and add the same series twice.

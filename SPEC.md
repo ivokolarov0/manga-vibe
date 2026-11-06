@@ -323,8 +323,10 @@ A list of: series with failed/low-confidence matches (with "Fix match"), series 
 ### 8.4 API (suggested)
 ```
 GET    /api/libraries                       POST /api/libraries   DELETE /api/libraries/{id}   (library folders)
-GET    /api/shelves                         POST /api/shelves     PATCH/DELETE /api/shelves/{id}   (libraries, issue #145)
-PUT    /api/shelves/{id}/password           POST /api/shelves/{id}/unlock|lock   POST /api/shelves/lock
+(the libraries plugin, issue #145; L = /api/plugins/libraries/api)
+GET    L/shelves                            POST L/shelves        PATCH/DELETE L/shelves/{id}
+PUT    L/shelves/{id}/password              POST L/shelves/{id}/unlock|lock   POST L/shelves/lock
+PUT    L/series/{id}  {shelf_id}            POST L/move {ids, shelf_id}       PUT L/folders/{id} {shelf_id}
 GET    /api/plugins/saved-searches/api/searches   POST (same)   DELETE .../searches/{id}   (built-in plugin)
 POST   /api/scan                            GET  /api/scan/status
 GET    /api/series?cursor=&limit=&q=&genre=&tag=&exclude_tag=&pub_status=&read_status=&match=&format=&sort=&order=

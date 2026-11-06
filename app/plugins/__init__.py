@@ -21,9 +21,11 @@ What a plugin can do:
 - long work:          ctx.run_in_thread() runs a worker of the plugin's own; it checks ctx.should_stop()
 - its own API:        set `router` (a FastAPI APIRouter): served at /api/plugins/<id>/api/...
 - its own UI:         `js` runs in the web app; `html` puts markup into the page's slots (see app/plugins/web.py)
+- the app's lists:    series_filter() narrows what a request sees; `middleware` guards every request;
+                      reading_mode(), series_info(), on_start(), can_switch_off(), folder hooks
 
-Some of the app's own features are built-in plugins (app/plugins/builtin/), e.g. saved searches,
-so the owner can switch them off and anyone can write a replacement.
+Some of the app's own features are built-in plugins (app/plugins/builtin/), e.g. saved searches and
+libraries, so the owner can switch them off and anyone can write a replacement.
 
 Plugins get read-only access to books through `ctx`. They must never write to the
 library (it is mounted read-only anyway); their data goes into the database.
@@ -41,7 +43,8 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 7
+API_VERSION = 8
+BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 
 
 @dataclass
@@ -154,6 +157,40 @@ class Plugin:
     router = None        # a FastAPI APIRouter, served at /api/plugins/<id>/api/<its paths>
     js = ""              # JavaScript run in the web app before it starts (window.MangaVibe is there)
     html: dict[str, str] = {}  # slot name -> markup put into that slot of the page (web.SLOTS)
+    # an ASGI middleware class, middleware(app), put in front of every request while the plugin is on,
+    # e.g. to refuse what a request may not see (Plugin API 8; app/plugins/web.py PluginMiddleware)
+    middleware = None
+
+    # --- shaping the app's lists and pages (Plugin API 8): how features like libraries plug in ---
+    def series_filter(self, ctx, request) -> list:
+        """SQL conditions on models.Series for what this request may see in every list and count (the
+        grid, tags, Continue reading, Needs attention, folder counts, multi-select). Read your own query
+        parameters from `request.query_params` (e.g. shelf=3). Raise HTTPException to refuse. Not called
+        inside try/except: if it fails, the request fails, so nothing is shown by mistake. Fast: it runs
+        for every list."""
+        return []
+
+    def series_info(self, ctx, series) -> dict | None:
+        """Extra data for the series page, as `plugin_data[<plugin id>]` in GET /api/series/<id>."""
+        return None
+
+    def reading_mode(self, ctx, series) -> tuple[str, str] | None:
+        """A default reading mode for a series that has none of its own: (mode, why), e.g.
+        ("vertical", "the mode of Webtoons"). mode is paged or vertical; None: no opinion."""
+        return None
+
+    def on_start(self, ctx):
+        """The plugin starts working: at app start, after Reload plugins and when switched on."""
+
+    def can_switch_off(self, ctx) -> str | None:
+        """Why the plugin can't be switched off right now (shown to the owner), or None."""
+        return None
+
+    def on_folders_changed(self, ctx):
+        """A library folder was added (at start too, for the LIBRARY_PATHS folders)."""
+
+    def on_folder_removed(self, ctx, folder):
+        """A library folder was just removed (flushed, not committed): clean up what was made for it."""
 
     # --- scan hooks -------------------------------------------------------
     def on_book_scanned(self, ctx, book, parsed):
@@ -522,8 +559,7 @@ class PluginManager:
         self.plugins.clear()
         self.errors.clear()
         self.paths.clear()
-        folders = folders if folders is not None else [Path(__file__).parent / "builtin",
-                                                       config.PLUGINS_DIR]
+        folders = folders if folders is not None else [BUILTIN, config.PLUGINS_DIR]
         for folder in folders:
             folder = Path(folder)
             if not folder.is_dir():
@@ -539,12 +575,21 @@ class PluginManager:
         log.info("Plugins loaded: %s", ", ".join(self.plugins) or "none")
 
     def _load_file(self, path: Path):
-        mod_name = f"mangavibe_plugin_{path.parent.name if path.name == '__init__.py' else path.stem}"
+        stem = path.parent.name if path.name == "__init__.py" else path.stem
+        package = path.parent.parent if path.name == "__init__.py" else path.parent
         try:
-            spec = importlib.util.spec_from_file_location(mod_name, path)
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[mod_name] = module
-            spec.loader.exec_module(module)
+            if package == BUILTIN:
+                # the app's own: imported under their real name (app.plugins.builtin.<name>), once, so a
+                # plugin folder's modules and their state exist one time, also after Reload plugins
+                mod_name = f"app.plugins.builtin.{stem}"
+                module = importlib.import_module(mod_name)
+            else:
+                mod_name = f"mangavibe_plugin_{stem}"
+                folder = [str(path.parent)] if path.name == "__init__.py" else None  # relative imports
+                spec = importlib.util.spec_from_file_location(mod_name, path, submodule_search_locations=folder)
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[mod_name] = module
+                spec.loader.exec_module(module)
             found = [v for v in vars(module).values()
                      if isinstance(v, type) and issubclass(v, Plugin) and v is not Plugin
                      and v.__module__ == mod_name]
@@ -570,6 +615,37 @@ class PluginManager:
         """An enabled plugin by id, or None."""
         p = self.plugins.get(plugin_id)
         return p if p is not None and plugin_id not in self.disabled else None
+
+    def series_conditions(self, db, request) -> list:
+        """Every enabled plugin's series_filter() for this request. Errors are not caught: a request
+        whose filter fails fails too, instead of showing what a plugin hides."""
+        return [cond for p in self.enabled() if implements(p, "series_filter")
+                for cond in p.series_filter(Context(p, db), request)]
+
+    def reading_mode(self, db, series):
+        """(mode, why) from the first enabled plugin with a default for this series, else None."""
+        for p in self.enabled():
+            if not implements(p, "reading_mode"):
+                continue
+            try:
+                found = p.reading_mode(Context(p, db), series)
+            except Exception:
+                log.error("Plugin %s failed in reading_mode:\n%s", p.id, traceback.format_exc())
+                continue
+            if found:
+                return found
+        return None
+
+    def start(self, db, plugin=None):
+        """Run on_start for one plugin, or every enabled one, and commit what they did."""
+        for p in [plugin] if plugin else self.enabled():
+            if implements(p, "on_start"):
+                try:
+                    p.on_start(Context(p, db))
+                    db.commit()
+                except Exception:
+                    db.rollback()
+                    log.error("Plugin %s failed in on_start:\n%s", p.id, traceback.format_exc())
 
     def run_hook(self, db, hook, *args):
         """Call a hook on every enabled plugin; errors are logged, not raised."""

@@ -361,9 +361,8 @@ def _aware(dt):
 
 def ensure_libraries(db, paths):
     """Add LIBRARY_PATHS as library folders (existing ones are kept, ones the owner removed stay
-    removed), and give every folder a library (app/shelves.py)."""
+    removed). Plugins see them in on_start (e.g. libraries: every folder gets one)."""
     from app.db import get_setting
-    from app.shelves import ensure_folder_shelves
     removed = set(get_setting(db, "removed_libraries", []) or [])
     for p in paths:
         root = str(Path(p))
@@ -373,4 +372,3 @@ def ensure_libraries(db, paths):
             db.add(Library(name=Path(root).name or root, root_path=root))
             log.info("Added library folder %s", root)
     db.commit()
-    ensure_folder_shelves(db)

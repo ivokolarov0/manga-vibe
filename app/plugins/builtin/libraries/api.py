@@ -1,16 +1,19 @@
-"""Libraries (Manga, Comics...; shelves in the code, see app/shelves.py): list, add, rename, delete,
-reading mode, password, unlock and lock."""
+"""The libraries plugin's API, at /api/plugins/libraries/api/...: list, add, rename, delete, reading
+mode, password, unlock and lock (/shelves), and where series and folders show (/series, /move,
+/folders). Libraries are shelves in the code, see core.py."""
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 
-from app import shelves
 from app.api.common import get_or_404
 from app.db import get_db
 from app.direction import MODES
 from app.models import Library, Series, Shelf
 
-router = APIRouter(prefix="/api/shelves")
+from . import core as shelves
+
+router = APIRouter(prefix="/shelves")
+places = APIRouter()  # where series and folders show
 
 
 def _set_cookie(response, value):
@@ -177,3 +180,71 @@ def lock_all(response: Response):
     """Lock every library again in this browser (the page does it when a new tab starts)."""
     _set_cookie(response, "")
     return {"ok": True}
+
+
+# ---------------------------------------------------------------- where series and folders show
+
+def _shelf_choice(db, shelf_id):
+    """What a series' shelf_id becomes: None for 0 (its folder's), else an existing library's id."""
+    if shelf_id == 0:
+        return None
+    get_or_404(db, Shelf, shelf_id)
+    return shelf_id
+
+
+class PlaceBody(BaseModel):
+    shelf_id: int  # the library to show it in; 0: its folder's library again
+
+
+@places.put("/series/{series_id}")
+def move_series(series_id: int, body: PlaceBody, request: Request, db=Depends(get_db)):
+    """Show one series in another library (series page → Edit). Its files stay where they are and a
+    rescan keeps it there. Not for a series in a locked library."""
+    s = get_or_404(db, Series, series_id)
+    locked = shelves.locked_for(db, request)
+    if shelves.shelf_id_of(db, s) in locked:
+        raise HTTPException(403, "This library is locked")
+    s.shelf_id = _shelf_choice(db, body.shelf_id)
+    db.commit()
+    shelves.invalidate()  # LockGuard's idea of where it is
+    return {"ok": True}
+
+
+class MoveBody(BaseModel):
+    ids: list[int]
+    shelf_id: int  # 0: each to its folder's library again
+
+
+@places.post("/move")
+def move_many(body: MoveBody, request: Request, db=Depends(get_db)):
+    """Show several series in another library (the library's multi-select). Series in a locked
+    library are skipped."""
+    shelf_id = _shelf_choice(db, body.shelf_id)
+    ids = list(dict.fromkeys(body.ids))[:10000]
+    visible = shelves.visible(shelves.locked_for(db, request))
+    found = db.query(Series).filter(Series.id.in_(ids), visible).all() if ids else []
+    for s in found:
+        s.shelf_id = shelf_id
+    db.commit()
+    shelves.invalidate()
+    return {"done": len(found), "skipped": len(ids) - len(found)}
+
+
+@places.put("/folders/{folder_id}")
+def folder_shelf(folder_id: int, body: PlaceBody, request: Request, db=Depends(get_db)):
+    """The library a folder's series show in (Settings → Library folders). Series moved by hand stay
+    where they are. Not while the folder's library is locked: that would show its series."""
+    folder = get_or_404(db, Library, folder_id)
+    if body.shelf_id != folder.shelf_id:
+        get_or_404(db, Shelf, body.shelf_id)
+        if folder.shelf_id in shelves.locked_for(db, request):
+            raise HTTPException(403, "Unlock the folder's library first")
+        folder.shelf_id = body.shelf_id
+        db.commit()
+        shelves.invalidate()
+    return {"ok": True}
+
+
+router_all = APIRouter()
+router_all.include_router(router)
+router_all.include_router(places)
