@@ -3,7 +3,8 @@ genre=Isekai), picked from the Saved button next to Filter / Sort / Letter. Only
 kept, the same one the page's URL has; it applies to whichever library is shown.
 
 Kept in the saved_searches setting, as before it was a plugin:
-[{"id": 1, "name": "Isekai", "query": "genre=Isekai&sort=year"}].
+[{"id": 1, "name": "Isekai", "query": "genre=Isekai&sort=year"}]. With accounts, each person has their
+own list (user:<id>:saved_searches, app/users.py).
 
 The UI is saved_searches.js, the markup in *.html (one file per slot of the page) and the styles in
 saved_searches.css. Switch it off in Settings -> Plugins, or replace it with a plugin of your own.
@@ -14,6 +15,7 @@ from urllib.parse import parse_qsl, urlencode
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
+from app import users
 from app.db import get_setting, set_setting
 from app.plugins import Context, Plugin
 from app.plugins.web import plugin_ctx
@@ -28,8 +30,13 @@ PARAMS = {"q", "genre", "exclude", "pub", "read", "match", "format", "have", "fa
 router = APIRouter(prefix="/searches")
 
 
+def _key():
+    """Each user's own list (app/users.py); the owner's is the saved_searches setting, as before."""
+    return users.personal_key(KEY)
+
+
 def _all(db):
-    return list(get_setting(db, KEY, []) or [])
+    return list(get_setting(db, _key(), []) or [])
 
 
 def _clean(query: str) -> str:
@@ -63,7 +70,7 @@ def add_saved(body: SavedBody, ctx: Context = Depends(plugin_ctx)):
             raise HTTPException(400, f"At most {MAX} saved searches")
         same = {"id": max((x["id"] for x in items), default=0) + 1, "name": name, "query": query}
         items.append(same)
-    set_setting(ctx.db, KEY, items)
+    set_setting(ctx.db, _key(), items)
     ctx.db.commit()
     return same
 
@@ -73,7 +80,7 @@ def delete_saved(saved_id: int, ctx: Context = Depends(plugin_ctx)):
     items = _all(ctx.db)
     if not any(x["id"] == saved_id for x in items):
         raise HTTPException(404, "Saved search not found")
-    set_setting(ctx.db, KEY, [x for x in items if x["id"] != saved_id])
+    set_setting(ctx.db, _key(), [x for x in items if x["id"] != saved_id])
     ctx.db.commit()
     return {"ok": True}
 

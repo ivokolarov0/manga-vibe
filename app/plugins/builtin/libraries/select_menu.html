@@ -1,1 +1,1 @@
-<button @click="selMenu = false; $store.libraries.moveOpen = true">📚 Move to library…</button>
+<button x-show="$store.app.admin" @click="selMenu = false; $store.libraries.moveOpen = true">📚 Move to library…</button>

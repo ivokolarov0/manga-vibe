@@ -1,15 +1,64 @@
 """Shared helpers for the API: titles, reading status, serialisation."""
+import functools
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
 
 from fastapi import HTTPException
-from sqlalchemy import case, func
+from sqlalchemy import and_, case, func, select
+from sqlalchemy.exc import IntegrityError
 
+from app import users
 from app.db import get_setting
 from app.metadata import editions
-from app.models import Book, Library, Progress
+from app.models import Book, Library, Progress, Series, SeriesState
+
+
+# ---- the current user's own (app/users.py) in SQL
+def my_progress_join():
+    """Join condition for Book -> the current user's Progress row."""
+    return and_(Progress.book_id == Book.id, Progress.user_id == users.current_id())
+
+
+def my_progress():
+    """Filter for Progress rows: the current user's."""
+    return Progress.user_id == users.current_id()
+
+
+def my_state(name):
+    """The current user's SeriesState column (reading_status, favorite, last_read_at) for each Series row,
+    as SQL (NULL without a row)."""
+    return (select(getattr(SeriesState, name))
+            .where(SeriesState.series_id == Series.id, SeriesState.user_id == users.current_id())
+            .scalar_subquery())
+
+
+def retry_on_conflict(route):
+    """Run a route once more when another request made the same per-user row (Progress, SeriesState)
+    at the same moment, e.g. pages turned quickly in two tabs: the second insert fails, and the second
+    run finds the row. For routes that get the session as `db`."""
+    @functools.wraps(route)
+    def run(*args, **kwargs):
+        try:
+            return route(*args, **kwargs)
+        except IntegrityError:
+            db = kwargs["db"]
+            db.rollback()
+            db.expunge_all()  # fresh rows (and no per-user cache) for the second run
+            return route(*args, **kwargs)
+    return run
+
+
+def load_states(db, series_list):
+    """Fetch the current user's SeriesState of many series at once, so reading series.favorite etc. on
+    each doesn't ask the database again."""
+    uid = users.current_id()
+    ids = [s.id for s in series_list]
+    found = {st.series_id: st for st in db.query(SeriesState).filter(SeriesState.user_id == uid,
+                                                                      SeriesState.series_id.in_(ids))} if ids else {}
+    for s in series_list:
+        s.__dict__.setdefault("_mv_states", {})[uid] = found.get(s.id)
 
 READING_STATUSES = {"plan_to_read", "reading", "completed", "on_hold", "dropped"}  # manual choices
 TITLE_FIELDS = {"english": ["title_english", "title_romaji", "title_native"],
@@ -43,7 +92,7 @@ def series_counts(db, series_ids):
     if not series_ids:
         return {}
     rows = (db.query(Book.series_id, func.coalesce(Book.override_extra, Book.extra), Progress.completed, Progress.page)
-            .outerjoin(Progress, Progress.book_id == Book.id)
+            .outerjoin(Progress, my_progress_join())
             .filter(Book.series_id.in_(series_ids), Book.missing_since.is_(None),
                     Book.hidden.is_(False))
             .all())
@@ -79,8 +128,12 @@ def status_of(db, series):
 
 
 def emit_reading_events(db, series, old_status, started=(), completed=()):
-    """Tell plugins what the owner just changed. Call after commit; plugins run in the background."""
+    """Tell plugins what the owner just changed. Call after commit; plugins run in the background.
+    Only the owner's reading (user 1, the first admin with accounts): plugins like tracker syncs are set
+    up once for the app, so another account's reading must not go to the owner's tracker."""
     from app.plugins import manager as plugins
+    if users.current_id() != users.OWNER.id:
+        return
     for book_id in started:
         plugins.emit("on_book_started", book_id)
     for book_id in completed:
@@ -158,7 +211,8 @@ def continue_target(db, series_id):
     books = visible_books_query(db, series_id).filter(Book.error.is_(None)).all()
     if not books:
         return None, 0
-    prog = {p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]))}
+    prog = {p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]),
+                                                             my_progress())}
     if not prog:
         return books[0], 0
     latest = max(prog.values(), key=lambda p: p.updated_at)

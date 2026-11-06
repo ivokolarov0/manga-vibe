@@ -39,7 +39,7 @@ async def lifespan(app):
         walker.ensure_libraries(s, config.LIBRARY_PATHS)
         walker.fill_numbering(s)
         plugins.load()
-        plugins.disabled = set(database.get_setting(s, "plugins_disabled", []) or [])
+        plugins.load_switches(s)
         plugins.start(s)  # e.g. libraries: every folder gets one, CLEAR_LIBRARY_PASSWORD
     if config.START_WORKERS:
         metadata_worker.start()

@@ -609,3 +609,40 @@ Choices made where the spec was open. Newest at the bottom.
   their `<template>`.
 - **The grid's load key includes `listsDirty`** instead of clearing the key to force a reload: clearing
   it let two loads of the same page run at once and add the same series twice.
+
+## Accounts (Plugin API 9)
+
+Owner's choices: login always required; per account: progress, favorites, saved searches, reader
+settings; an admin picks the libraries each account sees (library passwords stay).
+
+- **The core knows "who is asking", nothing about logins** (`app/users.py`). A context variable holds the
+  request's user; the accounts plugin's middleware sets it. Without accounts it's the owner (id 1), who
+  may do everything, so the app works as before. A context variable rather than a parameter: it reaches
+  every query (they run in the request's thread, which copies it) without changing every function.
+- **Per-user data in the core**: `progress.user_id` (one row per user and book) and `series_state`
+  (reading status set by hand, favorite, last read, per user). Migration 15 moved what there was to user 1
+  and dropped the old series columns; progress was rebuilt (SQLite can't drop its one-row-per-book rule).
+  `Series.reading_status/favorite/last_read_at` stay as Python properties reading the current user's
+  row, so most code didn't change; SQL uses `common.my_state()` / `my_progress_join()`.
+- **The first account is user 1**: it gets everything read before accounts, can't be deleted and stays an
+  admin (so there's always one). Switched off again, the app is the owner's with that reading.
+- **Admins-only is marked in the core** (`dependencies=[users.manage]`): settings other than Reader,
+  folders, scans, plugins, metadata and posters, matching, deleting, updates, plugin buttons; the library
+  plugin's add/rename/delete/password/move. Everyone else may read, set their own status and favorites,
+  mark read, keep saved searches and set Settings → Reader. The page hides what they can't use
+  (`$store.app.admin`), but the server is what refuses.
+- **Reader settings per user** are `user:<id>:<key>` settings over the shared ones (`personal_key()`);
+  saved searches the same. Display settings stay the app's (admins).
+- **Reading events only for the owner**: tracker plugins are set up once for the app; another account's
+  reading mustn't go to the owner's MyAnimeList.
+- **Accounts start switched off** (`enabled_by_default = False`, remembered in `plugins_known`): an update
+  must not start asking everyone to log in. Switched on, the next page asks for the first admin; anyone
+  who opens the app before that could make it, like most self-hosted apps on first run.
+- **Login**: scrypt hashes (`app/passwords.py`, shared with library passwords), wrong guesses slow down
+  per name (a wrong name counts too, so names can't be found by trying). A signed cookie for 30 days;
+  changing a password raises the account's version, which logs it out everywhere else. Stored in the
+  `accounts` setting: a short list, no table, like the plugin settings.
+- **Which libraries an account sees** is the libraries plugin's (`libraries_access` setting); its
+  series_filter and LockGuard treat a library the account may not see like a locked one that no password
+  opens (it isn't even listed). Its checkboxes go into the accounts page through the `account-row` slot,
+  a slot inside another plugin's markup, so neither plugin imports the other.

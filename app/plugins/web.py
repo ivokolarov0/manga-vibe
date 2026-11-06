@@ -23,6 +23,7 @@ from app.plugins import Context, manager
 
 # where plugin markup can go: slot name -> where it is in the page
 SLOTS = {
+    "topbar": "the top bar, before the Settings button (e.g. the account menu)",
     "home-top": "above the library grid and Continue reading (e.g. the library tabs)",
     "library-tools": "the library page's buttons, after Filter / Sort / Letter",
     "library-filters": "the row of filters on, after Clear all (shown while filters are on)",
@@ -33,6 +34,8 @@ SLOTS = {
     "folder-row": "each folder in Settings → Library folders (can use l: the folder)",
     "attention-note": "under the explanation of a Needs attention list",
     "sheets": "the end of the page, for sheets and dialogs of the plugin's own",
+    # slots in plugins' own markup (a plugin's markup can hold a slot that others fill)
+    "account-row": "each account in Settings → Accounts (accounts plugin; can use a: the account)",
 }
 
 
@@ -43,14 +46,22 @@ def with_ui(plugin) -> bool:
 def render_index(page: str) -> str:
     """index.html with the switched-on plugins' markup in its slots and their scripts."""
     plugins = manager.enabled()
-    for slot in SLOTS:
-        # each slot stays in the page (display: contents), so a plugin switched on later can be added
-        # to it, and each plugin's markup is in a box of its own, so it can be taken out (app.js)
-        parts = [ui_box(p.id, p.html[slot]) for p in plugins if p.html.get(slot)]
-        page = page.replace(f"<!-- slot:{slot} -->",
-                            f'<div class="plugin-slot" data-slot="{slot}">{"".join(parts)}</div>')
+    page = fill_slots(page, plugins)
     scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in plugins if p.js)
     return page.replace("<!-- slot:scripts -->", scripts)
+
+
+def fill_slots(markup: str, plugins) -> str:
+    """Put the plugins' markup into the slots of this markup, and into slots in what was put in (a
+    plugin's markup can hold a slot for others, e.g. account-row). Each slot stays in the page
+    (display: contents), so a plugin switched on later can be added to it, and each plugin's markup is in
+    a box of its own, so it can be taken out (app.js)."""
+    for _ in range(2):  # the page's slots, then slots in plugin markup
+        for slot in SLOTS:
+            parts = [ui_box(p.id, p.html[slot]) for p in plugins if p.html.get(slot)]
+            markup = markup.replace(f"<!-- slot:{slot} -->",
+                                    f'<div class="plugin-slot" data-slot="{slot}">{"".join(parts)}</div>')
+    return markup
 
 
 def ui_box(plugin_id, markup) -> str:
@@ -63,7 +74,8 @@ def script_url(plugin_id) -> str:
 
 def ui_of(plugin) -> dict:
     """What a plugin adds to the page, for switching it on without reloading (app.js)."""
-    return {"html": {slot: markup for slot, markup in plugin.html.items() if slot in SLOTS},
+    others = [p for p in manager.enabled() if p is not plugin]
+    return {"html": {slot: fill_slots(markup, others) for slot, markup in plugin.html.items() if slot in SLOTS},
             "js": f"/plugins/{quote(plugin.id)}.js" if plugin.js else None,
             "css": f"/plugins/{quote(plugin.id)}.css" if plugin.css else None}
 
@@ -85,7 +97,8 @@ class PluginMiddleware:
         self._key, self._chain = (), app
 
     async def __call__(self, scope, receive, send):
-        found = tuple(p for p in manager.enabled() if p.middleware is not None)
+        found = tuple(sorted((p for p in manager.enabled() if p.middleware is not None),
+                             key=lambda p: p.middleware_order))  # e.g. accounts (0) first: who is asking
         key = tuple(id(p) for p in found)
         if key != self._key:
             chain = self.app

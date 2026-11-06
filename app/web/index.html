@@ -17,6 +17,7 @@
     <a href="#/" class="brand">MangaVibe</a>
     <input id="search" x-ref="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search"
            x-model="q" @input="search()">
+    <!-- slot:topbar -->
     <a href="#/settings" id="settings-link" class="iconbtn" :class="{ active: $store.app.view === 'settings' }"
        :aria-current="$store.app.view === 'settings' ? 'page' : null"
        :aria-label="$store.app.attentionCount ? `Settings, ${$store.app.attentionCount} need attention` : 'Settings'"
@@ -94,7 +95,7 @@
         <b class="count" x-text="working || `${selCount} selected`" aria-live="polite"></b>
         <button class="btn small" :disabled="!!working" @click="selectAll()"
                 x-text="total && selCount >= total ? 'All selected' : `Select all${total ? ' ' + total : ''}`"></button>
-        <button class="btn small danger" :disabled="!!working || !selCount" @click="delOpen = true">🗑 Delete</button>
+        <button class="btn small danger" x-show="$store.app.admin" :disabled="!!working || !selCount" @click="delOpen = true">🗑 Delete</button>
         <div class="menu" @click.outside="selMenu = false">
           <button class="icon-btn" aria-label="More actions" title="More actions" :disabled="!!working || !selCount"
                   @click="selMenu = !selMenu">
@@ -106,7 +107,7 @@
             <button @click="bulk('unread', (n) => `Marked ${n} series as unread`)">○ Mark unread</button>
             <button @click="bulk('favorite', (n) => `Added ${n} series to favorites`)">★ Add to favorites</button>
             <button @click="bulk('unfavorite', (n) => `Removed ${n} series from favorites`)">☆ Remove from favorites</button>
-            <button @click="bulk('refresh', (n) => `Refreshing metadata for ${n} series in the background`)">⟳ Refresh metadata</button>
+            <button x-show="$store.app.admin" @click="bulk('refresh', (n) => `Refreshing metadata for ${n} series in the background`)">⟳ Refresh metadata</button>
             <!-- slot:select-menu -->
           </div>
         </div>
@@ -215,11 +216,12 @@
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 3.2l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.1 6.6 20l1-6.1-4.4-4.3 6.1-.9z"/></svg>
               </button>
-              <button class="btn small" id="edit-series" @click="editInfo()">
+              <button class="btn small" id="edit-series" x-show="$store.app.admin" @click="editInfo()">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M4 20h4L19 9l-4-4L4 16z M13.5 6.5l4 4"/></svg>
                 Edit</button>
-              <div class="menu" @click.outside="menuOpen = false" @keydown.escape="menuOpen = false">
+              <!-- reading mode, rescan, match, delete: admins (with accounts) -->
+              <div class="menu" x-show="$store.app.admin" @click.outside="menuOpen = false" @keydown.escape="menuOpen = false">
                 <button class="icon-btn" aria-label="More" title="More" @click="menuOpen = !menuOpen">
                   <svg class="icon dots" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
@@ -247,7 +249,7 @@
                 </template>
               </select>
               <!-- plugin dropdowns, e.g. the status on MyAnimeList -->
-              <template x-for="c in s.choices" :key="c.plugin + '/' + c.key">
+              <template x-for="c in $store.app.admin ? s.choices : []" :key="c.plugin + '/' + c.key">
                 <select class="ctl" :aria-label="c.label" :disabled="choiceBusy" @change="setChoice(c, $event.target.value)">
                   <option value="" disabled hidden :selected="c.value === null" x-text="c.label + ': unknown'"></option>
                   <template x-for="[v, label] in c.options" :key="v">
@@ -342,7 +344,7 @@
                     Source: <span x-text="$store.app.providerName(s.metadata_source?.provider)"></span>
                     <span x-show="s.metadata_source?.retry_primary"> (AniList will be tried again when it's back online)</span>
                   </p>
-                  <div class="btn-row">
+                  <div class="btn-row" x-show="$store.app.admin">
                     <button class="btn" @click="fixMatch()">Fix match</button>
                     <button class="btn" x-show="s.metadata_source" @click="refreshMeta($el)">Refresh metadata</button>
                   </div>
@@ -365,12 +367,12 @@
                   </div>
                   <p class="muted path-hint" x-show="!s.host_path">This is the path inside Docker. To see the one on your
                     NAS, set <a href="#/settings/library">Path outside Docker</a> for its library folder.</p>
-                  <div class="btn-row">
+                  <div class="btn-row" x-show="$store.app.admin">
                     <button class="btn" :disabled="rescanning" @click="rescan()"
                             x-text="rescanning ? 'Rescanning…' : '⟳ Rescan this series'"></button>
                   </div>
                 </section>
-                <section class="panel" x-show="s.actions.length">
+                <section class="panel" x-show="s.actions.length && $store.app.admin">
                   <h2>Plugin tools</h2>
                   <div class="btn-row">
                     <template x-for="a in s.actions"><button class="btn" :class="{ busy: actionBusy === a.plugin + a.key }"
@@ -492,7 +494,7 @@
             <button :class="{ active: section === k || (k === 'plugins' && section === 'plugin') }" @click="go(k)">
               <span class="ico" x-text="icon"></span><span x-text="label"></span></button>
           </template>
-          <h4>Needs attention</h4>
+          <h4 x-show="attNav.length">Needs attention</h4>
           <template x-for="[k, label] in attNav" :key="k">
             <button :class="{ active: section === 'att-' + k }" @click="go('att-' + k)">
               <span class="ico">•</span><span x-text="label"></span>

@@ -2,7 +2,7 @@
 plugins allow (e.g. the libraries plugin: one library, never a locked one)."""
 from sqlalchemy import String, and_, case, cast, exists, func, or_, select
 
-from app.api.common import TITLE_FIELDS, collection_of, numberings
+from app.api.common import TITLE_FIELDS, collection_of, my_progress_join, my_state, numberings
 from app.models import Book, Progress, Series, SeriesTag, Tag
 from app.plugins import manager as plugins
 
@@ -58,7 +58,7 @@ def reading_aggregates():
                    func.sum(case((and_(Progress.completed.is_not(True), Progress.page > 0), 1), else_=0)).label("started"),
                    func.sum(case((func.coalesce(Book.override_extra, Book.extra).is_(False), 1), else_=0)).label("total_main"),
                    func.sum(case((and_(func.coalesce(Book.override_extra, Book.extra).is_(False), Progress.completed.is_(True)), 1), else_=0)).label("done_main"))
-            .outerjoin(Progress, Progress.book_id == Book.id)
+            .outerjoin(Progress, my_progress_join())  # the current user's reading
             .where(visible).group_by(Book.series_id).subquery())
 
 
@@ -71,8 +71,9 @@ def title_expr(lang):
 
 def status_expr(agg):
     total_c, done_c = func.coalesce(agg.c.total, 0), func.coalesce(agg.c.done, 0)
+    manual = my_state("reading_status")
     return case(
-        (Series.reading_status.is_not(None), Series.reading_status),
+        (manual.is_not(None), manual),
         (and_(total_c > 0, agg.c.total_main > 0, agg.c.done_main == agg.c.total_main), "completed"),
         (or_(done_c > 0, func.coalesce(agg.c.started, 0) > 0), "reading"),
         else_="unread")
@@ -105,7 +106,7 @@ def filter_query(db, query, f, title, agg):
     if wanted:
         query = query.filter(_have_filter(db, wanted))
     if f.get("fav"):
-        query = query.filter(Series.favorite.is_(True))
+        query = query.filter(my_state("favorite").is_(True))
     if f.get("year_min"):
         query = query.filter(Series.start_year >= f["year_min"])
     if f.get("year_max"):

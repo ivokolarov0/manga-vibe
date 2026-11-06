@@ -84,6 +84,26 @@ MangaVibe.onStart(() => {
       } catch (e) { MV.toast(e.message, 6000, "error"); }
       await this.changed();
     },
+    // with accounts: which libraries each account sees ({ "<id>": [shelf ids] }; missing: all). Admins only.
+    access: {},
+    async loadAccess() {
+      if (Alpine.store("app").admin) this.access = await MV.api(`${API}/access`).catch(() => this.access);
+    },
+    sees(accountId, shelfId) {
+      const ids = this.access[String(accountId)];
+      return !ids || ids.includes(shelfId);
+    },
+    async setSees(account, shelfId, on) {
+      const all = this.list.map((s) => s.id);
+      const now = new Set(this.access[String(account.id)] || all);
+      on ? now.add(shelfId) : now.delete(shelfId);
+      const shelves = all.every((id) => now.has(id)) ? null : [...now];  // all ticked: no limit
+      try {
+        await MV.api(`${API}/access/${account.id}`, { method: "PUT", body: { shelves } });
+        MV.toast(`${account.name} ${on ? "sees" : "doesn't see"} ${this.name(shelfId)} now`);
+      } catch (e) { MV.toast(e.message, 6000, "error"); }
+      await this.loadAccess();
+    },
     // the series Edit dialog's choices: [value, label]; "0" follows the folder
     get editOptions() {
       const own = this.edit.info?.folder_shelf?.name;
@@ -179,7 +199,8 @@ MangaVibe.onStart(() => {
     Object.assign(store, { list: [], moveOpen: false });
     store.unlock.open = false;
   });
-  MV.on(ID, "settings-open", () => store.load().catch(() => {}));  // the series counts
+  // the series counts; with accounts, who sees which
+  MV.on(ID, "settings-open", () => Promise.all([store.load().catch(() => {}), store.loadAccess()]));
   MV.on(ID, "folders-changed", () => store.changed());  // a folder gets its library, or its library goes
   // a locked library's series, book or page: ask for the password, then try again
   MV.on(ID, "denied", (detail, retry) => {

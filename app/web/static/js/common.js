@@ -12,6 +12,8 @@ async function api(path, opts = {}) {
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
   if (!res.ok) {
+    // not logged in (an accounts plugin): it shows the login
+    if (res.status === 401) window.dispatchEvent(new CustomEvent("mv-login-needed"));
     let detail = res.statusText;
     try { detail = (await res.json()).detail || detail; } catch {}
     // detail is usually text; some answers send an object with a message and more (e.err.detail)

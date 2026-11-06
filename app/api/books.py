@@ -8,9 +8,11 @@ from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
-from app import images
+from app import images, users
 from app.api.common import (book_dict, display_title, emit_reading_events, ensure_inside_library,
-                            get_or_404, now, status_of, title_lang, visible_books_query)
+                            get_or_404, my_progress, now, retry_on_conflict, status_of, title_lang,
+                            visible_books_query)
+from app.users import manage
 from app.db import SessionLocal, get_db
 from app.direction import reading_direction
 from app.models import Book, OverlayHidden, Progress, Series
@@ -32,7 +34,7 @@ def get_book(book_id: int, db=Depends(get_db)):
     i = ids.index(b.id) if b.id in ids else -1
     nxt = books[i + 1] if 0 <= i < len(books) - 1 else None
     prev = books[i - 1] if i > 0 else None
-    p = db.query(Progress).filter_by(book_id=b.id).one_or_none()
+    p = db.query(Progress).filter_by(book_id=b.id, user_id=users.current_id()).one_or_none()
     return {**book_dict(b, p), "series_title": display_title(s, title_lang(db)),
             "reader_mode": reading_direction(db, s)[0],  # the series' own, or worked out (app/direction.py)
             "next": {"id": nxt.id, "label": book_dict(nxt)["label"]} if nxt else None,
@@ -123,7 +125,7 @@ def show_hidden_boxes(book_id: int, db=Depends(get_db)):
     return {"shown": count, "hidden_boxes": 0}
 
 
-@router.post("/{book_id}/actions/{plugin_id}/{action_key}")
+@router.post("/{book_id}/actions/{plugin_id}/{action_key}", dependencies=[manage])
 def run_book_action(book_id: int, plugin_id: str, action_key: str, db=Depends(get_db)):
     b = get_or_404(db, Book, book_id)
     p = plugins.get(plugin_id)
@@ -202,15 +204,16 @@ class ProgressBody(BaseModel):
 @router.get("/{book_id}/progress")
 def get_progress(book_id: int, db=Depends(get_db)):
     get_or_404(db, Book, book_id)
-    p = db.query(Progress).filter_by(book_id=book_id).one_or_none()
+    p = db.query(Progress).filter_by(book_id=book_id, user_id=users.current_id()).one_or_none()
     return {"page": p.page if p else 0, "completed": bool(p and p.completed)}
 
 
 @router.put("/{book_id}/progress")
+@retry_on_conflict
 def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
     b = get_or_404(db, Book, book_id)
     page = max(0, min(body.page, max(b.page_count - 1, 0)))
-    p = db.query(Progress).filter_by(book_id=book_id).one_or_none()
+    p = db.query(Progress).filter_by(book_id=book_id, user_id=users.current_id()).one_or_none()
     series = db.get(Series, b.series_id)
     old_status = status_of(db, series)
     if body.completed is False and page == 0:
@@ -220,7 +223,7 @@ def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
             db.flush()
             # nothing left read in the series: drop it from Continue reading
             others = (db.query(Progress.id).join(Book, Book.id == Progress.book_id)
-                      .filter(Book.series_id == b.series_id).first())
+                      .filter(Book.series_id == b.series_id, my_progress()).first())
             if others is None:
                 series.last_read_at = None
             db.commit()
@@ -228,7 +231,7 @@ def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
         return {"page": 0, "completed": False}
     started, was_completed = p is None, bool(p and p.completed)
     if p is None:
-        p = Progress(book_id=book_id)
+        p = Progress(book_id=book_id, user_id=users.current_id())
         db.add(p)
     p.page = page
     if body.completed is not None:
@@ -253,7 +256,7 @@ class BookOverride(BaseModel):
     reset: bool = False
 
 
-@router.patch("/{book_id}")
+@router.patch("/{book_id}", dependencies=[manage])
 def patch_book(book_id: int, body: BookOverride, db=Depends(get_db)):
     """Set the volume/chapter (or chapter range) of a file by hand, mark it extra or hidden.
     Stored in the database only: the file is never renamed. Survives rescans."""
@@ -279,5 +282,5 @@ def patch_book(book_id: int, body: BookOverride, db=Depends(get_db)):
     series = db.get(Series, b.series_id)
     apply_order(series)  # re-sort the series with the new numbers
     db.commit()
-    p = db.query(Progress).filter_by(book_id=b.id).one_or_none()
+    p = db.query(Progress).filter_by(book_id=b.id, user_id=users.current_id()).one_or_none()
     return book_dict(b, p)

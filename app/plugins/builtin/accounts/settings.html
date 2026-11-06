@@ -1,0 +1,44 @@
+<!-- Settings → Accounts (#/settings/accounts, admins): accountsSettings in accounts.js -->
+<section x-show="section === 'accounts'" x-data="accountsSettings">
+  <h2>Accounts</h2>
+  <p class="muted">Everyone logs in. Each account has its own reading progress, favorites, Continue reading,
+    saved searches and Settings → Reader. Admins also manage the app: settings, folders, metadata, plugins,
+    deleting, and these accounts.</p>
+  <template x-for="a in store.list" :key="a.id">
+    <div class="lib-card account-card">
+      <div class="libcard-head">
+        <span class="libcard-icon" aria-hidden="true" x-text="a.admin ? '🛡' : '👤'"></span>
+        <div class="libcard-title">
+          <input type="text" class="account-name" :value="a.name" maxlength="40" spellcheck="false"
+                 :aria-label="'Name of ' + a.name" @change="rename(a, $event.target.value)"
+                 @keydown.enter="$event.target.blur()">
+          <small x-text="(a.admin ? 'Admin' : 'Account') + (a.id === 1 ? ' · the first one: has the reading from before accounts' : '')
+            + (a.id === store.me?.id ? ' · you' : '')"></small>
+        </div>
+        <div class="row-buttons">
+          <button class="btn small" @click="newPassword(a)">New password…</button>
+          <button class="btn small danger" x-show="a.id !== 1 && a.id !== store.me?.id" @click="remove(a)">Delete</button>
+        </div>
+      </div>
+      <label class="lib-option" x-show="a.id !== 1">
+        <span class="lib-option-text"><span>Admin</span>
+          <small>Manages the app and the accounts</small></span>
+        <input type="checkbox" :checked="a.admin" @change="patch(a, { admin: $event.target.checked },
+          $event.target.checked ? `${a.name} is an admin now` : `${a.name} isn't an admin any more`)"
+               :aria-label="a.name + ' is an admin'"></label>
+      <!-- what other plugins add for each account (they can use a), e.g. which libraries it sees -->
+      <!-- slot:account-row -->
+    </div>
+  </template>
+  <form class="lib-card account-add" @submit.prevent="create()">
+    <div class="libcard-head"><span class="libcard-icon" aria-hidden="true">＋</span>
+      <div class="libcard-title"><strong>Add an account</strong></div></div>
+    <div class="account-add-fields">
+      <label>Name <input x-model="add.name" maxlength="40" autocomplete="off" required></label>
+      <label>Password <input type="password" x-model="add.password" maxlength="200" minlength="4"
+                             autocomplete="new-password" required></label>
+      <label class="check"><input type="checkbox" x-model="add.admin"> Admin</label>
+      <button class="btn small primary" type="submit" :disabled="!add.name || add.password.length < 4">Add</button>
+    </div>
+  </form>
+</section>

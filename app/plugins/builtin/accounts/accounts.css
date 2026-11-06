@@ -1,0 +1,108 @@
+/* Accounts (built-in plugin). Plugin CSS is loaded after the built-in styles, outside their layers
+   (see css/main.css), so a theme's custom.css still comes last and wins. */
+
+/* the login over the whole page */
+.account-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--bg);
+}
+
+.account-login,
+.account-password {
+  display: grid;
+  gap: 12px;
+  width: min(360px, 100%);
+
+  & .brand {
+    color: var(--accent);
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  & label {
+    display: grid;
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  & p {
+    margin: 0;
+  }
+}
+
+/* the account menu in the top bar */
+.account-menu {
+  position: relative;
+
+  & .account-btn span {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    color: var(--accent-text);
+    font-size: 14px;
+    font-weight: 700;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+
+  & .menu-pop {
+    right: 0;
+    min-width: 200px;
+  }
+
+  & .account-who {
+    display: grid;
+    gap: 2px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+
+    & small {
+      color: var(--muted);
+    }
+  }
+}
+
+/* Settings > Accounts: the folder cards' look; the name can be edited in place */
+.account-card input.account-name {
+  max-width: 320px;
+  padding: 4px 8px;
+  margin-left: -8px;
+  background: transparent;
+  border-color: transparent;
+  font-size: 16px;
+  font-weight: 600;
+
+  &:hover,
+  &:focus {
+    background: var(--surface);
+    border-color: var(--border);
+  }
+}
+
+.account-add-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  padding: 0 16px 14px;
+
+  & label {
+    display: grid;
+    gap: 4px;
+    font-size: 13px;
+  }
+
+  & label.check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-bottom: 8px;
+  }
+}

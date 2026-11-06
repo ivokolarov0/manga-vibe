@@ -55,6 +55,7 @@ class Hello(Plugin):
 | **An API of its own** | `router = APIRouter()` (FastAPI), served at `/api/plugins/<id>/api/...` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 7 |
 | **Its own buttons, sheets and scripts in the app** | `html = {"library-tools": "<button>…</button>"}` and `js = "…"` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 7 |
 | **Decide what the lists show** (e.g. libraries, accounts) | `series_filter(ctx, request)`, `middleware`, `reading_mode()`, `series_info()`, `on_start()`, `can_switch_off()` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 8 |
+| **Know who is asking** (accounts) | `users.current()`, `users.manage`, `users.personal_key()`, `enabled_by_default` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 9 |
 
 ## The `ctx` object
 
@@ -371,6 +372,27 @@ files of their own and read them in (the saved searches plugin does).
 | `on_start(ctx)` | at app start, after Reload plugins and when switched on |
 | `can_switch_off(ctx)` | a reason it can't be switched off now (shown to the owner), or `None` |
 | `on_folders_changed(ctx)` / `on_folder_removed(ctx, folder)` | a library folder was added, or just removed |
+| `enabled_by_default = False` | the plugin starts switched off the first time it's seen (e.g. accounts) |
+
+**Who is asking** (`app/users.py`, Plugin API 9). With the accounts plugin each request runs as a
+logged-in person; without it, as the owner (id 1), who may do everything.
+
+| | |
+|---|---|
+| `users.current()` | the user of this request: `.id`, `.name`, `.can_manage` (an admin) |
+| `dependencies=[users.manage]` | on a route of your own: admins only (403 for others) |
+| `users.personal_key("my_key")` | a settings key for the current user's own copy (the owner keeps `my_key`) |
+
+Reading progress, reading status, favorites and last read are each user's own. Reading events
+(`on_book_started`…) only fire for **the owner** (the first admin): plugins like tracker syncs are set up
+once for the app, so other accounts' reading isn't sent to it. Events and other background work
+(`run_in_background`, threads, scans) run as the owner, so `ctx.reading_status()` there is the owner's;
+inside a request (a button, a dropdown) it's the person's who asked.
+
+Two more slots: `topbar` (the top bar, before Settings; inside a component) and `account-row` (each
+account in Settings → Accounts, with the accounts plugin; `a` is the account: `a.id`, `a.name`, `a.admin`).
+`$store.app.admin` says whether the person may manage the app; `MangaVibe.settingsPage(..., { personal: true })`
+makes a page everyone sees.
 
 ## Styling: plugins and your own custom.css
 

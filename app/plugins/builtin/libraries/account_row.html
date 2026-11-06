@@ -1,0 +1,12 @@
+<!-- Settings → Accounts (accounts plugin): which libraries this account sees. Admins see them all. -->
+<div class="lib-option account-libraries" x-show="!a.admin && $store.libraries.list.length">
+  <span class="lib-option-text"><span>Libraries</span>
+    <small>The ones this account sees; the others are hidden from it everywhere</small></span>
+  <div class="access-list">
+    <template x-for="sh in $store.libraries.list" :key="sh.id">
+      <label><input type="checkbox" :checked="$store.libraries.sees(a.id, sh.id)"
+                    @change="$store.libraries.setSees(a, sh.id, $event.target.checked)">
+        <span x-text="sh.name"></span></label>
+    </template>
+  </div>
+</div>

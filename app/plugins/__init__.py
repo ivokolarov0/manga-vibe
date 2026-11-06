@@ -43,7 +43,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 8
+API_VERSION = 9
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 
 
@@ -157,9 +157,14 @@ class Plugin:
     router = None        # a FastAPI APIRouter, served at /api/plugins/<id>/api/<its paths>
     js = ""              # JavaScript run in the web app before it starts (window.MangaVibe is there)
     html: dict[str, str] = {}  # slot name -> markup put into that slot of the page (web.SLOTS)
+    # False: starts switched off the first time it's seen (the owner switches it on), e.g. accounts
+    enabled_by_default = True
     # an ASGI middleware class, middleware(app), put in front of every request while the plugin is on,
     # e.g. to refuse what a request may not see (Plugin API 8; app/plugins/web.py PluginMiddleware)
     middleware = None
+    # lower runs first (outermost). Who is asking is known from 0 on (accounts), so guards that look at
+    # the user (e.g. libraries' LockGuard) need a higher number; equal ones keep the plugins' order
+    middleware_order = 100
 
     # --- shaping the app's lists and pages (Plugin API 8): how features like libraries plug in ---
     def series_filter(self, ctx, request) -> list:
@@ -615,6 +620,19 @@ class PluginManager:
         """An enabled plugin by id, or None."""
         p = self.plugins.get(plugin_id)
         return p if p is not None and plugin_id not in self.disabled else None
+
+    def load_switches(self, db):
+        """Which plugins are switched off (plugins_disabled). A plugin seen for the first time that
+        isn't enabled_by_default starts off (plugins_known remembers which were seen)."""
+        from app.db import get_setting, set_setting
+        self.disabled = set(get_setting(db, "plugins_disabled", []) or [])
+        known = set(get_setting(db, "plugins_known", []) or [])
+        new = [pid for pid in self.plugins if pid not in known]
+        if new:
+            self.disabled |= {pid for pid in new if not self.plugins[pid].enabled_by_default}
+            set_setting(db, "plugins_disabled", sorted(self.disabled))
+            set_setting(db, "plugins_known", sorted(known | set(new)))
+            db.commit()
 
     def series_conditions(self, db, request) -> list:
         """Every enabled plugin's series_filter() for this request. Errors are not caught: a request

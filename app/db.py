@@ -71,6 +71,29 @@ MIGRATIONS = [
         "ALTER TABLE library ADD COLUMN shelf_id INTEGER REFERENCES shelf(id) ON DELETE SET NULL",
         "ALTER TABLE series ADD COLUMN shelf_id INTEGER REFERENCES shelf(id) ON DELETE SET NULL",
         "CREATE INDEX IF NOT EXISTS ix_series_shelf_id ON series (shelf_id)")],
+    # 15: a user's own reading (app/users.py): progress gets a user, and the reading status set by
+    # hand, favorite and last read move to series_state (table from create_all). Everything there is
+    # now is the owner's (user 1; with accounts, the first admin). progress is rebuilt: SQLite can't
+    # drop its one-row-per-book rule otherwise.
+    lambda conn: [conn.execute(text(q)) for q in (
+        "INSERT INTO series_state (user_id, series_id, reading_status, favorite, last_read_at) "
+        "SELECT 1, id, reading_status, COALESCE(favorite, 0), last_read_at FROM series "
+        "WHERE reading_status IS NOT NULL OR favorite = 1 OR last_read_at IS NOT NULL",
+        "DROP INDEX IF EXISTS ix_series_last_read_at",
+        "ALTER TABLE series DROP COLUMN reading_status",
+        "ALTER TABLE series DROP COLUMN favorite",
+        "ALTER TABLE series DROP COLUMN last_read_at",
+        "CREATE TABLE progress_new (id INTEGER NOT NULL PRIMARY KEY, user_id INTEGER NOT NULL DEFAULT 1, "
+        "book_id INTEGER NOT NULL REFERENCES book (id) ON DELETE CASCADE, page INTEGER NOT NULL, "
+        "completed BOOLEAN NOT NULL, updated_at DATETIME NOT NULL)",
+        "INSERT INTO progress_new (id, user_id, book_id, page, completed, updated_at) "
+        "SELECT id, 1, book_id, page, completed, updated_at FROM progress",
+        "DROP TABLE progress",
+        "ALTER TABLE progress_new RENAME TO progress",
+        "CREATE UNIQUE INDEX ix_progress_user_book ON progress (user_id, book_id)",
+        "CREATE INDEX ix_progress_user_state ON progress (user_id, book_id, completed, page)",
+        "CREATE INDEX ix_progress_book_id ON progress (book_id)",
+        "CREATE INDEX ix_progress_updated_at ON progress (updated_at)")],
 ]
 
 

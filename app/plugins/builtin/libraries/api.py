@@ -5,15 +5,18 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import func
 
+from app import users
 from app.api.common import get_or_404
 from app.db import get_db
 from app.direction import MODES
 from app.models import Library, Series, Shelf
+from app.users import manage
 
 from . import core as shelves
 
 router = APIRouter(prefix="/shelves")
-places = APIRouter()  # where series and folders show
+places = APIRouter(dependencies=[manage])  # where series and folders show: admins (with accounts)
+access_router = APIRouter(prefix="/access", dependencies=[manage])  # who sees which: admins
 
 
 def _set_cookie(response, value):
@@ -34,17 +37,19 @@ def counts(db, locked):
 
 @router.get("")
 def list_shelves(request: Request, db=Depends(get_db)):
-    """Every library, in the order they were made. locked: it has a password and this browser hasn't
-    unlocked it (its series count is then left out)."""
-    locked = shelves.locked_for(db, request)
+    """Every library the user may see (with accounts, an admin picks them), in the order they were made.
+    locked: it has a password and this browser hasn't unlocked it (its series count is then left out).
+    Folders are only listed for admins."""
+    locked, hidden = shelves.locked_for(db, request), shelves.hidden_ids(db)
     n = counts(db, locked)
     folders = {}
-    for f in db.query(Library).order_by(Library.id):
-        folders.setdefault(f.shelf_id, []).append({"id": f.id, "name": f.name, "root_path": f.root_path})
+    if users.current().can_manage:
+        for f in db.query(Library).order_by(Library.id):
+            folders.setdefault(f.shelf_id, []).append({"id": f.id, "name": f.name, "root_path": f.root_path})
     return [{"id": s.id, "name": s.name, "reader_mode": s.reader_mode, "has_password": bool(s.password_hash),
              "locked": s.id in locked, "series": None if s.id in locked else n.get(s.id, 0),
              "folders": folders.get(s.id, [])}
-            for s in db.query(Shelf).order_by(Shelf.id)]
+            for s in db.query(Shelf).order_by(Shelf.id) if s.id not in hidden]
 
 
 Name = Field(min_length=1, max_length=60)
@@ -64,11 +69,12 @@ class ShelfBody(BaseModel):
     name: str = Name
 
 
-@router.post("")
+@router.post("", dependencies=[manage])
 def add_shelf(body: ShelfBody, db=Depends(get_db)):
     shelf = Shelf(name=_check_name(db, body.name))
     db.add(shelf)
     db.commit()
+    shelves.invalidate()  # a limited account doesn't see it: the guard's list of libraries changed
     return {"id": shelf.id, "name": shelf.name}
 
 
@@ -77,7 +83,7 @@ class ShelfPatch(BaseModel):
     reader_mode: str | None = None  # paged | vertical, or "default" (Settings → Reader)
 
 
-@router.patch("/{shelf_id}")
+@router.patch("/{shelf_id}", dependencies=[manage])
 def patch_shelf(shelf_id: int, body: ShelfPatch, request: Request, db=Depends(get_db)):
     """Rename the library, or set the reading mode of its series that don't have their own. A locked
     library must be unlocked first. Once changed it's the owner's: removing its folder keeps it."""
@@ -99,7 +105,7 @@ def _unlocked_or_403(db, request, shelf):
         raise HTTPException(403, f"Unlock {shelf.name} first")
 
 
-@router.delete("/{shelf_id}")
+@router.delete("/{shelf_id}", dependencies=[manage])
 def delete_shelf(shelf_id: int, request: Request, db=Depends(get_db)):
     """Delete the library, not its series: its folders go to another library (one without a password
     if there is one), and its series that were moved here by hand follow their folder again. A locked
@@ -130,7 +136,7 @@ def _verify_or_403(shelf, password):
         raise HTTPException(429, str(e)) from None
 
 
-@router.put("/{shelf_id}/password")
+@router.put("/{shelf_id}/password", dependencies=[manage])
 def set_password(shelf_id: int, body: PasswordBody, request: Request, response: Response, db=Depends(get_db)):
     """Set, change or remove the password. Changing or removing it needs the current one. Browsers
     unlocked with the old password are locked again; this one stays unlocked."""
@@ -245,6 +251,31 @@ def folder_shelf(folder_id: int, body: PlaceBody, request: Request, db=Depends(g
     return {"ok": True}
 
 
+# ---------------------------------------------------------------- who sees which (with accounts)
+
+@access_router.get("")
+def get_access(db=Depends(get_db)):
+    """{user id: [library ids]} for the accounts that don't see every library."""
+    return shelves.access_rules(db)
+
+
+class AccessBody(BaseModel):
+    shelves: list[int] | None = None  # None: every library
+
+
+@access_router.put("/{user_id}")
+def put_access(user_id: int, body: AccessBody, db=Depends(get_db)):
+    """The libraries an account sees (Settings → Accounts). Admins always see all."""
+    if body.shelves is not None:
+        known = {sid for (sid,) in db.query(Shelf.id)}
+        if not set(body.shelves) <= known:
+            raise HTTPException(404, "Library not found")
+    shelves.set_access(db, user_id, body.shelves)
+    db.commit()
+    return {"ok": True}
+
+
 router_all = APIRouter()
 router_all.include_router(router)
 router_all.include_router(places)
+router_all.include_router(access_router)

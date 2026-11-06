@@ -41,6 +41,20 @@
   }
 }
 
+/* Settings > Accounts (accounts plugin): the libraries an account sees */
+.account-libraries .access-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+
+  & label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+  }
+}
+
 /* Settings > Libraries: the folder cards' look; the name can be edited in place */
 .shelf-card {
   & input.shelf-name {

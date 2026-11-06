@@ -54,6 +54,7 @@ class Libraries(Plugin):
             "settings": _read("settings.html"),
             "folder-row": _read("folder_row.html"),
             "attention-note": _read("attention_note.html"),
+            "account-row": _read("account_row.html"),  # with the accounts plugin
             "sheets": _read("unlock_dialog.html")}
 
     # --- what a request may see -------------------------------------------------------------------
