@@ -5,14 +5,14 @@ import threading
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
-from fastapi.responses import FileResponse, Response
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app import config, db as database, plugin_updates, shelves, updater
-from app.api import attention, books, edit, saved, series, shelves as shelves_api, system, update
+from app.api import attention, books, edit, series, shelves as shelves_api, system, update
 from app.metadata import worker as metadata_worker
-from app.plugins import manager as plugins
+from app.plugins import manager as plugins, web as plugin_web
 from app.posters import MAX_UPLOAD
 from app.scanner import walker
 
@@ -133,12 +133,14 @@ app.add_middleware(shelves.LockGuard)  # a locked library's series, books and pa
 
 app.include_router(system.router)
 app.include_router(shelves_api.router)
-app.include_router(saved.router)
 app.include_router(series.router)
 app.include_router(books.router)
 app.include_router(attention.router)
 app.include_router(edit.router)
 app.include_router(update.router)
+# a plugin's own API (Plugin.router), e.g. the built-in saved searches
+app.mount("/api/plugins/{plugin_id}/api", plugin_web.PluginApi())
+
 class StaticNoCache(StaticFiles):
     """The browser re-checks static files on every load (a quick 304 when unchanged),
     so a new version of the app shows up without ?v= numbers in the HTML."""
@@ -171,4 +173,23 @@ def manifest():
 
 @app.get("/")
 def index():
-    return FileResponse(config.WEB_DIR / "index.html", headers={"Cache-Control": "no-cache"})
+    """The app's page, with the switched-on plugins' markup and scripts (app/plugins/web.py)."""
+    page = (config.WEB_DIR / "index.html").read_text(encoding="utf-8")
+    return HTMLResponse(plugin_web.render_index(page), headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/plugins/{plugin_id}.js")
+def plugin_script(plugin_id: str):
+    p = plugins.get(plugin_id)
+    if p is None or not p.js:
+        raise HTTPException(404, "No such plugin script")
+    return Response(p.js, media_type="text/javascript", headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/plugins/{plugin_id}.css")
+def plugin_style(plugin_id: str):
+    """One plugin's CSS, for a plugin switched on after the page loaded (it's in /custom.css too)."""
+    p = plugins.get(plugin_id)
+    if p is None or not p.css:
+        raise HTTPException(404, "No such plugin style")
+    return Response(p.css, media_type="text/css", headers={"Cache-Control": "no-cache"})

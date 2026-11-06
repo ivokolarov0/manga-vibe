@@ -325,7 +325,7 @@ A list of: series with failed/low-confidence matches (with "Fix match"), series 
 GET    /api/libraries                       POST /api/libraries   DELETE /api/libraries/{id}   (library folders)
 GET    /api/shelves                         POST /api/shelves     PATCH/DELETE /api/shelves/{id}   (libraries, issue #145)
 PUT    /api/shelves/{id}/password           POST /api/shelves/{id}/unlock|lock   POST /api/shelves/lock
-GET    /api/saved-searches                  POST /api/saved-searches   DELETE /api/saved-searches/{id}
+GET    /api/plugins/saved-searches/api/searches   POST (same)   DELETE .../searches/{id}   (built-in plugin)
 POST   /api/scan                            GET  /api/scan/status
 GET    /api/series?cursor=&limit=&q=&genre=&tag=&exclude_tag=&pub_status=&read_status=&match=&format=&sort=&order=
 GET    /api/series/{id}                     PATCH /api/series/{id}           (edit metadata, sets locks)

@@ -111,7 +111,9 @@ function cardSub(s) {
 /* ---------------- global store + router ---------------- */
 
 document.addEventListener("alpine:init", () => {
+  alpineStarted = true;  // plugin scripts loaded from now on run MangaVibe.onStart() at once
   Alpine.store("app", {
+    pluginSlots: filledSlots(),  // the page's slots plugins put something in (see window.MangaVibe)
     view: null,          // library | series | continue | attention | settings | read
     id: null,            // series id for the series page
     params: {},          // query params of the current route
@@ -158,7 +160,6 @@ document.addEventListener("alpine:init", () => {
     // which libraries there are and which are locked: what the lists depend on (a reload of the
     // libraries makes a new array even when nothing changed)
     get shelvesKey() { return this.shelves.map((s) => `${s.id}:${s.locked ? 1 : 0}`).join(","); },
-    saved: [],           // saved searches (GET /api/saved-searches), see savedSheet()
   });
 
   let lastView = null, libraryScroll = 0;
@@ -227,7 +228,6 @@ document.addEventListener("alpine:init", () => {
     await loadSettings().catch(() => {});
     await lockOnNewTab();
     await loadShelves().catch(() => {});
-    loadSaved();
     api("/api/providers").then((p) => (Alpine.store("app").providers = p)).catch(() => {});
     route();
     refreshAttentionCount();
@@ -677,10 +677,8 @@ function library() {
       navigateLibrary(new URLSearchParams(q ? { q } : {}));
     },
 
-    // filters on: they can be saved as a search (the Saved button lists them)
-    get canSave() { return !!searchQuery(this.params); },
-    get savedOn() { return !!currentSaved(this.params); },
-    saveSearch() { saveSearch(this.params); },
+    // any filter or sort on (a plugin can add to their row, e.g. Save search)
+    get filtersOn() { return !!searchQuery(this.params); },
     get emptyText() {
       const app = this.$store.app;
       if (this.params.toString()) return "No series match these filters.";
@@ -910,9 +908,8 @@ function sortSheet() {
   };
 }
 
-/* ---------------- saved searches (the Saved button) ----------------
-   A name for the library page's filters and sort, e.g. "Isekai" for the Isekai tag. Picking one sets
-   them on the library shown (any library tab). Kept on the server (app/api/saved.py). */
+/* ---------------- the library page's filters, as plugins see them ----------------
+   e.g. the built-in saved searches plugin (app/plugins/builtin/saved_searches/) keeps them under a name. */
 
 const SEARCH_PARAMS = ["q", ...LIST_KEYS, "fav", "letter", "year_min", "year_max", "score_min", "sort", "order"];
 
@@ -923,13 +920,7 @@ function searchQuery(p) {
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
 }
 
-// the saved search the page shows right now, if any
-function currentSaved(p) {
-  const now = searchQuery(p);
-  return now ? Alpine.store("app").saved.find((x) => searchQuery(new URLSearchParams(x.query)) === now) : null;
-}
-
-// what a saved search does, one short label each: ["Isekai", "not Horror", "Reading", "↓ Recently added"]
+// what a query's filters do, one short label each: ["Isekai", "not Horror", "Reading", "↓ Recently added"]
 function searchParts(qs) {
   const p = new URLSearchParams(qs || ""), out = [];
   if (p.get("q")) out.push(`“${p.get("q")}”`);
@@ -943,42 +934,53 @@ function searchParts(qs) {
   return out;
 }
 
-const describeSearch = (qs) => searchParts(qs).join(", ");
+/* What plugin scripts may use (Plugin API 7, docs/PLUGINS.md). Plugin scripts run after this file:
+   before Alpine starts when the page loads, or later when the plugin is switched on. Either way they
+   register their stores and components in MangaVibe.onStart(). Keep to these names: everything else
+   in app.js can change in any version. */
+let alpineStarted = false;
+window.MangaVibe = {
+  // run fn when Alpine starts (Alpine.store, Alpine.data), or now if it already has
+  onStart(fn) { alpineStarted ? fn() : document.addEventListener("alpine:init", fn); },
+  api,             // api(path, { method, body }) -> the JSON answer; throws Error(detail) on 4xx/5xx
+  toast,           // toast(text, ms = 3000, kind = "" | "error")
+  // the library page's query (filters, sort, page) as URLSearchParams; reactive inside Alpine
+  libraryFilters: () => new URLSearchParams(Alpine.store("app").query),
+  filterQuery: searchQuery,   // its filters and sort only, in a fixed order: "" when none are on
+  filterLabels: searchParts,  // "genre=Isekai&read=reading" -> ["Isekai", "Reading"]
+  showLibrary: navigateLibrary,  // show the library page with these URLSearchParams (back to page 1)
+};
 
-async function loadSaved() {
-  Alpine.store("app").saved = await api("/api/saved-searches").catch(() => Alpine.store("app").saved);
+/* A plugin switched on or off in Settings: add or take out its markup, script and style in place
+   (the page loads with the switched-on ones already in, app/plugins/web.py). Its script stays loaded
+   once it ran; with its markup gone it has nothing to show. */
+function filledSlots() {
+  return [...document.querySelectorAll(".plugin-slot")].filter((s) => s.children.length).map((s) => s.dataset.slot);
 }
 
-async function saveSearch(p) {
-  const query = searchQuery(p);
-  const name = prompt(`Name for this search (${describeSearch(query)})`, getList(p, "genre")[0] || "");
-  if (!name?.trim()) return;
-  try {
-    const r = await api("/api/saved-searches", { method: "POST", body: { name, query } });
-    await loadSaved();
-    toast(`Saved as “${r.name}”. The Saved button brings it back, in any library.`, 5000);
-  } catch (e) { toast(e.message, 6000, "error"); }
+async function addPluginUi(id) {
+  const ui = await api(`/api/plugins/${encodeURIComponent(id)}/ui`);
+  if (ui.css && !document.querySelector(`link[href="${ui.css}"]`)) {
+    // before the app's stylesheet: still outside its layers, and the owner's custom.css comes after it
+    const link = Object.assign(document.createElement("link"), { rel: "stylesheet", href: ui.css });
+    document.querySelector('link[rel="stylesheet"]').before(link);
+  }
+  if (ui.js && !document.querySelector(`script[src="${ui.js}"]`)) {
+    await new Promise((ok, fail) => document.body.append(
+      Object.assign(document.createElement("script"), { src: ui.js, onload: ok, onerror: fail })));
+  }
+  removePluginUi(id);  // never twice
+  for (const [slot, markup] of Object.entries(ui.html)) {
+    const box = Object.assign(document.createElement("div"), { className: "plugin-ui", innerHTML: markup });
+    box.dataset.plugin = id;
+    document.querySelector(`.plugin-slot[data-slot="${slot}"]`)?.append(box);  // Alpine sets it up
+  }
+  Alpine.store("app").pluginSlots = filledSlots();
 }
 
-function savedSheet() {
-  return {
-    get items() { return this.$store.app.saved; },
-    get params() { return new URLSearchParams(this.$store.app.query); },
-    get canSave() { return !!searchQuery(this.params); },
-    isOn(x) { return currentSaved(this.params)?.id === x.id; },
-    parts: searchParts,
-    init() { this.$watch("$store.app.sheet", (s) => s === "saved" && loadSaved()); },
-    pick(x) {  // like a menu: pick and close; picking the one shown clears it
-      navigateLibrary(this.isOn(x) ? new URLSearchParams() : new URLSearchParams(x.query));
-      this.$store.app.sheet = null;
-    },
-    save() { saveSearch(this.params); },
-    async remove(x) {
-      if (!confirm(`Delete the saved search “${x.name}”?`)) return;
-      await api(`/api/saved-searches/${x.id}`, { method: "DELETE" }).catch((e) => toast(e.message, 6000, "error"));
-      await loadSaved();
-    },
-  };
+function removePluginUi(id) {
+  document.querySelectorAll(".plugin-ui").forEach((box) => box.dataset.plugin === id && box.remove());
+  Alpine.store("app").pluginSlots = filledSlots();
 }
 
 /* ---------------- continue reading ---------------- */
@@ -1695,6 +1697,10 @@ Your files are not touched. `
     async loadProviders() { this.providers = await api("/api/metadata/providers").catch(() => this.providers); },
     async togglePlugin(p) {
       await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } });
+      if (p.ui) {  // it adds to the page (e.g. Saved searches): show that, or take it away
+        try { await (p.enabled ? addPluginUi(p.id) : removePluginUi(p.id)); }
+        catch (e) { toast(`Reload the page to see the change (${e.message})`, 6000, "error"); }
+      }
       if (p.provider) this.loadProviders();
       this.refreshPlugins();  // a switched-on plugin shows its settings and status
     },
@@ -1763,7 +1769,10 @@ Your files are not touched. `
       this.statusSame = 0;  // a button was pressed: watch its status closely again
     },
     async reloadPlugins() {
+      const before = this.plugins.some((p) => p.ui && p.enabled);
       const r = await api("/api/plugins/reload", { method: "POST" });
+      // a plugin that adds to the page: load it again so its new version shows
+      if (before || r.plugins.some((p) => p.ui && p.enabled)) return location.reload();
       this.plugins = r.plugins; this.pluginErrors = r.errors;
       this.loadProviders();
     },

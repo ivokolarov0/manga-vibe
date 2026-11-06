@@ -527,7 +527,8 @@ Choices made where the spec was open. Newest at the bottom.
 - **Tried first: a library made of filters** ("Isekai": the series of a library that match saved filters),
   with its own tab. The owner found it looked wrong next to real libraries, so a set of filters is
   a **saved search** instead: a name for the library page's query string (filters and sort, not the page),
-  in the `saved_searches` setting (`app/api/saved.py`). The Saved button next to Filter / Sort / Letter
+  in the `saved_searches` setting (now the built-in plugin `app/plugins/builtin/saved_searches/`, see
+  [Features as built-in plugins](#features-as-built-in-plugins-plugin-api-7)). The Saved button next to Filter / Sort / Letter
   lists them; picking one sets them on whichever library tab is shown. The same name again replaces it.
 - **No new table**: a short list the page reads whole, like the ignored Needs attention rows.
 - **The filters moved to `app/api/filters.py`** (from `app/api/series.py`) so the grid and every other list
@@ -544,3 +545,29 @@ Choices made where the spec was open. Newest at the bottom.
 - Checked against the owner's plugins (accessibility, MyAnimeList sync, official chapters, translate) and
   the examples: none read `Library`, the moved filter functions or the changed page markup. Their
   `/api/tags`, `/api/chat` calls go to Ollama, not to MangaVibe.
+
+## Features as built-in plugins (Plugin API 7)
+
+- **The core is the grid, the series page and the reader; features around them become plugins** that
+  come with the app (`app/plugins/builtin/`), so the owner can switch one off in Settings → Plugins and
+  anyone can write a replacement. Saved searches is the first; libraries and accounts are next.
+- **A plugin can have its own API**: `router` (a FastAPI APIRouter) is served at
+  `/api/plugins/<id>/api/...`. One mount (`PluginApi`, app/plugins/web.py) looks the plugin up on every
+  request, so Reload plugins and switching one off work at once without restarting; off = 404.
+- **And its own UI**: `html` puts markup into named slots of index.html (`<!-- slot:<name> -->`), and `js`
+  is served as `/plugins/<id>.js`, run after app.js. The page loads with the switched-on plugins' markup
+  already in, so Alpine sees it like its own. One script per plugin, so a mistake in one doesn't stop the
+  app.
+- **Switching one on or off doesn't reload the page** (first version did; the owner found it odd next to
+  the other plugins' switches). Each slot stays in the page as a `display: contents` box and each
+  plugin's markup has a box of its own, so app.js adds it (from `GET /api/plugins/<id>/ui`, plus its
+  script and `/plugins/<id>.css`) or removes it; Alpine sets up added markup by itself. Scripts register
+  in `MangaVibe.onStart()`, which runs at once when Alpine has already started. A script stays loaded
+  once it ran; without its markup it shows nothing. Reload plugins still reloads the page.
+- **Slots are added as features move out**, not ahead of time: `library-tools`, `library-filters`,
+  `sheets` for now. `window.MangaVibe` (app.js) is the only JS a plugin should rely on; the rest of app.js
+  can change.
+- **Saved searches keep their data**: still the `saved_searches` setting, so nothing is migrated. Its
+  address moved from `/api/saved-searches` to `/api/plugins/saved-searches/api/searches`.
+- **Plugin CSS stays outside the layers**, after the built-in styles and before custom.css, so the
+  owner's custom.css still wins over a built-in plugin's look.

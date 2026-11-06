@@ -45,8 +45,9 @@ app/models.py, db.py    SQLite tables, first start, migrations
 app/direction.py        how a series reads, paged or vertical (its own, its library, default)
 app/shelves.py          libraries (Manga, Comics...; "shelves" in the code), passwords, LockGuard
 app/scanner/            parser.py (file names), archives.py (reading), walker.py (scanning)
-app/api/                series.py, books.py, system.py, shelves.py, filters.py, saved.py
-app/plugins/            plugin system
+app/api/                series.py, books.py, system.py, shelves.py, filters.py
+app/plugins/            plugin system; web.py: plugins' own API and UI (page slots, scripts)
+app/plugins/builtin/    plugins that come with the app: AniList, MangaUpdates, saved_searches/
 app/updater.py          auto-update from the newest GitHub release
 app/images.py           thumbnails, resized page cache
 app/web/index.html      the page: Alpine templates for every view

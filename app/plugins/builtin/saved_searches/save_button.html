@@ -1,0 +1,6 @@
+<!-- keep these filters and sort under a name (the Saved button lists them) -->
+<button class="save-search" x-show="$store.savedSearches.canSave && !$store.savedSearches.current"
+        @click="$store.savedSearches.save()"
+        title="Keep these filters under a name: the Saved button brings them back">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+  <span>Save search</span></button>

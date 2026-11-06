@@ -19,6 +19,11 @@ What a plugin can do:
 - series data:        ctx.set_series_data()/get_series_data() keep values per series, never shown
 - books:              book_badges() labels books in the list; `book_actions` are buttons in the reader
 - long work:          ctx.run_in_thread() runs a worker of the plugin's own; it checks ctx.should_stop()
+- its own API:        set `router` (a FastAPI APIRouter): served at /api/plugins/<id>/api/...
+- its own UI:         `js` runs in the web app; `html` puts markup into the page's slots (see app/plugins/web.py)
+
+Some of the app's own features are built-in plugins (app/plugins/builtin/), e.g. saved searches,
+so the owner can switch them off and anyone can write a replacement.
 
 Plugins get read-only access to books through `ctx`. They must never write to the
 library (it is mounted read-only anyway); their data goes into the database.
@@ -36,7 +41,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 6
+API_VERSION = 7
 
 
 @dataclass
@@ -145,6 +150,10 @@ class Plugin:
     permissions: list[str] = []
     overlay_label = ""   # e.g. "Translation": a reader toggle that draws page_overlay() over pages
     book_actions: list[Action] = []  # buttons for the open book, in the reader's options
+    # --- its own API and UI (Plugin API 7, see app/plugins/web.py) ---
+    router = None        # a FastAPI APIRouter, served at /api/plugins/<id>/api/<its paths>
+    js = ""              # JavaScript run in the web app before it starts (window.MangaVibe is there)
+    html: dict[str, str] = {}  # slot name -> markup put into that slot of the page (web.SLOTS)
 
     # --- scan hooks -------------------------------------------------------
     def on_book_scanned(self, ctx, book, parsed):

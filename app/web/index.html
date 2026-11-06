@@ -74,9 +74,7 @@
                   :aria-label="letter ? 'Title starts with ' + letter : 'Filter by first letter'">
             <i class="az" aria-hidden="true">A<small>z</small></i>
             <span x-text="letter ? 'Starts with ' + letter : 'Letter'"></span></button>
-          <button class="tool" :class="{ on: savedOn }" @click="openSheet('saved')" title="Saved searches">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
-            <span>Saved</span></button>
+          <!-- slot:library-tools -->
         </div>
         <div class="quick">
           <template x-for="[v, label] in quick" :key="v">
@@ -84,19 +82,15 @@
           </template>
         </div>
       </div>
-      <!-- the filters on (tap one to drop it), then Clear all and Save search -->
-      <div class="active-filters" x-show="chips.length || canSave" x-cloak>
+      <!-- the filters on (tap one to drop it), then Clear all and what plugins add (e.g. Save search) -->
+      <div class="active-filters" x-show="chips.length || (filtersOn && $store.app.pluginSlots.includes('library-filters'))" x-cloak>
         <template x-for="c in chips" :key="c.k + c.v">
           <button class="filter-chip" :class="{ ex: c.ex }" @click="removeChip(c)" :aria-label="'Remove ' + c.label">
             <span x-text="c.label"></span>
             <i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i></button>
         </template>
         <button class="clear-all" x-show="chips.length" @click="clearAll()">Clear all</button>
-        <!-- keep these filters and sort under a name (the Saved button lists them) -->
-        <button class="save-search" x-show="canSave && !savedOn" @click="saveSearch()"
-                title="Keep these filters under a name: the Saved button brings them back">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
-          <span>Save search</span></button>
+        <!-- slot:library-filters -->
       </div>
       <div class="page-info" x-show="paged && total > 0" x-cloak>
         <span x-text="pageInfo"></span>
@@ -1109,41 +1103,6 @@
     </div>
   </div>
 
-  <!-- saved searches: a name for a set of filters and sort, e.g. Isekai (savedSheet() in app.js) -->
-  <div class="sheet saved-sheet" x-data="savedSheet()" x-show="$store.app.sheet === 'saved'" x-cloak
-       @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
-    <div>
-      <div class="sheet-head"><b>Saved searches</b>
-        <span class="btn-row"><button class="btn small primary" x-show="canSave" @click="save()">+ Save this search</button>
-          <button class="btn small" @click="$store.app.sheet = null">Done</button></span></div>
-      <div class="saved-empty" x-show="!items.length">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
-        <b>No saved searches yet</b>
-        <span>Pick filters (for example the tag Isekai) and a sort, then save them here.
-          A saved search works in every library.</span>
-      </div>
-      <div class="saved-list">
-        <template x-for="x in items" :key="x.id">
-          <div class="saved-item" :class="{ on: isOn(x) }">
-            <button class="saved-main" :aria-pressed="isOn(x)" @click="pick(x)"
-                    :title="isOn(x) ? 'Shown now: tap to clear it' : 'Show these series'">
-              <span class="saved-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></span>
-              <span class="saved-text">
-                <b x-text="x.name"></b>
-                <span class="saved-pills"><template x-for="(p, i) in parts(x.query)" :key="i">
-                  <i x-text="p"></i></template></span>
-              </span>
-              <span class="saved-check" x-show="isOn(x)" aria-hidden="true">✓</span>
-            </button>
-            <button class="saved-del" :aria-label="'Delete ' + x.name" title="Delete" @click="remove(x)">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-          </div>
-        </template>
-      </div>
-    </div>
-  </div>
-
   <div class="sheet letter-sheet" x-data="letterSheet()" x-show="$store.app.sheet === 'letter'" x-cloak
        @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
     <div>
@@ -1449,9 +1408,13 @@
     </template>
   </div>
 
+  <!-- plugins: their sheets and dialogs, then their scripts (app/plugins/web.py) -->
+  <!-- slot:sheets -->
+
   <script src="/static/js/common.js"></script>
   <script src="/static/js/reader.js"></script>
   <script src="/static/js/app.js"></script>
+  <!-- slot:scripts -->
   <script defer src="/static/js/vendor/alpine.min.js"></script>
 </body>
 </html>

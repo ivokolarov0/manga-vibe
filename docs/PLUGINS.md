@@ -52,6 +52,8 @@ class Hello(Plugin):
 | **Labels on books** in the series list | `book_badges(ctx, books)` returning `{book_id: "Translated"}` |
 | **Buttons for the open book** (in the plugin's panel in the reader's options) | `book_actions = [Action("all", "Translate this chapter")]` and `run_book_action(ctx, key, book)` |
 | **Work for hours** without holding up other plugins | `ctx.run_in_thread(fn)`; the loop returns when `ctx.should_stop()` |
+| **An API of its own** | `router = APIRouter()` (FastAPI), served at `/api/plugins/<id>/api/...` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 7 |
+| **Its own buttons, sheets and scripts in the app** | `html = {"library-tools": "<button>…</button>"}` and `js = "…"` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 7 |
 
 ## The `ctx` object
 
@@ -269,6 +271,64 @@ class Tracker(Plugin):
   nothing changes. The old file is kept in `plugins/.backup/`.
 - Only single-file plugins in the `plugins` folder can be updated. A plugin's settings and data are
   kept, since they're in the database, not in the file.
+
+## Your own API and UI
+
+Plugin API 7. Some of the app's own features are plugins built this way, so you can switch them off in
+Settings → Plugins or replace them: see **`app/plugins/builtin/saved_searches/`** (the Saved button) for
+a complete one.
+
+**API.** Give the plugin a FastAPI router. It answers `/api/plugins/<id>/api/<its paths>`, only while
+the plugin is on (otherwise 404). `plugin_ctx` gives your handlers the usual `ctx`; commit what you change.
+
+```python
+from fastapi import APIRouter, Depends
+from app.plugins import Context, Plugin
+from app.plugins.web import plugin_ctx
+
+router = APIRouter()
+
+@router.get("/notes")                      # GET /api/plugins/notes/api/notes
+def list_notes(ctx: Context = Depends(plugin_ctx)):
+    return ctx.settings.get("notes", [])
+
+class Notes(Plugin):
+    id = "notes"
+    name = "Notes"
+    router = router
+```
+
+**Markup.** `html` maps a slot of the page to markup put there. It's [Alpine.js](https://alpinejs.dev)
+markup like the rest of the page (`x-show`, `@click`, `$store.app`…).
+
+| Slot | Where |
+|---|---|
+| `library-tools` | the library page's buttons, after Filter / Sort / Letter |
+| `library-filters` | the row of filters on, after Clear all (the row shows while filters are on) |
+| `sheets` | the end of the page: sheets and dialogs of your own. Open one with `$store.app.sheet = "<name>"` and show it with `x-show="$store.app.sheet === '<name>'"` |
+
+More slots are added as more of the app becomes plugins.
+
+**Script.** `js` runs after the app's own scripts: before Alpine starts when the page loads, or later
+when the owner switches the plugin on. Register your stores and components in `MangaVibe.onStart(() => {
+Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `window.MangaVibe` from the app
+(the rest can change in any version):
+
+| `MangaVibe.` | |
+|---|---|
+| `onStart(fn)` | run `fn` when Alpine starts, or at once if it already has |
+| `api(path, { method, body })` | call the server; the JSON answer, or throws an `Error` with the server's message |
+| `toast(text, ms, kind)` | a short message at the bottom; `kind = "error"` for a red one |
+| `libraryFilters()` | the library page's query (filters, sort, page) as `URLSearchParams`; reactive in Alpine |
+| `filterQuery(params)` | just its filters and sort, in a fixed order (`""` when none are on), to compare two |
+| `filterLabels(query)` | short labels for them: `["Isekai", "not Horror", "Reading"]` |
+| `showLibrary(params)` | show the library page with these filters |
+
+Switching the plugin on or off in Settings adds or takes out its markup in place, without reloading the
+page. Once your script has run it stays loaded until the next page load, so keep what it does to its
+stores and components. **Reload plugins** reloads the page, so a changed plugin shows its new version.
+Put styles in `css` as usual. A plugin folder can keep these in
+files of their own and read them in (the saved searches plugin does).
 
 ## Styling: plugins and your own custom.css
 

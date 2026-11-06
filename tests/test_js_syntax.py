@@ -5,7 +5,9 @@ from pathlib import Path
 
 import pytest
 
-JS = sorted((Path(__file__).parent.parent / "app" / "web" / "static" / "js").glob("*.js"))
+APP = Path(__file__).parent.parent / "app"
+# the app's own scripts and the built-in plugins' (e.g. saved searches)
+JS = sorted((APP / "web" / "static" / "js").glob("*.js")) + sorted((APP / "plugins" / "builtin").rglob("*.js"))
 
 
 @pytest.mark.skipif(not shutil.which("node"), reason="node is not installed")
