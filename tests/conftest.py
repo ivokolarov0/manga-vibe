@@ -13,6 +13,7 @@ os.environ["DATA_DIR"] = str(TMP / "data")
 os.environ["LIBRARY_PATHS"] = str(TMP / "manga")
 os.environ["RESCAN_HOURS"] = "0"
 os.environ["START_WORKERS"] = "0"  # no background metadata calls in tests
+os.environ["WATCH_FOLDERS"] = "0"  # tests/test_watcher.py starts its own watcher
 
 from PIL import Image  # noqa: E402
 

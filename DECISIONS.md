@@ -646,3 +646,24 @@ settings; an admin picks the libraries each account sees (library passwords stay
   series_filter and LockGuard treat a library the account may not see like a locked one that no password
   opens (it isn't even listed). Its checkboxes go into the accounts page through the `account-row` slot,
   a slot inside another plugin's markup, so neither plugin imports the other.
+
+## Watching the library folders
+
+- **The system reports changes** (`app/scanner/watcher.py`, `watchdog`: inotify, ReadDirectoryChangesW,
+  FSEvents), like Jellyfin's real-time monitoring, so nothing is read while the folders are quiet. The
+  6-hour full scan stays, for anything the watcher can't see.
+- **One series folder at a time, after it goes quiet**: events are gathered per series folder (the
+  folder right inside the library folder) and it is scanned `WATCH_DELAY` (10) seconds after its last
+  change, so a copy in progress is scanned once, when it's done. Only that folder is scanned
+  (`walker.scan_folder`), with the same incremental rules as a full scan; a deleted folder hides its
+  series. It takes the scan lock without waiting: during a full scan the folder waits for the next round.
+- **Reading isn't a change**: opened/closed-without-writing and attribute events are ignored. Windows
+  reports file reads as changes all the same, so a scan after a change doesn't reopen broken books
+  (that would be a change again, and so on); full scans still re-check them.
+- **Polling where the system reports nothing**: network shares (cifs, nfs) don't hear about changes
+  made by other computers, and Docker Desktop's Windows folders (9p) report nothing (tried in WSL). On
+  Linux, `/proc/self/mountinfo` tells the file system of each library folder; those are checked every
+  30 seconds, as is a folder the system can't watch (inotify's limit). `WATCH_FOLDERS=poll` checks every
+  folder that way, `0` turns watching off.
+- **The library folders are re-read every minute**, so added, removed and remounted folders are picked
+  up without hooks in the API.

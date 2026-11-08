@@ -25,6 +25,11 @@
   `python -m app.plugins.builtin.libraries.core clear-password <name>`.
 - **Don't want separate libraries at all:** switch off **Libraries** in **Settings → Plugins** (remove
   the libraries' passwords first). Everything shows in one list; switch it on again to get them back.
+- **A new series or chapter doesn't show up:** MangaVibe notices new files by itself, about 10
+  seconds after the copy finishes (30 seconds on a network share or with Docker Desktop on Windows).
+  The log says `Watching /manga for changes` or `checking it every 30 seconds`. If nothing shows up,
+  set `WATCH_FOLDERS=poll`, or tap **Rescan all** in **Settings**. Either way a full scan runs every
+  6 hours (`RESCAN_HOURS`).
 - **A file is broken or can't be read:** it's listed in **Settings → Needs attention → Errors**, with
   what's inside it. Replace the file; the next scan picks the new one up.
 - **A new version doesn't start:** after 3 failed starts in a row, MangaVibe goes back to the previous

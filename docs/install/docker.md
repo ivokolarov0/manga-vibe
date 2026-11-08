@@ -39,7 +39,9 @@ All optional:
 |---|---|---|
 | `TZ` | `UTC` | Your time zone, e.g. `Europe/Sofia` |
 | `LIBRARY_PATHS` | `/manga` | More than one library: `/manga,/manga2` (mount each one into the container) |
-| `RESCAN_HOURS` | `6` | How often the library is scanned for new files |
+| `RESCAN_HOURS` | `6` | How often the whole library is scanned, for anything the folder watching missed |
+| `WATCH_FOLDERS` | `1` | New and changed series show up within seconds. `poll` checks the folders every 30 seconds instead, if changes don't show up by themselves; `0` turns it off |
+| `WATCH_DELAY` | `10` | Seconds without changes in a series folder before it is scanned (so a copy can finish first) |
 | `CACHE_MAX_GB` | `2` | Space for resized pages and thumbnails |
 | `PUID` / `PGID` | `1000` | User the app runs as, if that user can read your manga folder |
 | `AUTO_UPDATE` | `1` | `0` turns off update checks |
