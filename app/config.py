@@ -12,6 +12,11 @@ DATA_DIR = Path(_env("DATA_DIR", "/data"))
 LIBRARY_PATHS = [p.strip() for p in _env("LIBRARY_PATHS", "/manga").split(",") if p.strip()]
 CACHE_MAX_GB = float(_env("CACHE_MAX_GB", "2"))
 RESCAN_HOURS = float(_env("RESCAN_HOURS", "6"))
+# app/scanner/watcher.py: "1" watches the library folders for changes (network shares and Docker
+# Desktop's Windows folders, which don't report them, are checked every 30 seconds), "poll" checks
+# every folder that way, "0" leaves it to RESCAN_HOURS
+WATCH_FOLDERS = _env("WATCH_FOLDERS", "1").lower()
+WATCH_DELAY = float(_env("WATCH_DELAY", "10"))  # seconds without changes before a series is rescanned
 START_WORKERS = _env("START_WORKERS", "1") == "1"  # tests turn background metadata off
 # forgot a library's password: its name (or "all") removes the password on the next start
 CLEAR_LIBRARY_PASSWORD = _env("CLEAR_LIBRARY_PASSWORD", "")

@@ -309,7 +309,7 @@ A list of: series with failed/low-confidence matches (with "Fix match"), series 
 - Frontend: keep it simple and dependency-light. Either server-rendered pages (Jinja2) + small vanilla JS/Alpine.js/htmx, or a small SPA with a tiny bundler. **No heavy framework unless clearly worth it.** Must be fast on a phone.
 
 ### 8.2 Scanning
-- On startup and on demand (button), plus a periodic rescan (default every 6 hours). Optionally watch with `watchdog` (polling mode works better on NAS shares).
+- On startup and on demand (button), plus a periodic rescan (default every 6 hours). The library folders are watched with `watchdog`: a changed series folder is scanned once it has been quiet for a few seconds (polling on NAS shares and Docker Desktop folders, which report no changes).
 - **Incremental:** compare path + size + mtime; only open new or changed files. Removed files are marked missing (keep progress for 30 days in case they come back, e.g. a temporarily unmounted share).
 - Opening an archive only to count pages and generate a thumbnail. Large libraries must scan in the background with progress shown in the UI.
 - After scanning a series: run the parser, apply overrides, compute `sort_index`, set duplicate/revision flags, queue metadata matching for new series.

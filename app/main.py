@@ -14,7 +14,7 @@ from app.api import attention, books, edit, series, system, update
 from app.metadata import worker as metadata_worker
 from app.plugins import manager as plugins, web as plugin_web
 from app.posters import MAX_UPLOAD
-from app.scanner import walker
+from app.scanner import walker, watcher
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)s: %(message)s")
 log = logging.getLogger("mangavibe")
@@ -44,6 +44,7 @@ async def lifespan(app):
     if config.START_WORKERS:
         metadata_worker.start()
     walker.start_scan_in_background()
+    watcher.start()  # changed series are rescanned within seconds; the periodic rescan catches the rest
     if config.RESCAN_HOURS > 0:
         threading.Thread(target=_periodic_rescan, daemon=True, name="rescan").start()
     updater.load_cached()

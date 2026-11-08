@@ -130,7 +130,8 @@ def scan_library(db, lib: Library):
     log.info("Scanned library %s: %d series in %.1fs", lib.name, len(dirs), time.time() - t0)
 
 
-def scan_series(db, lib, folder: Path) -> Series | None:
+def scan_series(db, lib, folder: Path, recheck_errors=True) -> Series | None:
+    """recheck_errors=False leaves unchanged broken books alone (scans after a change, see scan_folder)."""
     path_str = str(folder)
     series = db.query(Series).filter_by(folder_path=path_str).one_or_none()
     book_paths = list(find_books(folder))
@@ -156,7 +157,8 @@ def scan_series(db, lib, folder: Path) -> Series | None:
             continue
         book = existing.get(key)
         if (book and book.file_size == size and book.mtime == mtime and book.missing_since is None
-                and (book.error is None or archives.not_yet_supported(book.format, book.error))):
+                and (book.error is None or not recheck_errors
+                     or archives.not_yet_supported(book.format, book.error))):
             continue  # unchanged; damaged books are re-checked on every scan, light novels aren't
         if book is None:
             book = Book(series_id=series.id, path=key, file_name=path.name, format=fmt)
@@ -320,6 +322,40 @@ def rescan_series(series_id: int):
             db.close()
     finally:
         _lock.release()
+
+
+def scan_folder(lib_id: int, folder: Path):
+    """Scan one series folder of a library after its files changed (app/scanner/watcher.py). Like a
+    full scan, only new and changed files are opened. A deleted folder hides its series. Raises Busy
+    while another scan is running; returns True when a new series was added."""
+    if not _lock.acquire(blocking=False):
+        raise Busy("A library scan is running")
+    new = False
+    try:
+        with SessionLocal() as db:
+            lib = db.get(Library, lib_id)
+            if lib is None or not Path(lib.root_path).is_dir():
+                return False  # folder removed from the app, or the share isn't mounted: change nothing
+            counts = status["new_books"], status["errors"]  # they describe the last full scan
+            try:
+                if folder.is_dir():
+                    known = db.query(Series.id).filter_by(folder_path=str(folder)).first() is not None
+                    # broken books aren't reopened: on Windows reading a file is a change too, and
+                    # each reopen would start the next scan
+                    new = scan_series(db, lib, folder, recheck_errors=False) is not None and not known
+                else:
+                    series = db.query(Series).filter_by(folder_path=str(folder)).one_or_none()
+                    if series is not None and series.missing_since is None:
+                        series.missing_since = now()
+                db.commit()
+            finally:
+                status["new_books"], status["errors"] = counts
+    finally:
+        _lock.release()
+    if new:
+        from app.metadata import worker
+        worker.enqueue_unmatched()
+    return new
 
 
 def _purge_missing(db, lib_id: int):
