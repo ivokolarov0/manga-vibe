@@ -40,8 +40,10 @@ What it does to keep your books safe:
 
 - A book is written to a new hidden file next to the old one, and replaces it only once every page
   opened, the page count and order are the same, and the old file didn't change meanwhile.
-- A page that wouldn't get at least 10% smaller stays as it is. Pages already in WebP, AVIF or JPEG
-  XL, EPUBs, PDFs and archives inside archives are left alone.
+- A page that wouldn't get at least 10% smaller stays as it is. That's why some pages of a book may
+  stay `.jpg`: JPEGs saved at very high quality (common in official releases) barely shrink at
+  *High*; *Normal* converts most of them. Pages already in WebP, AVIF or JPEG XL, EPUBs, PDFs and
+  archives inside archives are left alone.
 - `.cbr` and `.cb7` books become `.cbz` (RAR and 7z can't be written). Reading progress, your manual
   chapter numbers and other plugins' data (e.g. translations) are kept.
 - It needs the manga folder mounted read-write (not `:ro`) and room on the drive for one book's copy.

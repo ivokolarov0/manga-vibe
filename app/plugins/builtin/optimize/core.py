@@ -22,10 +22,10 @@ import warnings
 import zipfile
 from pathlib import Path, PurePosixPath
 
-from PIL import Image, ImageChops, ImageOps
+from PIL import Image, ImageChops, ImageCms, ImageOps
 
 from app import config
-from app.db import get_setting, set_setting
+from app.db import SessionLocal, get_setting, set_setting
 from app.models import Book, Series
 from app.scanner import archives, walker
 from app.scanner.deleting import _read_only_mount
@@ -52,33 +52,52 @@ NO_PERMISSION = ("MangaVibe's user can't write in this folder. Give it write acc
                  "or set PUID/PGID to the user that owns it, and restart the container.")
 
 # what the worker is doing, for status() and the badges; one worker at a time
-state = {"thread": None, "series": None, "book_id": None, "book": 0, "books": 0, "stop": False,
-         "restart": False}
+state = {"thread": None, "series": None, "series_id": None, "book_id": None, "book": 0, "books": 0,
+         "stop": False, "restart": False, "starter": None}
 _state_lock = threading.Lock()
+_queue_lock = threading.Lock()
 
 
 class Skip(Exception):
     """Why a book is left as it is, in words for the owner."""
 
 
+class Blocked(Skip):
+    """Nothing in this folder can be changed right now (read-only, no permission, drive full). Not
+    remembered as the book's result: once the owner fixes it, the books are tried again."""
+
+
 # ---------------------------------------------------------------- one page
 
 def _prepare(im):
-    """The page as it looks (EXIF rotation applied), in a mode the encoders take. Grey pages saved
-    as colour (most scans) become grey, and an alpha channel nothing uses is dropped. None: leave
-    the page alone (16-bit and float images)."""
+    """The page as it looks (EXIF rotation applied), in a mode the encoders take. Colours with an
+    embedded profile (Adobe RGB, CMYK…) become sRGB, since the new file has no profile. Grey pages
+    saved as colour (most scans) become grey, and an alpha channel nothing uses is dropped. None:
+    leave the page alone (16-bit and float images, a profile that can't be read)."""
+    icc = im.info.get("icc_profile")
     im = ImageOps.exif_transpose(im)
     if im.mode in ("I", "I;16", "I;16B", "I;16L", "F"):
         return None
+    if icc:
+        alpha = im.mode in ("RGBA", "LA", "PA") or "transparency" in im.info
+        try:
+            if im.mode not in ("RGB", "RGBA", "L", "CMYK"):
+                im = im.convert("RGBA" if alpha else "RGB")
+            im = ImageCms.profileToProfile(im, ImageCms.ImageCmsProfile(io.BytesIO(icc)),
+                                           ImageCms.createProfile("sRGB"),
+                                           outputMode="RGBA" if alpha and im.mode == "RGBA" else "RGB")
+        except Exception as e:  # a broken or unusual profile: keep the page rather than guess
+            log.info("Page not converted: its colour profile can't be used (%s)", e)
+            return None
     if im.mode not in ("RGB", "RGBA", "L", "LA"):
         im = im.convert("RGBA" if "transparency" in im.info else "RGB")
     if im.mode in ("RGBA", "LA") and im.getchannel("A").getextrema() == (255, 255):
         im = im.convert(im.mode[:-1])
     if im.mode == "RGB":
-        small = im.copy()
-        small.thumbnail((256, 256))
-        r, g, b = small.split()
-        if max(ImageChops.difference(r, g).getextrema()[1], ImageChops.difference(g, b).getextrema()[1]) <= 8:
+        # every pixel, not a thumbnail: a small coloured title must not be averaged away
+        r, g, b = im.split()
+        if max(ImageChops.difference(r, g).getextrema()[1], ImageChops.difference(g, b).getextrema()[1],
+               ImageChops.difference(r, b).getextrema()[1]) <= 8:
             im = im.convert("L")
     return im
 
@@ -136,11 +155,11 @@ def candidate(book):
 
 
 def writable(folder: Path):
-    """Raise Skip when files in this folder can't be replaced."""
+    """Raise Blocked when files in this folder can't be replaced."""
     if _read_only_mount(folder):
-        raise Skip(READ_ONLY)
+        raise Blocked(READ_ONLY)
     if not os.access(folder, os.W_OK):
-        raise Skip(NO_PERMISSION)
+        raise Blocked(NO_PERMISSION)
 
 
 def _plan(book, fmt):
@@ -175,10 +194,10 @@ def optimize_book(book, fmt, quality, should_stop=lambda: False):
     writable(path.parent if book.format != "folder" else path)
     pages, names = _plan(book, fmt)
     before = walker.signature(path, book.format)
-    need = before[0] * 1.1 if book.format != "folder" else max(
-        (path / p).stat().st_size for p in names)
-    if shutil.disk_usage(path.parent).free < need:
-        raise Skip("Not enough free space on the drive for the new file")
+    # an archive is written whole; a folder's converted pages all wait as hidden files until the swap
+    need = before[0] * 1.1 if book.format != "folder" else sum((path / p).stat().st_size for p in names)
+    if shutil.disk_usage(path if book.format == "folder" else path.parent).free < need:
+        raise Blocked("Not enough free space on the drive for the new file")
 
     if book.format == "folder":
         return _convert_folder(path, names, fmt, quality, should_stop), before
@@ -261,18 +280,13 @@ def swap_in(db, book, result, before, should_stop=lambda: False):
             _discard(result)
             raise Skip("The file changed while it was being converted")
         if result["format"] == "folder":
-            try:
-                for name, (temp, new) in result["pages"].items():
-                    os.replace(temp, old / new)
-                    (old / name).unlink()
-            finally:
-                _discard(result)  # whatever wasn't moved in
+            _swap_pages(db, book, old, result)
         else:
             new_path = result["path"]
-            _replace(result["temp"], new_path)
+            _retry(os.replace, result["temp"], new_path)
             if new_path != old:
                 try:
-                    old.unlink()  # the .cbr/.cb7 the .cbz replaces
+                    _retry(old.unlink)  # the .cbr/.cb7 the .cbz replaces
                 except OSError:
                     new_path.unlink(missing_ok=True)  # never leave the book there twice
                     raise
@@ -287,11 +301,34 @@ def swap_in(db, book, result, before, should_stop=lambda: False):
     return before[0], book.file_size  # the whole book (for a folder: all its pages)
 
 
-def _replace(src, dst, tries=5):
-    """os.replace, waiting a moment if Windows still has the old file open for a page."""
+def _swap_pages(db, book, folder: Path, result):
+    """A folder book: each new page in, then its old one out. A page whose old file can't be removed
+    loses its new one again, so no page is ever there twice. If that happens after some pages were
+    swapped, the book's row is updated to the folder as it is (those pages stay converted)."""
+    moved = 0
+    try:
+        for name, (temp, new) in result["pages"].items():
+            _retry(os.replace, temp, folder / new)
+            try:
+                _retry((folder / name).unlink)
+            except OSError:
+                (folder / new).unlink(missing_ok=True)
+                raise
+            moved += 1
+    except OSError as e:
+        if moved:
+            book.file_size, book.mtime = walker.signature(folder, "folder")
+            db.commit()
+        raise Skip(f"{moved} of {len(result['pages'])} pages were replaced; one couldn't be ({e})")
+    finally:
+        _discard(result)  # whatever wasn't moved in
+
+
+def _retry(fn, *args, tries=5):
+    """fn(*args), waiting a moment if Windows still has the file open (a page being read)."""
     for i in range(tries):
         try:
-            return os.replace(src, dst)
+            return fn(*args)
         except PermissionError:
             if i == tries - 1:
                 raise
@@ -331,48 +368,75 @@ def todo(book, rec, retry=False):
     return retry and "error" in rec
 
 
-def queue(db):
-    return list(get_setting(db, QUEUE_KEY, []) or [])
+def queue():
+    """The series ids waiting, read fresh (not from a long-lived session's cache)."""
+    with SessionLocal() as db:
+        return list(get_setting(db, QUEUE_KEY, []) or [])
 
 
-def add_to_queue(ctx, series_ids, first=False):
-    q = queue(ctx.db)
-    new = [s for s in series_ids if s not in q]
-    set_setting(ctx.db, QUEUE_KEY, new + q if first else q + new)
-    ctx.db.commit()
-    return len(new)
+def _edit_queue(change):
+    """Change the queue in one step: the worker and the buttons both change it, so each reads it
+    fresh and writes it back under one lock (no change of the other is lost)."""
+    with _queue_lock, SessionLocal() as db:
+        q = change(list(get_setting(db, QUEUE_KEY, []) or []))
+        set_setting(db, QUEUE_KEY, q)
+        db.commit()
+        return q
+
+
+def add_to_queue(series_ids, first=False):
+    """Queue series (first: before the others). Returns how many weren't queued yet."""
+    added = []
+
+    def change(q):
+        added.extend(s for s in series_ids if s not in q)
+        if first:
+            return list(series_ids) + [s for s in q if s not in series_ids]
+        return q + added
+
+    _edit_queue(change)
+    return len(added)
 
 
 def totals(db):
     return get_setting(db, TOTALS_KEY, {"books": 0, "before": 0, "after": 0}) or {}
 
 
-def series_to_optimize(ctx):
-    """Ids of series with books that may still be optimized (not done at their current file)."""
-    out = []
-    for s in ctx.db.query(Series).filter(Series.missing_since.is_(None)).order_by(Series.sort_title):
-        recs = records(ctx, s)
-        if any(todo(b, recs.get(str(b.id))) for b in s.books):
-            out.append(s.id)
+def series_to_optimize(db):
+    """Ids of series with books that may still be optimized (not done at their current file), in
+    title order. Two queries, however big the library."""
+    from app.models import PluginSeriesData
+    recs = dict(db.query(PluginSeriesData.series_id, PluginSeriesData.value)
+                .filter(PluginSeriesData.plugin == "optimize", PluginSeriesData.key == "books"))
+    rows = (db.query(Book.id, Book.series_id, Book.format, Book.error, Book.missing_since, Book.file_size,
+                     Book.mtime)
+            .join(Series, Book.series_id == Series.id).filter(Series.missing_since.is_(None))
+            .order_by(Series.sort_title, Series.id))
+    out, seen = [], set()
+    for b in rows:
+        if b.series_id not in seen and todo(b, (recs.get(b.series_id) or {}).get(str(b.id))):
+            seen.add(b.series_id)
+            out.append(b.series_id)
     return out
 
 
 def start(plugin_ctx):
-    """Start the worker unless it's running."""
+    """Start the worker. One that is still running may be past its last look at the queue, or
+    stopping (Stop, Reload plugins): it starts a new one for the queue when it ends."""
     with _state_lock:
+        state["starter"] = plugin_ctx
         t = state["thread"]
         if t is not None and t.is_alive():
-            if state["stop"]:  # still finishing a page after Stop: it starts again when done
-                state["restart"] = True
+            state["restart"] = True
             return
         state["stop"] = False
         state["thread"] = plugin_ctx.run_in_thread(_work)
 
 
-def stop(ctx):
-    state["stop"] = True
-    set_setting(ctx.db, QUEUE_KEY, [])
-    ctx.db.commit()
+def stop():
+    with _state_lock:
+        state["stop"], state["restart"] = True, False
+    _edit_queue(lambda q: [])
 
 
 def running():
@@ -384,60 +448,86 @@ def _work(ctx):
     should_stop = lambda: state["stop"] or ctx.should_stop()  # noqa: E731
     try:
         while not should_stop():
-            q = queue(ctx.db)
+            q = queue()
             if not q:
                 break
             sid = q[0]
+            again = False
             try:
-                _optimize_series(ctx, sid, should_stop)
+                again = _optimize_series(ctx, sid, should_stop)
             except Exception:
+                ctx.db.rollback()
                 log.exception("Optimizing series %s failed", sid)
             if should_stop():
                 break
-            set_setting(ctx.db, QUEUE_KEY, [x for x in queue(ctx.db) if x != sid])
-            ctx.db.commit()
+            if not again:
+                _edit_queue(lambda q: [x for x in q if x != sid])
     finally:
-        state.update(series=None, book_id=None, book=0, books=0)
+        state.update(series=None, series_id=None, book_id=None, book=0, books=0)
         with _state_lock:
-            if state.pop("restart", False) and not ctx.should_stop():
+            starter, restart = state.get("starter"), state["restart"]
+            state["restart"] = False
+            # the plugin object that asked must still be the one switched on (not reloaded or off)
+            if restart and starter is not None and plugins_manager().get("optimize") is starter.plugin:
                 state["stop"] = False
-                state["thread"] = ctx.run_in_thread(_work)
+                state["thread"] = starter.run_in_thread(_work)
+
+
+def plugins_manager():
+    from app.plugins import manager
+    return manager
 
 
 def _optimize_series(ctx, series_id, should_stop):
+    """Optimize the series' books that need it. True when the owner asked for it again while it ran
+    (Optimize this series, to retry failed books): it is then done once more."""
     from app.plugins.builtin.optimize import settings_of
     series = ctx.db.get(Series, series_id)
     if series is None:
-        return
+        return False
     fmt, quality = settings_of(ctx)
     folder = Path(series.folder_path)
     if folder.is_dir():
         clean_leftovers(folder)
     recs = records(ctx, series)
-    retry = ctx.get_series_data(series, "retry")  # "Optimize this series" tries failed books again
-    books = [b for b in series.books if todo(b, recs.get(str(b.id)), bool(retry))]
+    retry = bool(ctx.get_series_data(series, "retry"))  # "Optimize this series" retries failed books
+    books = [b for b in series.books if todo(b, recs.get(str(b.id)), retry)]
     books.sort(key=lambda b: b.sort_index)
-    state.update(series=series.folder_name, books=len(books), book=0)
+    state.update(series=series.folder_name, series_id=series.id, books=len(books), book=0)
     for i, book in enumerate(books, start=1):
         if should_stop():
-            return
+            return False
         state.update(book=i, book_id=book.id)
         rec = _optimize_one(ctx, book, fmt, quality, should_stop)
         if rec is None:  # stopped: try it again next time
-            return
+            return False
+        if rec is BLOCKED:  # read-only, no permission, drive full: the other books won't do better
+            break
         recs[str(book.id)] = rec
         ctx.set_series_data(series, "books", dict(recs))
         ctx.db.commit()
+    ctx.db.commit()  # a fresh read: the button may have asked again meanwhile
+    if ctx.get_series_data(series, "retry") and not retry:
+        return True
     ctx.set_series_data(series, "retry", None)
     ctx.db.commit()
+    return False
+
+
+BLOCKED = object()
 
 
 def _optimize_one(ctx, book, fmt, quality, should_stop):
-    """Optimize a book and say what happened, as its record. None when it was stopped."""
+    """Optimize a book and say what happened, as its record. None when it was stopped, BLOCKED when
+    nothing can be written there now (not remembered, so it's tried again later)."""
     t0 = time.monotonic()
     try:
         result, before = optimize_book(book, fmt, quality, should_stop)
         old, new = swap_in(ctx.db, book, result, before, should_stop)
+    except Blocked as e:
+        ctx.db.rollback()
+        log.warning("Not optimized: %s: %s", book.path, e)
+        return BLOCKED
     except Skip as e:
         if str(e) == "Stopped":
             return None

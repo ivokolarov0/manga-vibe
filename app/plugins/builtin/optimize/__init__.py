@@ -53,7 +53,7 @@ class Optimize(Plugin):
     ]
 
     def on_start(self, ctx):
-        if core.queue(ctx.db):  # the app restarted during "Optimize all": carry on
+        if core.queue():  # the app restarted (or plugins were reloaded) during "Optimize all": carry on
             core.start(ctx)
 
     def run_action(self, ctx, action_key, series):
@@ -68,22 +68,43 @@ class Optimize(Plugin):
         if not any(core.todo(b, recs.get(str(b.id)), retry=True) for b in books):
             return "This series is optimized already"
         ctx.set_series_data(series, "retry", True)
-        core.add_to_queue(ctx, [series.id], first=True)
+        ctx.db.commit()  # before the worker looks (it may be optimizing this series right now)
+        core.add_to_queue([series.id], first=True)
         core.start(ctx)
         return "Optimizing started. Each book shows how much it saved"
 
     def run_global_action(self, ctx, action_key):
         if action_key == "stop":
-            if not core.running() and not core.queue(ctx.db):
+            if not core.running() and not core.queue():
                 return "Nothing is being optimized"
-            core.stop(ctx)
+            core.stop()
             return "Stopping after the page being converted"
-        ids = core.series_to_optimize(ctx)
+        ids = core.series_to_optimize(ctx.db)
         if not ids:
             return "Every series is optimized already"
-        added = core.add_to_queue(ctx, ids)
+        ids, blocked = self._writable(ctx, ids)
+        if not ids:
+            return blocked
+        added = core.add_to_queue(ids)
         core.start(ctx)
-        return f"Optimizing {len(ids)} series" if added else "Optimizing is running already"
+        if not added:
+            return "Optimizing is running already"
+        return f"Optimizing {len(ids)} series" + (f". Left out: {blocked}" if blocked else "")
+
+    @staticmethod
+    def _writable(ctx, ids):
+        """The series whose library folder can be written, and why the others can't (or "")."""
+        from app.models import Library, Series
+        roots = dict(ctx.db.query(Series.id, Library.root_path)
+                     .join(Library, Series.library_id == Library.id).filter(Series.id.in_(ids)))
+        why = {}
+        for root in set(roots.values()):
+            try:
+                core.writable(Path(root))
+            except core.Skip as e:
+                why[root] = str(e)
+        ok = [i for i in ids if roots.get(i) not in why]
+        return ok, " ".join(sorted(set(why.values())))
 
     def status(self, ctx):
         t = core.totals(ctx.db)
@@ -92,7 +113,7 @@ class Optimize(Plugin):
                 else "Nothing optimized yet")
         if not core.running():
             return done
-        waiting = max(0, len(core.queue(ctx.db)) - 1)
+        waiting = max(0, len(core.queue()) - 1)
         s = core.state
         line = f"Optimizing {s['series'] or '…'}, book {s['book']} of {s['books']}"
         if waiting:
