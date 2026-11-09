@@ -667,3 +667,36 @@ settings; an admin picks the libraries each account sees (library passwords stay
   folder that way, `0` turns watching off.
 - **The library folders are re-read every minute**, so added, removed and remounted folders are picked
   up without hooks in the API.
+
+## Optimize (built-in plugin)
+
+Owner's choices: JPEG XL by default, lossy only; replace the originals once checked, no copy kept;
+JPEG pages are converted too.
+
+- **A plugin, off by default** (`enabled_by_default = False`): it's the second thing in the app that
+  changes the owner's files (after Delete series), so an update mustn't put a button on every series
+  page that does that. It uses the plugin API's own buttons, settings, status line and book badges, so
+  it has no markup or script of its own.
+- **JPEG XL is fine for the reader**: the reader asks for pages at the screen's width, and those are
+  sent as WebP whatever the file holds (and cached), so a JPEG XL page costs ~15 ms more to show once.
+  Other comic apps may not read JPEG XL or AVIF; the setting says so and offers WebP.
+- **Checked before anything is replaced**: the new book is a hidden `.mvopt-…` file next to the old
+  one (scans and the watcher skip dot files). Every converted page is decoded once; the archive is
+  read back (`testzip`), and its pages must be the old ones in the old order with the new extension.
+  A new extension that would change the natural sort, or two pages that would get the same name
+  (`001.png` and `001.jpg`), keep the page or the book as it is.
+- **Swapped under the scanner's lock, and the book row updated at once** (path, size, mtime): the next
+  scan sees an unchanged book, so the row and everything keyed by it stay: progress, manual numbers,
+  plugins' page data (same pages, same order). Before swapping it checks the old file's size and
+  mtime against what was converted; a file changed meanwhile is left alone.
+- **A page must get 10% smaller** or it stays: no quality lost for a few bytes. Grey pages saved as
+  colour become grey, unused alpha is dropped, EXIF rotation is applied (the new file has none).
+- **RAR and 7z become `.cbz`** (nothing writes them), keeping the book's row; the old file is deleted
+  only once the new one is in place, and if that fails the new one goes, so a book is never there twice.
+- **Conversion runs without the scanner's lock** (minutes per book); only the swap holds it, waiting
+  for a full scan to finish rather than refusing.
+- **One worker, half the CPU cores for the encoder**, so reading stays smooth on a NAS. The queue is a
+  setting (`optimize_queue`), so "Optimize all" carries on after a restart. Per book, what happened
+  is kept as the plugin's series data at the file's size and mtime: a done book (or one with nothing
+  to convert) isn't tried again until its file changes; a failed one is retried by "Optimize this
+  series", not by "Optimize all".

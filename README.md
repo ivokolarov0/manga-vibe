@@ -5,9 +5,10 @@
 > conversation rather than written or reviewed line by line by a human developer. It has automated
 > tests and has been checked in a browser, but it has not had a professional security audit.
 > Use it at your own risk, keep it on your home network (see [Reading away from home](docs/away-from-home.md)),
-> and keep backups of anything you care about. The app changes your manga files in one way only:
-> **Delete series** removes a series' folder when you ask it to. Mount the manga folder read-only
-> (`:ro`) if you never want that.
+> and keep backups of anything you care about. The app changes your manga files in two ways only, both
+> when you ask it to: **Delete series** removes a series' folder, and the **Optimize** plugin (off until
+> you switch it on) replaces books with smaller versions. Mount the manga folder read-only (`:ro`) if you
+> never want either.
 
 <p align="center">
   <img src="docs/media/desktop.webp" width="74%" alt="MangaVibe on a computer: the library grid, a genre filter, a series page with its books in order and the files behind them, and the Needs attention lists">
@@ -102,6 +103,8 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 - **Dark or light theme**, card size, endless scrolling or numbered pages, and the title language.
 - **An Android app**: fullscreen, the screen kept on, volume buttons and the phone's voice. See
   [Phone and Android app](docs/phone.md).
+- **Make books smaller** (Optimize, in Settings → Plugins): converts PNG and JPEG pages to JPEG XL (or
+  AVIF, WebP), for one series or all of them. Often half the size or less. It replaces your files.
 - **Plugins** add features: tracker sync, translation, accessibility. See [Plugins](docs/using-plugins.md).
 - **Your own styles** in `custom.css` in the data folder (created on first start, with examples).
 - **Updates itself** (see below).
