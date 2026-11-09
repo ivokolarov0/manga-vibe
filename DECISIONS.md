@@ -689,8 +689,22 @@ JPEG pages are converted too.
   scan sees an unchanged book, so the row and everything keyed by it stay: progress, manual numbers,
   plugins' page data (same pages, same order). Before swapping it checks the old file's size and
   mtime against what was converted; a file changed meanwhile is left alone.
-- **A page must get 10% smaller** or it stays: no quality lost for a few bytes. Grey pages saved as
-  colour become grey, unused alpha is dropped, EXIF rotation is applied (the new file has none).
+- **A page must get 10% smaller** or it stays: no quality lost for a few bytes. On JPEGs saved at very
+  high quality (official releases, ~97), *High* (JPEG XL 92) often stays under that, so most pages are
+  kept; *Normal* gets them to ~73%.
+- **The new file looks like the old one**: EXIF rotation is applied, a colour profile (Adobe RGB, CMYK)
+  is converted to sRGB (a profile that can't be read keeps the page), unused alpha is dropped, and a
+  page is made grey only when every pixel is grey (checked at full size: a thumbnail averages a small
+  coloured title away).
+- **A folder book's pages are swapped one by one**: new page in, old one out; an old page that can't be
+  removed takes its new one out again, so no page is ever there twice, and the row is updated to what
+  was swapped.
+- **Read-only, no permission and a full drive aren't remembered** as a book's result (`Blocked`): the
+  series stops there, and the books are tried again once that's fixed. Optimize all leaves out library
+  folders that can't be written and says why.
+- **The queue is changed under one lock, read fresh each time**, by the worker and the buttons alike.
+  A button that finds the worker still running (finishing, stopping, or an old plugin object after
+  Reload plugins) leaves a note, and the worker starts a new one for the plugin that is on now.
 - **RAR and 7z become `.cbz`** (nothing writes them), keeping the book's row; the old file is deleted
   only once the new one is in place, and if that fails the new one goes, so a book is never there twice.
 - **Conversion runs without the scanner's lock** (minutes per book); only the swap holds it, waiting

@@ -24,15 +24,24 @@ def on(client):
 
 
 def wait():
-    from app.db import SessionLocal
     from app.plugins.builtin.optimize import core
     deadline = time.monotonic() + 120
     while time.monotonic() < deadline:
-        with SessionLocal() as db:
-            if not core.running() and not core.queue(db):
-                return
+        if not core.running() and not core.queue():
+            return
         time.sleep(0.1)
     raise AssertionError("optimizing didn't finish")
+
+
+def only(monkeypatch, *names):
+    """'Optimize all' sees only these series: the other tests' library stays as it is."""
+    from app.db import SessionLocal
+    from app.models import Series
+    from app.plugins.builtin.optimize import core
+    with SessionLocal() as db:
+        ids = {s.id for s in db.query(Series).filter(Series.folder_name.in_(names))}
+    real = core.candidate
+    monkeypatch.setattr(core, "candidate", lambda b: real(b) and b.series_id in ids)
 
 
 def series_named(name):
@@ -213,25 +222,124 @@ def test_a_file_changed_meanwhile_is_left_alone(on):
 def test_optimize_all_and_stop(on, monkeypatch):
     from app.db import SessionLocal
     from app.plugins.builtin.optimize import core
-    # "all" here means this test's two series: the other tests' library stays as it is
-    real = core.candidate
-    monkeypatch.setattr(core, "candidate", lambda b: real(b) and "Optimize All" in b.path)
     for name in ("Optimize All A", "Optimize All B"):
         make_zip(ROOT / name / f"{name} ch01.cbz", pages=3)
     series_named("Optimize All A")
+    only(monkeypatch, "Optimize All A", "Optimize All B")
     with SessionLocal() as db:
-        assert len(core.series_to_optimize(core_ctx(db))) == 2
+        assert len(core.series_to_optimize(db)) == 2
     assert on.post("/api/plugins/optimize/actions/all").json()["message"] == "Optimizing 2 series"
     wait()
     for name in ("Optimize All A", "Optimize All B"):
         with zipfile.ZipFile(ROOT / name / f"{name} ch01.cbz") as z:
             assert "p1.jxl" in z.namelist()
     with SessionLocal() as db:
-        assert core.series_to_optimize(core_ctx(db)) == []
+        assert core.series_to_optimize(db) == []
     assert on.post("/api/plugins/optimize/actions/all").json()["message"] == "Every series is optimized already"
     assert on.post("/api/plugins/optimize/actions/stop").json()["message"] == "Nothing is being optimized"
 
 
-def core_ctx(db):
-    from app.plugins import Context, manager
-    return Context(manager.plugins["optimize"], db)
+def test_reload_during_a_run_carries_on(on, monkeypatch):
+    """Reload plugins (or switching it off and on) mid-run: the new plugin object takes over the queue."""
+    names = [f"Optimize Reload {i}" for i in range(4)]
+    for name in names:
+        make_zip(ROOT / name / f"{name} ch01.cbz", pages=6)
+    series_named(names[0])
+    only(monkeypatch, *names)
+    assert on.post("/api/plugins/optimize/actions/all").json()["message"] == "Optimizing 4 series"
+    assert on.post("/api/plugins/reload").status_code == 200
+    wait()
+    for name in names:
+        with zipfile.ZipFile(ROOT / name / f"{name} ch01.cbz") as z:
+            assert "p1.jxl" in z.namelist()
+
+
+def test_grey_check_sees_small_colour():
+    """A grey page with a small red title stays in colour (a thumbnail would average it away)."""
+    from app.plugins.builtin.optimize import core
+    im = Image.new("RGB", (2000, 3000), (128, 128, 128))
+    im.paste((200, 30, 30), (100, 100, 112, 112))  # 12 x 12 pixels of red
+    assert core._prepare(im).mode == "RGB"
+    assert core._prepare(Image.new("RGB", (2000, 3000), (128, 129, 127))).mode == "L"
+
+
+def test_colour_profile_becomes_srgb():
+    from PIL import ImageCms
+    from app.plugins.builtin.optimize import core
+    srgb = ImageCms.ImageCmsProfile(ImageCms.createProfile("sRGB")).tobytes()
+    im = Image.new("RGB", (400, 600), (200, 30, 30))
+    im.info["icc_profile"] = srgb
+    out = core._prepare(im)
+    assert out.mode == "RGB" and abs(out.getpixel((10, 10))[0] - 200) <= 2
+    im.info["icc_profile"] = b"not a profile"
+    assert core._prepare(im) is None  # a profile that can't be read: the page stays as it is
+
+
+def test_folder_page_that_cant_be_removed(on, monkeypatch):
+    """The old page can't be deleted: its new one goes again, so no page is there twice, and the
+    book's row matches the folder (the pages swapped before it stay converted)."""
+    from pathlib import Path
+    from app.db import SessionLocal
+    from app.models import Book
+    from app.plugins.builtin.optimize import core
+    from app.scanner import walker
+    folder = ROOT / "Optimize Locked" / "Chapter 1"
+    folder.mkdir(parents=True)
+    for i in (1, 2, 3):
+        (folder / f"{i:03d}.png").write_bytes(png((40, 40, 40), size=(600, 900)))
+    sid = series_named("Optimize Locked")
+    real_unlink = Path.unlink
+
+    def unlink(self, missing_ok=False):
+        if self.name == "002.png":
+            raise PermissionError("in use")
+        return real_unlink(self, missing_ok=missing_ok)
+
+    monkeypatch.setattr(Path, "unlink", unlink)
+    monkeypatch.setattr(core.time, "sleep", lambda s: None)
+    on.post(f"/api/series/{sid}/actions/optimize/optimize")
+    wait()
+    assert sorted(p.name for p in folder.iterdir()) == ["001.jxl", "002.png", "003.png"]
+    with SessionLocal() as db:
+        book = db.query(Book).filter_by(series_id=sid).one()
+        assert walker.signature(folder, "folder") == (book.file_size, book.mtime)
+    assert "Not optimized" in [x["text"] for x in on.get(f"/api/series/{sid}/books").json()[0]["badges"]]
+
+
+def test_read_only_isnt_remembered(on, monkeypatch):
+    """A folder that can't be written is left out, and its books aren't marked as failed: once it can
+    be written, Optimize all picks them up."""
+    from app.db import SessionLocal
+    from app.plugins.builtin.optimize import core
+    make_zip(ROOT / "Optimize Locked RO" / "RO ch01.cbz", pages=3)
+    series_named("Optimize Locked RO")
+    only(monkeypatch, "Optimize Locked RO")
+
+    def read_only(folder):
+        raise core.Blocked(core.READ_ONLY)
+
+    monkeypatch.setattr(core, "writable", read_only)
+    assert on.post("/api/plugins/optimize/actions/all").json()["message"] == core.READ_ONLY
+    with SessionLocal() as db:
+        assert len(core.series_to_optimize(db)) == 1  # still to do
+    monkeypatch.undo()
+    only(monkeypatch, "Optimize Locked RO")
+    assert on.post("/api/plugins/optimize/actions/all").json()["message"] == "Optimizing 1 series"
+    wait()
+    with zipfile.ZipFile(ROOT / "Optimize Locked RO" / "RO ch01.cbz") as z:
+        assert "p1.jxl" in z.namelist()
+
+
+def test_folder_needs_room_for_all_its_pages(monkeypatch):
+    from types import SimpleNamespace
+    from app.plugins.builtin.optimize import core
+    folder = ROOT / "Optimize Room" / "Chapter 1"
+    folder.mkdir(parents=True)
+    for i in (1, 2, 3):
+        (folder / f"{i:03d}.png").write_bytes(png((40, 40, 40), size=(600, 900)))
+    one_page = (folder / "001.png").stat().st_size
+    monkeypatch.setattr(core.shutil, "disk_usage", lambda p: SimpleNamespace(free=one_page * 2))
+    book = SimpleNamespace(path=str(folder), format="folder")
+    with pytest.raises(core.Blocked, match="free space"):
+        core.optimize_book(book, "jxl", 85)
+    assert not list(folder.glob(".mvopt-*"))
