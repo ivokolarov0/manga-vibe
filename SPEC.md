@@ -21,9 +21,10 @@ The owner tried Komga + Komf and Kavita. The problems were:
 - Public internet exposure (LAN only; remote access via VPN/Tailscale).
 - Native Android/iOS apps.
 - Downloading manga from the internet.
-- Modifying, renaming or moving the owner's files. The one exception: **Delete series** removes a
-  series folder when the owner asks (issue #104, see DECISIONS.md). Mounting the manga folder
-  read-only (`:ro`) turns that off.
+- Modifying, renaming or moving the owner's files. Two exceptions, both only when the owner asks:
+  **Delete series** removes a series folder (issue #104), and the built-in **Optimize** plugin
+  replaces books with smaller ones (see DECISIONS.md). Mounting the manga folder read-only (`:ro`)
+  turns both off.
 
 ---
 
@@ -395,7 +396,7 @@ For the older Docker package GUI: getting the image onto the NAS, Create contain
 - Intended for LAN only. Document using Synology VPN or Tailscale for remote reading; do **not** recommend port forwarding.
 - Optional `APP_PASSWORD`: simple login page, session cookie (long-lived on the phone), no user management.
 - Path safety: every file access must resolve inside a configured library root (no path traversal via API parameters).
-- Never write inside library roots.
+- Never write inside library roots, except Delete series and Optimize when the owner asks.
 
 ---
 

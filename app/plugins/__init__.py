@@ -28,7 +28,8 @@ Some of the app's own features are built-in plugins (app/plugins/builtin/), e.g.
 libraries, so the owner can switch them off and anyone can write a replacement.
 
 Plugins get read-only access to books through `ctx`. They must never write to the
-library (it is mounted read-only anyway); their data goes into the database.
+library; their data goes into the database. The one exception is the built-in Optimize plugin,
+which replaces books with smaller ones when the owner asks (builtin/optimize/core.py).
 See docs/PLUGINS.md and examples/plugins/.
 """
 import importlib.util

@@ -7,8 +7,10 @@ your data folder (`docker/mangavibe/plugins` on the NAS). After copying it there
 A plugin that fails to load, or crashes in a hook, is logged and skipped. It never stops the app.
 
 **Plugins don't write to the manga folder.** Everything a plugin produces goes into MangaVibe's
-database. The only thing in the app that changes the owner's files is **Delete series**, and only
-when the owner asks; plugins hear about it through `on_series_deleted`.
+database. Only two things in the app change the owner's files, and only when the owner asks:
+**Delete series** (plugins hear about it through `on_series_deleted`) and the built-in **Optimize**
+plugin, which replaces books with smaller ones. Optimize keeps the book's row, so a plugin's data
+for the book and its pages stays (the pages are the same pages, in the same order).
 
 ## Minimal plugin
 

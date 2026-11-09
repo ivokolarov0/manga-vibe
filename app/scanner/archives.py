@@ -1,6 +1,6 @@
 """Read pages from archives and image folders.
 
-The library is only read: it is mounted read-only and we never open a file there for writing.
+This module only reads the library; it never opens a file there for writing.
 A RAR or 7z book that is being read page after page is unpacked once into /data/cache/unpacked
 (see _Unpacked); everything else is read straight from the archive.
 

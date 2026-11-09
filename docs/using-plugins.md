@@ -18,6 +18,37 @@ Plugins add features without changing the app. A plugin is a single `.py` file.
 > to its data, including the logins other plugins save. Install plugins from this list or ones whose
 > code you've read.
 
+## Optimize (built in)
+
+Makes your books smaller by converting their PNG, JPEG, BMP and TIFF pages to **JPEG XL** (or AVIF
+or WebP). Often half the size or less, and PNG pages far more. It's off until you switch it on in
+**Settings → Plugins**.
+
+- **One series:** **Optimize this series** on its page. Each book then shows what it saved (e.g. *−53%*).
+- **Everything:** **Settings → Plugins → Optimize → Optimize all series**. It works through the
+  library in the background (it carries on after a restart), and the line under the plugin shows
+  how far it is and how much it has saved. **Stop** stops after the page it's on.
+- **Settings:** the format (JPEG XL by default) and the quality (*Normal* looks like the original
+  when reading; *Small* saves more; *High* saves less).
+
+> [!IMPORTANT]
+> **It replaces your files**, and the original pages can't be brought back. The conversion is lossy:
+> pages look the same when reading, but aren't identical to the originals. Keep a backup if you want
+> those.
+
+What it does to keep your books safe:
+
+- A book is written to a new hidden file next to the old one, and replaces it only once every page
+  opened, the page count and order are the same, and the old file didn't change meanwhile.
+- A page that wouldn't get at least 10% smaller stays as it is. Pages already in WebP, AVIF or JPEG
+  XL, EPUBs, PDFs and archives inside archives are left alone.
+- `.cbr` and `.cb7` books become `.cbz` (RAR and 7z can't be written). Reading progress, your manual
+  chapter numbers and other plugins' data (e.g. translations) are kept.
+- It needs the manga folder mounted read-write (not `:ro`) and room on the drive for one book's copy.
+
+MangaVibe shows JPEG XL and AVIF in every browser. **Other comic apps may not open them**: pick WebP
+if you also read the files elsewhere.
+
 ## Install a plugin
 
 1. Download the plugin's `.py` file (on GitHub: open the file → **Download raw file**).

@@ -1,7 +1,7 @@
 """Deleting a series: its folder on the drive, then everything the app keeps about it.
 
-This is the only place the app removes the owner's files, and only when the owner asks for one
-series. It refuses anything that isn't a series folder directly inside a library folder, and it
+This is the only place the app removes the owner's files (besides the Optimize plugin, which
+replaces books with smaller ones), and only when the owner asks for one series. It refuses anything that isn't a series folder directly inside a library folder, and it
 needs the manga folder mounted read-write (a `:ro` mount makes deleting impossible on purpose).
 """
 import logging
