@@ -577,8 +577,14 @@ function showPage(fromDir = 0) {
   clearTimeout(stage._spin);
   stage._spin = setTimeout(() => stage.classList.add("waiting"), 150);  // slow page: show a spinner
   el.src = pageUrl(R.page);
+  // Firefox resolves decode() at once for the old picture while the new one is still loading
+  // (Chrome waits), so wait for the load first: else the old page slides in, then blinks to the new one
+  const loaded = el.complete ? Promise.resolve() : new Promise((done) => {
+    el.addEventListener("load", done, { once: true });
+    el.addEventListener("error", done, { once: true });
+  });
   // decode() fails on a broken page (onerror shows a toast) or when src changes again; show the page anyway
-  el.decode().catch(() => {}).then(() => {
+  loaded.then(() => el.decode()).catch(() => {}).then(() => {
     if (token !== showToken || img() !== el) return;
     clearTimeout(stage._spin);
     stage.classList.remove("waiting");
