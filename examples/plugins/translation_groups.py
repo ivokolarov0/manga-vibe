@@ -17,6 +17,7 @@ GROUP = re.compile(r"\[([^\]]+)\]")
 class TranslationGroups(Plugin):
     id = "translation-groups"
     name = "Translation groups"
+    category = "library"
     version = "1.0"
     description = "Shows scanlation groups from file names and finds missing chapters."
     permissions = ["Reads series.json in series folders", "Changes chapter ordering during scans"]

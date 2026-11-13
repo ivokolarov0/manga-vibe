@@ -92,6 +92,7 @@ def _read(name):
 class SavedSearches(Plugin):
     id = "saved-searches"
     name = "Saved searches"
+    category = "library"
     version = "1.0"
     description = ("Keep the library page's filters and sort under a name (e.g. Isekai) and pick them "
                    "again from the Saved button. Built in.")

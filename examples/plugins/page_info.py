@@ -26,6 +26,7 @@ AHEAD = 3  # pages after the one being read that are prepared too
 class PageInfo(Plugin):
     id = "page-info"
     name = "Page info"
+    category = "reader"
     version = "1.0"
     description = "Example: a label over each reader page with its size and brightness."
     overlay_label = "Page info"
