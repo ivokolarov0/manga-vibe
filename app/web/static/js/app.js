@@ -1478,6 +1478,21 @@ const ANDROID = /Android/i.test(navigator.userAgent);
 // on Android phones (in the app or the browser) Settings gets an "Android app" page
 if (ANDROID) SETTINGS_NAV.splice(2, 0, ["app", "Android app", "📱"]);
 
+// Settings → Plugins: what each viewer picked (category, source, status, built-ins unfolded)
+const PLUGIN_VIEW_KEY = "plugins-view";
+const PLUGIN_CAT_ICONS = { metadata: "🏷", reader: "📖", library: "📚", system: "⚙", appearance: "🎨", other: "🧩" };
+function loadPluginView() {
+  try {
+    const v = JSON.parse(localStorage.getItem(PLUGIN_VIEW_KEY) || "{}");
+    const ok = (x, allowed) => (typeof x === "string" && (!allowed || allowed.includes(x)) ? x : undefined);
+    return Object.fromEntries(Object.entries({
+      cat: ok(v.cat), src: ok(v.src, ["all", "installed", "builtin"]),
+      status: ok(v.status, ["all", "on", "off", "update", "errors"]),
+      builtinOpen: typeof v.builtinOpen === "boolean" ? v.builtinOpen : undefined,
+    }).filter(([, x]) => x !== undefined));
+  } catch { return {}; }
+}
+
 function settingsView() {
   return {
     // everything for an admin; for others (accounts) only their own pages (Reader...), not the app's
@@ -1495,8 +1510,54 @@ function settingsView() {
       const s = this.$store.app.sub || "";
       return s.startsWith("plugin-") ? this.plugins.find((p) => p.id === s.slice(7)) || null : null;
     },
-    // only plugins with something to set up, run or update get a page
-    hasPluginPage(p) { return !!(p.settings.length || p.global_actions.length || p.update.supported); },
+    // ---- Settings → Plugins: grouped by category, with search and filters ----
+    // the category, source (built in or installed) and status picked, kept per browser; the search isn't
+    pf: { cat: "all", src: "all", status: "all", builtinOpen: false, q: "", ...loadPluginView() },
+    pluginCats: {},  // category key -> label, in order (GET /api/plugins)
+    savePluginView() {
+      const { cat, src, status, builtinOpen } = this.pf;
+      try { localStorage.setItem(PLUGIN_VIEW_KEY, JSON.stringify({ cat, src, status, builtinOpen })); } catch {}
+    },
+    setPluginFilter(key, value) { this.pf[key] = value; this.savePluginView(); },
+    catLabel(c) { return this.pluginCats[c] || c; },
+    catIcon(c) { return PLUGIN_CAT_ICONS[c] || "🧩"; },
+    hasUpdate(p) { return !!(p.update.available && !p.update.skipped); },
+    get pluginUpdates() { return this.plugins.filter((p) => this.hasUpdate(p)).length; },
+    get pluginErrorCount() { return Object.keys(this.pluginErrors).length; },
+    // what the Plugins tab shows, worked out in one pass by an x-effect whenever the plugins or the
+    // filters change (not again for every binding that reads it)
+    pview: { installed: [], builtin: [], cats: [], all: 0, src: { all: 0, installed: 0, builtin: 0 },
+             forced: false, open: false },
+    computePluginView() {
+      const { cat, src, status: st, builtinOpen } = this.pf;
+      const q = this.pf.q.trim().toLowerCase();
+      // the search and status apply everywhere, counts included; then category and source
+      const base = this.plugins.filter((p) =>
+        (st === "all" || (st === "on" && p.enabled) || (st === "off" && !p.enabled) ||
+         (st === "update" && this.hasUpdate(p))) &&
+        (!q || `${p.name} ${p.description} ${p.id}`.toLowerCase().includes(q)))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      // a plugin belongs to each of its categories: listed under the main one, found under its tags too
+      const inCat = (p, c = cat) => c === "all" || p.categories.includes(c);
+      const inSrc = (p, s = src) => s === "all" || (s === "builtin") === p.builtin;
+      const count = (fn) => base.reduce((n, p) => n + (fn(p) ? 1 : 0), 0);
+      // the sidebar: every category that has a plugin (and the picked one), counted with the source;
+      // the sources counted with the category
+      const cats = Object.keys(this.pluginCats)
+        .filter((c) => c === cat || this.plugins.some((p) => p.categories.includes(c)))
+        .map((c) => [c, count((p) => inSrc(p) && inCat(p, c))]);
+      const srcCounts = Object.fromEntries(["all", "installed", "builtin"].map((s) => [s, count((p) => inCat(p) && inSrc(p, s))]));
+      const list = st === "errors" ? [] : base.filter((p) => inCat(p) && inSrc(p));
+      const installed = list.filter((p) => !p.builtin), builtin = list.filter((p) => p.builtin);
+      // the built-in ones are folded away, unless that would hide the whole answer: a search, a picked
+      // category or source, or nothing installed to show
+      const forced = !!q || src === "builtin" || cat !== "all" || !installed.length;
+      return { installed, builtin, cats, all: count((p) => inSrc(p)), src: srcCounts, forced,
+               open: builtinOpen || forced };
+    },
+    // what a row shows next to the name: every category while all are listed, else the other ones
+    rowTags(p) { return p.categories.filter((c) => c !== this.pf.cat); },
+    openPlugin(p) { location.hash = `#/settings/plugin-${p.id}`; },
     go(sec) { this.navOpen = false; location.replace(`#/settings/${sec}`); },
     // phones: the nav is one "current page ▾" button that opens a menu
     navOpen: false,
@@ -1539,7 +1600,8 @@ function settingsView() {
       const [libs, plug, providers] = await Promise.all([api("/api/libraries"), api("/api/plugins"),
         api("/api/metadata/providers"), emitPlugins("settings-open")]);
       this.st = strings();
-      Object.assign(this, { libs, providers, plugins: plug.plugins, pluginErrors: plug.errors });
+      Object.assign(this, { libs, providers });
+      this.setPlugins(plug);
       this.stop();
       this.pollScan();
       this.pollMeta();
@@ -1652,7 +1714,17 @@ Your files are not touched. `
     },
     async refreshPlugins() {
       const r = await api("/api/plugins").catch(() => null);
-      if (r) { this.plugins = r.plugins; this.pluginErrors = r.errors; }
+      if (r) this.setPlugins(r);
+    },
+    // a GET /api/plugins answer (also what reload and update install return)
+    setPlugins(r) {
+      this.plugins = r.plugins;
+      this.pluginErrors = r.errors;
+      if (r.categories) {
+        this.pluginCats = r.categories;
+        // a category saved by an older version, or one no longer there: show them all
+        if (this.pf.cat !== "all" && !(this.pf.cat in r.categories)) this.setPluginFilter("cat", "all");
+      }
     },
     async savePluginSetting(p, f) {
       try {
@@ -1698,8 +1770,7 @@ Your files are not touched. `
                        "\n\nAllow them and install the update?")) { toast("Update not installed"); return; }
           r = await install(perms);
         }
-        this.plugins = r.plugins;
-        this.pluginErrors = r.errors;
+        this.setPlugins(r);
         toast(r.message);
         this.loadProviders();
       } catch (e) { toast(e.message, 8000, "error"); } finally { this.busyAction = ""; }
@@ -1719,7 +1790,7 @@ Your files are not touched. `
       const r = await api("/api/plugins/reload", { method: "POST" });
       // a plugin that adds to the page: load it again so its new version shows
       if (before || r.plugins.some((p) => p.ui && p.enabled)) return location.reload();
-      this.plugins = r.plugins; this.pluginErrors = r.errors;
+      this.setPlugins(r);
       this.loadProviders();
     },
     async pollScan() {

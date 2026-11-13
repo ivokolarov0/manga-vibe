@@ -11,6 +11,7 @@ from app.plugins import Action, FieldDef, OpenUrl, Plugin, SettingDef
 class ReadingLog(Plugin):
     id = "reading-log"
     name = "Reading log"
+    category = "library"  # Settings -> Plugins lists it under Library
     version = "1.0"
     description = "Example: keeps a log of what you start and finish."
     permissions = ["Sees what you start and finish reading", "Has its own web page"]

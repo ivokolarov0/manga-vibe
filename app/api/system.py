@@ -16,7 +16,7 @@ from app.users import manage
 from app.api.filters import visible_series
 from app.db import get_db, get_setting, set_setting
 from app.models import Library, Series
-from app.plugins import Context, OpenUrl, action_result, implements, manager as plugins
+from app.plugins import CATEGORIES, Context, OpenUrl, action_result, implements, manager as plugins
 from app.plugins.web import ui_of, with_ui
 from app.scanner import walker
 from app.scanner.parser import natural_key
@@ -238,10 +238,15 @@ def _plugin_status(p, db):
 def _plugin_dict(p, db):
     ctx = Context(p, db)
     saved = ctx.settings
+    categories = plugins.categories_of(p)
     return {"id": p.id, "name": p.name, "version": p.version,
             "description": p.description, "enabled": p.id not in plugins.disabled,
+            # where Settings -> Plugins lists it: the main category first, the others are tags
+            "category": categories[0], "categories": categories,
+            "builtin": plugins.is_builtin(p.id),  # comes with the app (app/plugins/builtin/)
             "provider": p.is_provider, "fields": [f.label for f in p.fields],
-            "ui": with_ui(p),  # adds to the page: switching it on or off adds or removes that (app.js)            "actions": [a.label for a in p.actions],
+            "ui": with_ui(p),  # adds to the page: switching it on or off adds or removes that (app.js)
+            "actions": [a.label for a in p.actions],
             "settings": [{"key": f.key, "label": f.label, "help": f.help, "secret": f.secret,
                           "options": [[str(v), str(label)] for v, label in f.options],
                           "value": "" if f.secret else str(ctx.setting(f.key) or ""),
@@ -255,7 +260,7 @@ def _plugin_dict(p, db):
 @router.get("/plugins", dependencies=[manage])
 def list_plugins(db=Depends(get_db)):
     return {"plugins": [_plugin_dict(p, db) for p in plugins.plugins.values()],
-            "errors": plugins.errors}
+            "errors": plugins.errors, "categories": CATEGORIES}
 
 
 def _enabled_plugin(plugin_id):

@@ -31,6 +31,7 @@ def _percent(rec):
 class Optimize(Plugin):
     id = "optimize"
     name = "Optimize"
+    category = ["library", "system"]  # listed under Library; tagged System (maintenance)
     version = "1.0"
     description = ("Makes books smaller: converts PNG and JPEG pages to JPEG XL (or AVIF, WebP), lossy. "
                    "For one series from its page, or for all of them here. It replaces your files. Built in.")

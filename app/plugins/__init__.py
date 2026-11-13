@@ -44,8 +44,18 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 9
+API_VERSION = 10
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
+
+# Where a plugin is listed in Settings -> Plugins (Plugin.category), in the order shown there
+CATEGORIES = {
+    "metadata": "Metadata",      # metadata providers (is_provider)
+    "reader": "Reader",          # draws on pages, buttons in the reader
+    "library": "Library",        # lists, series pages, fields and actions, libraries, searches
+    "system": "System",          # accounts, access, middleware, maintenance
+    "appearance": "Appearance",  # themes: CSS only
+    "other": "Other",
+}
 
 
 @dataclass
@@ -73,7 +83,7 @@ class Choice:
 
 @dataclass
 class SettingDef:
-    """A text box on the plugin's page (Settings -> Plugins -> Settings), or a dropdown when `options` is given
+    """A text box on the plugin's page (Settings -> Plugins -> the plugin), or a dropdown when `options` is given
     ([(value, label)]). The value lands in ctx.settings[key]; ctx.setting(key) falls back to
     `default` while nothing is saved."""
     key: str
@@ -140,6 +150,10 @@ class Plugin:
     name = ""          # shown in Settings
     version = "1.0"
     description = ""
+    # Where Settings -> Plugins lists it: one of CATEGORIES, or a list whose first one is the main
+    # category and the rest are shown as tags, e.g. ["reader", "library"]. Left empty, it's worked out
+    # from what the plugin uses (categories_of). Plugin API 10
+    category: str | list[str] = ""
     fields: list[FieldDef] = []
     actions: list[Action] = []
     choices: list[Choice] = []  # dropdowns on the series page
@@ -291,6 +305,37 @@ def implements(plugin, hook):
     """True when the plugin overrides `hook` (the base class versions do nothing)."""
     fn = getattr(plugin, hook, None)
     return fn is not None and getattr(fn, "__func__", None) is not getattr(Plugin, hook, None)
+
+
+# what a plugin can set besides css; a plugin with css and none of these is a theme
+_FEATURES = ("fields", "actions", "choices", "settings_fields", "global_actions", "book_actions",
+             "overlay_label", "router", "js", "html", "middleware", "is_provider")
+# the hooks that do something, so a theme overriding one isn't only a theme. status() only shows a line,
+# and search()/fetch() count only for providers (is_provider is in _FEATURES)
+_HOOKS = tuple(k for k, v in vars(Plugin).items()
+               if callable(v) and not k.startswith("_") and k not in ("status", "search", "fetch"))
+
+
+def categories_of(plugin) -> list[str]:
+    """The plugin's categories, main one first: what it says (unknown names are dropped), else worked
+    out from what it uses: a provider is metadata, an overlay or reader buttons are reader, only css
+    is appearance, anything else is other."""
+    said = plugin.category
+    said = [said] if isinstance(said, str) else list(said or [])
+    found = list(dict.fromkeys(c.strip().lower() for c in said if isinstance(c, str) and c.strip()))
+    known = [c for c in found if c in CATEGORIES]
+    if known:
+        return known
+    if found:
+        log.warning("Plugin %s: unknown category %s (one of %s)", plugin.id, found, ", ".join(CATEGORIES))
+    if plugin.is_provider:
+        return ["metadata"]
+    if plugin.overlay_label or plugin.book_actions:
+        return ["reader"]
+    if plugin.css and not any(getattr(plugin, k) for k in _FEATURES) \
+            and not any(implements(plugin, h) for h in _HOOKS):
+        return ["appearance"]
+    return ["other"]
 
 
 class Context:
@@ -532,6 +577,7 @@ class PluginManager:
         self.plugins: dict[str, Plugin] = {}
         self.errors: dict[str, str] = {}   # file name -> error text
         self.paths: dict[str, Path] = {}   # plugin id -> the file it was loaded from
+        self.categories: dict[str, list[str]] = {}  # plugin id -> categories_of(), worked out at load
         self.disabled: set[str] = set()
         self.base_url = "http://localhost:8080"  # updated from each request (see main.py)
         self._queue = queue.Queue()
@@ -565,6 +611,7 @@ class PluginManager:
         self.plugins.clear()
         self.errors.clear()
         self.paths.clear()
+        self.categories.clear()
         folders = folders if folders is not None else [BUILTIN, config.PLUGINS_DIR]
         for folder in folders:
             folder = Path(folder)
@@ -607,9 +654,18 @@ class PluginManager:
                     raise ValueError(f"duplicate plugin id '{p.id}'")
                 self.plugins[p.id] = p
                 self.paths[p.id] = path
+                self.categories[p.id] = categories_of(p)
         except Exception as e:  # a broken plugin must never stop the app
             self.errors[path.name] = f"{type(e).__name__}: {e}"
             log.error("Could not load plugin %s:\n%s", path, traceback.format_exc())
+
+    def is_builtin(self, plugin_id) -> bool:
+        """True for the plugins that come with the app (app/plugins/builtin/)."""
+        path = self.paths.get(plugin_id)
+        return path is not None and BUILTIN in path.parents
+
+    def categories_of(self, plugin) -> list[str]:
+        return self.categories.get(plugin.id) or categories_of(plugin)
 
     def enabled(self):
         return [p for pid, p in self.plugins.items() if pid not in self.disabled]

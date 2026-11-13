@@ -9,6 +9,7 @@ from app.plugins import Plugin
 class SakuraTheme(Plugin):
     id = "sakura-theme"
     name = "Sakura theme"
+    category = "appearance"
     version = "1.0"
     description = "Pink accent colour and rounder corners."
     permissions = ["Changes how the app looks"]

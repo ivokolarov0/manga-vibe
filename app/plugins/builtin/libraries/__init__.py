@@ -38,6 +38,7 @@ def _shelf_param(request):
 class Libraries(Plugin):
     id = "libraries"
     name = "Libraries"
+    category = ["library", "system"]  # listed under Library; tagged System (passwords, who sees what)
     version = "1.0"
     description = ("Separate libraries (Manga, Comics...) with tabs on the home screen, a reading mode "
                    "and an optional password each. Built in.")

@@ -73,6 +73,7 @@ def _gql(query, variables):
 class AniList(Plugin):
     id = "anilist"
     name = "AniList"
+    category = "metadata"
     description = "Built-in metadata provider: titles, description, tags, cover, links."
     is_provider = True
     url = "https://anilist.co"
