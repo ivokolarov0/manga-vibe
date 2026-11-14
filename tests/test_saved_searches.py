@@ -30,7 +30,7 @@ def test_switched_off(client):
     page = client.get("/").text
     assert "<!-- slot:" not in page  # every slot is filled in (or emptied)
     assert "savedSearchesSheet" in page and '<script src="/plugins/saved-searches.js">' in page
-    assert '<div class="plugin-ui" data-plugin="saved-searches">' in page
+    assert '<div class="plugin-ui" data-plugin="saved-searches" data-order="50">' in page
     assert "Alpine.store(\"savedSearches\"" in client.get("/plugins/saved-searches.js").text
     assert ".saved-item" in client.get("/custom.css").text
     # what the page adds when the plugin is switched on without reloading (app.js)

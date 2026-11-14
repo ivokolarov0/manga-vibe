@@ -334,6 +334,11 @@ class Notes(Plugin):
 **Markup.** `html` maps a slot of the page to markup put there. It's [Alpine.js](https://alpinejs.dev)
 markup like the rest of the page (`x-show`, `@click`, `$store.app`…).
 
+When several plugins use the same slot, their markup goes in the order the plugins are loaded. To choose
+a place, give `(markup, order)` instead of the markup: lower goes first, and markup without an order
+counts as 50. E.g. `html = {"topbar": (menu, 90)}` keeps the accounts plugin's menu last, next to
+Settings. Plugin API 11.
+
 | Slot | Where |
 |---|---|
 | `home-top` | above the library grid and Continue reading (the library tabs). Not inside a component: give your markup `x-data` |

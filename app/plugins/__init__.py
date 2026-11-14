@@ -44,7 +44,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 10
+API_VERSION = 11
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 
 # Where a plugin is listed in Settings -> Plugins (Plugin.category), in the order shown there
@@ -171,7 +171,9 @@ class Plugin:
     # --- its own API and UI (Plugin API 7, see app/plugins/web.py) ---
     router = None        # a FastAPI APIRouter, served at /api/plugins/<id>/api/<its paths>
     js = ""              # JavaScript run in the web app before it starts (window.MangaVibe is there)
-    html: dict[str, str] = {}  # slot name -> markup put into that slot of the page (web.SLOTS)
+    # slot name -> markup put into that slot of the page (web.SLOTS), or (markup, order): lower goes first
+    # among the plugins in that slot, 50 when not given (Plugin API 11)
+    html: dict[str, str | tuple[str, int]] = {}
     # False: starts switched off the first time it's seen (the owner switches it on), e.g. accounts
     enabled_by_default = True
     # an ASGI middleware class, middleware(app), put in front of every request while the plugin is on,
