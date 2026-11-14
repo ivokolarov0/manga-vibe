@@ -19,13 +19,14 @@
 
 MangaVibe is a self-hosted manga server that runs anywhere Docker does: a NAS, a home server or your
 PC. Point it at your manga folder, and read on your phone, tablet or computer. Nothing is uploaded
-anywhere, and your files are never renamed or changed.
+anywhere, and your files are never renamed or changed unless you ask (Delete series, Optimize).
 
 ## Install
 
 > [!CAUTION]
-> **Never make MangaVibe reachable from the internet.** It has **no login**: anyone who finds it can
-> read, download and change everything in it. To read away from home, use a VPN:
+> **Never make MangaVibe reachable from the internet.** Its login is off unless you switch on
+> Accounts, and even then it isn't built to face the internet: anyone who gets in can read, download
+> and change everything in it. To read away from home, use a VPN:
 > see [Reading away from home](docs/away-from-home.md).
 
 MangaVibe runs in **Docker**. You set it up once (about 10 minutes); after that it updates itself.

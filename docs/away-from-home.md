@@ -4,7 +4,8 @@
 
 > [!CAUTION]
 > **Do not open port 8090 to the internet.** It's the easy way to read outside your home, and it's
-> unsafe. MangaVibe is made for your home network only and has **no password or login**.
+> unsafe. MangaVibe is made for your home network only. It has **no login** unless you switch on
+> Accounts, and even with Accounts it isn't built or tested to face the internet.
 
 ## Do this instead: use a VPN
 
