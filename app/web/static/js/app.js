@@ -945,11 +945,14 @@ function removeMarkup(id) {
   }));
 }
 
-function addMarkup(id, slot, markup) {
+function addMarkup(id, slot, markup, order = 50) {
   eachRoot((root) => root.querySelectorAll(`.plugin-slot[data-slot="${slot}"]`).forEach((host) => {
     const box = Object.assign(document.createElement("div"), { className: "plugin-ui", innerHTML: markup });
     box.dataset.plugin = id;
-    Alpine.mutateDom(() => host.append(box));
+    box.dataset.order = order;
+    // in its place by order (app/plugins/web.py fill_slots): before the first box that goes after it
+    const next = [...host.children].find((b) => b.classList.contains("plugin-ui") && +(b.dataset.order ?? 50) > order);
+    Alpine.mutateDom(() => host.insertBefore(box, next || null));
     // in the page: set it up now, with what's around it (e.g. a folder row's l); in a <template>:
     // Alpine sets it up when it makes a copy
     if (root === document) {
@@ -970,7 +973,7 @@ async function addPluginUi(id) {
       Object.assign(document.createElement("script"), { src: ui.js, onload: ok, onerror: fail })));
   }
   removeMarkup(id);  // never twice
-  for (const [slot, markup] of Object.entries(ui.html)) addMarkup(id, slot, markup);
+  for (const [slot, markup] of Object.entries(ui.html)) addMarkup(id, slot, markup, ui.order?.[slot] ?? 50);
   Alpine.store("app").pluginSlots = filledSlots();
   stoppedPlugins.delete(id);
   await emitPlugins("start", [], { only: id });

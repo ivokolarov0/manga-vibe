@@ -40,6 +40,6 @@ class Accounts(Plugin):
     middleware_order = 0  # before every other plugin's guard: they need to know who is asking
     js = _read("accounts.js")
     css = _read("accounts.css")
-    html = {"topbar": _read("menu.html"),
+    html = {"topbar": (_read("menu.html"), 90),  # the account menu last, next to Settings
             "settings": _read("settings.html"),
             "sheets": _read("login.html")}

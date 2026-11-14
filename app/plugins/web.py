@@ -82,17 +82,31 @@ def fill_slots(markup: str, plugins) -> str:
     """Put the plugins' markup into the slots of this markup, and into slots in what was put in (a
     plugin's markup can hold a slot for others, e.g. account-row). Each slot stays in the page
     (display: contents), so a plugin switched on later can be added to it, and each plugin's markup is in
-    a box of its own, so it can be taken out (app.js)."""
+    a box of its own, so it can be taken out (app.js). In each slot the boxes go by their order."""
     for _ in range(2):  # the page's slots, then slots in plugin markup
         for slot in SLOTS:
-            parts = [ui_box(p.id, p.html[slot]) for p in plugins if p.html.get(slot)]
+            entries = [(p.id, *slot_entry(p.html[slot])) for p in plugins if slot in p.html]
+            parts = [ui_box(pid, m, order) for pid, m, order in sorted(entries, key=lambda e: e[2]) if m]
             markup = markup.replace(f"<!-- slot:{slot} -->",
                                     f'<div class="plugin-slot" data-slot="{slot}">{"".join(parts)}</div>')
     return markup
 
 
-def ui_box(plugin_id, markup) -> str:
-    return f'\n<div class="plugin-ui" data-plugin="{html_lib.escape(plugin_id)}">\n{markup.strip()}\n</div>'
+def ui_box(plugin_id, markup, order) -> str:
+    return (f'\n<div class="plugin-ui" data-plugin="{html_lib.escape(plugin_id)}" data-order="{order}">'
+            f'\n{markup.strip()}\n</div>')
+
+
+DEFAULT_ORDER = 50
+
+
+def slot_entry(value) -> tuple[str, int]:
+    """A plugin's html for a slot: "<markup>", or ("<markup>", order) to choose where it goes among the
+    other plugins' (lower first; DEFAULT_ORDER when not given). The same order keeps the plugins' order."""
+    if isinstance(value, (tuple, list)):
+        markup, order = value
+        return markup or "", int(order)
+    return value or "", DEFAULT_ORDER
 
 
 def script_url(plugin_id) -> str:
@@ -102,7 +116,9 @@ def script_url(plugin_id) -> str:
 def ui_of(plugin) -> dict:
     """What a plugin adds to the page, for switching it on without reloading (app.js)."""
     others = [p for p in manager.enabled() if p is not plugin]
-    return {"html": {slot: fill_slots(markup, others) for slot, markup in plugin.html.items() if slot in SLOTS},
+    slots = {slot: slot_entry(value) for slot, value in plugin.html.items() if slot in SLOTS}
+    return {"html": {slot: fill_slots(markup, others) for slot, (markup, _) in slots.items() if markup},
+            "order": {slot: order for slot, (markup, order) in slots.items() if markup},
             "js": f"/plugins/{quote(plugin.id)}.js" if plugin.js else None,
             "css": f"/plugins/{quote(plugin.id)}.css" if plugin.css else None}
 
