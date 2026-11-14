@@ -334,6 +334,9 @@
   }
 
   .sp-actions {
+    /* above the poster, whose shadow would otherwise paint over the buttons */
+    position: relative;
+    z-index: 1;
     grid-area: actions;
     display: grid;
     align-content: start;
