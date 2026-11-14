@@ -44,7 +44,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 10
+API_VERSION = 11
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 
 # Where a plugin is listed in Settings -> Plugins (Plugin.category), in the order shown there

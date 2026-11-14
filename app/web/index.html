@@ -232,6 +232,7 @@
               <span class="badge status" x-show="s.favorite" title="Favorite" aria-label="Favorite">
                 <svg class="ic fill" aria-hidden="true"><use href="#i-star"/></svg></span>
               <span class="badge missing" x-show="s.incomplete" title="Finished series with volumes or chapters missing">Incomplete</span>
+              <!-- slot:card-badges -->
               <div class="bar" x-show="s.reading_status === 'reading'"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
             </div>
             <div class="card-title" x-text="s.title"></div>
@@ -262,10 +263,12 @@
     <!-- ============ continue reading ============ -->
     <section class="view" x-data="continueView()" x-show="$store.app.view === 'continue'" x-cloak>
       <h2>Continue reading</h2>
+      <!-- slot:continue-top -->
       <div class="grid">
         <template x-for="s in items || []" :key="s.id">
           <a class="card" :href="'#/series/' + s.id">
             <div class="poster"><img :src="s.poster" loading="lazy" alt="">
+              <!-- slot:card-badges -->
               <div class="bar"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div></div>
             <div class="card-title" x-text="s.title"></div>
             <div class="card-sub reading" x-text="`${s.continue.label} · p${s.continue.page + 1}/${s.continue.page_count}`"></div>
@@ -325,6 +328,7 @@
                     <svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Rescan this series</button>
                   <button @click="menuOpen = false; fixMatch()">
                     <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>Fix match…</button>
+                  <!-- slot:series-menu -->
                   <button class="danger" @click="menuOpen = false; openDelete()">
                     <svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Delete series…</button>
                 </div>
@@ -354,6 +358,7 @@
                   </template>
                 </select>
               </template>
+              <!-- slot:series-actions -->
             </div>
 
             <!-- reading mode for this series (from the ⋯ menu) -->
@@ -473,6 +478,7 @@
                       :disabled="actionBusy === a.plugin + a.key" @click="runAction(a)" x-text="a.label"></button></template>
                   </div>
                 </section>
+                <!-- slot:series-panels -->
               </div>
 
               <section class="panel wide" x-show="s.tags.length">
@@ -521,6 +527,7 @@
                           <div class="meta" x-show="!b.error" x-text="bookState(b)"></div>
                           <div class="book-progress" x-show="!b.completed && b.page > 0"><i :style="`width:${progressPct(b)}%`"></i></div>
                         </a>
+                        <!-- slot:book-row -->
                         <button class="btn small" title="Mark this and all previous as read"
                                 aria-label="Mark this and all previous as read" @click="readUpTo(b)"
                           :style="{ visibility: unreadBefore(i) ? 'visible' : 'hidden' }"><svg class="ic" aria-hidden="true"><use href="#i-check-up"/></svg></button>
@@ -569,6 +576,7 @@
                   </tbody></table>
                 </div>
               </section>
+              <!-- slot:series-end -->
             </div>
           </div>
         </div>
