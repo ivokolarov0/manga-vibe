@@ -202,13 +202,25 @@ def test_fetch_latest_release(image, monkeypatch):
     seen = github(monkeypatch, RELEASE)
     info = updater.fetch_latest()
     assert info == {"sha": SHA2, "version": "v1.4.0", "date": "2026-10-20T08:00:00Z", "message": None,
-                    "url": RELEASE["html_url"], "image": "", "needs_image": False}
+                    "url": RELEASE["html_url"], "notes": "notes", "changes": [], "image": "", "needs_image": False}
     assert seen[1].endswith("/commits/v1.4.0")  # the tag's commit is what gets installed
     assert f"/{SHA2}/Dockerfile" in seen[2]
 
     github(monkeypatch, {**RELEASE, "name": "Reader tap zones"}, dockerfile="FROM node\n")
     info = updater.fetch_latest()
     assert info["message"] == "Reader tap zones" and info["needs_image"]
+
+
+def test_release_notes():
+    body = ("This version needs a new Docker image.\r\n\r\n## What's Changed\r\n"
+            "* Keep the poster shadow under the buttons by @ivo in https://github.com/ivokolarov0/manga-vibe/pull/174\r\n"
+            "* Reader tap zones\r\n\r\n## New Contributors\r\n"
+            "* @someone made their first contribution in https://github.com/ivokolarov0/manga-vibe/pull/170\r\n\r\n"
+            "**Full Changelog**: https://github.com/ivokolarov0/manga-vibe/compare/v2.6.0...v2.6.1")
+    assert updater.release_notes(body) == {
+        "notes": "This version needs a new Docker image.",
+        "changes": ["Keep the poster shadow under the buttons (#174)", "Reader tap zones"]}
+    assert updater.release_notes("") == {"notes": None, "changes": []}
 
 
 def test_no_release_yet(image, monkeypatch):
