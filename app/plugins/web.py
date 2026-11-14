@@ -51,18 +51,6 @@ def render_index(page: str) -> str:
     return page.replace("<!-- slot:scripts -->", scripts)
 
 
-DEFAULT_ORDER = 50
-
-
-def slot_entry(value) -> tuple[str, int]:
-    """A plugin's html for a slot: "<markup>", or ("<markup>", order) to choose where it goes among the
-    other plugins' (lower first; DEFAULT_ORDER when not given). The same order keeps the plugins' order."""
-    if isinstance(value, (tuple, list)):
-        markup, order = value
-        return markup or "", int(order)
-    return value or "", DEFAULT_ORDER
-
-
 def fill_slots(markup: str, plugins) -> str:
     """Put the plugins' markup into the slots of this markup, and into slots in what was put in (a
     plugin's markup can hold a slot for others, e.g. account-row). Each slot stays in the page
@@ -77,9 +65,21 @@ def fill_slots(markup: str, plugins) -> str:
     return markup
 
 
-def ui_box(plugin_id, markup, order=DEFAULT_ORDER) -> str:
+def ui_box(plugin_id, markup, order) -> str:
     return (f'\n<div class="plugin-ui" data-plugin="{html_lib.escape(plugin_id)}" data-order="{order}">'
             f'\n{markup.strip()}\n</div>')
+
+
+DEFAULT_ORDER = 50
+
+
+def slot_entry(value) -> tuple[str, int]:
+    """A plugin's html for a slot: "<markup>", or ("<markup>", order) to choose where it goes among the
+    other plugins' (lower first; DEFAULT_ORDER when not given). The same order keeps the plugins' order."""
+    if isinstance(value, (tuple, list)):
+        markup, order = value
+        return markup or "", int(order)
+    return value or "", DEFAULT_ORDER
 
 
 def script_url(plugin_id) -> str:
