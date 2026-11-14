@@ -16,13 +16,12 @@
   }
 
   & .lock {
+    display: inline-flex;
     font-size: 12px;
   }
 
   & button.add {
     padding: 6px 12px;
-    font-size: 18px;
-    line-height: 1;
   }
 
   & button.lock-now {

@@ -28,6 +28,11 @@
       }
     }
 
+    /* a field changed by hand: kept when metadata is refreshed */
+    & .lock-mark {
+      color: var(--warn);
+    }
+
     & input,
     & select,
     & textarea {

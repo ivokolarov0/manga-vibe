@@ -8,7 +8,7 @@
     <div class="lib-card shelf-card">
       <div class="libcard-head">
         <span class="libcard-icon" aria-hidden="true"
-              x-text="sh.has_password ? (sh.locked ? '🔒' : '🔓') : '📚'"></span>
+              x-html="icon(sh.has_password ? (sh.locked ? 'lock' : 'unlock') : 'books')"></span>
         <div class="libcard-title">
           <input type="text" class="shelf-name" :value="sh.name" maxlength="60" spellcheck="false"
                  :aria-label="'Name of ' + sh.name" @change="rename(sh, $event.target.value)"
@@ -62,7 +62,7 @@
   <div class="setting-row">
     <div class="label"><span>Add a library</span>
       <small>For example Manga, Comics, Manhwa. Then point a folder at it, or move series to it.
-        Just a set of filters (e.g. only Isekai)? Filter the home screen and use “☆ Save search”.</small></div>
-    <button class="btn small primary" @click="store.add()">+ New library</button>
+        Just a set of filters (e.g. only Isekai)? Filter the home screen and use “Save search”.</small></div>
+    <button class="btn small primary" @click="store.add()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>New library</button>
   </div>
 </section>

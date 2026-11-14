@@ -37,16 +37,41 @@
       }
     }
 
+    /* an icon from the sprite, or a plugin's own character */
     & .ico {
-      width: 18px;
+      display: grid;
       flex: none;
-      text-align: center;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      color: var(--muted);
+      transition: color var(--fast);
+
+      & .ic {
+        width: 18px;
+        height: 18px;
+      }
+
+      /* Needs attention rows: a small dot */
+      &.dot::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        background: currentColor;
+        border-radius: 50%;
+        opacity: 0.6;
+      }
+    }
+
+    & .active .ico {
+      color: var(--accent);
     }
 
     & .count {
       min-width: 20px;
-      padding: 0 6px;
+      padding: 1px 6px;
       border-radius: 9px;
+      font-weight: 600;
       background: var(--surface2);
       color: var(--muted);
       font-size: 11px;
@@ -69,6 +94,14 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-panel);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* phones: see-through like the top bar it sits under */
+    @media (max-width: 799.98px) {
+      background: var(--glass);
+      backdrop-filter: blur(16px) saturate(1.5);
+      -webkit-backdrop-filter: blur(16px) saturate(1.5);
     }
   }
 
@@ -94,8 +127,10 @@
     }
 
     & .chev {
+      width: 18px;
+      height: 18px;
       color: var(--muted);
-      transition: transform 0.15s;
+      transition: transform var(--slow) var(--ease);
     }
 
     .open > & {
@@ -119,9 +154,9 @@
     & button {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       width: 100%;
-      padding: 10px;
+      padding: 9px 10px;
       background: none;
       border: 0;
       border-radius: var(--radius);
@@ -129,7 +164,7 @@
       text-align: left;
 
       &.active {
-        background: color-mix(in srgb, var(--accent) 18%, transparent);
+        background: var(--accent-soft);
         color: var(--text);
         font-weight: 600;
       }
@@ -152,7 +187,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-panel);
-      box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+      box-shadow: var(--shadow-lg);
       opacity: 0;
       visibility: hidden;
       transform: translateY(-6px);
@@ -176,15 +211,20 @@
   .settings-content {
     min-width: 0;
 
-    & > section {
+    /* each page is a card; a plugin's page (inside its slot) looks the same */
+    & > section,
+    & > .plugin-slot > .plugin-ui > section {
       padding: 4px 16px 10px;
+      overflow: hidden;  /* the rows' hover tint stays inside the rounded corners */
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-panel);
+      box-shadow: var(--shadow-sm);
+      animation: view-in var(--slow) var(--ease);
 
       & > h2 {
-        margin: 12px 0 6px;
-        font-size: 18px;
+        margin: 14px 0 8px;
+        font-size: 20px;
       }
 
       & > .muted {
@@ -209,6 +249,8 @@
       border-bottom: 0;
     }
 
+    transition: background-color var(--fast);
+
     &:hover {
       background: color-mix(in srgb, var(--surface2) 45%, transparent);
     }
@@ -217,10 +259,16 @@
       display: grid;
       gap: 2px;
       min-width: 0;
+      font-weight: 500;
 
       & small {
         color: var(--muted);
         font-size: 12px;
+        font-weight: 400;
+
+        & a {
+          color: var(--accent);
+        }
       }
 
       & small.scan-progress {
@@ -277,11 +325,17 @@
       display: grid;
       flex-shrink: 0;
       place-items: center;
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
+      color: var(--accent);
       font-size: 20px;
-      background: var(--surface2);
-      border-radius: var(--radius);
+      background: var(--accent-soft);
+      border-radius: 12px;
+
+      & .ic {
+        width: 21px;
+        height: 21px;
+      }
     }
 
     & .libcard-title {
@@ -330,7 +384,7 @@
       & select {
         min-width: 200px;
         max-width: 100%;
-        background: var(--surface);
+        background-color: var(--surface);  /* not "background": that would take the arrow away */
       }
 
       & .lib-option-text small {
@@ -365,6 +419,7 @@
   .plugin-uses {
     color: var(--muted);
     font-size: 12px;
+    font-weight: 400;
 
     & ul {
       margin: 2px 0 4px;
@@ -392,9 +447,16 @@
   /* one plugin's page (#/settings/plugin-<id>) */
   .plugin-page {
     & .back-link {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
       margin-top: 12px;
+      color: var(--muted);
       font-size: 13px;
+
+      &:hover {
+        color: var(--text);
+      }
     }
 
     & h2 {
@@ -483,7 +545,7 @@
       height: 100%;
       background: var(--accent);
       border-radius: inherit;
-      transition: width 0.4s;
+      transition: width 0.4s var(--ease);
     }
   }
 
@@ -539,8 +601,13 @@
   .folder-list {
     display: grid;
     margin: 8px 0;
+    overflow: hidden;
     border: 1px solid var(--border);
     border-radius: var(--radius);
+
+    & .ic {
+      color: var(--accent);
+    }
 
     & button {
       display: flex;

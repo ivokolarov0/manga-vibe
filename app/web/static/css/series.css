@@ -10,11 +10,13 @@
     right: 0;
     left: 0;
     z-index: -1;
-    height: 280px;
+    height: 300px;
     background-position: center;
     background-size: cover;
-    opacity: 0.28;
-    mask-image: linear-gradient(#000 40%, transparent);
+    border-radius: var(--radius-panel);
+    opacity: 0.3;
+    mask-image: linear-gradient(#000 30%, transparent);
+    animation: fade-in 0.6s;
   }
 
   /* "‹ Back" above the poster and title: a quiet text button that fills in on hover */
@@ -30,19 +32,22 @@
     border-radius: var(--radius);
     color: var(--muted);
     font-size: 14px;
+    font-weight: 500;
+    transition: background-color var(--fast), color var(--fast), transform 0.08s;
 
-    & .icon {
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+    & .ic {
+      transition: transform var(--fast) var(--ease);
     }
 
     @media (hover: hover) {
       &:hover {
         background: color-mix(in srgb, var(--text) 9%, var(--surface2));
         color: var(--text);
+
+        /* the arrow leans the way it goes */
+        & .ic {
+          transform: translateX(-3px);
+        }
       }
     }
 
@@ -101,24 +106,25 @@
     border: 1px solid var(--border);
     border-radius: 50%;
 
-    &:hover {
-      border-color: var(--muted);
+    & .ic {
+      width: 17px;
+      height: 17px;
     }
 
-    /* outline star; filled and yellow when it's a favorite */
-    &.star .icon {
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linejoin: round;
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
     }
 
+    /* outline star; filled and yellow when it's a favorite, with a little bounce */
     &.star.on {
       color: var(--warn);
       border-color: var(--warn);
+      background: color-mix(in srgb, var(--warn) 14%, var(--surface2));
 
-      & .icon {
+      & .ic {
         fill: currentColor;
+        animation: bounce 0.35s var(--ease);
       }
     }
   }
@@ -134,17 +140,7 @@
     }
   }
 
-  #edit-series .icon {
-    width: 15px;
-    height: 15px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  /* ⋯ dropdown */
+  /* ⋯ dropdown: opens from its top right corner */
   .menu {
     position: relative;
   }
@@ -155,36 +151,60 @@
     right: 0;
     z-index: 20;
     display: grid;
-    min-width: 230px;
+    min-width: 240px;
     padding: 6px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-panel);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    transform-origin: top right;
+    animation: menu-in 0.16s var(--ease);
 
+    /* an icon, the label, and maybe a second line under the label */
     & button {
-      display: grid;
-      gap: 2px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 10px;
       padding: 9px 10px;
       background: none;
       border: 0;
-      border-radius: var(--radius);
+      border-radius: 9px;
       font-size: 14px;
       text-align: left;
+
+      & .ic {
+        width: 17px;
+        height: 17px;
+        color: var(--muted);
+      }
 
       &:hover {
         background: var(--surface2);
       }
 
       & small {
-        padding-left: 24px;
+        flex-basis: 100%;
+        padding-left: 27px;
         color: var(--muted);
         font-size: 12px;
       }
 
-      &.danger {
+      &.danger,
+      &.danger .ic {
         color: var(--danger);
       }
+
+      &.danger:hover {
+        background: color-mix(in srgb, var(--danger) 12%, transparent);
+      }
+    }
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
     }
   }
 
@@ -226,23 +246,28 @@
     border: 0;
     cursor: pointer;
 
-    /* "✎ Poster" appears on hover (desktop) */
+    /* "Poster" with a pencil appears on hover (desktop) */
     & .poster-hint {
       position: absolute;
       right: 8px;
       bottom: 8px;
-      padding: 3px 8px;
-      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
       background: rgba(0, 0, 0, 0.7);
       color: #fff;
       font-size: 12px;
       opacity: 0;
-      transition: opacity 0.15s;
+      transform: translateY(4px);
+      transition: opacity 0.15s, transform 0.15s;
     }
 
     &:hover .poster-hint,
     &:focus-visible .poster-hint {
       opacity: 1;
+      transform: none;
     }
 
     & img {
@@ -251,8 +276,10 @@
       aspect-ratio: 2 / 3;
       object-fit: cover;
       background: var(--surface2);
-      border-radius: 10px;
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+      border-radius: 14px;
+      box-shadow: var(--shadow-lg);
+      outline: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+      outline-offset: -1px;
     }
   }
 
@@ -265,13 +292,15 @@
       margin: 0 0 4px;
       font-size: 22px;
       line-height: 1.2;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
     }
 
     @media (min-width: 800px) {
       padding-top: 16px;
 
       & h1 {
-        font-size: 30px;
+        font-size: 34px;
       }
     }
   }
@@ -288,6 +317,20 @@
     margin: 6px 0;
     color: var(--muted);
     font-size: 14px;
+
+    & span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    & .ic {
+      width: 14px;
+      height: 14px;
+      color: var(--warn);
+      fill: currentColor;
+      stroke-width: 0;
+    }
   }
 
   .sp-actions {
@@ -357,15 +400,10 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
 
-    & > .icon {
-      flex: none;
+    & > .ic {
       width: 16px;
       height: 16px;
       color: var(--muted);
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.8;
-      stroke-linejoin: round;
     }
 
     & .path {
@@ -394,14 +432,14 @@
       font-weight: 600;
       transition: color 0.12s, background-color 0.12s, border-color 0.12s;
 
-      & .icon {
+      & .ic {
         width: 14px;
         height: 14px;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
+        stroke-width: 2.2;
+      }
+
+      &.done .ic {
+        animation: bounce 0.35s var(--ease);
       }
 
       &.done {
@@ -483,11 +521,17 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px;
+      padding: 5px 10px;
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       font-size: 13px;
+
+      & .ic {
+        width: 12px;
+        height: 12px;
+        color: var(--muted);
+      }
     }
   }
 
@@ -497,19 +541,22 @@
     border-radius: 3px;
   }
 
+  /* a tint of the state's colour, with text that stays readable in both themes */
   .chip.match-auto,
   .chip.match-manual {
-    background: var(--ok);
-    color: #000;
+    background: color-mix(in srgb, var(--ok) 18%, transparent);
+    color: color-mix(in srgb, var(--ok) 65%, var(--text));
   }
 
   .chip.match-failed {
-    background: var(--warn);
-    color: #000;
+    background: color-mix(in srgb, var(--warn) 22%, transparent);
+    color: color-mix(in srgb, var(--warn) 60%, var(--text));
   }
 
   .books {
-    margin: 8px 0;
+    display: grid;
+    gap: 4px;
+    margin: 10px 0 0;
     padding: 0;
     list-style: none;
   }
@@ -519,9 +566,25 @@
     align-items: center;
     gap: 10px;
     padding: 8px 10px 8px 8px;
-    border-bottom: 1px solid var(--border);
     border-left: 4px solid transparent;
-    border-radius: 6px;
+    border-radius: var(--radius);
+    transition: background-color var(--fast);
+
+    @media (hover: hover) {
+      &:not(.read, .reading):hover {
+        background: var(--hover);
+      }
+    }
+
+    /* ✓↑ and Read: an icon in a small square button */
+    & > .btn {
+      flex: none;
+
+      & .ic {
+        width: 15px;
+        height: 15px;
+      }
+    }
 
     /* read: green edge and tint, check on the thumbnail */
     &.read {
@@ -558,15 +621,24 @@
       height: 20px;
       border-radius: 50%;
       background: var(--ok);
-      color: #000;
-      font-size: 12px;
-      font-weight: 700;
+      color: #04200f;
+      box-shadow: 0 0 0 2px var(--surface);
+
+      & .ic {
+        width: 12px;
+        height: 12px;
+        stroke-width: 3;
+      }
     }
 
     & .manual-mark {
       margin-left: 4px;
       color: var(--warn);
-      font-size: 12px;
+
+      & .ic {
+        width: 13px;
+        height: 13px;
+      }
     }
 
     /* a plugin's short label on a book, e.g. "Translated" */
@@ -595,16 +667,20 @@
         display: block;
         height: 100%;
         background: var(--accent);
+        border-radius: inherit;
+        transition: width 0.4s var(--ease);
       }
     }
 
     & img {
+      display: block;
       flex: none;
       width: 46px;
       height: 66px;
       object-fit: cover;
       background: var(--surface2);
-      border-radius: 4px;
+      border-radius: 6px;
+      box-shadow: var(--shadow-sm);
     }
 
     & .info {

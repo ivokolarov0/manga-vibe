@@ -2,7 +2,7 @@
 <div class="modal" x-data="libraryUnlock" x-show="$store.libraries.unlock.open" x-cloak
      @click.self="close()" @keydown.escape.window="close()">
   <div class="small-dialog unlock-dialog"><form @submit.prevent="submit()">
-    <div class="sheet-head"><b x-text="`🔒 ${name}`"></b>
+    <div class="sheet-head"><b><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg> <span x-text="name"></span></b>
       <button class="btn small" type="button" @click="close()">Cancel</button></div>
     <p class="muted">This library is locked. Its series show again in this browser after the password,
       until “Lock now” or a new tab.</p>

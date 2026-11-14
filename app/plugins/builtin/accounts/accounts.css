@@ -9,26 +9,59 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  background: var(--bg);
+  /* a soft glow of the accent colour behind the card */
+  background:
+    radial-gradient(60% 50% at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent),
+    var(--bg);
+}
+
+/* the login is a card in the middle of the page */
+.account-login {
+  padding: 28px 24px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  animation: pop-in 0.3s var(--ease);
+
+  & .btn {
+    margin-top: 4px;
+  }
 }
 
 .account-login,
 .account-password {
   display: grid;
-  gap: 12px;
-  width: min(360px, 100%);
+  gap: 14px;
+  width: min(380px, 100%);
 
   & .brand {
-    color: var(--accent);
-    font-size: 26px;
+    display: grid;
+    justify-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+    font-size: 24px;
     font-weight: 700;
+    letter-spacing: -0.02em;
     text-align: center;
+
+    & .logo {
+      width: 52px;
+      height: 52px;
+      padding: 11px;
+      background: var(--accent);
+      border-radius: 15px;
+      fill: var(--accent-text);
+      box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 40%, transparent);
+    }
   }
 
   & label {
     display: grid;
-    gap: 4px;
+    gap: 5px;
+    color: var(--muted);
     font-size: 13px;
+    font-weight: 500;
   }
 
   & p {
@@ -39,6 +72,10 @@
 /* the account menu in the top bar */
 .account-menu {
   position: relative;
+
+  & .account-btn {
+    padding: 0;
+  }
 
   & .account-btn span {
     display: grid;

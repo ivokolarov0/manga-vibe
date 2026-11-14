@@ -1,4 +1,4 @@
-/* Reset, typography, form controls and small shared pieces (chips, tabs, helpers). */
+/* Reset, typography, icons, form controls, small shared pieces (chips, tabs, helpers) and motion. */
 @layer base {
   * {
     box-sizing: border-box;
@@ -10,6 +10,20 @@
     background: var(--bg);
     color: var(--text);
     font: var(--font);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    scrollbar-color: color-mix(in srgb, var(--text) 22%, transparent) transparent;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 35%, transparent);
   }
 
   a {
@@ -29,18 +43,66 @@
     cursor: pointer;
   }
 
+  h1,
+  h2 {
+    letter-spacing: -0.01em;
+  }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
+
   [hidden],
   [x-cloak] {
     display: none !important;
   }
 
+  /* ---------------------------------------------------------------- icons
+     Line icons from the sprite at the top of index.html:
+     <svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>. They take the text colour
+     and scale with the font size. In scripts: icon("star") (js/common.js). */
+  .ic {
+    flex: none;
+    width: 1.2em;
+    height: 1.2em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vertical-align: -0.22em;
+
+    &.fill {
+      fill: currentColor;
+    }
+  }
+
+  /* ---------------------------------------------------------------- form controls */
   input,
   select,
   textarea {
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0 10px;
+    padding: 0 12px;
+    transition: border-color var(--fast), box-shadow var(--fast), background-color var(--fast);
+  }
+
+  ::placeholder {
+    color: color-mix(in srgb, var(--muted) 80%, transparent);
+  }
+
+  @media (hover: hover) {
+    :is(input:not([type="checkbox"], [type="range"]), select, textarea):hover:not(:focus, :disabled) {
+      border-color: color-mix(in srgb, var(--text) 28%, var(--border));
+    }
+  }
+
+  /* a typed-in field shows it has the focus with an accent border and a soft glow */
+  :is(input:not([type="checkbox"], [type="range"]), select, textarea):focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
   /* every button, select and text field has the same height */
@@ -51,27 +113,111 @@
     font-size: 14px;
   }
 
+  /* our own arrow, the same in every browser and theme */
+  select {
+    padding-right: 34px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a919e' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    cursor: pointer;
+    text-overflow: ellipsis;
+  }
+
+  /* checkbox: a rounded box that fills with the accent colour, the check drawn in */
   input[type="checkbox"] {
+    position: relative;
+    display: inline-grid;
+    flex: none;
+    place-items: center;
     width: 20px;
     height: 20px;
-    accent-color: var(--accent);
+    margin: 0;
+    padding: 0;
+    appearance: none;
+    background: var(--surface2);
+    border: 1.5px solid color-mix(in srgb, var(--text) 35%, var(--border));
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color var(--fast), border-color var(--fast);
+
+    &::before {
+      content: "";
+      width: 5px;
+      height: 10px;
+      margin-top: -2px;
+      border: solid var(--accent-text);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg) scale(0);
+      transition: transform var(--fast) var(--ease);
+    }
+
+    &:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+
+      &::before {
+        transform: rotate(45deg) scale(1);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  /* a checkbox that turns something on or off in a settings row is a switch */
+  :is(.setting-row, .row-buttons, .lib-option) > input[type="checkbox"],
+  input[type="checkbox"].switch {
+    width: 40px;
+    height: 24px;
+    background: color-mix(in srgb, var(--text) 18%, var(--surface2));
+    border: 0;
+    border-radius: var(--radius-pill);
+
+    &::before {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      background: #fff;
+      border: 0;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+      transform: none;
+      transition: transform var(--slow) var(--ease);
+    }
+
+    &:checked {
+      background: var(--accent);
+
+      &::before {
+        transform: translateX(16px);
+      }
+    }
   }
 
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 7px;
     padding: 0 14px;
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    font-weight: 500;
     line-height: 1;
     white-space: nowrap;
 
     &.small {
       height: var(--control-height-small);
-      padding: 0 10px;
+      padding: 0 11px;
+      border-radius: calc(var(--radius) - 2px);
       font-size: 13px;
     }
 
@@ -80,6 +226,7 @@
       border-color: var(--accent);
       color: var(--accent-text);
       font-weight: 600;
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 30%, transparent);
     }
 
     &.danger {
@@ -94,20 +241,30 @@
 
     &.disabled,
     &:disabled {
-      opacity: 0.6;
+      opacity: 0.55;
+      box-shadow: none;
       cursor: default;
     }
   }
 
   .iconbtn {
     position: relative;
+    display: inline-grid;
+    flex: none;
+    place-items: center;
     height: var(--control-height);
     min-width: var(--control-height);
     padding: 0 10px;
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+    color: var(--muted);
     font-size: 16px;
+
+    & .ic {
+      width: 20px;
+      height: 20px;
+    }
 
     & .count {
       position: absolute;
@@ -119,6 +276,12 @@
       color: var(--accent-text);
       font-size: 10px;
       font-weight: 700;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        color: var(--text);
+      }
     }
   }
 
@@ -153,10 +316,14 @@
   }
 
   .chip {
-    padding: 2px 10px;
-    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
     background: var(--surface2);
     font-size: 12px;
+    font-weight: 500;
 
     &.warn {
       background: var(--warn);
@@ -181,16 +348,37 @@
     border-bottom: 1px solid var(--border);
 
     & button {
-      padding: 8px 12px;
+      position: relative;
+      padding: 9px 12px;
       background: none;
       border: 0;
-      border-bottom: 2px solid transparent;
+      border-radius: 8px 8px 0 0;
       color: var(--muted);
+      font-weight: 500;
       white-space: nowrap;
+
+      /* the underline grows from the middle when a tab becomes the active one */
+      &::after {
+        content: "";
+        position: absolute;
+        right: 8px;
+        bottom: 0;  /* inside the button: 1px lower would make a scrolling row of tabs scroll up and down */
+        left: 8px;
+        height: 2px;
+        background: var(--accent);
+        border-radius: 2px 2px 0 0;
+        opacity: 0;
+        transform: scaleX(0.3);
+        transition: transform var(--slow) var(--ease), opacity var(--fast);
+      }
 
       &.active {
         color: var(--text);
-        border-color: var(--accent);
+
+        &::after {
+          opacity: 1;
+          transform: none;
+        }
 
         & .count {
           background: var(--accent);
@@ -200,14 +388,15 @@
     }
 
     & .count {
-      padding: 0 6px;
-      border-radius: 8px;
+      margin-left: 2px;
+      padding: 1px 7px;
+      border-radius: var(--radius-pill);
       background: var(--surface2);
       font-size: 12px;
     }
 
     &.small button {
-      padding: 6px 10px;
+      padding: 7px 10px;
     }
 
     &.scroll {
@@ -220,10 +409,11 @@
   /* titled card used on the series page and elsewhere */
   .panel {
     min-width: 0;
-    padding: 14px 16px;
+    padding: 16px 18px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-sm);
 
     & > h2 {
       margin: 0 0 10px;
@@ -256,10 +446,47 @@
     color: var(--danger);
   }
 
+  /* nothing to show: a quiet icon above a line of text */
   .empty {
-    padding: 40px 10px;
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    padding: 56px 16px;
     color: var(--muted);
     text-align: center;
+
+    & > .ic {
+      width: 44px;
+      height: 44px;
+      padding: 10px;
+      box-sizing: content-box;
+      background: var(--surface2);
+      border-radius: 50%;
+      stroke-width: 1.6;
+    }
+
+    & > span {
+      max-width: 46ch;
+    }
+  }
+
+  /* "Loading…" with a spinner before it */
+  .loading-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 4px;
+
+    &::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      flex: none;
+      border: 2px solid var(--accent);
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
   }
 
   .pre {
@@ -296,16 +523,12 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      min-height: 46px;
-      padding: 8px 12px;
+      min-height: 48px;
+      padding: 8px 14px;
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       text-align: left;
-
-      &:hover {
-        border-color: var(--muted);
-      }
 
       &.on {
         background: color-mix(in srgb, var(--accent) 14%, var(--surface2));
@@ -330,6 +553,7 @@
       height: 20px;
       border: 2px solid var(--muted);
       border-radius: 50%;
+      transition: border-color var(--fast);
 
       &::after {
         content: "";
@@ -338,7 +562,7 @@
         border-radius: 50%;
         background: var(--accent);
         transform: scale(0);
-        transition: transform 0.12s;
+        transition: transform var(--slow) var(--ease);
       }
     }
 
@@ -377,6 +601,7 @@
         background: var(--accent);
         color: var(--accent-text);
         font-weight: 600;
+        box-shadow: var(--shadow-sm);
       }
     }
   }
@@ -397,7 +622,8 @@
   .menu-pop button,
   .folder-list button,
   .settings-nav button {
-    transition: background-color 0.12s, border-color 0.12s, color 0.12s, filter 0.12s, transform 0.08s;
+    transition: background-color var(--fast), border-color var(--fast), color var(--fast),
+      filter var(--fast), box-shadow var(--fast), transform 0.08s;
   }
 
   @media (hover: hover) {
@@ -412,14 +638,18 @@
       border-color: color-mix(in srgb, var(--text) 30%, var(--border));
     }
 
-    .btn.primary:not(:disabled):hover,
+    .btn.primary:not(:disabled, .disabled):hover {
+      filter: brightness(1.08);
+      box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 42%, transparent);
+    }
+
     .chip-btn.on:hover,
     .quick button.on:hover,
     .segmented button.on:hover {
-      filter: brightness(1.1);
+      filter: brightness(1.08);
     }
 
-    .btn.danger:hover {
+    .btn.danger:not(:disabled):hover {
       background: color-mix(in srgb, var(--danger) 15%, var(--surface2));
       border-color: var(--danger);
     }
@@ -430,7 +660,7 @@
     }
 
     .tabs button:not(.active):hover {
-      border-bottom-color: color-mix(in srgb, var(--text) 25%, transparent);
+      background: var(--hover);
     }
 
     .link-btn:hover {
@@ -439,6 +669,7 @@
 
     .options button:not(.on):hover {
       background: color-mix(in srgb, var(--text) 6%, var(--surface2));
+      border-color: color-mix(in srgb, var(--text) 30%, var(--border));
     }
   }
 
@@ -451,24 +682,12 @@
     border: 2px solid currentColor;
     border-right-color: transparent;
     border-radius: 50%;
-    animation: btn-spin 0.7s linear infinite;
+    animation: spin 0.7s linear infinite;
   }
 
   .btn.busy:disabled {
     opacity: 1;
     cursor: progress;
-  }
-
-  @keyframes btn-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .btn.busy::before {
-      animation-duration: 2s;
-    }
   }
 
   /* a small "press" so a click feels like it did something */
@@ -479,12 +698,85 @@
   .quick button:active,
   .options button:active,
   .segmented button:active {
-    transform: scale(0.97);
+    transform: scale(0.96);
   }
 
   /* keyboard focus: a clear ring, but not on mouse clicks */
-  :is(button, a, select, input, textarea, summary):focus-visible {
+  :is(button, a, summary, input[type="checkbox"]):focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+  }
+
+  /* ---------------------------------------------------------------- motion
+     Shared keyframes. Things animate when they appear (a page, a dialog, a menu), never on a
+     loop except spinners. */
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* a page that opens: fades in, rising a little */
+  @keyframes view-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  /* a sheet from the bottom edge (phones) */
+  @keyframes sheet-up {
+    from {
+      transform: translateY(40px);
+      opacity: 0;
+    }
+  }
+
+  /* a dialog or menu: grows a little into place */
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(6px);
+    }
+  }
+
+  /* something that was just switched on (a favorite's star) */
+  @keyframes bounce {
+    40% {
+      transform: scale(1.35);
+    }
+  }
+
+  /* the whole page changes colour together when the theme is switched (applyTheme() in common.js) */
+  .theme-anim,
+  .theme-anim *,
+  .theme-anim *::before,
+  .theme-anim *::after {
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s, fill 0.3s, stroke 0.3s !important;
+  }
+
+  /* "reduce motion" on the device: nothing slides, grows or spins fast. Not in the reader: it has
+     its own rules, and its "page is loading" spinner has to keep turning. */
+  @media (prefers-reduced-motion: reduce) {
+    *:not(#reader *),
+    *:not(#reader *)::before,
+    *:not(#reader *)::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    .btn.busy::before,
+    .loading-line::before {
+      animation-duration: 2s !important;
+      animation-iteration-count: infinite !important;
+    }
   }
 }

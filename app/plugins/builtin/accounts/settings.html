@@ -7,7 +7,7 @@
   <template x-for="a in store.list" :key="a.id">
     <div class="lib-card account-card">
       <div class="libcard-head">
-        <span class="libcard-icon" aria-hidden="true" x-text="a.admin ? '🛡' : '👤'"></span>
+        <span class="libcard-icon" aria-hidden="true" x-html="icon(a.admin ? 'shield' : 'user')"></span>
         <div class="libcard-title">
           <input type="text" class="account-name" :value="a.name" maxlength="40" spellcheck="false"
                  :aria-label="'Name of ' + a.name" @change="rename(a, $event.target.value)"
@@ -31,7 +31,7 @@
     </div>
   </template>
   <form class="lib-card account-add" @submit.prevent="create()">
-    <div class="libcard-head"><span class="libcard-icon" aria-hidden="true">＋</span>
+    <div class="libcard-head"><span class="libcard-icon" aria-hidden="true"><svg class="ic"><use href="#i-plus"/></svg></span>
       <div class="libcard-title"><strong>Add an account</strong></div></div>
     <div class="account-add-fields">
       <label>Name <input x-model="add.name" maxlength="40" autocomplete="off" required></label>

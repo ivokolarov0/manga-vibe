@@ -3,8 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#111318">
+  <meta name="theme-color" content="#0f1115">
   <title>MangaVibe</title>
+  <!-- the theme used last on this device, before the first paint (no flash of the other one);
+       applyTheme() in js/common.js sets it for real once the settings are loaded -->
+  <script>try { if (localStorage.getItem("theme-last") === "light") document.documentElement.dataset.theme = "light"; } catch (e) {}</script>
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
@@ -12,17 +15,84 @@
   <link rel="stylesheet" href="/static/css/main.css">
 </head>
 <body>
+  <!-- ============ icons ============
+       Line icons on a 24 × 24 grid, drawn with the text colour. Use one with
+       <svg class="ic" aria-hidden="true"><use href="#i-NAME"/></svg>, or icon("NAME") in scripts
+       (js/common.js). Plugins can use them too (docs/PLUGINS.md). -->
+  <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-check-up" viewBox="0 0 24 24"><path d="M3 14l4 4 7-8M19 19V6M15.5 9.5L19 6l3.5 3.5"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></symbol>
+    <symbol id="i-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4l9 16H3zM12 10v4.5M12 17.2v.1"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-8 8M17 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></g></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></symbol>
+    <symbol id="i-book-open" viewBox="0 0 24 24"><path d="M2.5 4h6A3.5 3.5 0 0 1 12 7.5V20a3 3 0 0 0-3-3H2.5zM21.5 4h-6A3.5 3.5 0 0 0 12 7.5V20a3 3 0 0 1 3-3h6.5z"/></symbol>
+    <symbol id="i-books" viewBox="0 0 24 24"><rect x="3.5" y="4" width="4.5" height="16" rx="1"/><rect x="8" y="4" width="4.5" height="16" rx="1"/><path d="M14.6 6.6l3.4-.9a1 1 0 0 1 1.2.7l3 11.6a1 1 0 0 1-.7 1.2l-3.4.9a1 1 0 0 1-1.2-.7l-3-11.6a1 1 0 0 1 .7-1.2z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.2l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.1 6.6 20l1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M2.5 12h2M19.5 12h2M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c1.2 0 2-.9 2-2 0-.5-.2-1-.5-1.4-.3-.4-.5-.8-.5-1.3a2 2 0 0 1 2-2h2.3a3.7 3.7 0 0 0 3.7-3.7C21 6.4 17 3 12 3z"/><g fill="currentColor" stroke="none"><circle cx="7.5" cy="11.5" r="1.2"/><circle cx="10.5" cy="7.5" r="1.2"/><circle cx="15.5" cy="8" r="1.2"/></g></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12.6V4.5A1.5 1.5 0 0 1 4.5 3h8.1a2 2 0 0 1 1.4.6l6.9 6.9a2 2 0 0 1 0 2.8l-7.6 7.6a2 2 0 0 1-2.8 0l-6.9-6.9a2 2 0 0 1-.6-1.4z"/><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-blocks" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M17 3.5v7M13.5 7h7"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7 9.5l5-5 5 5M5 20h14"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.3L4 8.5M4 4v4.5h4.5M4 13a8 8 0 0 0 14.3 4.3L20 15.5M20 20v-4.5h-4.5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9.5" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.6-1.7"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15.5" r="4.5"/><path d="M11.3 12.2L20 3.5M16 7.5l3 3M13.5 10l2 2"/></symbol>
+    <symbol id="i-log-out" viewBox="0 0 24 24"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M16 16l4-4-4-4M20 12H9"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.7a3.5 3.5 0 0 1 0 6.6M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 7.9-8 9-4.8-1.100-8-4.500-8-9V6z"/><path d="M9 12l2.200 2.200L15 10"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.500"/><circle cx="9" cy="10" r="1.800"/><path d="M21 15.500l-4.500-4.500L7 20"/></symbol>
+  </svg>
+
   <!-- ============ top bar ============ -->
   <header id="topbar" x-data="topbar()" x-show="$store.app.view !== 'read'">
-    <a href="#/" class="brand">MangaVibe</a>
-    <input id="search" x-ref="search" type="search" placeholder="Search" autocomplete="off" aria-label="Search"
-           x-model="q" @input="search()">
+    <a href="#/" class="brand" aria-label="MangaVibe: Library">
+      <svg class="logo" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" width="8" height="20" rx="2"/><rect x="11" width="8" height="20" rx="2"/></svg>
+      <span>MangaVibe</span></a>
+    <label class="search-box">
+      <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="search" x-ref="search" type="search" placeholder="Search your library" autocomplete="off" aria-label="Search"
+             x-model="q" @input="search()" @keydown.escape="if (q) { q = ''; search() }">
+      <button type="button" class="search-clear" x-show="q" x-cloak aria-label="Clear the search" title="Clear"
+              @click="q = ''; search(); $refs.search.focus()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </label>
+    <!-- light / dark, for this device (toggleTheme() in js/common.js) -->
+    <button id="theme-toggle" class="iconbtn" @click="toggleTheme()"
+            :aria-label="$store.app.theme === 'light' ? 'Switch to the dark theme' : 'Switch to the light theme'"
+            :title="$store.app.theme === 'light' ? 'Dark theme' : 'Light theme'">
+      <template x-if="$store.app.theme === 'light'"><svg class="ic" aria-hidden="true"><use href="#i-moon"/></svg></template>
+      <template x-if="$store.app.theme !== 'light'"><svg class="ic" aria-hidden="true"><use href="#i-sun"/></svg></template>
+    </button>
     <!-- slot:topbar -->
     <a href="#/settings" id="settings-link" class="iconbtn" :class="{ active: $store.app.view === 'settings' }"
        :aria-current="$store.app.view === 'settings' ? 'page' : null"
        :aria-label="$store.app.attentionCount ? `Settings, ${$store.app.attentionCount} need attention` : 'Settings'"
        :title="$store.app.attentionCount ? `Settings (${$store.app.attentionCount} need attention)` : 'Settings'">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>
       <i id="att-count" x-show="$store.app.attentionCount" aria-hidden="true" x-cloak
          x-text="$store.app.attentionCount > 99 ? '99+' : $store.app.attentionCount"></i>
     </a>
@@ -30,9 +100,11 @@
 
   <!-- ============ Library / Continue: fixed at the bottom, or under the top bar
        (Settings → Display → Navigation bar), so it comes right after the top bar ============ -->
-  <nav id="bottomnav" x-data x-show="$store.app.view !== 'read'">
-    <a href="#/" :class="{ active: $store.app.view === 'library' }"><span>▦</span>Library</a>
-    <a href="#/continue" :class="{ active: $store.app.view === 'continue' }"><span>▶</span>Continue</a>
+  <nav id="bottomnav" x-data x-show="$store.app.view !== 'read'" aria-label="Main">
+    <a href="#/" :class="{ active: $store.app.view === 'library' }" :aria-current="$store.app.view === 'library' ? 'page' : null">
+      <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></span>Library</a>
+    <a href="#/continue" :class="{ active: $store.app.view === 'continue' }" :aria-current="$store.app.view === 'continue' ? 'page' : null">
+      <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>Continue</a>
   </nav>
 
   <main>
@@ -42,7 +114,7 @@
       <div class="label"><b>MangaVibe for Android</b>
         <small>Fullscreen, the screen stays on, volume buttons turn pages</small></div>
       <button class="btn small primary" @click="openAndroidApp()">Open app</button>
-      <button class="icon" aria-label="Don't show again" title="Don't show again" @click="dismissAppBanner()">✕</button>
+      <button class="icon" aria-label="Don't show again" title="Don't show again" @click="dismissAppBanner()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
     </div>
 
     <!-- ============ above the library grid and Continue: what plugins add, e.g. the library tabs ============ -->
@@ -53,10 +125,10 @@
       <div class="lib-head">
         <div class="lib-tools">
           <button class="tool" :class="{ on: filterCount }" @click="openSheet('filter')">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg>
+            <svg aria-hidden="true"><use href="#i-filter"/></svg>
             <span>Filter</span><b class="count" x-show="filterCount" x-text="filterCount" x-cloak></b></button>
           <button class="tool" :class="{ on: customSort }" @click="openSheet('sort')">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 20V4M3 8l4-4 4 4M17 4v16M13 16l4 4 4-4"/></svg>
+            <svg aria-hidden="true"><use href="#i-sort"/></svg>
             <span>Sort</span></button>
           <button class="tool" :class="{ on: letter }" @click="openSheet('letter')"
                   :aria-label="letter ? 'Title starts with ' + letter : 'Filter by first letter'">
@@ -66,7 +138,9 @@
         </div>
         <div class="quick">
           <template x-for="[v, label] in quick" :key="v">
-            <button :class="{ on: quickOn(v) }" @click="setQuick(v)" x-text="label"></button>
+            <button :class="{ on: quickOn(v) }" :aria-pressed="quickOn(v)" @click="setQuick(v)">
+              <svg class="ic fill" x-show="v === 'fav'" aria-hidden="true"><use href="#i-star"/></svg>
+              <span x-text="label"></span></button>
           </template>
         </div>
       </div>
@@ -75,7 +149,7 @@
         <template x-for="c in chips" :key="c.k + c.v">
           <button class="filter-chip" :class="{ ex: c.ex }" @click="removeChip(c)" :aria-label="'Remove ' + c.label">
             <span x-text="c.label"></span>
-            <i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i></button>
+            <i aria-hidden="true"><svg><use href="#i-x"/></svg></i></button>
         </template>
         <button class="clear-all" x-show="chips.length" @click="clearAll()">Clear all</button>
         <!-- slot:library-filters -->
@@ -91,23 +165,28 @@
       <div class="select-bar" x-show="selecting" x-cloak role="toolbar" aria-label="Selected series"
            @keydown.escape.window="if (!delOpen) endSelect()">
         <button class="icon-btn" aria-label="Stop selecting" title="Stop selecting" :disabled="!!working"
-                @click="endSelect()">✕</button>
+                @click="endSelect()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
         <b class="count" x-text="working || `${selCount} selected`" aria-live="polite"></b>
         <button class="btn small" :disabled="!!working" @click="selectAll()"
                 x-text="total && selCount >= total ? 'All selected' : `Select all${total ? ' ' + total : ''}`"></button>
-        <button class="btn small danger" x-show="$store.app.admin" :disabled="!!working || !selCount" @click="delOpen = true">🗑 Delete</button>
+        <button class="btn small danger" x-show="$store.app.admin" :disabled="!!working || !selCount" @click="delOpen = true">
+          <svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Delete</button>
         <div class="menu" @click.outside="selMenu = false">
           <button class="icon-btn" aria-label="More actions" title="More actions" :disabled="!!working || !selCount"
                   @click="selMenu = !selMenu">
-            <svg class="icon dots" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+            <svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg>
           </button>
           <div class="menu-pop" x-show="selMenu" x-transition.opacity x-cloak>
-            <button @click="bulk('read', (n) => `Marked ${n} series as read`)">✓ Mark read</button>
-            <button @click="bulk('unread', (n) => `Marked ${n} series as unread`)">○ Mark unread</button>
-            <button @click="bulk('favorite', (n) => `Added ${n} series to favorites`)">★ Add to favorites</button>
-            <button @click="bulk('unfavorite', (n) => `Removed ${n} series from favorites`)">☆ Remove from favorites</button>
-            <button x-show="$store.app.admin" @click="bulk('refresh', (n) => `Refreshing metadata for ${n} series in the background`)">⟳ Refresh metadata</button>
+            <button @click="bulk('read', (n) => `Marked ${n} series as read`)">
+              <svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg>Mark read</button>
+            <button @click="bulk('unread', (n) => `Marked ${n} series as unread`)">
+              <svg class="ic" aria-hidden="true"><use href="#i-circle"/></svg>Mark unread</button>
+            <button @click="bulk('favorite', (n) => `Added ${n} series to favorites`)">
+              <svg class="ic fill" aria-hidden="true"><use href="#i-star"/></svg>Add to favorites</button>
+            <button @click="bulk('unfavorite', (n) => `Removed ${n} series from favorites`)">
+              <svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>Remove from favorites</button>
+            <button x-show="$store.app.admin" @click="bulk('refresh', (n) => `Refreshing metadata for ${n} series in the background`)">
+              <svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Refresh metadata</button>
             <!-- slot:select-menu -->
           </div>
         </div>
@@ -144,10 +223,14 @@
             <div class="poster">
               <img :src="s.poster" loading="lazy" alt="" draggable="false">
               <span class="pick" x-show="selecting" aria-hidden="true"></span>
-              <span class="badge done" x-show="s.reading_status === 'completed'">✓</span>
-              <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="Dropped" aria-label="Dropped">✕</span>
-              <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"></span>
-              <span class="badge status" x-show="s.favorite">★</span>
+              <span class="badge done" x-show="s.reading_status === 'completed'" title="Completed" aria-label="Completed">
+                <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
+              <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="Dropped" aria-label="Dropped">
+                <svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></span>
+              <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"
+                    :title="s.unread_count + ' unread'"></span>
+              <span class="badge status" x-show="s.favorite" title="Favorite" aria-label="Favorite">
+                <svg class="ic fill" aria-hidden="true"><use href="#i-star"/></svg></span>
               <span class="badge missing" x-show="s.incomplete" title="Finished series with volumes or chapters missing">Incomplete</span>
               <div class="bar" x-show="s.reading_status === 'reading'"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
             </div>
@@ -159,7 +242,7 @@
       </div>
       <div x-ref="sentinel"></div>
       <nav class="pager" x-show="paged && pages() > 1" x-cloak aria-label="Pages">
-        <button class="pager-step" :disabled="page <= 1" @click="goPage(page - 1)" aria-label="Previous page">‹<span> Previous</span></button>
+        <button class="pager-step" :disabled="page <= 1" @click="goPage(page - 1)" aria-label="Previous page"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg><span> Previous</span></button>
         <template x-for="(n, i) in pageNums" :key="i + '-' + n">
           <span class="pager-item">
             <span class="pager-gap" x-show="n === '…'">…</span>
@@ -167,9 +250,13 @@
                     @click="goPage(n)" x-text="n"></button>
           </span>
         </template>
-        <button class="pager-step" :disabled="page >= pages()" @click="goPage(page + 1)" aria-label="Next page"><span>Next </span>›</button>
+        <button class="pager-step" :disabled="page >= pages()" @click="goPage(page + 1)" aria-label="Next page"><span>Next </span><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </nav>
-      <p class="empty" x-show="total === 0" x-text="emptyText" x-cloak></p>
+      <div class="empty" x-show="total === 0" x-cloak>
+        <svg class="ic" aria-hidden="true"><use :href="params.toString() ? '#i-search' : '#i-books'"/></svg>
+        <span x-text="emptyText"></span>
+        <button class="btn small" x-show="chips.length" @click="clearAll()">Clear the filters</button>
+      </div>
     </section>
 
     <!-- ============ continue reading ============ -->
@@ -185,7 +272,11 @@
           </a>
         </template>
       </div>
-      <p class="empty" x-show="items && !items.length">Nothing in progress. Start a series from the Library.</p>
+      <div class="empty" x-show="items && !items.length">
+        <svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>
+        <span>Nothing in progress. Start a series and it shows up here.</span>
+        <a class="btn small primary" href="#/">Open the Library</a>
+      </div>
     </section>
 
     <!-- ============ series page ============ -->
@@ -194,15 +285,18 @@
         <div>
           <div class="sp-banner" x-show="s.banner_url" :style="s.banner_url && `background-image:url('${s.banner_url}')`"></div>
           <button class="sp-back" @click="back()">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+            <svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg>
             <span x-text="$store.app.seriesBack ? 'Back' : 'Library'"></span></button>
           <div class="sp">
             <button class="sp-poster" title="Change poster" @click="editInfo('poster')"><img :src="s.poster_large" alt="">
-              <span class="poster-hint">✎ Poster</span></button>
+              <span class="poster-hint"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>Poster</span></button>
             <header class="sp-head">
               <h1 x-text="s.title"></h1>
               <div class="alt-titles" x-show="alt.length" x-text="alt.join(' · ')"></div>
-              <div class="sp-facts" x-show="facts.length"><template x-for="f in facts"><span x-text="f"></span></template></div>
+              <!-- the score is "★ 92%": the star is drawn as an icon -->
+              <div class="sp-facts" x-show="facts.length"><template x-for="f in facts">
+                <span><svg class="ic" x-show="String(f).startsWith('★')" aria-hidden="true"><use href="#i-star"/></svg><span x-text="String(f).replace(/^★ /, '')"></span></span>
+              </template></div>
               <div class="chips">
                 <span class="chip" x-text="s.book_count + ' books'"></span>
                 <span class="chip" x-text="s.unread_count + ' unread'"></span>
@@ -212,26 +306,27 @@
             <div class="sp-tools">
               <button class="icon-btn star" :class="{ on: s.favorite }" @click="toggleFav()"
                       :title="s.favorite ? 'Remove from favorites' : 'Add to favorites'"
+                      :aria-label="s.favorite ? 'Remove from favorites' : 'Add to favorites'"
                       :aria-pressed="s.favorite">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M12 3.2l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17.1 6.6 20l1-6.1-4.4-4.3 6.1-.9z"/></svg>
+                <svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>
               </button>
               <button class="btn small" id="edit-series" x-show="$store.app.admin" @click="editInfo()">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 20h4L19 9l-4-4L4 16z M13.5 6.5l4 4"/></svg>
-                Edit</button>
+                <svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>Edit</button>
               <!-- reading mode, rescan, match, delete: admins (with accounts) -->
               <div class="menu" x-show="$store.app.admin" @click.outside="menuOpen = false" @keydown.escape="menuOpen = false">
                 <button class="icon-btn" aria-label="More" title="More" @click="menuOpen = !menuOpen">
-                  <svg class="icon dots" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+                  <svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg>
                 </button>
                 <div class="menu-pop" x-show="menuOpen" x-transition.opacity x-cloak>
-                  <button @click="menuOpen = false; readerOpen = true">📖 Reading mode…
+                  <button @click="menuOpen = false; readerOpen = true">
+                    <svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>Reading mode…
                     <small x-text="readerModeLabel"></small></button>
-                  <button @click="menuOpen = false; rescan()">⟳ Rescan this series</button>
-                  <button @click="menuOpen = false; fixMatch()">🔎 Fix match…</button>
-                  <button class="danger" @click="menuOpen = false; openDelete()">🗑 Delete series…</button>
+                  <button @click="menuOpen = false; rescan()">
+                    <svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Rescan this series</button>
+                  <button @click="menuOpen = false; fixMatch()">
+                    <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>Fix match…</button>
+                  <button class="danger" @click="menuOpen = false; openDelete()">
+                    <svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Delete series…</button>
                 </div>
               </div>
             </div>
@@ -239,9 +334,10 @@
               <template x-if="s.continue">
                 <a class="btn primary ctl" :href="`#/read/${s.continue.book_id}?page=${s.continue.page}`"
                    :title="`${s.continue.started ? 'Continue' : 'Start'} · ${s.continue.label}`">
-                  <span class="ellipsis" x-text="`▶ ${s.continue.started ? 'Continue' : 'Start'} · ${s.continue.label}`"></span></a>
+                  <svg class="ic fill" aria-hidden="true"><use href="#i-play"/></svg>
+                  <span class="ellipsis" x-text="`${s.continue.started ? 'Continue' : 'Start'} · ${s.continue.label}`"></span></a>
               </template>
-              <span class="btn ctl disabled" x-show="!s.continue">✓ All read</span>
+              <span class="btn ctl disabled" x-show="!s.continue"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>All read</span>
               <select class="ctl" aria-label="Reading status" @change="setStatus($event.target.value)">
                 <option value="" :selected="!s.manual_reading_status" x-text="'Status: ' + statusLabels[s.reading_status] + ' (auto)'"></option>
                 <template x-for="k in ['reading', 'completed', 'plan_to_read', 'on_hold', 'dropped']">
@@ -333,7 +429,7 @@
                     <template x-for="l in s.links" :key="l.id">
                       <a :href="l.url" target="_blank" rel="noopener noreferrer">
                         <img class="site-icon" :src="'/api/links/' + l.id + '/icon'" alt="" loading="lazy" @error="$el.remove()">
-                        <span x-text="l.site"></span> ↗</a>
+                        <span x-text="l.site"></span><svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
                     </template>
                   </div>
                 </section>
@@ -352,24 +448,22 @@
                 <section class="panel">
                   <h2>Folder</h2>
                   <div class="path-field">
-                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    <svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg>
                     <code class="path" x-text="s.host_path || s.folder_path"
                           :title="s.host_path ? s.host_path + '\n(in Docker: ' + s.folder_path + ')' : s.folder_path"></code>
                     <button class="copy" :class="{ done: copied }" @click="copyPath()"
                             :aria-label="copied ? 'Copied' : 'Copy path'" :title="copied ? 'Copied' : 'Copy path'">
-                      <svg x-show="!copied" class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
-                      <svg x-show="copied" x-cloak class="icon" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+                      <svg x-show="!copied" class="ic" aria-hidden="true"><use href="#i-copy"/></svg>
+                      <svg x-show="copied" x-cloak class="ic" aria-hidden="true"><use href="#i-check"/></svg>
                       <span x-text="copied ? 'Copied' : 'Copy'"></span>
                     </button>
                   </div>
                   <p class="muted path-hint" x-show="!s.host_path">This is the path inside Docker. To see the one on your
                     NAS, set <a href="#/settings/library">Path outside Docker</a> for its library folder.</p>
                   <div class="btn-row" x-show="$store.app.admin">
-                    <button class="btn" :disabled="rescanning" @click="rescan()"
-                            x-text="rescanning ? 'Rescanning…' : '⟳ Rescan this series'"></button>
+                    <button class="btn" :class="{ busy: rescanning }" :disabled="rescanning" @click="rescan()">
+                      <svg class="ic" x-show="!rescanning" aria-hidden="true"><use href="#i-refresh"/></svg>
+                      <span x-text="rescanning ? 'Rescanning…' : 'Rescan this series'"></span></button>
                   </div>
                 </section>
                 <section class="panel" x-show="s.actions.length && $store.app.admin">
@@ -409,24 +503,27 @@
 
                 <div x-show="tab !== 'files'">
                   <div class="row">
-                    <button class="btn small" @click="markAll(true)">Mark all read</button>
-                    <button class="btn small" @click="markAll(false)">Mark all unread</button>
+                    <button class="btn small" @click="markAll(true)">
+                      <svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg>Mark all read</button>
+                    <button class="btn small" @click="markAll(false)">
+                      <svg class="ic" aria-hidden="true"><use href="#i-circle"/></svg>Mark all unread</button>
                   </div>
                   <ul class="books">
                     <template x-for="(b, i) in books" :key="b.id">
                       <li class="book" :class="{ read: b.completed, reading: !b.completed && b.page > 0 }">
                         <a class="thumb" :href="'#/read/' + b.id"><img :src="b.thumbnail" loading="lazy" alt="">
-                          <span class="done-mark" x-show="b.completed">✓</span></a>
+                          <span class="done-mark" x-show="b.completed"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span></a>
                         <a class="info" :href="'#/read/' + b.id">
                           <div class="label"><span x-text="b.label"></span>
-                            <span class="manual-mark" x-show="b.manual" title="Numbers set by you">✎</span>
+                            <span class="manual-mark" x-show="b.manual" title="Numbers set by you"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg></span>
                             <template x-for="g in b.badges || []"><span class="book-badge" :title="g.name" x-text="g.text"></span></template></div>
                           <div class="err" x-show="b.error" x-text="b.error"></div>
                           <div class="meta" x-show="!b.error" x-text="bookState(b)"></div>
                           <div class="book-progress" x-show="!b.completed && b.page > 0"><i :style="`width:${progressPct(b)}%`"></i></div>
                         </a>
-                        <button class="btn small" title="Mark this and all previous as read" @click="readUpTo(b)"
-                          :style="{ visibility: unreadBefore(i) ? 'visible' : 'hidden' }">✓↑</button>
+                        <button class="btn small" title="Mark this and all previous as read"
+                                aria-label="Mark this and all previous as read" @click="readUpTo(b)"
+                          :style="{ visibility: unreadBefore(i) ? 'visible' : 'hidden' }"><svg class="ic" aria-hidden="true"><use href="#i-check-up"/></svg></button>
                         <button class="btn small" @click="toggleBook(b)" x-text="b.completed ? 'Unread' : 'Read'"></button>
                       </li>
                     </template>
@@ -446,7 +543,7 @@
                             <div class="fname" x-text="b.file_name"></div>
                             <button class="btn small" x-show="editing !== b.id" @click="startEdit(b)">Edit</button>
                           </div>
-                          <span class="chip manual-chip" x-show="b.manual">✎ manual</span>
+                          <span class="chip manual-chip" x-show="b.manual"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>manual</span>
                           <div class="muted" x-text="`${b.label} · vol ${n(b.volume)} · ch ${n(b.chapter)}${b.chapter_end ? '–' + b.chapter_end : ''}${b.extra ? ' · extra' : ''} · rev ${b.revision} · ${mb(b.file_size)}`"></div>
                           <div class="muted" x-show="b.hidden">Hidden (older revision)</div>
                           <div class="err" x-show="b.duplicate">Duplicate of another file with the same number</div>
@@ -476,7 +573,7 @@
           </div>
         </div>
       </template>
-      <p class="muted" x-show="!s" x-text="error || 'Loading…'"></p>
+      <p class="muted" :class="{ 'loading-line': !error }" x-show="!s" x-text="error || 'Loading…'"></p>
     </section>
 
     <!-- ============ settings (with Needs attention) ============ -->
@@ -484,20 +581,20 @@
       <nav class="settings-nav" :class="{ open: navOpen }" @click.outside="navOpen = false" @keydown.escape="navOpen = false">
         <!-- phones only: shows where you are, tap to open the full list -->
         <button class="settings-nav-toggle" @click="navOpen = !navOpen" :aria-expanded="navOpen">
-          <span class="ico" x-text="current[0]"></span><span class="label" x-text="current[1]"></span>
+          <span class="ico" x-html="navIcon(current[0])"></span><span class="label" x-text="current[1]"></span>
           <span class="count alert" x-show="attAlerts && !navOpen" x-text="attAlerts"></span>
-          <span class="chev" aria-hidden="true">▾</span>
+          <svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg>
         </button>
         <div class="settings-nav-list">
           <h4>Settings</h4>
           <template x-for="[k, label, icon] in nav" :key="k">
             <button :class="{ active: section === k || (k === 'plugins' && section === 'plugin') }" @click="go(k)">
-              <span class="ico" x-text="icon"></span><span x-text="label"></span></button>
+              <span class="ico" x-html="navIcon(icon)"></span><span x-text="label"></span></button>
           </template>
           <h4 x-show="attNav.length">Needs attention</h4>
           <template x-for="[k, label] in attNav" :key="k">
             <button :class="{ active: section === 'att-' + k }" @click="go('att-' + k)">
-              <span class="ico">•</span><span x-text="label"></span>
+              <span class="ico dot" aria-hidden="true"></span><span x-text="label"></span>
               <span class="count" :class="{ zero: !attCount(k), alert: ['unreadable', 'matches', 'same', 'duplicates'].includes(k) }"
                     x-text="attCount(k)"></span></button>
           </template>
@@ -514,7 +611,7 @@
           <template x-for="l in libs" :key="l.id">
             <div class="lib-card" :class="{ missing: !l.available }">
               <div class="libcard-head">
-                <span class="libcard-icon" aria-hidden="true">📁</span>
+                <span class="libcard-icon" aria-hidden="true"><svg class="ic"><use href="#i-folder"/></svg></span>
                 <div class="libcard-title">
                   <strong x-text="l.name"></strong>
                   <small x-text="l.root_path + ' · ' + l.series + ' series' + (l.available ? '' : ' · not found, check the volume mount')"></small>
@@ -522,7 +619,7 @@
                 </div>
                 <div class="row-buttons">
                   <button class="btn small" :disabled="!!scan.running" @click="rescan(l)"
-                          :title="scan.running ? 'A scan is running' : 'Scan only this folder'">⟳ Scan</button>
+                          :title="scan.running ? 'A scan is running' : 'Scan only this folder'"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Scan</button>
                   <button class="btn small danger" @click="removeLibrary(l)">Remove</button>
                 </div>
               </div>
@@ -540,20 +637,20 @@
           <div class="setting-row">
             <div class="label"><span>Add a folder</span>
               <small>Only folders mounted in the container are visible (e.g. /library2).</small></div>
-            <button class="btn small primary" @click="$store.app.folderPicker = true">+ Add folder</button>
+            <button class="btn small primary" @click="$store.app.folderPicker = true"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Add folder</button>
           </div>
           <div class="setting-row">
             <div class="label"><span x-text="scanText || 'Scan for new files'"></span>
               <small>Runs by itself every 6 hours and on start.</small></div>
-            <button class="btn small" :disabled="!!scan.running" @click="rescan()">Rescan all</button>
+            <button class="btn small" :class="{ busy: !!scan.running }" :disabled="!!scan.running" @click="rescan()">Rescan all</button>
           </div>
         </section>
 
         <!-- display -->
         <section x-show="section === 'display'">
           <h2>Display</h2>
-          <label class="setting-row"><span class="label">Theme</span>
-            <select x-model="st.theme" @change="save('theme')"><option value="dark">Dark</option><option value="light">Light</option></select></label>
+          <label class="setting-row"><span class="label">Theme<small>For everyone. The sun and moon button in the top bar changes it on one device only</small></span>
+            <select x-model="st.theme" @change="save('theme')"><option value="dark">Dark</option><option value="light">Light</option><option value="auto">Match device</option></select></label>
           <label class="setting-row"><span class="label">Card size</span>
             <select x-model="st.card_size" @change="save('card_size')"><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
           <label class="setting-row"><span class="label">Navigation bar<small>Where Library and Continue sit</small></span>
@@ -702,7 +799,7 @@
 
         <!-- one plugin's page (#/settings/plugin-<id>) -->
         <section class="plugin-page" x-show="section === 'plugin'">
-          <a class="back-link" href="#/settings/plugins">← Plugins</a>
+          <a class="back-link" href="#/settings/plugins"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg>Plugins</a>
           <template x-if="!plugin">
             <p class="muted" x-text="plugins.length ? 'This plugin is not installed.' : 'Loading…'"></p>
           </template>
@@ -765,7 +862,7 @@
                             @click="skipPluginUpdate(plugin, true)">Skip this version</button>
                     <button class="btn small" x-show="plugin.update.skipped" @click="skipPluginUpdate(plugin, false)">Show it again</button>
                     <a class="btn small" x-show="plugin.update.available && plugin.update.url" :href="plugin.update.url"
-                       target="_blank" rel="noopener noreferrer">What's new ↗</a>
+                       target="_blank" rel="noopener noreferrer">What's new<svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
                   </div>
                 </div>
               </template>
@@ -824,7 +921,10 @@
           <p class="muted" x-text="help"></p>
           <!-- what plugins say about these lists, e.g. "only Manga, the library picked on the home screen" -->
           <!-- slot:attention-note -->
-          <p class="empty" x-show="a && !rows.length">Nothing here. 🎉</p>
+          <div class="empty" x-show="a && !rows.length">
+            <svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg>
+            <span>Nothing here. All good.</span>
+          </div>
 
           <!-- errors / not supported: grouped by series -->
           <template x-if="a && (kind === 'unreadable' || kind === 'unsupported')">
@@ -939,9 +1039,10 @@
                         <span class="chip" x-text="d.label"></span></div>
                     </div>
                     <div class="btn-row">
-                      <button class="btn small" :disabled="!!rescanning[d.series_id]" @click="rescan(d.series_id)"
-                              title="Re-read this series' folder after fixing the files on disk"
-                              x-text="rescanning[d.series_id] ? 'Rescanning…' : '⟳ Rescan'"></button>
+                      <button class="btn small" :class="{ busy: !!rescanning[d.series_id] }" :disabled="!!rescanning[d.series_id]" @click="rescan(d.series_id)"
+                              title="Re-read this series' folder after fixing the files on disk">
+                        <svg class="ic" x-show="!rescanning[d.series_id]" aria-hidden="true"><use href="#i-refresh"/></svg>
+                        <span x-text="rescanning[d.series_id] ? 'Rescanning…' : 'Rescan'"></span></button>
                       <button class="btn small" @click="ignore(d.key, !d.ignored)"
                               x-text="d.ignored ? 'Restore' : 'Not a duplicate'"></button>
                     </div>
@@ -1102,8 +1203,8 @@
                 <div class="muted" x-show="c.other_titles.length" x-text="c.other_titles.join(' · ')"></div>
                 <div><span x-text="[c.year, c.format, c.status].filter(Boolean).join(' · ')"></span> ·
                   <span class="score" :class="scoreCls(c.score)" x-text="c.score + '%'"></span></div>
-                <a class="link-btn" x-show="c.url" :href="c.url" target="_blank" rel="noopener"
-                   x-text="'Open on ' + $store.app.providerName(provider) + ' ↗'"></a>
+                <a class="link-btn" x-show="c.url" :href="c.url" target="_blank" rel="noopener"><span
+                   x-text="'Open on ' + $store.app.providerName(provider)"></span> <svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
               </div>
               <button class="btn small primary" :class="{ busy: busy === c.provider_id }" :disabled="!!busy"
                       @click="use(c)" x-text="busy === c.provider_id ? 'Matching…' : 'Use'"></button>
@@ -1139,35 +1240,35 @@
 
           <!-- info -->
           <form class="edit-form" x-show="tab === 'info'" @submit.prevent="save()">
-            <p class="muted">Changed fields get a 🔒 and are kept when metadata is refreshed.
+            <p class="muted">Changed fields get a lock <svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg> and are kept when metadata is refreshed.
               <button type="button" class="link-btn" x-show="lockedCount" @click="unlockAll()"
                       x-text="`Unlock ${lockedCount} field${lockedCount > 1 ? 's' : ''}`"></button></p>
             <!-- plugins' fields, saved with the rest (e.g. Library) -->
             <!-- slot:series-edit -->
-            <label class="wide">English title <span x-show="locked('title_english')">🔒</span>
+            <label class="wide">English title <span x-show="locked('title_english')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <input x-model="f.title_english" maxlength="300"></label>
-            <label>Romaji title <span x-show="locked('title_romaji')">🔒</span>
+            <label>Romaji title <span x-show="locked('title_romaji')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <input x-model="f.title_romaji" maxlength="300"></label>
-            <label>Native title <span x-show="locked('title_native')">🔒</span>
+            <label>Native title <span x-show="locked('title_native')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <input x-model="f.title_native" maxlength="300"></label>
-            <label class="wide">Other titles <small>one per line</small> <span x-show="locked('synonyms')">🔒</span>
+            <label class="wide">Other titles <small>one per line</small> <span x-show="locked('synonyms')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <textarea rows="3" x-model="f.synonyms"></textarea></label>
-            <label class="wide">Description <span x-show="locked('description')">🔒</span>
+            <label class="wide">Description <span x-show="locked('description')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <textarea rows="7" x-model="f.description" maxlength="20000"></textarea></label>
-            <label>Status <span x-show="locked('publication_status')">🔒</span>
+            <label>Status <span x-show="locked('publication_status')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <select x-model="f.publication_status">
                 <template x-for="[k, v] in Object.entries(pubLabels)" :key="k"><option :value="k" :selected="k === f.publication_status" x-text="v"></option></template>
               </select></label>
-            <label>Type <span x-show="locked('format') || locked('country_of_origin')">🔒</span>
+            <label>Type <span x-show="locked('format') || locked('country_of_origin')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <select x-model="f.type">
                 <option value="">Unknown</option><option value="manga">Manga</option><option value="manhwa">Manhwa</option>
                 <option value="manhua">Manhua</option><option value="one_shot">One-shot</option><option value="novel">Novel</option>
               </select></label>
-            <label>Year <span x-show="locked('start_year')">🔒</span>
+            <label>Year <span x-show="locked('start_year')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <input type="number" min="1900" max="2100" x-model="f.start_year"></label>
-            <label>Volumes <span x-show="locked('volumes_total')">🔒</span>
+            <label>Volumes <span x-show="locked('volumes_total')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <input type="number" min="0" x-model="f.volumes_total"></label>
-            <label>Chapters <span x-show="locked('chapters_total')">🔒</span>
+            <label>Chapters <span x-show="locked('chapters_total')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <input type="number" min="0" x-model="f.chapters_total"></label>
             <label title="Complete: count the collection as complete whatever the numbers say, e.g. for omnibus editions">Collection
               <select x-model="f.collection_complete">
@@ -1177,13 +1278,13 @@
               <select x-model="f.edition_volumes">
                 <template x-for="[v, label] in editions" :key="v"><option :value="v" x-text="label" :selected="v === f.edition_volumes"></option></template>
               </select></label>
-            <label class="wide">Authors <small>one per line: Name (Role)</small> <span x-show="locked('authors')">🔒</span>
+            <label class="wide">Authors <small>one per line: Name (Role)</small> <span x-show="locked('authors')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <textarea rows="3" x-model="f.authors"></textarea></label>
-            <label class="wide">Genres <small>comma separated</small> <span x-show="locked('tags')">🔒</span>
+            <label class="wide">Genres <small>comma separated</small> <span x-show="locked('tags')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <input x-model="f.genres"></label>
-            <label class="wide">Tags <small>comma separated</small> <span x-show="locked('tags')">🔒</span>
+            <label class="wide">Tags <small>comma separated</small> <span x-show="locked('tags')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <textarea rows="2" x-model="f.tags"></textarea></label>
-            <label class="wide">Links <small>one per line: Site | https://…</small> <span x-show="locked('links')">🔒</span>
+            <label class="wide">Links <small>one per line: Site | https://…</small> <span x-show="locked('links')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
               <textarea rows="3" x-model="f.links"></textarea></label>
             <div class="btn-row wide">
               <button class="btn primary" type="submit" :disabled="saving" x-text="saving ? 'Saving…' : 'Save'"></button>
@@ -1248,9 +1349,9 @@
       </div>
       <p class="err" x-show="error" x-text="error"></p>
       <div class="folder-list">
-        <button x-show="parent !== null && path" @click="open(parent)">⬆ <span>Up</span></button>
+        <button x-show="parent !== null && path" @click="open(parent)"><svg class="ic" aria-hidden="true"><use href="#i-arrow-up"/></svg> <span>Up</span></button>
         <template x-for="d in dirs" :key="d.path">
-          <button @click="open(d.path)">📁 <span x-text="d.name"></span>
+          <button @click="open(d.path)"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg> <span x-text="d.name"></span>
             <small class="muted" x-show="d.library">(already a library)</small></button>
         </template>
         <p class="muted" style="margin: 0; padding: 10px 12px" x-show="path && !dirs.length">No folders inside.</p>

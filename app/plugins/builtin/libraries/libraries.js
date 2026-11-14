@@ -192,7 +192,7 @@ MangaVibe.onStart(() => {
   /* ---- what the app asks (MangaVibe.on): only while the plugin is on ---- */
   MV.on(ID, "start", async () => {
     await lockOnNewTab();
-    MV.settingsPage(ID, "shelves", "Libraries", "📚", 0);
+    MV.settingsPage(ID, "shelves", "Libraries", "books", 0);
     await store.load().catch(() => {});
   });
   MV.on(ID, "stop", () => {

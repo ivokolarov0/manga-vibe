@@ -3,7 +3,7 @@
      @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
   <div>
     <div class="sheet-head"><b>Saved searches</b>
-      <span class="btn-row"><button class="btn small primary" x-show="store.canSave" @click="store.save()">+ Save this search</button>
+      <span class="btn-row"><button class="btn small primary" x-show="store.canSave" @click="store.save()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Save this search</button>
         <button class="btn small" @click="$store.app.sheet = null">Done</button></span></div>
     <div class="saved-empty" x-show="!store.items.length">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
@@ -23,7 +23,7 @@
               <span class="saved-pills"><template x-for="(p, i) in parts(x.query)" :key="i">
                 <i x-text="p"></i></template></span>
             </span>
-            <span class="saved-check" x-show="isOn(x)" aria-hidden="true">✓</span>
+            <span class="saved-check" x-show="isOn(x)" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span>
           </button>
           <button class="saved-del" :aria-label="'Delete ' + x.name" title="Delete" @click="store.remove(x)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>

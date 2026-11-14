@@ -106,7 +106,7 @@ MangaVibe.onStart(() => {
       store.gate = true;
       return new Promise(() => {});
     }
-    if (store.me.admin) MV.settingsPage(ID, "accounts", "Accounts", "👥", 1);
+    if (store.me.admin) MV.settingsPage(ID, "accounts", "Accounts", "users", 1);
   });
   // switched off: everyone is the owner again, with the first admin's reading
   MV.on(ID, "stop", () => location.reload());

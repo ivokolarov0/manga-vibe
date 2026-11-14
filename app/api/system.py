@@ -25,7 +25,7 @@ router = APIRouter(prefix="/api")
 
 DEFAULT_SETTINGS = {
     "title_language": "english",   # english | romaji | native
-    "theme": "dark",               # dark | light
+    "theme": "dark",               # dark | light | auto (follows the device)
     "card_size": "medium",         # small | medium | large
     "nav_position": "bottom",      # bottom | top: where the Library / Continue bar sits
     "library_listing": "lazy",     # lazy (infinite scroll) | paged (numbered pages)
