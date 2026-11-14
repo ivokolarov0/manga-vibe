@@ -66,6 +66,7 @@ def normalize(s):
 class MangaUpdates(Plugin):
     id = "mangaupdates"
     name = "MangaUpdates"
+    category = "metadata"
     description = "Built-in metadata provider: MangaUpdates link, and fallback metadata."
     is_provider = True
     url = "https://www.mangaupdates.com"

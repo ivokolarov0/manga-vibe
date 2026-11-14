@@ -13,6 +13,71 @@
     }
   }
 
+  /* shared by the settings nav and the Plugins sidebar: the small headings, the icon column and the
+     count pills (also on the Built in group of the Plugins tab) */
+  .settings-nav h4,
+  .plugin-cats h4,
+  .plugin-group-title {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* an icon from the sprite, or a plugin's own character */
+  .settings-nav .ico,
+  .plugin-cats .ico {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    color: var(--muted);
+    transition: color var(--fast);
+
+    & .ic {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Needs attention rows: a small dot */
+    &.dot::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      background: currentColor;
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+  }
+
+  .settings-nav .active .ico {
+    color: var(--accent);
+  }
+
+  /* the picked category: on phones it is a filled chip, so the icon takes the chip's text colour */
+  .plugin-cats .on .ico {
+    color: inherit;
+  }
+
+  .settings-nav .count,
+  .plugin-cats .count,
+  .plugin-group-head .count {
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 9px;
+    font-weight: 600;
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+
+    &.zero {
+      opacity: 0.5;
+    }
+  }
+
   /* phones: a sticky bar with one "current page ▾" button; tapping it drops down the full list.
      desktop: the list is a sidebar and the button is hidden. */
   .settings-nav {
@@ -26,65 +91,15 @@
 
     & h4 {
       margin: 10px 10px 4px;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
 
       &:first-child {
         margin-top: 4px;
       }
     }
 
-    /* an icon from the sprite, or a plugin's own character */
-    & .ico {
-      display: grid;
-      flex: none;
-      place-items: center;
-      width: 20px;
-      height: 20px;
-      color: var(--muted);
-      transition: color var(--fast);
-
-      & .ic {
-        width: 18px;
-        height: 18px;
-      }
-
-      /* Needs attention rows: a small dot */
-      &.dot::before {
-        content: "";
-        width: 6px;
-        height: 6px;
-        background: currentColor;
-        border-radius: 50%;
-        opacity: 0.6;
-      }
-    }
-
-    & .active .ico {
-      color: var(--accent);
-    }
-
-    & .count {
-      min-width: 20px;
-      padding: 1px 6px;
-      border-radius: 9px;
-      font-weight: 600;
-      background: var(--surface2);
-      color: var(--muted);
-      font-size: 11px;
-      text-align: center;
-
-      &.alert:not(.zero) {
-        background: var(--danger);
-        color: #fff;
-      }
-
-      &.zero {
-        opacity: 0.5;
-      }
+    & .count.alert:not(.zero) {
+      background: var(--danger);
+      color: #fff;
     }
 
     @media (min-width: 800px) {
@@ -431,16 +446,366 @@
     }
   }
 
-  /* the whole row opens the plugin's page, when it has one */
-  .plugin-row.has-page {
-    cursor: pointer;
+  /* Settings > Plugins: categories on the left (a strip of chips when narrow), the list on the right.
+     Sized by the section, not the window: the settings nav already takes room on wide screens. */
+  .plugins-section {
+    container: plugins / inline-size;
   }
 
-  .plugin-row .row-buttons {
-    align-items: center;
+  .plugin-alerts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 4px 0 10px;
 
-    & input[type="checkbox"] {
+    & .chip-btn.warn {
+      background: var(--warn);
+      border-color: var(--warn);
+      color: #000;
+    }
+
+    & .chip-btn.ex-err {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff;
+    }
+  }
+
+  .plugins-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+
+    @container plugins (min-width: 640px) {
+      grid-template-columns: 180px minmax(0, 1fr);
+      align-items: start;
+      gap: 18px;
+    }
+  }
+
+  .plugin-cats {
+    display: flex;
+    gap: 6px;
+    margin: 0 -16px;
+    padding: 2px 16px 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    & h4 {
+      display: none;
+      margin: 10px 8px 4px;
+
+      &:first-child {
+        margin-top: 2px;
+      }
+    }
+
+    & button {
+      display: flex;
+      flex: none;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      font-size: 13px;
+      text-align: left;
+      white-space: nowrap;
+
+      &.on {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--accent-text);
+
+        & .count {
+          background: color-mix(in srgb, var(--accent-text) 20%, transparent);
+          color: inherit;
+        }
+      }
+    }
+
+    /* chips are surface2 themselves, so the pill is a step darker there */
+    & .count {
+      margin-left: auto;
+      background: var(--surface);
+    }
+
+    /* the Source buttons start a new run of chips */
+    & h4 + button {
+      margin-left: 0;
+    }
+
+    & h4:not(:first-child) + button {
+      margin-left: 10px;
+    }
+
+    @container plugins (min-width: 640px) {
+      position: sticky;
+      top: calc(var(--header-height) + 15px);
+      flex-direction: column;
+      gap: 2px;
+      margin: 0;
+      padding: 4px 0;
+      overflow: visible;
+
+      & h4 {
+        display: block;
+      }
+
+      & button {
+        width: 100%;
+        padding: 8px 10px;
+        background: none;
+        border: 0;
+        border-radius: var(--radius);
+        font-size: 14px;
+
+        &.on {
+          background: color-mix(in srgb, var(--accent) 18%, transparent);
+          color: var(--text);
+          font-weight: 600;
+
+          & .count {
+            background: var(--surface2);
+            color: var(--muted);
+          }
+        }
+      }
+
+      & .count {
+        background: var(--surface2);
+      }
+
+      & h4:not(:first-child) + button {
+        margin-left: 0;
+      }
+    }
+  }
+
+  @media (hover: hover) {
+    .plugin-cats button:not(.on):hover {
+      background: color-mix(in srgb, var(--text) 9%, var(--surface2));
+    }
+  }
+
+  .plugin-main {
+    min-width: 0;
+  }
+
+  .plugin-tools {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 6px;
+
+    & .plugin-search {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+
+  .plugin-status-filter {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    & .n {
+      margin-left: 6px;
+      font-weight: 600;
+    }
+  }
+
+  .plugin-group + .plugin-group {
+    margin-top: 10px;
+  }
+
+  .plugin-group-title {
+    margin: 12px 0 2px;
+  }
+
+  /* the built-in plugins: folded away until opened (open while searching or picked) */
+  .plugin-group-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 6px;
+    padding: 10px 2px;
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+
+    & .count {
+      font-weight: 400;
+    }
+
+    & small {
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 400;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & .chev {
+      margin-left: auto;
+      color: var(--muted);
+      transition: transform 0.15s;
+    }
+
+    &[aria-expanded="true"] .chev {
+      transform: rotate(180deg);
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 1;
+
+      & .chev {
+        visibility: hidden;
+      }
+    }
+  }
+
+  .plugin-list {
+    display: grid;
+    gap: 6px;
+  }
+
+  /* one plugin: icon, name and version with its tags, a line of description, its status; the whole
+     row opens the plugin's page, the switch turns it on or off */
+  .plugin-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: color-mix(in srgb, var(--text) 3%, var(--surface));
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+
+    &.off .plugin-ico,
+    &.off .plugin-text {
+      opacity: 0.6;
+    }
+
+    & .plugin-ico {
+      display: grid;
+      flex: none;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      background: var(--surface2);
+      border-radius: var(--radius);
+      font-size: 17px;
+    }
+
+    & .plugin-text {
+      display: grid;
+      flex: 1;
+      gap: 2px;
+      min-width: 0;
+
+      & small {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      & .plugin-desc {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      & .plugin-status {
+        color: var(--accent);
+      }
+    }
+
+    & .plugin-title a {
+      color: var(--text);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    & .row-buttons {
+      display: flex;
       flex-shrink: 0;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+
+      & input[type="checkbox"] {
+        flex-shrink: 0;
+      }
+    }
+
+    & .chip.err {
+      background: var(--danger);
+      color: #fff;
+    }
+  }
+
+  @media (hover: hover) {
+    .plugin-item:hover {
+      border-color: color-mix(in srgb, var(--text) 30%, var(--border));
+
+      & .plugin-title a {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  /* name, version and category tags on one line that wraps */
+  .plugin-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    min-width: 0;
+
+    & > a:first-child {
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .plugin-tag {
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 18px;
+    white-space: nowrap;
+  }
+
+  a.plugin-tag {
+    text-decoration: none;
+  }
+
+  .plugin-empty {
+    margin: 14px 0;
+  }
+
+  .plugin-errors {
+    margin-top: 14px;
+
+    & h3 {
+      margin: 0 0 4px;
+      font-size: 14px;
+    }
+
+    & p {
+      margin: 4px 0;
+      font-size: 13px;
+      overflow-wrap: anywhere;
     }
   }
 

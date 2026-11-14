@@ -56,8 +56,24 @@ if you also read the files elsewhere.
 1. Download the plugin's `.py` file (on GitHub: open the file → **Download raw file**).
 2. Put it in the `plugins` folder of your data folder: `docker/mangavibe/plugins` on a Synology, or
    `plugins` inside the folder you mounted as `/data` (create it if it isn't there).
-3. In MangaVibe: **Settings → Plugins → Reload plugins**. The plugin appears in the list. If it has
-   settings, buttons or updates, its **Settings** button opens a page with them.
+3. In MangaVibe: **Settings → Plugins → Reload plugins**. The plugin appears under **Installed**.
+   Tap it to open its page: what it does, what it uses, its settings, buttons and updates.
+
+## Find a plugin
+
+**Settings → Plugins** groups plugins by what they change:
+
+- **Categories** on the left (a row of chips on a phone): *Metadata*, *Reader*, *Library*,
+  *System*, *Appearance* and *Other*, each with how many plugins it has. A plugin that changes more
+  than one area is listed under its main one and tagged with the others.
+- **Source:** *Installed* (the ones you added) or *Built in* (they come with MangaVibe). Installed
+  plugins are listed first; the built-in ones are folded away under **Built in**, since they're
+  rarely changed. Tap it to open them.
+- **Search** by name or description, and show only plugins that are **On**, **Off**, have an
+  **Update**, or **Errors** (plugins that failed to load, with the reason).
+- Updates and plugins that failed to load are also counted at the top, so they aren't missed.
+
+What you picked (category, source, filter) is remembered in this browser.
 
 In the reader, everything a plugin adds is under **Plugins** at the bottom of the reading options:
 one row per plugin, which opens a panel with its switches and buttons.
@@ -65,7 +81,7 @@ one row per plugin, which opens a panel with its switches and buttons.
 ## Update a plugin
 
 Plugins that publish releases on GitHub have an **Updates** part on their page (**Settings →
-Plugins → Settings** next to the plugin). The list shows *Update X* next to a plugin with a new
+Plugins**, then the plugin). The list shows *Update X* next to a plugin with a new
 version:
 
 - MangaVibe checks once a day and shows *Version X is available*. **Check for updates** looks right away.

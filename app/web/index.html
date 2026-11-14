@@ -769,27 +769,91 @@
             <select x-model="st.include_adult" @change="save('include_adult')"><option value="false">No</option><option value="true">Yes</option></select></label>
         </section>
 
-        <!-- plugins: one row each; a plugin with settings, buttons or updates opens its own page -->
-        <section x-show="section === 'plugins'">
+        <!-- plugins: grouped by category (sidebar, chips on phones), with search and filters. Installed
+             plugins come first, the built-in ones in a group of their own. A row opens the plugin's page. -->
+        <section class="plugins-section" x-show="section === 'plugins'" x-effect="pview = computePluginView()">
           <h2>Plugins</h2>
-          <template x-for="p in plugins" :key="p.id">
-            <div class="setting-row plugin-row" :class="{ 'has-page': hasPluginPage(p) }"
-                 @click="hasPluginPage(p) && (location.hash = `#/settings/plugin-${p.id}`)">
-              <span class="label"><span x-text="p.name"></span><small x-text="`v${p.version}` + (p.description ? ' · ' + p.description : '')"></small>
-                <small class="plugin-status" x-show="p.enabled && p.status" x-text="p.status"></small>
-                <template x-if="p.permissions.length && !hasPluginPage(p)">
-                  <div class="plugin-uses"><small>Uses:</small>
-                    <ul><template x-for="x in p.permissions"><li x-text="x"></li></template></ul></div>
-                </template></span>
-              <span class="row-buttons">
-                <span class="chip warn" x-show="p.update.available && !p.update.skipped" x-text="`Update ${p.update.latest}`"></span>
-                <a class="btn small" x-show="hasPluginPage(p)" :href="`#/settings/plugin-${p.id}`" @click.stop>Settings</a>
-                <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" @click.stop :aria-label="`${p.name} on`">
-              </span>
+          <!-- what needs a look, so it isn't lost in the list -->
+          <div class="plugin-alerts" x-show="pluginUpdates || pluginErrorCount">
+            <button class="chip-btn warn" x-show="pluginUpdates" @click="setPluginFilter('status', 'update')"
+                    x-text="pluginUpdates === 1 ? '1 update available' : `${pluginUpdates} updates available`"></button>
+            <button class="chip-btn ex-err" x-show="pluginErrorCount" @click="setPluginFilter('status', 'errors')"
+                    x-text="pluginErrorCount === 1 ? '1 plugin failed to load' : `${pluginErrorCount} plugins failed to load`"></button>
+          </div>
+          <div class="plugins-layout">
+            <nav class="plugin-cats" aria-label="Plugin categories">
+              <h4>Category</h4>
+              <button :class="{ on: pf.cat === 'all' }" :aria-pressed="pf.cat === 'all'" @click="setPluginFilter('cat', 'all')">
+                <span class="ico" aria-hidden="true"><svg class="ic"><use href="#i-blocks"/></svg></span><span>All</span>
+                <span class="count" x-text="pview.all"></span></button>
+              <template x-for="[c, n] in pview.cats" :key="c">
+                <button :class="{ on: pf.cat === c }" :aria-pressed="pf.cat === c" @click="setPluginFilter('cat', c)">
+                  <span class="ico" aria-hidden="true" x-html="navIcon(catIcon(c))"></span><span x-text="catLabel(c)"></span>
+                  <span class="count" :class="{ zero: !n }" x-text="n"></span></button>
+              </template>
+              <h4>Source</h4>
+              <template x-for="[s, label] in [['all', 'Everything'], ['installed', 'Installed'], ['builtin', 'Built in']]" :key="s">
+                <button :class="{ on: pf.src === s }" :aria-pressed="pf.src === s" @click="setPluginFilter('src', s)">
+                  <span class="ico" aria-hidden="true" x-text="{ all: '∗', installed: '⬇', builtin: '◆' }[s]"></span><span x-text="label"></span>
+                  <span class="count" :class="{ zero: !pview.src[s] }" x-text="pview.src[s]"></span></button>
+              </template>
+            </nav>
+            <div class="plugin-main">
+              <div class="plugin-tools">
+                <input type="search" class="plugin-search" x-model="pf.q" placeholder="Search plugins" aria-label="Search plugins">
+                <div class="plugin-status-filter" role="group" aria-label="Show">
+                  <template x-for="[s, label] in [['all', 'All'], ['on', 'On'], ['off', 'Off'], ['update', 'Updates'], ['errors', 'Errors']]" :key="s">
+                    <button class="chip-btn" :class="{ on: pf.status === s }" :aria-pressed="pf.status === s"
+                            @click="setPluginFilter('status', s)">
+                      <span x-text="label"></span><span class="n" x-show="s === 'update' && pluginUpdates" x-text="pluginUpdates"></span><span
+                        class="n" x-show="s === 'errors' && pluginErrorCount" x-text="pluginErrorCount"></span></button>
+                  </template>
+                </div>
+              </div>
+
+              <template x-for="[group, list] in [['installed', pview.installed], ['builtin', pview.builtin]]" :key="group">
+                <div class="plugin-group" x-show="list.length">
+                  <button class="plugin-group-head" x-show="group === 'builtin'" :aria-expanded="pview.open"
+                          :disabled="pview.forced"
+                          @click="setPluginFilter('builtinOpen', !pf.builtinOpen)">
+                    <span>Built in</span><span class="count" x-text="list.length"></span>
+                    <small>Come with MangaVibe</small><svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
+                  <h3 class="plugin-group-title" x-show="group === 'installed' && pview.builtin.length">Installed</h3>
+                  <div class="plugin-list" x-show="group === 'installed' || pview.open">
+                    <template x-for="p in list" :key="p.id">
+                      <div class="plugin-item" :class="{ off: !p.enabled }" @click="openPlugin(p)">
+                        <span class="plugin-ico" aria-hidden="true" x-html="navIcon(catIcon(p.category))"></span>
+                        <span class="plugin-text">
+                          <span class="plugin-title">
+                            <a :href="`#/settings/plugin-${p.id}`" @click.stop x-text="p.name"></a>
+                            <small x-text="`v${p.version}`"></small>
+                            <template x-for="c in rowTags(p)" :key="c"><span class="plugin-tag" x-text="catLabel(c)"></span></template>
+                          </span>
+                          <small class="plugin-desc" x-show="p.description" x-text="p.description"></small>
+                          <small class="plugin-status" x-show="p.enabled && p.status" x-text="p.status"></small>
+                        </span>
+                        <span class="row-buttons">
+                          <span class="chip warn" x-show="hasUpdate(p)" x-text="`Update ${p.update.latest}`"></span>
+                          <span class="chip err" x-show="p.update.error" title="The update check failed">Update check failed</span>
+                          <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" @click.stop :aria-label="`${p.name} on`">
+                        </span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+
+              <p class="muted plugin-empty" x-show="!plugins.length && !pluginErrorCount">No plugins installed.</p>
+              <p class="muted plugin-empty" x-show="plugins.length && pf.status !== 'errors' && !pview.installed.length && !pview.builtin.length">
+                No plugins match. <a href="#" @click.prevent="Object.assign(pf, { cat: 'all', src: 'all', status: 'all', q: '' }); savePluginView()">Show all</a></p>
+              <!-- plugins that failed to load: they aren't in the list above -->
+              <div class="plugin-errors" x-show="pluginErrorCount && (pf.status === 'errors' || pf.status === 'all')">
+                <h3>Failed to load</h3>
+                <template x-for="[f, e] in Object.entries(pluginErrors)" :key="f"><p class="err"><strong x-text="f"></strong> <span x-text="e"></span></p></template>
+              </div>
+              <p class="muted plugin-empty" x-show="pf.status === 'errors' && !pluginErrorCount">Every plugin loaded.</p>
             </div>
-          </template>
-          <p class="muted" x-show="!plugins.length">No plugins installed.</p>
-          <template x-for="[f, e] in Object.entries(pluginErrors)"><p class="err" x-text="`${f}: ${e}`"></p></template>
+          </div>
           <div class="setting-row">
             <div class="label"><span>Plugins and custom styles</span>
               <small>Plugin .py files go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css</small></div>
@@ -809,6 +873,12 @@
               <div class="plugin-about">
                 <small x-text="`v${plugin.version}` + (plugin.description ? ' · ' + plugin.description : '')"></small>
                 <small class="plugin-status" x-show="plugin.enabled && plugin.status" x-text="plugin.status"></small>
+                <span class="plugin-title">
+                  <template x-for="c in plugin.categories" :key="c">
+                    <a class="plugin-tag" href="#/settings/plugins" @click="setPluginFilter('cat', c)"
+                       :title="`Show the ${catLabel(c)} plugins`" x-html="navIcon(catIcon(c)) + ' ' + esc(catLabel(c))"></a></template>
+                  <span class="plugin-tag" x-text="plugin.builtin ? 'Built in' : 'Installed'"></span>
+                </span>
               </div>
               <template x-if="plugin.permissions.length">
                 <div class="plugin-uses"><small>Uses:</small>

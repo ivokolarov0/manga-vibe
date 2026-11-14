@@ -22,6 +22,7 @@ class Hello(Plugin):
     name = "Hello"
     version = "1.0"
     description = "Logs every new book."
+    category = "library"    # where Settings → Plugins lists it (see Categories)
 
     def on_book_scanned(self, ctx, book, parsed):
         ctx.log.info("New book: %s", book.file_name)
@@ -40,8 +41,8 @@ class Hello(Plugin):
 | **Change how the app looks** | `css = """ :root { --accent: #ff6fa8; } """` (loaded after the built-in styles, so it wins) |
 | **Metadata provider** | `is_provider = True`, implement `search(ctx, query, year)` → `list[Candidate]` and `fetch(ctx, provider_id)` → dict of series fields. Optional `url = "https://..."` links the site on the Metadata settings page |
 | **React to reading** | `on_book_started(ctx, book, series)`, `on_book_completed(ctx, book, series)`, `on_series_status_changed(ctx, series, old, new)` (see [Reading events](#reading-events)) |
-| **Settings boxes** on the plugin's page (Settings → Plugins → Settings) | `settings_fields = [SettingDef("client_id", "Client ID", help="...", secret=False)]`; the value is in `ctx.settings["client_id"]`. `secret=True` values are never sent back to the browser. With `options=[("auto", "Automatic"), ("manual", "Manual")]` and `default="auto"` it's a dropdown instead; `ctx.setting("key")` gives the saved value or the default |
-| **Buttons on the plugin's page** (Settings → Plugins → Settings) | `global_actions = [Action("sync", "Sync all")]` and `run_global_action(ctx, key)` returning a message |
+| **Settings boxes** on the plugin's page (Settings → Plugins → the plugin) | `settings_fields = [SettingDef("client_id", "Client ID", help="...", secret=False)]`; the value is in `ctx.settings["client_id"]`. `secret=True` values are never sent back to the browser. With `options=[("auto", "Automatic"), ("manual", "Manual")]` and `default="auto"` it's a dropdown instead; `ctx.setting("key")` gives the saved value or the default |
+| **Buttons on the plugin's page** (Settings → Plugins → the plugin) | `global_actions = [Action("sync", "Sync all")]` and `run_global_action(ctx, key)` returning a message |
 | **Status line** under the plugin in Settings | `status(ctx)` returning a short text, e.g. `"Connected as Ivo"` |
 | **Open a page** (e.g. a login) from a button | return `OpenUrl(url, message="")` from `run_action` or `run_global_action` |
 | **A web address of its own** (e.g. an OAuth callback) | `handle_web(ctx, path, params)` answers `GET /api/plugins/<id>/web/<path>`. Return a message (shown on a small page with a link back) or `OpenUrl(url)` to redirect; `None` = 404 |
@@ -58,6 +59,32 @@ class Hello(Plugin):
 | **Its own buttons, sheets and scripts in the app** | `html = {"library-tools": "<button>…</button>"}` and `js = "…"` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 7 |
 | **Decide what the lists show** (e.g. libraries, accounts) | `series_filter(ctx, request)`, `middleware`, `reading_mode()`, `series_info()`, `on_start()`, `can_switch_off()` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 8 |
 | **Know who is asking** (accounts) | `users.current()`, `users.manage`, `users.personal_key()`, `enabled_by_default` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 9 |
+| **Be listed under the right category** in Settings → Plugins | `category = "reader"`, or several: `category = ["reader", "library"]` (see [Categories](#categories)). Plugin API 10 |
+
+## Categories
+
+Settings → Plugins groups plugins by category, so the owner can find them and see what each one
+changes. Set `category` to one of these:
+
+| Category | For plugins that | Examples |
+|---|---|---|
+| `metadata` | find titles, descriptions, covers (`is_provider = True`) | AniList, MangaUpdates |
+| `reader` | change the reader: page overlays, `book_actions`, page tools | `examples/plugins/page_info.py`, Manga Translate |
+| `library` | change lists, series pages and books: fields, actions, libraries, searches | Libraries, Saved searches, Optimize, `translation_groups.py` |
+| `system` | handle users, access, middleware, maintenance | Accounts |
+| `appearance` | only change how the app looks (`css`) | `examples/plugins/sakura_theme.py` |
+| `other` | don't fit any of the above | |
+
+A plugin that spans areas lists several: `category = ["reader", "library"]`. It's listed under the
+first one and tagged with the others. Unknown names are left out (and logged).
+
+**Left empty**, the category is worked out from what the plugin uses: `is_provider` → `metadata`,
+`overlay_label` or `book_actions` → `reader`, only `css` (nothing else, no hooks) → `appearance`,
+anything else → `other`. So older plugins are grouped without changes, but setting it is clearer.
+
+`GET /api/plugins` sends each plugin's `category` (the main one), `categories` (all of them, main
+first) and `builtin` (true for the plugins in `app/plugins/builtin/`, false for the ones the owner
+installed), plus `categories` at the top: every category key with its label, in the order shown.
 
 ## The `ctx` object
 

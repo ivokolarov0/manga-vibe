@@ -27,6 +27,7 @@ def _read(name):
 
 class Accounts(Plugin):
     id = "accounts"
+    category = "system"
     name = "Accounts"
     version = "1.0"
     description = ("Everyone logs in; each account has its own progress, favorites, saved searches and "
