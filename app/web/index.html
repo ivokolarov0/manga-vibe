@@ -650,19 +650,13 @@
         <section x-show="section === 'display'">
           <h2>Display</h2>
           <!-- part of the page's settings: a dropdown each (SETTING_ROWS in app.js) -->
-          <template x-for="r in rows.display" :key="r.key">
-            <label class="setting-row" x-show="!r.show || r.show(st)"><span class="label"><span x-text="r.label"></span><small x-show="r.hint" x-text="r.hint"></small></span>
-              <select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in r.options" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></label>
-          </template>
+          <template x-for="r in rows.display" :key="r.key"><!-- part:setting-row --></template>
         </section>
 
         <!-- reader -->
         <section x-show="section === 'reader'">
           <h2>Reader</h2>
-          <template x-for="r in rows.reader" :key="r.key">
-            <label class="setting-row" x-show="!r.show || r.show(st)"><span class="label"><span x-text="r.label"></span><small x-show="r.hint" x-text="r.hint"></small></span>
-              <select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in r.options" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></label>
-          </template>
+          <template x-for="r in rows.reader" :key="r.key"><!-- part:setting-row --></template>
         </section>
 
         <!-- Android app (only on Android: see SETTINGS_NAV) -->
@@ -674,10 +668,7 @@
                 <div class="label"><span>Server</span><small x-text="appServer"></small></div>
                 <button class="btn small" @click="changeServer()">Change server</button>
               </div>
-              <template x-for="r in rows.app" :key="r.key">
-                <label class="setting-row" x-show="!r.show || r.show(st)"><span class="label"><span x-text="r.label"></span><small x-show="r.hint" x-text="r.hint"></small></span>
-                  <select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in r.options" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></label>
-              </template>
+              <template x-for="r in rows.app" :key="r.key"><!-- part:setting-row --></template>
               <div class="setting-row">
                 <div class="label"><span>App version</span><small x-text="appVersion"></small></div>
                 <a class="btn small" :href="apkUrl()">Download newest</a>
@@ -707,15 +698,7 @@
         <!-- metadata -->
         <section x-show="section === 'metadata'">
           <h2>Metadata</h2>
-          <template x-if="$store.app.metaProgress">
-            <div class="meta-progress" x-data="{ get p() { return $store.app.metaProgress } }">
-              <div class="head"><b x-text="`Matching metadata: ${p.done} of ${p.total} series`"></b>
-                <span x-text="p.pct + '%'"></span></div>
-              <div class="meta-bar" role="progressbar" :aria-valuenow="p.done" aria-valuemin="0" :aria-valuemax="p.total">
-                <i :style="`width:${Math.max(p.pct, 1)}%`"></i></div>
-              <small x-text="[p.current && 'Now: ' + p.current, p.left].filter(Boolean).join(' · ')"></small>
-            </div>
-          </template>
+          <!-- part:meta-progress -->
           <p class="muted" x-show="metaText" x-text="metaText"></p>
           <div class="meta-sources">
             <h3>Sources</h3>
@@ -1003,15 +986,7 @@
           <!-- metadata matches -->
           <template x-if="a && kind === 'matches'">
             <div>
-          <template x-if="$store.app.metaProgress">
-            <div class="meta-progress" x-data="{ get p() { return $store.app.metaProgress } }">
-              <div class="head"><b x-text="`Matching metadata: ${p.done} of ${p.total} series`"></b>
-                <span x-text="p.pct + '%'"></span></div>
-              <div class="meta-bar" role="progressbar" :aria-valuenow="p.done" aria-valuemin="0" :aria-valuemax="p.total">
-                <i :style="`width:${Math.max(p.pct, 1)}%`"></i></div>
-              <small x-text="[p.current && 'Now: ' + p.current, p.left].filter(Boolean).join(' · ')"></small>
-            </div>
-          </template>
+          <!-- part:meta-progress -->
               <template x-for="x in a.matches" :key="x.series_id">
                 <div class="item">
                   <div class="cand own">
