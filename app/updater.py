@@ -142,7 +142,28 @@ def release_info(rel, sha):
     """What the app keeps of a GitHub release. The tag is the version; a title other than the tag is the message."""
     tag, name = rel["tag_name"], (rel.get("name") or "").strip()
     return {"sha": sha, "version": tag[:50], "date": rel.get("published_at"),
-            "message": name[:200] if name and name != tag else None, "url": rel.get("html_url")}
+            "message": name[:200] if name and name != tag else None, "url": rel.get("html_url"),
+            **release_notes(rel.get("body") or "")}
+
+
+_PR_CREDIT = re.compile(r"\s+by @\S+ in https://github\.com/\S+/pull/(\d+)\s*$")
+
+
+def release_notes(body):
+    """A release body as {notes, changes}: the text above the first heading (e.g. "needs a new Docker
+    image"), and the bullets GitHub generated, one per merged PR, as "Title (#12)". "New Contributors"
+    and the "Full Changelog" link are left out; the release page still has them."""
+    notes, changes, section = [], [], None
+    for line in body.replace("\r", "").split("\n"):
+        line = line.strip()
+        if line.startswith("#"):
+            section = line.lstrip("#").strip().lower()
+        elif line[:2] in ("* ", "- "):
+            if section != "new contributors" and len(changes) < 30:
+                changes.append(_PR_CREDIT.sub(r" (#\1)", line[2:].strip())[:200])
+        elif line and section is None and not line.startswith("**Full Changelog**"):
+            notes.append(line)
+    return {"notes": " ".join(notes)[:1000] or None, "changes": changes}
 
 
 def needs_new_image(files):
