@@ -585,6 +585,23 @@
     }
   }
 
+  /* plugins' badges on a card (the card-badges slot): stacked in the bottom-right corner, above the
+     progress bar, so they never cover the app's own corners. A plugin's .badge sits in this column */
+  .poster > .plugin-slot[data-slot="card-badges"] {
+    position: absolute;
+    right: 6px;
+    bottom: 9px;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+
+    & .badge {
+      position: static;
+    }
+  }
+
   .bar {
     position: absolute;
     right: 0;

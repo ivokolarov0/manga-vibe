@@ -346,6 +346,13 @@ markup like the rest of the page (`x-show`, `@click`, `$store.app`…).
 | `folder-row` | each folder in Settings → Library folders; `l` is the folder (`l.id`, `l.name`, `l.root_path`) |
 | `attention-note` | under the explanation of a Needs attention list |
 | `sheets` | the end of the page: sheets and dialogs of your own. Open one with `$store.app.sheet = "<name>"` and show it with `x-show="$store.app.sheet === '<name>'"`. Not inside a component: give it `x-data` |
+| `series-actions` | the series page, after the Continue button and the status dropdowns. `s` is the series (`s.id`, `s.title`, `s.plugin_data[<id>]`…). Give a button or dropdown `class="ctl"` to fit the row. Plugin API 11 |
+| `series-menu` | the series page's ⋯ menu (admins only), before Delete: `<button @click="menuOpen = false; …">`. `s` is the series. Plugin API 11 |
+| `series-panels` | the series page's column of panels (Links, Metadata, Folder…), after Plugin tools: a `<section class="panel"><h2>…</h2>…</section>`. `s` is the series. Plugin API 11 |
+| `series-end` | the end of the series page, after the Books panel: a `<section class="panel wide">`, or dialogs. `s` is the series, `books` its books. Plugin API 11 |
+| `book-row` | each book in the series page's Books list, before its Read button. `b` is the book (`b.id`, `b.label`, `b.completed`, `b.page`), `s` the series. For a short label, `book_badges()` is simpler. Plugin API 11 |
+| `card-badges` | each series card in the library and on Continue reading. `s` is the card's series (`s.id`, `s.title`, `s.reading_status`). A `<span class="badge">` is stacked in the poster's bottom-right corner. Plugin API 11 |
+| `continue-top` | the Continue reading page, above its grid. Not inside a component of yours: give it `x-data`. Plugin API 11 |
 
 More slots are added as more of the app becomes plugins.
 
