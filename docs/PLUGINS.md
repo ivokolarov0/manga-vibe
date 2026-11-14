@@ -349,6 +349,10 @@ markup like the rest of the page (`x-show`, `@click`, `$store.app`…).
 
 More slots are added as more of the app becomes plugins.
 
+**Dialogs and sheets.** Give a `.modal` or `.sheet` of your own `x-dialog="<how to close it>"`, e.g.
+`<div class="modal" x-show="$store.notes.open" x-dialog="$store.notes.open = false">`. A click on the
+backdrop, Escape and the Android app's back button then close it, like the app's own.
+
 **Script.** `js` runs after the app's own scripts: before Alpine starts when the page loads, or later
 when the owner switches the plugin on. Register your stores and components in `MangaVibe.onStart(() => {
 Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `window.MangaVibe` from the app
