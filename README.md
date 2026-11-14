@@ -82,8 +82,9 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 - **Fit** to screen, width or height, or original size. Pages are resized for your screen and the
   next ones preloaded, so turning is instant.
 - **Progress saved on every page**, and the next book offered at the end.
-- **On a computer:** click or use the arrow keys, scroll to zoom, and move the mouse to the bottom
-  edge for the controls.
+- **On a computer:** the wheel scrolls a tall page and turns the page at its end; click the sides
+  or use the arrow keys, Page Up/Down and Space; Ctrl + wheel zooms and F goes fullscreen. Move the
+  mouse to the top or bottom edge for the controls.
 
 ### Easy on the eyes, and for readers who can't see the page
 - **Page look:** brightness, contrast, and inverted (white lines on black) or warm colours.
