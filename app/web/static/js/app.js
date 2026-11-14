@@ -1479,6 +1479,64 @@ function attentionView() {
 const SETTINGS_NAV = [["library", "Library folders", "folder"], ["display", "Display", "palette"],
   ["reader", "Reader", "book-open"], ["metadata", "Metadata", "tag"], ["plugins", "Plugins", "blocks"],
   ["updates", "Updates", "download"]];
+/* The plain settings of a page: a label, a hint and a dropdown, saved when changed. Each is
+   { key, label, hint, options: [[value, text], ...], show(st) }; show (when there) decides whether
+   it's there at all. Values are strings, like st's; save() turns them into numbers or booleans. */
+const ON_OFF = [["true", "On"], ["false", "Off"]];
+const SETTING_ROWS = {
+  display: [
+    { key: "theme", label: "Theme", hint: "For everyone. The sun and moon button in the top bar changes it on one device only",
+      options: [["dark", "Dark"], ["light", "Light"], ["auto", "Match device"]] },
+    { key: "card_size", label: "Card size", options: [["small", "Small"], ["medium", "Medium"], ["large", "Large"]] },
+    { key: "nav_position", label: "Navigation bar", hint: "Where Library and Continue sit",
+      options: [["bottom", "Bottom"], ["top", "Top"]] },
+    { key: "library_listing", label: "Library listing", hint: "Load more while scrolling, or show numbered pages",
+      options: [["lazy", "Lazy load"], ["paged", "Paginated"]] },
+    { key: "library_page_size", label: "Series per page", options: [["30", "30"], ["60", "60"], ["120", "120"]],
+      show: (st) => st.library_listing === "paged" },
+    { key: "title_language", label: "Title language", hint: "Falls back to the next one if missing",
+      options: [["english", "English"], ["romaji", "Romaji"], ["native", "Native"]] },
+  ],
+  reader: [
+    { key: "reader_mode", label: "Default reading mode",
+      hint: "Pages: one at a time, the next one on the right (→, a tap on the right, a swipe to the left). " +
+        "For series whose library has no mode of its own (Settings → Libraries); each series can be set by hand",
+      options: [["paged", "Pages"], ["vertical", "Vertical"]] },
+    { key: "reader_fit", label: "Fit",
+      options: [["screen", "Fit screen"], ["width", "Fit width"], ["height", "Fit height"], ["original", "Original"]] },
+    // no fullscreen in the Android app: it already fills the screen between the phone's bars
+    { key: "auto_fullscreen", label: "Fullscreen on first tap", options: ON_OFF, show: () => !Alpine.store("app").inApp,
+      hint: "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F" },
+    { key: "preload", label: "Pages to preload", hint: "More = smoother, uses more data",
+      options: ["2", "3", "4", "5", "8"].map((n) => [n, n]) },
+    { key: "reader_autohide", label: "Hide controls after",
+      hint: "When nothing is touched. Turning the page or a tap in the middle hides them at once",
+      options: [["3", "3 seconds"], ["5", "5 seconds"], ["8", "8 seconds"], ["15", "15 seconds"], ["0", "Never"]] },
+    { key: "reader_drawer_side", label: "Reading hand",
+      hint: "Back, fullscreen and the options button sit on this side, within thumb reach",
+      options: [["right", "Right"], ["left", "Left"]] },
+    { key: "reader_tap_layout", label: "Tap zones",
+      hint: "One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu",
+      options: [["default", "Left back, right forward"], ["one-handed", "One-handed"], ["off", "Off (swipe only)"]] },
+    { key: "overlay_opacity", label: "Overlay box background",
+      hint: "Plugin boxes over the page, e.g. translations. Lower shows the art underneath",
+      options: [["100", "Solid"], ["75", "75%"], ["50", "50%"], ["25", "25%"], ["0", "See-through"]] },
+    { key: "overlay_outline", label: "Overlay text outline",
+      hint: "A white outline around the letters, so they stay readable over the art",
+      options: [["off", "Off"], ["thin", "Thin"], ["thick", "Thick"]] },
+    { key: "reader_brightness", label: "Page brightness", hint: "Darker pages are easier on the eyes, e.g. at night",
+      options: [["100", "Normal"], ["85", "85%"], ["70", "70%"], ["55", "55%"], ["40", "40%"]] },
+    { key: "reader_contrast", label: "Page contrast", hint: "More makes faint lines and small text stand out",
+      options: [["75", "Less"], ["100", "Normal"], ["125", "More"], ["150", "Most"]] },
+    { key: "reader_colors", label: "Page colours",
+      hint: "Inverted turns white pages black with white lines. Warm takes out the blue light",
+      options: [["normal", "Normal"], ["dark", "Inverted"], ["warm", "Warm"], ["dark-warm", "Inverted, warm"]] },
+  ],
+  app: [
+    { key: "reader_volume_keys", label: "Volume buttons turn pages",
+      hint: "In the reader: volume down goes to the next page, volume up goes back", options: ON_OFF },
+  ],
+};
 // Settings pages that are each person's own (with accounts, everyone sees them; the rest is for admins)
 const PERSONAL_PAGES = new Set(["reader", "app"]);
 const ANDROID = /Android/i.test(navigator.userAgent);
@@ -1510,6 +1568,7 @@ function settingsView() {
       return app.admin ? app.settingsNav : app.settingsNav.filter((x) => x[4] || PERSONAL_PAGES.has(x[0]));
     },
     get attNav() { return this.$store.app.admin ? ATT_TABS : []; },
+    rows: SETTING_ROWS,  // the plain dropdown settings of each page
     get section() {
       const s = this.$store.app.sub || this.nav[0][0];
       return s.startsWith("plugin-") ? "plugin" : s;
