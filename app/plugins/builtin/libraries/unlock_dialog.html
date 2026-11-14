@@ -1,6 +1,6 @@
 <!-- a locked library's password ($store.libraries.openUnlock) -->
 <div class="modal" x-data="libraryUnlock" x-show="$store.libraries.unlock.open" x-cloak
-     @click.self="close()" @keydown.escape.window="close()">
+     x-dialog="close()">
   <div class="small-dialog unlock-dialog"><form @submit.prevent="submit()">
     <div class="sheet-head"><b><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg> <span x-text="name"></span></b>
       <button class="btn small" type="button" @click="close()">Cancel</button></div>

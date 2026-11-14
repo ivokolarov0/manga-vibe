@@ -110,7 +110,23 @@ function cardSub(s) {
 
 /* ---------------- global store + router ---------------- */
 
+/* x-dialog="<close>" on a .modal or .sheet: a click on its backdrop (the element itself, not what's in
+   it) or Escape runs <close>, e.g. x-dialog="open = false". The Android back button sends Escape too
+   (MangaVibeApp.back). Plugins use it as well (docs/PLUGINS.md). */
+function dialogDirective(el, { expression }, { evaluateLater, cleanup }) {
+  const close = evaluateLater(expression);
+  const onClick = (e) => e.target === el && close();
+  const onKey = (e) => e.key === "Escape" && close();
+  el.addEventListener("click", onClick);
+  window.addEventListener("keydown", onKey);
+  cleanup(() => {
+    el.removeEventListener("click", onClick);
+    window.removeEventListener("keydown", onKey);
+  });
+}
+
 document.addEventListener("alpine:init", () => {
+  Alpine.directive("dialog", dialogDirective);
   alpineStarted = true;  // plugin scripts loaded from now on run MangaVibe.onStart() at once
   Alpine.store("app", {
     pluginSlots: filledSlots(),  // the page's slots plugins put something in (see window.MangaVibe)

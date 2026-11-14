@@ -195,7 +195,7 @@
       <!-- slot:library-end -->
 
       <!-- delete the selected series and their folders -->
-      <div class="modal" x-show="delOpen" x-cloak @click.self="delOpen = false" @keydown.escape.window="delOpen = false">
+      <div class="modal" x-show="delOpen" x-cloak x-dialog="delOpen = false">
         <div class="small-dialog delete-dialog">
           <div class="sheet-head"><b x-text="`Delete ${selCount} series`"></b>
             <button class="btn small" @click="delOpen = false">Cancel</button></div>
@@ -357,8 +357,7 @@
             </div>
 
             <!-- reading mode for this series (from the ⋯ menu) -->
-            <div class="modal" x-show="readerOpen" x-cloak @click.self="readerOpen = false"
-                 @keydown.escape.window="readerOpen = false">
+            <div class="modal" x-show="readerOpen" x-cloak x-dialog="readerOpen = false">
               <div class="small-dialog">
                 <div class="sheet-head"><b>Reading mode</b>
                   <button class="btn small" @click="readerOpen = false">Close</button></div>
@@ -377,8 +376,7 @@
             </div>
 
             <!-- delete the series and its folder (from the ⋯ menu) -->
-            <div class="modal" x-show="del.open" x-cloak @click.self="closeDelete()"
-                 @keydown.escape.window="closeDelete()">
+            <div class="modal" x-show="del.open" x-cloak x-dialog="closeDelete()">
               <div class="small-dialog delete-dialog">
                 <div class="sheet-head"><b>Delete series</b>
                   <button class="btn small" :disabled="del.busy" @click="closeDelete()">Cancel</button></div>
@@ -1156,7 +1154,7 @@
 
   <!-- ============ filter sheet ============ -->
   <div class="sheet" x-data="sortSheet()" x-show="$store.app.sheet === 'sort'" x-cloak
-       @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
+       x-dialog="$store.app.sheet = null">
     <div>
       <div class="sheet-head"><b>Sort</b><button class="btn small" @click="$store.app.sheet = null">Done</button></div>
       <h3>Order</h3>
@@ -1176,7 +1174,7 @@
   </div>
 
   <div class="sheet letter-sheet" x-data="letterSheet()" x-show="$store.app.sheet === 'letter'" x-cloak
-       @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
+       x-dialog="$store.app.sheet = null">
     <div>
       <div class="sheet-head"><b>Title starts with</b>
         <span class="btn-row"><button class="btn small" x-show="letter" @click="pick('')">Clear</button>
@@ -1192,7 +1190,7 @@
   </div>
 
   <div class="sheet filter-sheet" x-data="filterSheet()" x-show="$store.app.sheet === 'filter'" x-cloak
-       @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
+       x-dialog="$store.app.sheet = null">
     <div>
       <div class="sheet-head"><b>Filter</b>
         <span class="btn-row"><button class="btn small" @click="clearAll()">Clear</button>
@@ -1252,7 +1250,7 @@
 
   <!-- ============ fix match dialog ============ -->
   <div class="modal" x-data="fixMatch()" x-show="$store.app.fix.open" x-cloak
-       @click.self="close()" @keydown.escape.window="close()">
+       x-dialog="close()">
     <div>
       <template x-if="s">
         <div>
@@ -1298,7 +1296,7 @@
 
   <!-- ============ edit series ============ -->
   <div class="modal" x-data="editSeries()" x-show="$store.app.edit.open" x-cloak
-       @click.self="close()" @keydown.escape.window="close()">
+       x-dialog="close()">
     <div class="edit-dialog">
       <template x-if="s">
         <div>
@@ -1407,7 +1405,7 @@
 
   <!-- ============ folder picker ============ -->
   <div class="modal" x-data="folderPicker()" x-show="$store.app.folderPicker" x-cloak
-       @click.self="close()" @keydown.escape.window="close()">
+       x-dialog="close()">
     <div>
       <div class="sheet-head"><b>Add a library folder</b><button class="btn small" @click="close()">Cancel</button></div>
       <p class="muted">These are the folders inside the MangaVibe container. To see another folder here,

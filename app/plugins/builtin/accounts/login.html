@@ -23,7 +23,7 @@
 
 <!-- the account menu's Change password -->
 <div class="modal" x-data="accountsPassword" x-show="$store.accounts.pwOpen" x-cloak
-     @click.self="$store.accounts.pwOpen = false" @keydown.escape.window="$store.accounts.pwOpen = false">
+     x-dialog="$store.accounts.pwOpen = false">
   <div class="small-dialog"><form class="account-password" @submit.prevent="save()">
     <div class="sheet-head"><b>Change your password</b>
       <button class="btn small" type="button" @click="$store.accounts.pwOpen = false">Cancel</button></div>

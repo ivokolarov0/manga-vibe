@@ -1,6 +1,6 @@
 <!-- saved searches: a name for a set of filters and sort, e.g. Isekai -->
 <div class="sheet saved-sheet" x-data="savedSearchesSheet" x-show="$store.app.sheet === 'saved-searches'" x-cloak
-     @click.self="$store.app.sheet = null" @keydown.escape.window="$store.app.sheet = null">
+     x-dialog="$store.app.sheet = null">
   <div>
     <div class="sheet-head"><b>Saved searches</b>
       <span class="btn-row"><button class="btn small primary" x-show="store.canSave" @click="store.save()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Save this search</button>
