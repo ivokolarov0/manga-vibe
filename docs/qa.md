@@ -12,18 +12,28 @@ and match % built in from the start. I didn't feel like making a mobile app, so 
 [Android app](phone.md#android-app)).
 
 **Can MangaVibe change my files?**
-In one way only: **Delete series** (the ⋯ menu on a series page) deletes a series' folder, after
-showing what it will remove. I added it because I wanted to get rid of series I don't care about
-without leaving the app. It can only delete a series folder directly inside a library folder,
-nothing above it. The code was written almost entirely with Claude and may have gaps, so if you
-never want the app to touch your files, mount the manga folder read-only (`:ro`). Deleting is then
-turned off.
+In two ways, and only when you ask it to:
 
-**Why is there no user login?**
-Too much of a headache, and it means handling sensitive information I don't want to be responsible
-for. Also, someone will want Google/Apple login, then 2FA, then passkeys, then "forgot password",
-which means a mailing service or an SMTP server... In short, tedious, and I don't feel like it.
-At most there will be a PIN page or a simple password.
+- **Delete series** (the ⋯ menu on a series page) deletes a series' folder, after showing what it
+  will remove. I added it because I wanted to get rid of series I don't care about without leaving
+  the app. It can only delete a series folder directly inside a library folder, nothing above it.
+- **Optimize** (a built-in plugin, off until you switch it on in Settings → Plugins) replaces books
+  with smaller ones by converting their pages to JPEG XL, AVIF or WebP. It checks every new book
+  before it replaces the old one, but the originals are gone afterwards. See
+  [Optimize](using-plugins.md#optimize-built-in).
+
+The code was written almost entirely with Claude and may have gaps, so if you never want the app to
+touch your files, mount the manga folder read-only (`:ro`). Both are then turned off.
+
+**Are there user accounts?**
+Yes, if you want them: switch on **Accounts** in Settings → Plugins (it's off until you do). Everyone
+then logs in and has their own progress, favorites, Continue reading, saved searches and reader
+settings, and admins pick which libraries each account sees (e.g. the kids only get Comics).
+It's a name and a password and that's it: no Google/Apple login, 2FA, passkeys or "forgot password"
+emails, which would mean a mailing service or an SMTP server and more sensitive information I don't
+want to be responsible for. If someone forgets their password, an admin sets a new one in
+Settings → Accounts. Accounts keep the people in your home apart; they don't make the app safe to
+put on the internet (see [Reading away from home](away-from-home.md)).
 
 **Why only manga and not comics?**
 I'm making it for myself, and I mostly read manga. That said, you can already read comics with it:
@@ -31,9 +41,11 @@ put them in a library of their own (Settings → Libraries, then point the comic
 single series there with Edit), with its own reading mode. If you want more comic-specific features,
 there's a plugin system, so you can vibe code a plugin for them.
 
-**Why is there no option to rename or optimize files?**
-Again, I don't want the app to have access to your files. Rename and optimize them outside the
-app; I don't want to be responsible if something important disappears.
+**Why is there no option to rename files?**
+Renaming, moving and tagging are how you organize your own folders, and I don't want to be
+responsible if something important disappears, so do them outside the app. Making books smaller is
+the exception: [Optimize](using-plugins.md#optimize-built-in) does that, keeps each book's place,
+progress and page order, and stays off until you switch it on.
 
 **Do you accept feature requests and changes?**
 Some things are never accepted: see [Requests that are declined](#requests-that-are-declined) below.
@@ -64,8 +76,8 @@ It makes updating easier, and if someone wants a quick and dirty solution, here 
 
 - **Connecting to pirate sites to read their contents.** MangaVibe reads the files you own, nothing else.
 - **Crawling or scraping pirate sites**, including downloaders and "find the raws" features.
-- **Changing library files**: renaming, converting, optimizing, tagging or moving them. Deleting a
-  whole series is the one exception (see above).
+- **Changing library files**: renaming, tagging or moving them, or converting them other than the
+  way Optimize does. Deleting a whole series and Optimize are the exceptions (see above).
 - **More mobile apps**: an iPhone app, a Play Store listing, or a native reader. The
   [Android app](phone.md#android-app) is a window onto the web app, and that's as far as it goes.
 - **Tying it to an existing mobile app**, such as making it a source or extension for another reader app.
