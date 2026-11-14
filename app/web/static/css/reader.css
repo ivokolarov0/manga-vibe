@@ -429,6 +429,44 @@
       }
     }
 
+    /* with a mouse there's no thumb to keep things near: back goes to the top left and fullscreen
+       to the top right, beside the title, where computer programs keep them. The card stays at the bottom. */
+    @media (hover: hover) and (pointer: fine) {
+      & .chrome.top {
+        padding-right: 72px;
+        padding-left: 72px;
+      }
+
+      &.drawer-left .chrome.rail,
+      & .chrome.rail {
+        top: calc(8px + env(safe-area-inset-top, 0px));
+        right: 12px;
+        bottom: auto;
+        left: 12px;
+        flex-direction: row;
+        justify-content: space-between;
+        pointer-events: none;  /* the gap between the two buttons is page */
+
+        & button.icon {
+          width: 44px;
+          height: 44px;
+        }
+      }
+
+      &:not(.ui-hidden) .chrome.rail button.icon {
+        pointer-events: auto;
+      }
+
+      &.ui-hidden .chrome.rail {
+        transform: translateY(-12px);
+      }
+
+      /* reading with the controls away: the pointer goes too once the mouse rests (reader.js) */
+      &.ui-hidden.cursor-idle .stage {
+        cursor: none;
+      }
+    }
+
     /* page numbers around the slider */
     & .b-pages {
       display: flex;

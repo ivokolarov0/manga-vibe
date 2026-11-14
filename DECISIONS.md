@@ -114,7 +114,7 @@ Choices made where the spec was open. Newest at the bottom.
 
 - **Paged reader zoom/pan is our own code** (Pointer Events + a CSS transform on the page), not the
   browser's page zoom, so the controls stay put. Pinch 1–5×, one-finger pan when zoomed (clamped so no
-  empty space shows), double tap 2.5× at the finger, mouse wheel on desktop. Zoomed past 1.6× the page
+  empty space shows), double tap 2.5× at the finger, Ctrl + mouse wheel on desktop (issue #80). Zoomed past 1.6× the page
   is swapped for the full-resolution image so it stays sharp.
 - **🔒 lock** turns zoom and moving off and returns to the fitted page. It's a per-device preference
   (localStorage), because it depends on the phone, not on the library.
@@ -743,3 +743,30 @@ JPEG pages are converted too.
   checkboxes are a rounded box. Both are the real `<input type="checkbox">`, restyled.
 - **Bars are see-through** (`--glass` with a backdrop blur), covers have a hairline so white covers
   don't melt into the light page, and the bottom navigation marks the current page with a pill.
+
+## Desktop reader, fullscreen, the controls' auto-hide (issue #80)
+
+- **The wheel scrolls, it doesn't zoom.** A page taller than the window (fit width, original size,
+  zoomed) scrolls; at its end the wheel turns the page. A spin of the wheel (events less than
+  250 ms apart, a touchpad swipe with its momentum too) either scrolls or turns, never both: the page
+  stops at its end, and the next spin turns it. So it can't fly through a chapter, and you never miss
+  the bottom of a page. Scrolling back up shows the previous page from its bottom. A page that fits
+  turns at once. Ctrl + wheel zooms (a touchpad pinch arrives as Ctrl + wheel). Zoomed in, the wheel
+  only moves the page, like taps then don't turn it.
+- **A page taller than the window starts at its top**, on phones too (it used to open at its middle).
+  Leaving a zoom, or a swipe that snaps back, keeps the place instead of jumping to the middle.
+- **Keys:** ← → turn; ↓ ↑, Page Down/Up and Space / Shift + Space go down a page by a step, then on
+  to the next (a held key stops at the end of a page); Home/End; F fullscreen. Vertical mode gets the
+  scrolling keys too. Keys go to a focused slider or dropdown, not to the page as well.
+- **On a computer back and fullscreen are in the top corners**, not stacked over the card by the
+  thumb; the mouse at the top edge brings the controls up like the bottom edge, and the pointer hides
+  when it rests while reading. Dragging and click zones stay. Two-page spreads are left for later:
+  they need the overlays, zoom and the page count to work on two pictures at once.
+- **The controls go away when you read on:** turning the page hides them (not while the drawer is
+  open or they're in use), and a tap in the middle while they're up hides them instead of opening
+  the drawer again. The 5 seconds stay the default: with these two, the timer only matters when you
+  leave them up and do nothing.
+- **Fullscreen comes back after the phone took it**: when it ends while the page is hidden (locked,
+  another app) or just as it comes back (browsers send that event late), the next tap goes fullscreen
+  again; browsers allow fullscreen only on a tap. Leaving it yourself (Esc, the back gesture, the
+  button) is kept. Going to the next chapter stays fullscreen (the reader isn't closed in between).

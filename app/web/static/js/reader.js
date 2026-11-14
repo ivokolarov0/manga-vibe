@@ -269,8 +269,12 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   $("#r-progress").onclick = (e) => { if (e.target.dataset.p) goTo(+e.target.dataset.p); };
   // desktop: the mouse on the bottom edge brings up the full controls
   $("#r-progress").onpointerenter = (e) => { if (e.pointerType === "mouse" && !uiShown()) showUi(); };
-  // vertical mode: the wheel over the bottom strip still scrolls the pages
-  $("#r-progress").onwheel = (e) => $("#reader .vertical")?.scrollBy(0, e.deltaY);
+  // the wheel over the bottom strip still scrolls the pages (and turns them, in paged mode)
+  $("#r-progress").addEventListener("wheel", (e) => {
+    e.preventDefault();
+    if (!paged) $("#reader .vertical")?.scrollBy(0, wheelDelta(e).y);
+    else if (!e.ctrlKey) wheelScroll(e);
+  }, { passive: false });
   $("#r-page").onchange = (e) => goTo(+e.target.value);
   $("#r-pprev").onclick = () => (paged ? prev() : goTo(R.page - 1));
   $("#r-pnext").onclick = () => (paged ? next() : goTo(R.page + 1));
@@ -346,10 +350,11 @@ function updateLockButton() {
 
 function img() { return $("#reader .stage img"); }
 
+/* `animate`: true for the usual .2s, or a length in seconds (a wheel or key step is quicker) */
 function applyZoom(animate = false) {
   const el = img();
   if (!el) return;
-  el.style.transition = animate ? "transform .2s ease-out" : "none";
+  el.style.transition = animate ? `transform ${animate === true ? 0.2 : animate}s ease-out` : "none";
   el.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.s})`;
   $("#reader .stage").classList.toggle("zoomed", Z.s > 1.01);
   $("#reader .stage").classList.toggle("can-pan", canPan());
@@ -371,9 +376,14 @@ function zoomAt(s, px, py, from = { s: Z.s, x: Z.x, y: Z.y }) {
   Z.x = cx - (cx - from.x) * (s / from.s);
   Z.y = cy - (cy - from.y) * (s / from.s);
   Z.s = s;
-  if (s === 1) { Z.x = 0; Z.y = 0; }
-  clampPan();
+  clampPan();  // back at 1×, a page that fits is centred again; a taller one keeps its place
   maybeHiRes();
+}
+
+/* how far a page taller than the window can move up or down from the middle (0: it fits) */
+function roomY() {
+  const el = img();
+  return el ? Math.max(0, (el.offsetHeight * Z.s - innerHeight) / 2) : 0;
 }
 
 /* is the page bigger than the screen (zoomed in, or "fit width"/"original" pages)? */
@@ -382,8 +392,11 @@ function canPan() {
   return !locked() && (el.offsetWidth * Z.s > innerWidth + 1 || el.offsetHeight * Z.s > innerHeight + 1);
 }
 
+/* back to the fitted page. A page taller than the window ("fit width") stays about where it was
+   instead of jumping to its middle. */
 function resetZoom(animate = false) {
-  Object.assign(Z, { s: 1, x: 0, y: 0 });
+  Object.assign(Z, { x: Z.x / Z.s, y: Z.y / Z.s, s: 1 });
+  if (img()) clampPan();
   applyZoom(animate);
 }
 
@@ -459,7 +472,7 @@ function setupPaged() {
       applyZoom();
     } else if (gesture.type === "swipe") {
       img().style.transition = "none";
-      img().style.transform = `translateX(${dx}px)`;  // the page follows the finger
+      img().style.transform = `translate(${dx}px, ${Z.y}px)`;  // the page follows the finger
     }
   });
 
@@ -506,23 +519,90 @@ function setupPaged() {
     lastTap = { t: now, x: e.clientX, y: e.clientY };
     const x = e.clientX / innerWidth, y = e.clientY / innerHeight, mouse = e.pointerType === "mouse";
     tapTimer = setTimeout(() => {
-      if (Z.s > 1.01) return openMenu();  // zoomed: taps don't turn pages, they only open the menu
+      if (Z.s > 1.01) return toggleMenu();  // zoomed: taps don't turn pages, they only show or hide the menu
       const act = tapAction(x, y, mouse);
       if (act === "next") next();
       else if (act === "prev") prev();
-      else openMenu();
+      else toggleMenu();
     }, 230);
   };
   stage.addEventListener("pointerup", end);
   stage.addEventListener("pointercancel", end);
 
-  // desktop: mouse wheel zooms around the cursor
+  // desktop: the wheel scrolls a page taller than the window, and turns pages at its ends;
+  // Ctrl + wheel (and a touchpad pinch, which browsers send as one) zooms around the cursor
   stage.addEventListener("wheel", (e) => {
-    if (locked()) return;
     e.preventDefault();
-    zoomAt(Z.s * (e.deltaY < 0 ? 1.15 : 1 / 1.15), e.clientX, e.clientY);
-    applyZoom();
+    if (e.ctrlKey) {
+      if (locked()) return;
+      zoomAt(Z.s * Math.exp(-wheelDelta(e).y / 300), e.clientX, e.clientY);
+      return applyZoom();
+    }
+    wheelScroll(e);
   }, { passive: false });
+
+  // a mouse that rests over the page hides its pointer while the controls are away; the top edge
+  // brings the controls up, like the bottom edge does (back and fullscreen are up there on a computer)
+  let idle = null;
+  stage.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
+    if (e.clientY < 36 && !pointers.size && !uiShown()) showUi();
+    $("#reader").classList.remove("cursor-idle");
+    clearTimeout(idle);
+    idle = setTimeout(() => $("#reader")?.classList.add("cursor-idle"), 2000);
+  });
+}
+
+/* a wheel event's movement in pixels (Firefox counts a mouse wheel in lines) */
+function wheelDelta(e) {
+  const unit = e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? innerHeight : 1;
+  let x = e.deltaX * unit, y = e.deltaY * unit;
+  if (e.shiftKey && !x) [x, y] = [y, 0];  // Shift + wheel: sideways
+  return { x, y };
+}
+
+/* One spin of the wheel, or one touchpad swipe with its momentum, is a run of events close
+   together. A run either scrolls the page or turns it, never both: the page stops at its end,
+   and the next run turns it. So a fast spin can't fly through several pages. */
+const W = { t: 0, acc: 0, done: false };
+const WHEEL_GAP = 250;   // ms between events that still belong to the same run
+const WHEEL_TURN = 50;   // px of wheel past the end of the page that turn it
+
+function wheelScroll(e) {
+  const d = wheelDelta(e);
+  if (e.timeStamp - W.t > WHEEL_GAP) Object.assign(W, { acc: 0, done: false });
+  W.t = e.timeStamp;
+  const el = img();
+  if (!el) return;
+  const sideways = Math.abs(d.x) > Math.abs(d.y), delta = sideways ? d.x : d.y;
+  if (!delta) return;
+  const room = sideways ? Math.max(0, (el.offsetWidth * Z.s - innerWidth) / 2) : roomY();
+  const pos = sideways ? Z.x : Z.y;
+  // down (or right) moves the page up (or left): towards -room
+  const to = Math.max(-room, Math.min(room, pos - delta));
+  if (to !== pos) {
+    Z[sideways ? "x" : "y"] = to;
+    applyZoom(Math.abs(delta) >= 30 ? 0.12 : false);  // a mouse notch glides, a touchpad follows the fingers
+    W.done = true;
+    return;
+  }
+  if (W.done || Z.s > 1.01) return;  // zoomed in: the wheel only moves the page, like taps don't turn it
+  W.acc += Math.abs(delta);
+  if (W.acc < WHEEL_TURN) return;
+  W.done = true;
+  if (delta > 0) next(); else prev(!sideways);  // scrolling back up shows the end of the page before
+}
+
+/* ↓, Page Down and Space: down the page by a step, then on to the next page (↑, Page Up, Shift +
+   Space the other way). A key held down stops at the end of a page instead of racing through the book. */
+function keyScroll(down, step, repeat) {
+  const room = roomY(), to = Math.max(-room, Math.min(room, Z.y + (down ? -step : step)));
+  if (to !== Z.y) {
+    Z.y = to;
+    return applyZoom(0.15);
+  }
+  if (repeat || Z.s > 1.01) return;
+  if (down) next(); else prev(true);
 }
 
 /* what a tap at (x, y) (fractions of the screen) does: "next", "prev" or "ui" (open the menu).
@@ -542,8 +622,11 @@ function tapAction(x, y, mouse = false) {
 
 addEventListener("resize", () => { if (R.book && img()) { clampPan(); applyZoom(); } });
 
-/* swipe/tap/key page turn with a slide: out towards `outDir` (-1 left, 1 right), new page in from the other side */
-function turn(forward, outDir) {
+/* swipe/tap/key page turn with a slide: out towards `outDir` (-1 left, 1 right), new page in from
+   the other side. `atEnd`: a page taller than the window comes in showing its bottom (scrolling back). */
+function turn(forward, outDir, atEnd = false) {
+  // turning the page is reading on: the controls go away (not while they're being used, e.g. the drawer)
+  if (uiShown() && !controlsBusy()) hideUi();
   const canGo = forward ? R.page < R.book.page_count - 1 : R.page > 0;
   if (!canGo) {
     resetZoom(true);
@@ -551,19 +634,20 @@ function turn(forward, outDir) {
   }
   const el = img();
   el.style.transition = "transform .16s ease-in, opacity .16s";
-  el.style.transform = `translateX(${outDir * innerWidth}px)`;
+  el.style.transform = `translate(${Z.x + outDir * innerWidth}px, ${Z.y}px) scale(${Z.s})`;
   el.style.opacity = "0";
   setTimeout(() => {
     R.page += forward ? 1 : -1;
-    showPage(-outDir);
+    showPage(-outDir, atEnd);
   }, 160);
 }
 
 /* show R.page; `fromDir` is the side the new page slides in from (-1 left, 1 right, 0 none).
    The browser keeps painting the old picture in the <img> until the new one is decoded, so a
-   sliding page stays hidden until then; only then does it slide in. */
+   sliding page stays hidden until then; only then does it slide in. A page taller than the window
+   starts at its top, like a page of a book (with `atEnd`, at its bottom). */
 let showToken = 0;
-function showPage(fromDir = 0) {
+function showPage(fromDir = 0, atEnd = false) {
   const el = img();
   if (!el) return;
   const stage = $("#reader .stage");
@@ -589,11 +673,14 @@ function showPage(fromDir = 0) {
     clearTimeout(stage._spin);
     stage.classList.remove("waiting");
     stage.classList.toggle("can-pan", canPan());  // e.g. "fit width" pages taller than the screen
-    if (!fromDir) return;
     if (Z.s > 1.01) { el.style.opacity = "1"; return; }  // zoomed in meanwhile: keep the zoom, don't slide
+    if (Z.x === 0 && Z.y === 0) Z.y = atEnd ? -roomY() : roomY();  // not moved meanwhile: top (or bottom)
+    if (!fromDir) return applyZoom();
+    // the start position, at the page's height, so it only slides sideways
+    el.style.transform = `translate(${fromDir * 30}%, ${Z.y}px)`;
     void el.offsetWidth;  // apply the start position first, so the slide below animates from it
     el.style.transition = "transform .2s ease-out, opacity .2s";
-    el.style.transform = "translate(0, 0) scale(1)";
+    el.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(1)`;
     el.style.opacity = "1";
   });
   updatePageUi();
@@ -645,7 +732,7 @@ function goTo(i) {
 
 /* the old page slides out to the left going forward, to the right going back */
 function next() { turn(true, -1); }
-function prev() { turn(false, 1); }
+function prev(atEnd = false) { turn(false, 1, atEnd); }
 
 function showEndCard() {
   saveProgress(true);
@@ -706,7 +793,7 @@ function setupVertical() {
     if (e.target.closest("button")) return;
     if (R.drawer) return setDrawer(false);
     maybeAutoFullscreen(e);
-    openMenu();
+    toggleMenu();
   });
 }
 
@@ -1250,17 +1337,23 @@ for (const type of ["pointerup", "keydown"]) {
 }
 
 /* ---------------- controls: show/hide, auto-hide after a few seconds ----------------
-   A tap/click in the middle shows them with the options drawer (openMenu). Once shown, they hide on their own after `reader_autohide`
+   A tap/click in the middle shows them with the options drawer (openMenu); the next one hides them
+   again, and so does turning the page. Otherwise they hide on their own after `reader_autohide`
    seconds (0 = never). Any use of the bars restarts the countdown, and they wait while
    the slider is held, the mouse is over them, or a dropdown has focus. */
 
 function uiShown() { return !$("#reader").classList.contains("ui-hidden"); }
 
 /* a tap on the page that doesn't turn it: the bars and the reading options (the ☰ drawer) together.
-   A tap beside the open drawer closes it again, and the bars hide on their own. */
+   A tap beside the open drawer closes it again (and the bars hide on their own). */
 function openMenu() {
   showUi();
   setDrawer(true);
+}
+
+/* a tap in the middle: the menu, or away with the bars if they're up (the drawer was closed already) */
+function toggleMenu() {
+  if (uiShown()) hideUi(); else openMenu();
 }
 
 function showUi() {
@@ -1328,14 +1421,27 @@ function saveProgress(now = false) {
   R.saveTimer = setTimeout(send, 700);
 }
 
-/* phones and tablets only: a mouse click never goes fullscreen by itself (the buttons still do) */
+/* phones and tablets only: a mouse click never goes fullscreen by itself (the buttons still do).
+   On the first tap with Auto fullscreen, and again on the next tap after the phone took fullscreen
+   away (locked, or another app): browsers only go fullscreen on a tap, never by themselves. */
 function maybeAutoFullscreen(e) {
   if (e?.pointerType === "mouse") return;
-  if (R.firstTap && settings.auto_fullscreen && !document.fullscreenElement && !androidApp) {
+  const want = (R.firstTap && settings.auto_fullscreen) || R.wantFs;
+  if (want && !document.fullscreenElement && !androidApp) {
     document.documentElement.requestFullscreen?.().catch(() => {});
   }
   R.firstTap = false;
 }
+
+/* R.wantFs: the reader was fullscreen and nobody chose to leave it. Fullscreen that goes away while
+   the page is hidden, or just as it comes back (browsers send the event late), was taken by the phone;
+   leaving it on screen (Esc, the back gesture, the button) is the reader's choice and stays. */
+R.wantFs = false;
+R.shownAt = 0;
+document.addEventListener("fullscreenchange", () => {
+  if (document.fullscreenElement) R.wantFs = true;
+  else if (document.visibilityState === "visible" && performance.now() - R.shownAt > 1500) R.wantFs = false;
+});
 
 /* both fullscreen buttons show what a tap will do; hidden where the browser has no fullscreen (iPhone)
    and in the Android app, which already fills the screen between the phone's bars */
@@ -1378,6 +1484,7 @@ function closeReader() {
   ovReset(null);
   R.book = null;
   R.firstTap = true;
+  R.wantFs = false;
   clearTimeout(R.hideTimer);
   Object.assign(R, { sliding: false, hovering: false, drawer: false });
   $("#reader").hidden = true;
@@ -1390,14 +1497,39 @@ function closeReader() {
 document.addEventListener("keydown", (e) => {
   if ($("#reader").hidden || !R.book) return;
   if (e.key === "Escape") return R.panel ? openPanel(null) : R.drawer ? setDrawer(false) : leaveReader();
-  if (R.mode === "vertical" || e.target.tagName === "SELECT") return;
-  if (e.key === "ArrowRight") next();
-  else if (e.key === "ArrowLeft") prev();
-  else if (e.key === " ") next();
+  if (e.ctrlKey || e.metaKey || e.altKey) return;  // the browser's own shortcuts
+  // the slider and dropdowns take their own keys; Space and Enter press a focused button
+  const t = e.target, own = t.tagName === "SELECT" || t.tagName === "INPUT";
+  if (own || (e.key === " " && t.closest?.("button, a"))) return;
+  if (e.key === "f" || e.key === "F") {
+    if (!$("#r-fs").hidden) toggleFullscreen();
+    return;
+  }
+  if (R.mode === "vertical") {
+    const step = { ArrowDown: 0.2, ArrowUp: -0.2, PageDown: 0.85, PageUp: -0.85, " ": e.shiftKey ? -0.85 : 0.85 }[e.key];
+    if (!step) return;
+    e.preventDefault();  // else a browser that put the scroll box in focus scrolls it a second time
+    return $("#reader .vertical")?.scrollBy({ top: step * innerHeight, behavior: "smooth" });
+  }
+  const keys = {
+    ArrowRight: () => next(), ArrowLeft: () => prev(),
+    ArrowDown: () => keyScroll(true, innerHeight * 0.2, e.repeat),
+    ArrowUp: () => keyScroll(false, innerHeight * 0.2, e.repeat),
+    PageDown: () => keyScroll(true, innerHeight * 0.85, e.repeat),
+    PageUp: () => keyScroll(false, innerHeight * 0.85, e.repeat),
+    " ": () => keyScroll(!e.shiftKey, innerHeight * 0.85, e.repeat),
+    Home: () => goTo(0), End: () => goTo(R.book.page_count - 1),
+  };
+  if (!keys[e.key]) return;
+  e.preventDefault();
+  keys[e.key]();
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") saveProgress(true);
-  else if (!$("#reader").hidden) requestWakeLock();
+  else {
+    R.shownAt = performance.now();
+    if (!$("#reader").hidden) requestWakeLock();
+  }
 });
 
 /* the Android app's volume keys (Settings → Android app): down = next page, up = previous.
