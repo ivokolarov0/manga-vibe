@@ -366,7 +366,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `on(pluginId, event, fn)` | listen to the app (events below); only while your plugin is on |
 | `setListScope(pluginId, params)` | query parameters for every list's API call (grid, tags, Continue, Needs attention), e.g. `{ shelf: 3 }`, for your `series_filter()` to read. The lists reload. Taken away when the plugin is switched off |
 | `listsChanged()` | the same lists show something else now (e.g. a library was unlocked): they reload |
-| `settingsPage(pluginId, key, label, icon, at)` | a page of your own in Settings at `#/settings/<key>`, at place `at` in the menu (0: first). Call it in `start`; it goes away when the plugin is switched off |
+| `settingsPage(pluginId, key, label, icon, at)` | a page of your own in Settings at `#/settings/<key>`, at place `at` in the menu (0: first). `icon` is the name of a built-in icon (`"users"`, see Icons below) or any character, e.g. an emoji. Call it in `start`; it goes away when the plugin is switched off |
 | `denied(error, retry)` | used by the app when the server answered 403: the `denied` event gets the answer's `detail` |
 
 **Events** (`MangaVibe.on(pluginId, event, fn)`). `fn` may be async unless it says otherwise.
@@ -433,6 +433,26 @@ The easiest way to restyle is to change the design tokens from `css/tokens.css`
 (`--accent`, `--card`, `--poster-width`, `--radius`, colours…). See `examples/custom.css` and
 `examples/plugins/sakura_theme.py`. `custom.css` is created with instructions on first start;
 edit it with File Station and reload the page.
+
+There are two themes, dark and light: `<html data-theme="dark">` or `"light"`. A token set on
+`:root` counts for both; for one theme only, use `:root[data-theme="light"] { --accent: … }`.
+`--accent-text` is the text colour on the accent (dark in the dark theme, white in the light one):
+set it too if your accent needs the other.
+
+### Icons
+
+The app's line icons are in one SVG sprite at the top of `index.html`. In your HTML:
+
+```html
+<button class="btn small"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>Favorite</button>
+```
+
+In a script, `icon("star")` gives the same as a string (for `x-html`). They take the text colour and
+scale with the font size; add the class `fill` for a filled one. Names: `search` `x` `plus` `check`
+`check-up` `check-circle` `circle` `ban` `alert` `info` `chevron-left` `chevron-right` `chevron-down`
+`arrow-up` `external` `dots` `library` `play` `book-open` `books` `star` `bookmark` `filter` `sort`
+`settings` `sun` `moon` `palette` `tag` `blocks` `download` `upload` `refresh` `phone` `folder` `copy`
+`pencil` `trash` `lock` `unlock` `key` `log-out` `user` `users` `shield` `image`.
 
 ## Example
 

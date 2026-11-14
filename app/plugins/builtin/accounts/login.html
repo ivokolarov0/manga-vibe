@@ -1,7 +1,9 @@
 <!-- the login over the whole page (or the first admin, while there is no account) -->
 <div class="account-gate" x-data="accountsLogin" x-show="$store.accounts.gate" x-cloak>
   <form class="account-login" @submit.prevent="submit()">
-    <div class="brand">MangaVibe</div>
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" width="8" height="20" rx="2"/><rect x="11" width="8" height="20" rx="2"/></svg>
+      MangaVibe</div>
     <template x-if="$store.accounts.setup">
       <p class="muted">Accounts are on. Make the first account: an admin, who manages the app and the other
         accounts. It keeps everything read so far.</p>

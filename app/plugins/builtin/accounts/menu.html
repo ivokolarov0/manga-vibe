@@ -7,7 +7,9 @@
   <div class="menu-pop" x-show="$store.accounts.menuOpen" x-transition.opacity>
     <div class="account-who"><b x-text="$store.accounts.me?.name"></b>
       <small x-text="$store.accounts.me?.admin ? 'Admin' : 'Account'"></small></div>
-    <button @click="$store.accounts.menuOpen = false; $store.accounts.pwOpen = true">🔑 Change password…</button>
-    <button @click="$store.accounts.logout()">↩ Log out</button>
+    <button @click="$store.accounts.menuOpen = false; $store.accounts.pwOpen = true">
+      <svg class="ic" aria-hidden="true"><use href="#i-key"/></svg>Change password…</button>
+    <button @click="$store.accounts.logout()">
+      <svg class="ic" aria-hidden="true"><use href="#i-log-out"/></svg>Log out</button>
   </div>
 </div>

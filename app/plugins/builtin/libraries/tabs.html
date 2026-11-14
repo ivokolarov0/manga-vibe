@@ -7,11 +7,11 @@
     <button role="tab" :class="{ active: $store.libraries.picked === s.id }" :aria-selected="$store.libraries.picked === s.id"
             @click="$store.libraries.pick(s.id)" :title="s.locked ? 'Locked: asks for the password' : ''">
       <span x-text="s.name"></span>
-      <span class="lock" x-show="s.has_password" x-text="s.locked ? '🔒' : '🔓'"
-            :aria-label="s.locked ? 'locked' : 'unlocked'"></span></button>
+      <span class="lock" x-show="s.has_password" x-html="icon(s.locked ? 'lock' : 'unlock')"
+            role="img" :aria-label="s.locked ? 'locked' : 'unlocked'"></span></button>
   </template>
   <button class="add" x-show="$store.app.admin" @click="$store.libraries.addAndPick()" title="New library"
-          aria-label="New library">+</button>
+          aria-label="New library"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button>
   <button class="lock-now" x-show="$store.libraries.anyOpen" @click="$store.libraries.lockNow()"
-          title="Ask for the passwords again">🔒 Lock now</button>
+          title="Ask for the passwords again"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>Lock now</button>
 </div>

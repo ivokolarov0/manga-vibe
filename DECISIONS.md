@@ -714,3 +714,32 @@ JPEG pages are converted too.
   is kept as the plugin's series data at the file's size and mtime: a done book (or one with nothing
   to convert) isn't tried again until its file changes; a failed one is retried by "Optimize this
   series", not by "Optimize all".
+
+## Design refresh: two themes, icons, motion
+
+- **Two full themes from the same tokens** (`css/tokens.css`): dark stays the default, light has its
+  own accent (deeper, readable as text on white), state colours and softer shadows. `color-scheme`
+  follows the theme, so native lists, scrollbars and date fields match. New tokens: `--accent-soft`,
+  `--hover`, `--glass`, `--shadow-sm` / `--shadow` / `--shadow-lg`, `--backdrop`, `--radius-pill`,
+  `--ease`. `--accent-text` is dark in the dark theme (the coral is light) and white in the light one.
+- **Theme setting gets "Match device"** (`theme: auto`), and **the top bar has a sun/moon button**.
+  The setting is the app's (admins, everyone gets it); the button is this device's own choice
+  (`localStorage "theme"`), so a phone can be dark while the desktop is light, and people who aren't
+  admins can pick too. Tapping the button back to what the app's theme gives, or choosing a theme in
+  Settings on that device, ends the device's own choice, so it follows the app (and the OS) again.
+  `<html data-theme>` is always `dark` or `light` (`applyTheme()` in `common.js`), so custom.css
+  rules for `[data-theme="light"]` keep working. An inline script in `<head>` sets the theme used
+  last before the first paint (no flash).
+- **One SVG sprite for icons** at the top of `index.html` (`<symbol id="i-…">`, line icons on a 24
+  grid), used as `<svg class="ic"><use href="#i-star"/></svg>` or `icon("star")` in scripts. It
+  replaces the emoji and text symbols (they looked different on every device and sat off-centre).
+  No icon font, no extra request, and they take the text colour. Settings menu icons are sprite names;
+  a plugin may still give any character (`navIcon()` shows it as text). The reader keeps its own.
+- **Motion is short and only when something appears**: a page fades in, a sheet slides up (a dialog
+  grows in on desktop), menus open from their corner, the theme change fades, a favorite's star
+  bounces. All of it is CSS (`@keyframes` in `base.css`), and "reduce motion" on the device switches
+  it off in one rule.
+- **Checkboxes that switch something on are drawn as switches** (a settings row, a plugin row); other
+  checkboxes are a rounded box. Both are the real `<input type="checkbox">`, restyled.
+- **Bars are see-through** (`--glass` with a backdrop blur), covers have a hairline so white covers
+  don't melt into the light page, and the bottom navigation marks the current page with a pill.

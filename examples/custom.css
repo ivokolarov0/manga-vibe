@@ -6,8 +6,14 @@
 /* 1. Change colours and sizes through the design tokens */
 :root {
   --accent: #4f8cff;
+  --accent-text: #fff;  /* the text on accent-coloured buttons */
   --card: 120px;
   --poster-width: 340px;
+}
+
+/* ...or for one theme only (dark or light) */
+:root[data-theme="light"] {
+  --bg: #faf7f2;
 }
 
 /* 2. Restyle one thing: bold titles under the library cards */

@@ -30,7 +30,7 @@ const LIST_KEYS = ["read", "pub", "match", "format", "have", "genre", "exclude"]
 // first-letter filter (letter=B); "#" is everything else: numbers, symbols, other scripts
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Completed"],
-  ["plan_to_read", "Plan to read"], ["fav", "★ Favorites"]];
+  ["plan_to_read", "Plan to read"], ["fav", "Favorites"]];  // Favorites gets a star icon (index.html)
 const ATT_TABS = [
   ["unreadable", "Errors", "These files could not be opened. The message says why."],
   ["matches", "Missing metadata", "No confident match was found online. Pick the right one, or open Fix match."],
@@ -101,8 +101,8 @@ function editionOptions(s) {
 
 function cardSub(s) {
   const st = s.reading_status, read = s.book_count - s.unread_count;
-  if (st === "completed") return "✓ Completed";
-  if (st === "dropped") return "✕ Dropped";
+  if (st === "completed") return "Completed";  // the poster has the ✓ or ✕ badge
+  if (st === "dropped") return "Dropped";
   if (st === "reading") return `Reading · ${read}/${s.book_count}`;
   if (st === "unread") return `Unread · ${s.book_count} ${s.book_count === 1 ? "book" : "books"}`;
   return STATUS_LABELS[st] || st;
@@ -147,6 +147,7 @@ document.addEventListener("alpine:init", () => {
     progressDirty: 0,    // bumped after the reader closes and its last progress save is done
     update: null,        // GET /api/update: running version, newest version on GitHub
     updating: null,      // an install in progress: { state, message, error }
+    theme: document.documentElement.dataset.theme,  // "dark" | "light", as shown now (applyTheme)
     inApp: !!androidApp, // running inside the Android app (android/)
     appBanner: ANDROID && !androidApp && !appBannerDismissed(),  // "Read in the app" on the library
     openFix(seriesId, onDone) { this.fix = { open: true, seriesId, onDone }; },
@@ -162,6 +163,8 @@ document.addEventListener("alpine:init", () => {
     me: { id: 1, name: "", can_manage: true },
     get admin() { return this.me.can_manage; },  // settings, folders, metadata, deleting...
   });
+
+  window.addEventListener("mv-theme", (e) => (Alpine.store("app").theme = e.detail));
 
   let lastView = null, libraryScroll = 0;
   history.scrollRestoration = "manual";  // we restore the library position ourselves
@@ -812,7 +815,7 @@ function searchParts(qs) {
   for (const v of getList(p, "genre")) out.push(v);
   for (const v of getList(p, "exclude")) out.push("not " + v);
   for (const [k, , labels] of FILTER_GROUPS) for (const v of getList(p, k)) out.push(labels[v] || v);
-  if (p.get("fav")) out.push("★ Favorites");
+  if (p.get("fav")) out.push("Favorites");
   if (p.get("letter")) out.push("Starts with " + p.get("letter"));
   const sort = SORTS.find(([k]) => k === p.get("sort"))?.[1];
   if (sort) out.push("↓ " + sort);
@@ -1470,17 +1473,21 @@ function attentionView() {
 /* ---------------- settings ---------------- */
 
 // Settings' own pages; plugins add theirs to $store.app.settingsNav (e.g. libraries: Libraries, first)
-const SETTINGS_NAV = [["library", "Library folders", "📁"], ["display", "Display", "🎨"],
-  ["reader", "Reader", "📖"], ["metadata", "Metadata", "🏷"], ["plugins", "Plugins", "🧩"], ["updates", "Updates", "⟳"]];
+// The icon is the name of one in the sprite (index.html); a plugin may also give any character.
+const SETTINGS_NAV = [["library", "Library folders", "folder"], ["display", "Display", "palette"],
+  ["reader", "Reader", "book-open"], ["metadata", "Metadata", "tag"], ["plugins", "Plugins", "blocks"],
+  ["updates", "Updates", "download"]];
 // Settings pages that are each person's own (with accounts, everyone sees them; the rest is for admins)
 const PERSONAL_PAGES = new Set(["reader", "app"]);
 const ANDROID = /Android/i.test(navigator.userAgent);
 // on Android phones (in the app or the browser) Settings gets an "Android app" page
-if (ANDROID) SETTINGS_NAV.splice(2, 0, ["app", "Android app", "📱"]);
+if (ANDROID) SETTINGS_NAV.splice(2, 0, ["app", "Android app", "phone"]);
 
 // Settings → Plugins: what each viewer picked (category, source, status, built-ins unfolded)
 const PLUGIN_VIEW_KEY = "plugins-view";
-const PLUGIN_CAT_ICONS = { metadata: "🏷", reader: "📖", library: "📚", system: "⚙", appearance: "🎨", other: "🧩" };
+// names of icons in the sprite (index.html), shown with navIcon()
+const PLUGIN_CAT_ICONS = { metadata: "tag", reader: "book-open", library: "books", system: "settings",
+  appearance: "palette", other: "blocks" };
 function loadPluginView() {
   try {
     const v = JSON.parse(localStorage.getItem(PLUGIN_VIEW_KEY) || "{}");
@@ -1520,7 +1527,7 @@ function settingsView() {
     },
     setPluginFilter(key, value) { this.pf[key] = value; this.savePluginView(); },
     catLabel(c) { return this.pluginCats[c] || c; },
-    catIcon(c) { return PLUGIN_CAT_ICONS[c] || "🧩"; },
+    catIcon(c) { return PLUGIN_CAT_ICONS[c] || "blocks"; },
     hasUpdate(p) { return !!(p.update.available && !p.update.skipped); },
     get pluginUpdates() { return this.plugins.filter((p) => this.hasUpdate(p)).length; },
     get pluginErrorCount() { return Object.keys(this.pluginErrors).length; },
@@ -1562,11 +1569,11 @@ function settingsView() {
     // phones: the nav is one "current page ▾" button that opens a menu
     navOpen: false,
     get current() {
-      if (this.section === "plugin") return ["🧩", this.plugin?.name || "Plugin"];
+      if (this.section === "plugin") return ["blocks", this.plugin?.name || "Plugin"];
       const n = this.nav.find(([k]) => k === this.section);
       if (n) return [n[2], n[1]];
       const a = ATT_TABS.find(([k]) => "att-" + k === this.section);
-      return a ? ["⚠", a[1]] : ["⚙", "Settings"];
+      return a ? ["alert", a[1]] : ["settings", "Settings"];
     },
     // problems worth a look (the red counts), shown on the closed menu button
     get attAlerts() {
@@ -1633,6 +1640,8 @@ function settingsView() {
       if (v === "true" || v === "false") v = v === "true";
       else if (typeof v === "string" && /^\d+$/.test(v)) v = +v;
       await api("/api/settings", { method: "PUT", body: { [key]: v } });
+      // the theme chosen here also ends this device's own choice (the top bar's button)
+      if (key === "theme") { settings.theme = v; setDeviceTheme(""); }
       await loadSettings();
       if (["title_language", "library_listing", "library_page_size"].includes(key)) this.$store.app.libraryDirty++;
       toast("Saved");

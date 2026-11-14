@@ -7,6 +7,7 @@
     overflow: hidden;
     background: #000;
     color: #fff;
+    color-scheme: dark;  /* the reader is dark in both themes, its drop-down lists too */
     touch-action: pan-y pinch-zoom;
     user-select: none;
     /* plugin overlay boxes, from the reader settings (reader.js sets them). A plugin's css that sets
@@ -56,7 +57,7 @@
         border-right-color: transparent;
         border-radius: 50%;
         pointer-events: none;
-        animation: btn-spin 0.7s linear infinite;
+        animation: spin 0.7s linear infinite;
       }
     }
 
@@ -529,12 +530,16 @@
       & .d-opt {
         min-height: 40px;
         padding: 0 12px;
-        background: #2a2d35;
+        background-color: #2a2d35;  /* not "background": a select keeps its arrow (base.css) */
         border: 0;
         border-radius: 6px;
         color: #fff;
         font: inherit;
         cursor: pointer;
+      }
+
+      & select {
+        padding-right: 34px;  /* room for the arrow */
       }
 
       & button:disabled {
