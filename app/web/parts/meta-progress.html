@@ -1,0 +1,10 @@
+<!-- metadata matching in progress (Settings → Metadata and the Needs attention lists) -->
+<template x-if="$store.app.metaProgress">
+  <div class="meta-progress" x-data="{ get p() { return $store.app.metaProgress } }">
+    <div class="head"><b x-text="`Matching metadata: ${p.done} of ${p.total} series`"></b>
+      <span x-text="p.pct + '%'"></span></div>
+    <div class="meta-bar" role="progressbar" :aria-valuenow="p.done" aria-valuemin="0" :aria-valuemax="p.total">
+      <i :style="`width:${Math.max(p.pct, 1)}%`"></i></div>
+    <small x-text="[p.current && 'Now: ' + p.current, p.left].filter(Boolean).join(' · ')"></small>
+  </div>
+</template>

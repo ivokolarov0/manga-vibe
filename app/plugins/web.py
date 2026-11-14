@@ -14,12 +14,18 @@ The page is put together with the switched-on plugins when it loads. Switching o
 adds or takes out its markup in place (app.js, from GET /api/plugins/<id>/ui); no reload.
 """
 import html as html_lib
+import re
 from urllib.parse import quote
 
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
+from app import config
 from app.plugins import Context, manager
+
+# markup the page uses in more than one place: <!-- part:<name> --> is app/web/parts/<name>.html
+PARTS_DIR = config.WEB_DIR / "parts"
+PART = re.compile(r"<!-- part:([a-z0-9-]+) -->")
 
 # where plugin markup can go: slot name -> where it is in the page
 SLOTS = {
@@ -46,9 +52,23 @@ def with_ui(plugin) -> bool:
 def render_index(page: str) -> str:
     """index.html with the switched-on plugins' markup in its slots and their scripts."""
     plugins = manager.enabled()
-    page = fill_slots(page, plugins)
+    page = fill_slots(fill_parts(page), plugins)
     scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in plugins if p.js)
     return page.replace("<!-- slot:scripts -->", scripts)
+
+
+def fill_parts(markup: str, depth: int = 0) -> str:
+    """The page with each <!-- part:<name> --> replaced by app/web/parts/<name>.html (which can hold
+    parts and slots of its own). Put together on each request like the slots: no build step. A part
+    that isn't there is an error, not an empty place (a test loads the page)."""
+    def part(m):
+        path = PARTS_DIR / f"{m.group(1)}.html"
+        if not path.is_file():
+            raise ValueError(f"No part {m.group(1)!r} in {PARTS_DIR}")
+        if depth >= 4:
+            raise ValueError(f"Part {m.group(1)!r} is nested too deep (does it include itself?)")
+        return fill_parts(path.read_text(encoding="utf-8").strip(), depth + 1)
+    return PART.sub(part, markup)
 
 
 def fill_slots(markup: str, plugins) -> str:
