@@ -1019,6 +1019,8 @@ function seriesView() {
       const app = this.$store.app, id = app.id, tab = app.params.tab || "";
       this.loadedFor = `${id}|${tab}`;
       this.error = "";
+      // another series: drop the old one now, so the page shows "Loading…" instead of it until the new one is here
+      if (this.s && String(this.s.id) !== String(id)) Object.assign(this, { s: null, books: [] });
       let s, books;
       try {
         [s, books] = await Promise.all([api(`/api/series/${id}`),
