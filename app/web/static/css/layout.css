@@ -168,7 +168,7 @@
   }
 
   main {
-    max-width: 1400px;
+    max-width: var(--page-max);
     margin: 0 auto;
     padding: 14px 12px calc(84px + var(--safe-bottom));
 
@@ -265,7 +265,7 @@
       z-index: 9;
       justify-content: flex-start;
       height: var(--top-nav-height);
-      padding: 0 max(0px, (100% - 1400px) / 2);
+      padding: 0 max(0px, (100% - var(--page-max)) / 2);
       border-top: 0;
       border-bottom: 1px solid var(--border);
 
@@ -290,7 +290,7 @@
       }
 
       @media (min-width: 700px) {
-        padding: 0 max(8px, (100% - 1400px) / 2 + 8px);
+        padding: 0 max(8px, (100% - var(--page-max)) / 2 + 8px);
 
         & a {
           flex: none;
