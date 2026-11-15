@@ -29,6 +29,8 @@ DEFAULT_SETTINGS = {
     "card_size": "medium",         # small | medium | large
     "grid_columns": "auto",        # auto (from the screen width and card size) | 4 | 5 | 6 | 8 | 10 | 12
     "page_width": "contained",     # contained (at most 1400px) | full: the Library and Continue grids fill the screen
+    "page_width_series": False,    # with page_width full: the series page fills the screen too
+    "card_width": "auto",          # auto (from card_size) | a card's minimum width in px, with grid_columns auto (wide screens)
     "nav_position": "bottom",      # bottom | top: where the Library / Continue bar sits
     "library_listing": "lazy",     # lazy (infinite scroll) | paged (numbered pages)
     "library_page_size": 80,       # series per page in paged mode: 40 | 80 | 120 (see PAGE_SIZES)
@@ -200,7 +202,8 @@ PERSONAL_SETTINGS = {"theme", "reader_mode", "reader_fit", "auto_fullscreen", "p
                      "overlay_outline", "reader_brightness", "reader_contrast", "reader_colors",
                      # the library page's own "per page" picker and grid/list switch, there for everyone
                      "library_page_size", "library_view",
-                     "grid_columns", "page_width"}  # what suits depends on the person's screen
+                     # what suits depends on the person's screen
+                     "grid_columns", "card_width", "page_width", "page_width_series"}
 
 # The "per page" choices: they divide evenly by 2, 4, 5, 8 and 10 columns (120 also by 3, 6 and 12), so
 # the last row of a page is full at most widths. Sizes saved before (30, 60) map to the next one up.

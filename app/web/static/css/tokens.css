@@ -55,10 +55,12 @@
     --card: 108px;
 
     /* the widest the page content gets (main, and the top nav lined up with it). Settings → Display →
-       Page width: Full width lifts it on the Library and Continue grids (main.home, see index.html) */
+       Page width: Full width lifts it on the Library and Continue grids (main.home, see index.html),
+       and on the series page too when that's ticked (data-width-series) */
     --page-max: 1400px;
 
-    &[data-width="full"]:has(main.home) {
+    &[data-width="full"]:has(main.home),
+    &[data-width="full"][data-width-series]:has(main.series-page) {
       --page-max: 100%;
     }
 
@@ -115,6 +117,12 @@
 
       &[data-card="large"] {
         --card: 190px;
+      }
+
+      /* Settings → Display → Card width (common.js sets --card-width): the person's own, instead of the
+         card size's. Only here: on a phone the card size's few columns stay */
+      &[data-card-width] {
+        --card: var(--card-width);
       }
     }
 

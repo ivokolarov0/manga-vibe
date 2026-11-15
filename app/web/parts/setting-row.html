@@ -1,3 +1,5 @@
-<!-- one plain setting: r is an entry of SETTING_ROWS (app.js), in an x-for over a page's rows -->
-<label class="setting-row" x-show="!r.show || r.show(st)"><span class="label"><span x-text="r.label"></span><small x-show="r.hint" x-text="r.hint"></small></span>
-  <select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in r.options" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></label>
+<!-- one plain setting: r is an entry of SETTING_ROWS (app.js), in an x-for over a page's rows;
+     a dropdown, or a checkbox for an on/off one (r.check) -->
+<label class="setting-row" :class="{ sub: r.sub }" x-show="!r.show || r.show(st)"><span class="label"><span x-text="r.label"></span><small x-show="r.hint" x-text="r.hint"></small></span>
+  <template x-if="r.check"><input type="checkbox" :checked="st[r.key] === 'true'" @change="st[r.key] = String($event.target.checked); save(r.key)"></template>
+  <template x-if="!r.check"><select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in r.options" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></template></label>

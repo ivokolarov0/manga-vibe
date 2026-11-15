@@ -99,8 +99,9 @@
       <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>Continue</a>
   </nav>
 
-  <!-- home: the Library and Continue grids, which Settings → Display → Page width may let fill the screen -->
-  <main x-data :class="{ home: ['library', 'continue'].includes($store.app.view) }">
+  <!-- home: the Library and Continue grids, which Settings → Display → Page width may let fill the screen
+       (series-page: so may the series page, when that's ticked too) -->
+  <main x-data :class="{ home: ['library', 'continue'].includes($store.app.view), 'series-page': $store.app.view === 'series' }">
     <!-- ============ Android browser: offer the app (android/) ============ -->
     <div class="app-banner" x-data x-show="$store.app.appBanner && $store.app.view === 'library'" x-cloak>
       <img src="/static/icons/icon-192.png" alt="">
