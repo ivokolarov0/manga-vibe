@@ -730,6 +730,12 @@ JPEG pages are converted too.
   `<html data-theme>` is always `dark` or `light` (`applyTheme()` in `common.js`), so custom.css
   rules for `[data-theme="light"]` keep working. An inline script in `<head>` sets the theme used
   last before the first paint (no flash).
+- **Later: the sun/moon button left the top bar.** You pick a theme once, so it took room in the bar
+  for nothing. The theme moved to Settings → Display only, and became each person's own setting
+  (like Settings → Reader, starting from the owner's): people who aren't admins see the Display page
+  with just that row. Per-device choices went with the button (the old `localStorage "theme"` is
+  cleared, or it would win over the setting with no way to change it); "Match device" covers a
+  phone in dark and a desktop in light.
 - **One SVG sprite for icons** at the top of `index.html` (`<symbol id="i-…">`, line icons on a 24
   grid), used as `<svg class="ic"><use href="#i-star"/></svg>` or `icon("star")` in scripts. It
   replaces the emoji and text symbols (they looked different on every device and sat off-centre).

@@ -78,23 +78,16 @@ const icon = (name, cls = "") =>
 /* A Settings menu icon: the name of a sprite icon ("folder"), or any character (a plugin's emoji). */
 const navIcon = (x) => (document.getElementById("i-" + x) ? icon(x) : esc(x));
 
-/* Theme. Settings → Display has the app's theme: "dark", "light" or "auto" (follows the device).
-   The sun/moon button in the top bar picks the other one for this device only (localStorage
-   "theme"), which wins over the app's theme. Tapping the button back to what the app's theme gives
-   ends the device's own choice, so the device follows the app (and "auto") again.
+/* Theme. Settings → Display has it, each person's own: "dark", "light" or "auto" (follows the device).
    <html data-theme> is always "dark" or "light": that is what the CSS and custom.css look at. */
 const lightDevice = window.matchMedia("(prefers-color-scheme: light)");
 // a theme setting as "dark" or "light"
 const themeOf = (choice) => (choice === "auto" ? (lightDevice.matches ? "light" : "dark") : choice === "light" ? "light" : "dark");
-function deviceTheme() {
-  try {
-    const t = localStorage.getItem("theme");
-    return t === "dark" || t === "light" ? t : "";
-  } catch { return ""; }
-}
+// the top bar's old sun/moon button kept a choice per device: it would win over the setting forever
+try { localStorage.removeItem("theme"); } catch {}
 function applyTheme() {
   const root = document.documentElement;
-  const choice = deviceTheme() || settings.theme;
+  const choice = settings.theme;
   // the settings aren't loaded yet (e.g. at the login): keep what index.html put there
   if (!choice) return root.dataset.theme;
   const theme = themeOf(choice);
@@ -107,20 +100,14 @@ function applyTheme() {
   return theme;
 }
 lightDevice.addEventListener("change", applyTheme);
-/* Change the theme with the colours fading over, not snapping. choice: "dark" | "light" for this
-   device, or "" to follow Settings → Display again. */
-function setDeviceTheme(choice) {
-  try { choice ? localStorage.setItem("theme", choice) : localStorage.removeItem("theme"); } catch {}
+/* Change the theme with the colours fading over, not snapping. choice: a theme setting. */
+function setTheme(choice) {
+  settings.theme = choice;
   const root = document.documentElement;
   root.classList.add("theme-anim");
-  clearTimeout(setDeviceTheme.timer);
-  setDeviceTheme.timer = setTimeout(() => root.classList.remove("theme-anim"), 400);
+  clearTimeout(setTheme.timer);
+  setTheme.timer = setTimeout(() => root.classList.remove("theme-anim"), 400);
   return applyTheme();
-}
-function toggleTheme() {
-  const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
-  // back to what the app's theme gives: no choice of its own any more
-  return setDeviceTheme(settings.theme && themeOf(settings.theme) === next ? "" : next);
 }
 
 /* App settings (theme, reader defaults, ...). One shared object; reload with loadSettings(). */

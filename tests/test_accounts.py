@@ -92,7 +92,10 @@ def test_each_account_reads_on_its_own(client, accounts_on):
     assert other.get("/api/settings").json()["reader_mode"] == "vertical"
     assert client.get("/api/settings").json()["reader_mode"] != "vertical"
     assert other.get(f"/api/series/{sid}").json()["direction"]["mode"] == "vertical"
-    assert other.put("/api/settings", json={"theme": "light"}).status_code == 403
+    assert other.put("/api/settings", json={"card_size": "large"}).status_code == 403
+    # the theme is each one's own too
+    assert other.put("/api/settings", json={"theme": "light"}).json()["theme"] == "light"
+    assert client.get("/api/settings").json()["theme"] != "light"
     # the library page's own "per page" picker is for everyone
     assert other.put("/api/settings", json={"library_page_size": 120}).json()["library_page_size"] == 120
     assert client.get("/api/settings").json()["library_page_size"] != 120
