@@ -31,6 +31,15 @@ def test_book_order_and_revisions(client):
     assert hidden == ["Hana_to_Akuma_v01_ch03_[OT].zip"]
 
 
+def test_list_view_details(client):
+    names = series_by_name(client)
+    # the last book in reading order, skipping the unnumbered one (the omake) after it
+    assert names["Hana to Akuma"]["latest"] == "Ch 52"
+    assert names["Series B"]["latest"] == "Ch 5"
+    assert all(isinstance(s["updated_at"], int) and abs(s["updated_at"] - time.time()) < 86400
+               for s in names.values())
+
+
 def test_image_folder_book(client):
     sid = series_by_name(client)["Series B"]["id"]
     books = client.get(f"/api/series/{sid}/books").json()

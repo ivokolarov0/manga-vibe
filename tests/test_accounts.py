@@ -99,6 +99,10 @@ def test_each_account_reads_on_its_own(client, accounts_on):
     # the library page's own "per page" picker is for everyone
     assert other.put("/api/settings", json={"library_page_size": 120}).json()["library_page_size"] == 120
     assert client.get("/api/settings").json()["library_page_size"] != 120
+    # and the grid/list switch
+    assert client.get("/api/settings").json()["library_view"] == "grid"
+    assert other.put("/api/settings", json={"library_view": "list"}).json()["library_view"] == "list"
+    assert client.get("/api/settings").json()["library_view"] == "grid"
     # and saved searches
     other.post("/api/plugins/saved-searches/api/searches", json={"name": "Mine", "query": "fav=1"})
     assert [x["name"] for x in other.get("/api/plugins/saved-searches/api/searches").json()] == ["Mine"]

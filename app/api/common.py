@@ -111,6 +111,24 @@ def series_counts(db, series_ids):
     return out
 
 
+def latest_labels(db, series_ids):
+    """{series_id: label of its last book in reading order, e.g. "Vol 12 Ch 120"} (the library's list
+    view). Extras and books without a volume or chapter number are skipped unless a series has
+    nothing else."""
+    if not series_ids:
+        return {}
+    shown = and_(Book.series_id.in_(series_ids), Book.missing_since.is_(None), Book.hidden.is_(False))
+    numbered = and_(func.coalesce(Book.override_extra, Book.extra).is_not(True),
+                    (func.coalesce(Book.override_volume, Book.volume).is_not(None)
+                     | func.coalesce(Book.override_chapter, Book.chapter).is_not(None)))
+    # per series: the highest sort_index, of the numbered books first
+    ranked = (select(Book.id, func.row_number().over(
+        partition_by=Book.series_id, order_by=(case((numbered, 0), else_=1), Book.sort_index.desc())).label("n"))
+              .where(shown).subquery())
+    books = db.query(Book).join(ranked, and_(ranked.c.id == Book.id, ranked.c.n == 1)).all()
+    return {b.series_id: book_label(b) for b in books}
+
+
 def derived_status(series, counts):
     if series.reading_status:
         return series.reading_status
