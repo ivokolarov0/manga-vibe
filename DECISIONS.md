@@ -207,6 +207,20 @@ Choices made where the spec was open. Newest at the bottom.
 - **Daily check, user decides**: the server asks GitHub once a day (unauthenticated API, 4 requests);
   the page shows a toast that stays until **Update now**, **Skip this version** (stored on the server,
   for all devices) or **Later** (this browser, one day).
+- **Going back on purpose** (issue #181): Settings → Updates lists earlier releases (two GitHub
+  requests, only when the owner presses Show versions: releases, and tags for their commits), plus
+  the versions still in `/data/code` and the image's own code, which need no download. Releases newer
+  than the running one aren't listed; that's what Update is for. The version left becomes the
+  skipped one (when it's the newest), so the toast doesn't offer it straight back.
+- **The database across versions**: migrations still only go forward. Every install whose version
+  has more migrations than the database copies it first (SQLite's backup, to
+  `/data/code/.db-backups/schema-<n>.db`, newest 3 kept). Each version's migration count is found when
+  it's tested (`import app.main` in a separate process) and kept in its `.info.json`. Going back to a
+  version with fewer migrations needs a choice: put back the copy at its count (changes since then are
+  lost), or keep the newer database (older code ignores columns it doesn't know, and its own
+  migrations don't run again because `schema_version` is higher, but data a newer migration rewrote may
+  confuse it). Without a copy, only "keep" is offered. The copy is put back right before the restart,
+  after the switch, and a failed restore undoes the switch.
 
 
 ## Library filters: A–Z and filter panel (issue #48)
@@ -278,6 +292,11 @@ Choices made where the spec was open. Newest at the bottom.
   anything.
 - **Only single-file plugins in the plugins folder** are updated. Built-in plugins come with the app;
   package folders would need a different download.
+- **Going back** (issue #181): the copies updates keep in `plugins/.backup/` can be put back with no
+  download, and any published release can be installed by its tag (older ones too). Both go through
+  the same checks as an update (loads, same id, new permissions approved), and the installed version
+  is kept in `.backup/` in turn, so going forward again works the same way. Going back from the newest
+  release skips it, so the daily check doesn't offer it straight back.
 
 ## A page per plugin
 

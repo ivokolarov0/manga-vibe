@@ -173,6 +173,7 @@ document.addEventListener("alpine:init", () => {
     progressDirty: 0,    // bumped after the reader closes and its last progress save is done
     update: null,        // GET /api/update: running version, newest version on GitHub
     updating: null,      // an install in progress: { state, message, error }
+    updatingBack: false, // ...that goes back to an earlier version
     theme: document.documentElement.dataset.theme,  // "dark" | "light", as shown now (applyTheme)
     inApp: !!androidApp, // running inside the Android app (android/)
     appBanner: ANDROID && !androidApp && !appBannerDismissed(),  // "Read in the app" on the library
@@ -323,13 +324,38 @@ async function refreshUpdate() {
   try { Alpine.store("app").update = await api("/api/update"); } catch {}
 }
 
-/* Install a version, follow its progress, then reload the page when the new version answers. */
-async function installUpdate(sha) {
+/* The version is older than the database (updater.NeedsDbChoice): put back the copy made before
+   newer versions changed it, keep the newer database, or cancel. Returns "restore", "keep" or null. */
+function askDatabase(d, label) {
+  const older = `${label} is older than your database: newer versions have changed it since.`;
+  if (d.backup) {
+    const when = d.backup.date ? new Date(d.backup.date).toLocaleString() : "an earlier update";
+    if (confirm(`${older}\n\nPut back the copy of the database made on ${when}? Reading progress, ` +
+                "settings and other changes made since then are lost.\n\nCancel to see the other choice.")) return "restore";
+  }
+  if (confirm(`${d.backup ? "Or keep" : `${older}\n\nKeep`} the newer database? ${label} may not understand ` +
+              "what newer versions added, and parts of it can break. Updating again fixes that.")) return "keep";
+  return null;
+}
+
+/* Install a version (how.rollback: an earlier one), follow its progress, then reload the page when
+   the new version answers. */
+async function installUpdate(sha, how = {}) {
   const app = Alpine.store("app");
+  const ask = (d) => {
+    const db = askDatabase(d, how.label || "This version");
+    if (db) return installUpdate(sha, { ...how, db });
+    app.updating = null;
+    toast("Nothing was changed");
+    refreshUpdate();
+  };
   app.updating = { state: "installing", message: "Starting…", error: null };
+  app.updatingBack = !!how.rollback;
   try {
-    await api("/api/update/install", { method: "POST", body: { sha } });
+    await api(how.rollback ? "/api/update/rollback" : "/api/update/install",
+              { method: "POST", body: { sha, db: how.db || null } });
   } catch (e) {
+    if (e.status === 409 && e.detail?.needs_db) return ask(e.detail.needs_db);
     app.updating = { state: "error", message: "", error: e.message };
     return;
   }
@@ -340,6 +366,7 @@ async function installUpdate(sha) {
     try { u = await api("/api/update"); } catch { restarted = true; continue; }  // down while restarting
     if (u.current.sha === sha) { location.reload(); return; }
     if (u.status.state === "error") {
+      if (u.status.needs_db && !how.db) return ask(u.status.needs_db);  // known once it was downloaded
       app.updating = { state: "error", message: "", error: u.status.error };
       app.update = u;
       return;
@@ -1834,6 +1861,27 @@ Your files are not touched. `
     },
     async unskipUpdate() { this.$store.app.update = await api("/api/update/skip", { method: "DELETE" }); },
     installUpdate() { installUpdate(this.upd.available.sha); },
+    // ---- going back to an earlier version (GET /api/update/versions, only when asked: it asks GitHub)
+    older: null, olderError: "", loadingOlder: false,
+    async loadOlder() {
+      this.loadingOlder = true;
+      try {
+        const r = await api("/api/update/versions");
+        this.older = r.versions;
+        this.olderError = r.error || "";
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.loadingOlder = false; }
+    },
+    olderText(v) {
+      const where = v.builtin ? "Built into the Docker image, no download"
+        : v.on_disk ? "Still on the server, no download" : "Downloaded from GitHub";
+      return [v.date && new Date(v.date).toLocaleDateString(), v.message, where].filter(Boolean).join(" · ");
+    },
+    goBack(v) {
+      const cur = this.upd?.current?.short || "the running version";
+      if (!confirm(`Go back to ${v.short}? MangaVibe restarts with it. ${cur} won't be offered again ` +
+                   "until a newer version is out.")) return;
+      installUpdate(v.sha, { rollback: true, label: v.short });
+    },
     async loadProviders() { this.providers = await api("/api/metadata/providers").catch(() => this.providers); },
     async togglePlugin(p) {
       try { await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } }); }
@@ -1903,23 +1951,48 @@ Your files are not touched. `
         toast(clear ? "GitHub token removed" : "GitHub token saved");
       } catch (e) { toast(e.message, 6000, "error"); }
     },
-    async installPluginUpdate(p) {
+    installPluginUpdate(p) {
       if (!confirm(`Install ${p.name} ${p.update.latest} from github.com/${p.update.repo}?`)) return;
+      this.putInPluginVersion(p, "install", null, p.update.latest);
+    },
+    // going back: a copy in plugins/.backup (no download), or any release picked from the list
+    restorePluginVersion(p, version) {
+      if (!confirm(`Go back to ${p.name} ${version}? It's the copy kept when you updated it.`)) return;
+      this.putInPluginVersion(p, "restore", version, version);
+    },
+    pluginReleases: {},  // plugin id -> its releases on GitHub, once "Other versions" was pressed
+    pluginPick: {},      // plugin id -> the release picked in that list
+    async loadPluginReleases(p) {
       this.busyAction = p.id + ":update";
-      const install = (accept) => api(`/api/plugins/${p.id}/updates/install`,
-                                      { method: "POST", body: { accept_permissions: accept } });
+      try {
+        const r = await api(`/api/plugins/${p.id}/updates/releases`);
+        this.pluginReleases[p.id] = r.releases.filter((x) => x.version.replace(/^v/, "") !== p.version.replace(/^v/, ""));
+        this.pluginPick[p.id] = this.pluginReleases[p.id][0]?.version || "";
+        if (!this.pluginReleases[p.id].length) toast("No other release found");
+      } catch (e) { toast(e.message, 6000, "error"); } finally { this.busyAction = ""; }
+    },
+    installPluginRelease(p) {
+      const version = this.pluginPick[p.id];
+      if (!version || !confirm(`Install ${p.name} ${version} from github.com/${p.update.repo}?`)) return;
+      this.putInPluginVersion(p, "install", version, version);
+    },
+    async putInPluginVersion(p, what, version, label) {
+      this.busyAction = p.id + ":update";
+      const send = (accept) => api(`/api/plugins/${p.id}/updates/${what}`,
+                                   { method: "POST", body: { accept_permissions: accept, version } });
       try {
         let r;
-        try { r = await install([]); } catch (e) {
+        try { r = await send([]); } catch (e) {
           if (e.status !== 409 || !e.detail.permissions) throw e;
-          // the new version asks for permissions the installed one doesn't have
+          // that version asks for permissions the installed one doesn't have
           const perms = e.detail.permissions;
-          if (!confirm(`${p.name} ${p.update.latest} asks for new permissions:\n\n` +
+          if (!confirm(`${p.name} ${label} asks for new permissions:\n\n` +
                        perms.map((x) => `• ${x}`).join("\n") +
-                       "\n\nAllow them and install the update?")) { toast("Update not installed"); return; }
-          r = await install(perms);
+                       "\n\nAllow them and install it?")) { toast("Nothing was installed"); return; }
+          r = await send(perms);
         }
         this.setPlugins(r);
+        delete this.pluginReleases[p.id];
         toast(r.message);
         this.loadProviders();
       } catch (e) { toast(e.message, 8000, "error"); } finally { this.busyAction = ""; }

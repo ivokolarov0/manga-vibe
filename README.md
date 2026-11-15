@@ -134,6 +134,11 @@ MangaVibe checks for a new version once a day and shows a message. Tap **Update 
 installs the new version and restarts by itself. You don't have to touch Docker. If a new version
 doesn't start 3 times in a row, MangaVibe goes back to the previous one by itself.
 
+If a new version starts but has a problem, go to **Settings → Updates → Go back to an earlier
+version** and pick one. The version you left isn't offered again until a newer one is out. When a
+newer version changed the database, MangaVibe asks first: put back the copy of the database it made
+before that update (changes since then are lost), or keep the newer one.
+
 Once in a while, a version needs a new Docker image, and the message tells you so. Your library,
 progress and settings are kept. The steps are at the end of each install guide:
 [Windows](docs/install/windows.md#when-a-version-needs-a-new-image) ·

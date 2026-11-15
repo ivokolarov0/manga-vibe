@@ -1,4 +1,6 @@
-"""Auto-update: what version runs, what is new on GitHub, install or skip it."""
+"""Auto-update: what version runs, what is new on GitHub, install or skip it, or go back."""
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
@@ -31,8 +33,12 @@ class ShaBody(BaseModel):
     sha: str
 
 
+class InstallBody(ShaBody):
+    db: Literal["restore", "keep"] | None = None  # see updater.NeedsDbChoice
+
+
 @router.post("/install")
-def install(body: ShaBody):
+def install(body: InstallBody):
     if not updater.supported():
         raise HTTPException(400, "Updates only work in the MangaVibe Docker image")
     latest = updater.latest or {}
@@ -41,7 +47,35 @@ def install(body: ShaBody):
     if latest.get("needs_image"):
         raise HTTPException(409, "This version needs a new Docker image. See github.com/ivokolarov0/manga-vibe#updating")
     try:
-        updater.install_in_background(body.sha)
+        updater.install_in_background(body.sha, body.db)
+    except RuntimeError as e:
+        raise HTTPException(409, str(e))
+    return {"ok": True}
+
+
+@router.get("/versions")
+def versions():
+    """Earlier versions to go back to (asks GitHub: only when the owner opens the list)."""
+    if not updater.supported():
+        raise HTTPException(400, "Updates only work in the MangaVibe Docker image")
+    return updater.versions()
+
+
+class RollbackBody(BaseModel):
+    sha: str
+    db: Literal["restore", "keep"] | None = None  # the answer when the version is older than the database
+
+
+@router.post("/rollback")
+def rollback(body: RollbackBody):
+    if not updater.supported():
+        raise HTTPException(400, "Updates only work in the MangaVibe Docker image")
+    try:
+        updater.check_rollback(body.sha, body.db)
+        updater.rollback_in_background(body.sha, body.db)
+    except updater.NeedsDbChoice as e:
+        # 409 with the details: the browser asks what to do with the database and sends it back
+        raise HTTPException(409, {"message": str(e), "needs_db": e.detail})
     except RuntimeError as e:
         raise HTTPException(409, str(e))
     return {"ok": True}

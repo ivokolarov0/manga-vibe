@@ -1,6 +1,7 @@
 """Auto-update: image checks, requirements diff, install/switch/rollback files, API. No network, no real pip."""
 import io
 import json
+import sqlite3
 import tarfile
 from pathlib import Path
 
@@ -42,9 +43,12 @@ def image(monkeypatch, tmp_path):
     return pip_calls
 
 
-def version_files(dockerfile="FROM python\nRUN x\n", req=BASE_REQ, main="X = 1\n"):
-    return {"Dockerfile": dockerfile, "docker/entrypoint.sh": "#!/bin/sh\nexec app\n",
-            "requirements.txt": req, "app/__init__.py": "", "app/main.py": main, "README.md": "skip me"}
+def version_files(dockerfile="FROM python\nRUN x\n", req=BASE_REQ, main="X = 1\n", migrations=None):
+    files = {"Dockerfile": dockerfile, "docker/entrypoint.sh": "#!/bin/sh\nexec app\n",
+             "requirements.txt": req, "app/__init__.py": "", "app/main.py": main, "README.md": "skip me"}
+    if migrations is not None:
+        files["app/db.py"] = f"MIGRATIONS = [None] * {migrations}\n"
+    return files
 
 
 def downloader(files):
@@ -82,7 +86,8 @@ def test_install_switch_and_cleanup(image):
     assert not (d1 / "README.md").exists()  # only the files the app needs
     assert (code / "current").read_text() == SHA1 and not (code / "previous").exists()
     assert json.loads((d1 / ".info.json").read_text()) == {
-        "sha": SHA1, "version": "v1.0.0", "date": "2026-10-01T10:00:00Z", "message": "First"}
+        "sha": SHA1, "version": "v1.0.0", "date": "2026-10-01T10:00:00Z", "message": "First",
+        "migrations": None}  # this test version has no app/db.py
     assert image == []  # same packages as the image: pip is not run
 
     updater.install(SHA2, downloader=downloader(version_files(req=BASE_REQ + "natsort==8.4.0\n")))
@@ -241,7 +246,7 @@ def test_update_api(client, image, monkeypatch):
     assert client.post("/api/update/install", json={"sha": SHA3}).status_code == 409  # not the newest
 
     started = []
-    monkeypatch.setattr(updater, "install_in_background", lambda sha: started.append(sha))
+    monkeypatch.setattr(updater, "install_in_background", lambda sha, db=None: started.append(sha))
     assert client.post("/api/update/install", json={"sha": SHA2}).json() == {"ok": True}
     assert started == [SHA2]
 
@@ -256,3 +261,203 @@ def test_update_api_outside_docker(client):
     assert not client.get("/api/update").json()["supported"]  # tests run without /opt/mangavibe/image
     assert client.post("/api/update/check").status_code == 400
     assert client.get("/api/settings").json()["auto_update"] is True
+    assert client.get("/api/update/versions").status_code == 400
+    assert client.post("/api/update/rollback", json={"sha": SHA1}).status_code == 400
+
+
+# ---------------- going back to an earlier version ----------------
+
+SHA4 = "4" * 40
+
+
+@pytest.fixture
+def dbfile(monkeypatch, tmp_path):
+    """A database of our own at 3 migrations, with a table to tell its copies apart."""
+    f = tmp_path / "mv.db"
+    sql(f, "CREATE TABLE schema_version (version INTEGER)")
+    sql(f, "INSERT INTO schema_version VALUES (3)")
+    sql(f, "CREATE TABLE note (text TEXT)")
+    monkeypatch.setattr(updater, "_db_file", lambda: f)
+    monkeypatch.setattr(updater, "offered", {})
+    monkeypatch.setattr(updater, "pending_restore", None)
+    monkeypatch.setattr(updater, "status", dict(updater.status))
+    return f
+
+
+def sql(f, query):
+    conn = sqlite3.connect(f)
+    try:
+        rows = conn.execute(query).fetchall()
+        conn.commit()
+        return rows
+    finally:
+        conn.close()
+
+
+def offline():
+    raise httpx.ConnectError("offline")
+
+
+def running(monkeypatch, sha):
+    """Pretend the code runs from DATA_DIR/code/<sha>."""
+    monkeypatch.setattr(updater, "__file__", str(config.DATA_DIR / "code" / sha / "app" / "updater.py"))
+
+
+def release(sha, tag, date):
+    return {"sha": sha, "version": tag, "date": date, "message": None, "url": None, "notes": None, "changes": []}
+
+
+def test_go_back_to_the_previous_version_on_disk(image, dbfile, monkeypatch):
+    code = config.DATA_DIR / "code"
+    updater.install(SHA1, downloader=downloader(version_files(migrations=3)),
+                    meta={"version": "v1.0.0", "date": "2026-10-01T00:00:00Z"})
+    assert not (code / ".db-backups").exists()  # as many migrations as the database: no copy needed
+    sql(dbfile, "INSERT INTO note VALUES ('before')")
+    updater.install(SHA2, downloader=downloader(version_files(migrations=4, main="X = 2\n")),
+                    meta={"version": "v1.1.0", "date": "2026-10-02T00:00:00Z"})
+    # v1.1.0 has a migration more: the database was copied before it starts
+    assert sql(code / ".db-backups" / "schema-3.db", "SELECT text FROM note") == [("before",)]
+    # v1.1.0 starts, its migration runs and the owner reads on
+    sql(dbfile, "UPDATE schema_version SET version=4")
+    sql(dbfile, "INSERT INTO note VALUES ('after')")
+    running(monkeypatch, SHA2)
+    monkeypatch.setattr(updater, "fetch_releases", offline)
+
+    vs = updater.versions()
+    assert vs["current"]["short"] == "v1.1.0" and "not reachable" in vs["error"]
+    # still on disk, so GitHub isn't needed
+    assert [(v["short"], v["on_disk"], v["builtin"]) for v in vs["versions"]] == [("v1.0.0", True, False)]
+    with pytest.raises(updater.NeedsDbChoice) as e:
+        updater.check_rollback(SHA1)
+    assert (e.value.detail["have"], e.value.detail["target"]) == (4, 3) and e.value.detail["backup"]["date"]
+
+    def no_download(sha, dest):
+        raise AssertionError("downloaded")
+
+    assert updater.rollback(SHA1, "restore", downloader=no_download) == SHA2
+    assert (code / "current").read_text() == SHA1 and (code / "previous").read_text() == SHA2
+    assert sql(dbfile, "SELECT version FROM schema_version") == [(4,)]  # put back right before the restart
+    updater._finish(SHA2)
+    assert sql(dbfile, "SELECT text FROM note") == [("before",)] and updater.db_schema() == 3
+    assert updater.pending_restore is None
+    assert (code / SHA2 / "app" / "main.py").exists()  # the version left stays: forward again, no download
+
+
+def test_older_than_the_database_without_a_copy(image, dbfile):
+    code = config.DATA_DIR / "code"
+    with pytest.raises(updater.NeedsDbChoice) as e:
+        updater.install(SHA1, downloader=downloader(version_files(migrations=2)))
+    assert e.value.detail == {"have": 3, "target": 2, "backup": None}
+    assert not (code / "current").exists()  # nothing switched
+    with pytest.raises(updater.NeedsDbChoice):
+        updater.install(SHA1, downloader=downloader(version_files(migrations=2)), db_choice="restore")  # no copy
+    updater.install(SHA1, downloader=downloader(version_files(migrations=2)), db_choice="keep")
+    assert (code / "current").read_text() == SHA1
+    assert updater.pending_restore is None and updater.db_schema() == 3
+
+
+def test_versions_list_and_going_back_to_a_release(image, dbfile, monkeypatch, tmp_path, client):
+    from app import db as database
+    code = config.DATA_DIR / "code"
+    (config.IMAGE_DIR / "sha").write_text(SHA1)
+    builtin = tmp_path / "builtin"
+    (builtin / "app").mkdir(parents=True)
+    for name, text in version_files(migrations=3).items():
+        if name.startswith("app/"):
+            (builtin / name).write_text(text)
+    monkeypatch.setattr(config, "BUILTIN_DIR", builtin)
+    updater.install(SHA2, downloader=downloader(version_files(migrations=3)),
+                    meta={"version": "v1.1.0", "date": "2026-10-02T00:00:00Z"})
+    running(monkeypatch, SHA2)
+    monkeypatch.setattr(updater, "fetch_releases", lambda: [
+        release(SHA4, "v1.2.0", "2026-10-03T00:00:00Z"), release(SHA2, "v1.1.0", "2026-10-02T00:00:00Z"),
+        release(SHA3, "v1.0.5", "2026-10-01T12:00:00Z"), release(SHA1, "v1.0.0", "2026-10-01T00:00:00Z")])
+
+    vs = updater.versions()
+    # newer than the running one is an update, not going back; v1.0.0 is the image's own code
+    assert [(v["short"], v["on_disk"], v["builtin"]) for v in vs["versions"]] == [
+        ("v1.0.5", False, False), ("v1.0.0", True, True)]
+    with pytest.raises(RuntimeError, match="isn't in the list"):
+        updater.rollback(SHA4)
+
+    # a release that isn't on disk is downloaded like an update
+    updater.latest = {"sha": SHA2}
+    left = updater.rollback(SHA3, downloader=downloader(version_files(migrations=3)))
+    assert left == SHA2 and (code / "current").read_text() == SHA3
+    assert json.loads((code / SHA3 / ".info.json").read_text())["version"] == "v1.0.5"
+    # the version left is the newest: it's skipped until a newer one is out
+    try:
+        updater.skip_left(left)
+        with database.SessionLocal() as s:
+            assert database.get_setting(s, "update_skipped") == SHA2
+    finally:
+        with database.SessionLocal() as s:
+            database.set_setting(s, "update_skipped", None)
+            s.commit()
+
+    # the image's own code: no download, code/current goes away
+    updater.versions()
+    updater.rollback(SHA1)
+    assert not (code / "current").exists() and (code / "previous").read_text() == SHA3
+
+
+def test_fetch_releases(image, monkeypatch):
+    rels = [RELEASE, {**RELEASE, "tag_name": "v1.5.0-rc", "prerelease": True},
+            {**RELEASE, "tag_name": "v1.6.0", "draft": True},
+            {**RELEASE, "tag_name": "v1.3.0", "name": "Older"}, {**RELEASE, "tag_name": "v0.1.0"}]
+    tags = [{"name": "v1.4.0", "commit": {"sha": SHA2}}, {"name": "v1.3.0", "commit": {"sha": SHA1}},
+            {"name": "v1.5.0-rc", "commit": {"sha": SHA3}}]
+
+    def handler(req):
+        if req.url.path.endswith("/releases"):
+            return httpx.Response(200, json=rels)
+        if req.url.path.endswith("/tags"):
+            return httpx.Response(200, json=tags)
+        return httpx.Response(404)
+
+    monkeypatch.setattr(updater, "_client", lambda: httpx.Client(transport=httpx.MockTransport(handler)))
+    # no drafts or pre-releases, and none whose tag isn't in the tags list
+    assert [(v["version"], v["sha"], v["message"]) for v in updater.fetch_releases()] == [
+        ("v1.4.0", SHA2, None), ("v1.3.0", SHA1, "Older")]
+
+
+def test_rollback_api(client, image, dbfile, monkeypatch):
+    updater.install(SHA1, downloader=downloader(version_files(migrations=3)),
+                    meta={"version": "v1.0.0", "date": "2026-10-01T00:00:00Z"})
+    updater.install(SHA2, downloader=downloader(version_files(migrations=4)),
+                    meta={"version": "v1.1.0", "date": "2026-10-02T00:00:00Z"})
+    sql(dbfile, "UPDATE schema_version SET version=4")
+    running(monkeypatch, SHA2)
+    monkeypatch.setattr(updater, "fetch_releases", offline)
+    assert [v["sha"] for v in client.get("/api/update/versions").json()["versions"]] == [SHA1]
+
+    r = client.post("/api/update/rollback", json={"sha": SHA1})
+    assert r.status_code == 409 and r.json()["detail"]["needs_db"]["target"] == 3  # the browser asks
+    assert client.post("/api/update/rollback", json={"sha": SHA1, "db": "drop"}).status_code == 422
+    assert client.post("/api/update/rollback", json={"sha": SHA3}).status_code == 409  # not in the list
+    started = []
+    monkeypatch.setattr(updater, "rollback_in_background", lambda sha, db=None: started.append((sha, db)))
+    assert client.post("/api/update/rollback", json={"sha": SHA1, "db": "restore"}).json() == {"ok": True}
+    assert started == [(SHA1, "restore")]
+
+
+def test_rollback_in_background_asks_about_the_database(image, dbfile, monkeypatch):
+    """A download is only known to be older than the database once it's there: the status asks."""
+    code = config.DATA_DIR / "code"
+    monkeypatch.setattr(updater, "offered", {SHA1: {**release(SHA1, "v0.9.0", None), "on_disk": False, "builtin": False}})
+    monkeypatch.setattr(updater, "_download", downloader(version_files(migrations=2)))
+    monkeypatch.setattr(updater.time, "sleep", lambda s: None)
+    restarts = []
+    monkeypatch.setattr(updater, "restart", lambda: restarts.append(1))
+
+    def wait():
+        assert updater.lock.acquire(timeout=60)
+        updater.lock.release()
+
+    updater.rollback_in_background(SHA1)
+    wait()
+    assert updater.status["state"] == "error" and not restarts
+    assert updater.status["needs_db"] == {"have": 3, "target": 2, "backup": None}
+    updater.rollback_in_background(SHA1, "keep")
+    wait()
+    assert restarts == [1] and (code / "current").read_text() == SHA1
