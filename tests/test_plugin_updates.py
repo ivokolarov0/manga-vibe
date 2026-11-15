@@ -24,11 +24,14 @@ class FakeGitHub:
 
     def __init__(self):
         self.tag, self.files, self.requests, self.status = "v1.1.0", {}, [], 200
+        self.releases = []  # what /releases lists
 
     def __call__(self, request: httpx.Request):
         self.requests.append(str(request.url))
         if self.status != 200:
             return httpx.Response(self.status, json={"message": "nope"})
+        if request.url.host == "api.github.com" and request.url.path == f"/repos/{REPO}/releases":
+            return httpx.Response(200, json=self.releases)
         if request.url.host == "api.github.com":
             assert request.url.path == f"/repos/{REPO}/releases/latest"
             return httpx.Response(200, json={"tag_name": self.tag,
@@ -49,6 +52,8 @@ def info(client):
 def gh(client):
     from app import plugin_updates
     from app.db import SessionLocal, set_setting
+    for f in (PLUGINS / ".backup").glob("hello-*.py"):  # copies left by other tests
+        f.unlink()
     (PLUGINS / "hello.py").write_text(plugin_file("1.0.0"))
     with SessionLocal() as db:
         set_setting(db, "plugin_updates", {})
@@ -266,7 +271,8 @@ def ghz(client):
     yield fake
     plugin_updates.transport = old
     shutil.rmtree(PLUGINS / PKG, ignore_errors=True)
-    shutil.rmtree(PLUGINS / ".backup" / f"{PKG}-1.0.0", ignore_errors=True)
+    for d in (PLUGINS / ".backup").glob(f"{PKG}-*"):
+        shutil.rmtree(d, ignore_errors=True)
     with SessionLocal() as db:
         set_setting(db, plugin_updates.TOKEN_KEY, "")
         db.commit()
@@ -348,6 +354,89 @@ def test_reload_loads_a_folder_plugins_modules_fresh(client, ghz):
     (PLUGINS / PKG / "core.py").write_text('VERSION = "9.9.10"\n')  # another size: no stale .pyc
     client.post("/api/plugins/reload")
     assert pkg_info(client)["version"] == "9.9.10"
+
+
+def test_folder_plugin_restores_its_previous_version(client, ghz):
+    client.post("/api/plugins/hellopkg/updates/check")
+    ghz.zips["v1.1.0"] = source_zip(pkg_files("1.1.0"))
+    client.post("/api/plugins/hellopkg/updates/install")
+    assert pkg_info(client)["update"]["backups"] == ["1.0.0"]
+    r = client.post("/api/plugins/hellopkg/updates/restore", json={"version": "1.0.0"})
+    assert r.status_code == 200, r.text
+    assert r.json()["message"] == "Hello folder went back from 1.1.0 to 1.0.0"
+    assert pkg_info(client)["version"] == "1.0.0"  # core.py was loaded fresh again
+    assert (PLUGINS / PKG / "core.py").read_text() == pkg_files("1.0.0")["core.py"]
+    assert (PLUGINS / ".backup" / f"{PKG}-1.1.0" / "core.py").read_text() == pkg_files("1.1.0")["core.py"]
+
+
+# ---------------- going back to an earlier version
+
+def test_restore_the_previous_version(client, gh):
+    client.post("/api/plugins/hello/updates/check")
+    assert info(client)["update"]["backups"] == []
+    gh.files["v1.1.0"] = plugin_file("1.1.0")
+    client.post("/api/plugins/hello/updates/install")
+    assert info(client)["update"]["backups"] == ["1.0.0"]
+
+    before = len(gh.requests)
+    r = client.post("/api/plugins/hello/updates/restore", json={"version": "1.0.0"})
+    assert r.status_code == 200, r.text
+    assert r.json()["message"] == "Hello went back from 1.1.0 to 1.0.0"
+    assert gh.requests[before:] == []  # from plugins/.backup, no download
+    assert (PLUGINS / "hello.py").read_text() == plugin_file("1.0.0")
+    u = info(client)["update"]
+    assert info(client)["version"] == "1.0.0" and u["backups"] == ["1.1.0"]  # forward again, the same way
+    # the version left isn't offered again, even after a check
+    assert u["available"] and u["skipped"]
+    assert client.post("/api/plugins/hello/updates/check").json()["update"]["skipped"]
+    # ...but a newer one is
+    gh.tag = "v1.2.0"
+    u = client.post("/api/plugins/hello/updates/check").json()["update"]
+    assert u["available"] and not u["skipped"]
+
+    assert client.post("/api/plugins/hello/updates/restore", json={"version": "0.9.0"}).status_code == 400
+    assert client.post("/api/plugins/hello/updates/restore", json={}).status_code == 400
+
+
+def test_restore_checks_like_an_update(client, gh):
+    from app.plugins import manager
+    backup = PLUGINS / ".backup"
+    backup.mkdir(exist_ok=True)
+    # an old copy asks for a permission the installed version doesn't
+    (backup / "hello-0.9.0.py").write_text(plugin_file("0.9.0", permissions=["Reads your files"]))
+    (backup / "hello-0.8.0.py").write_text(plugin_file("0.8.0", plugin_id="other"))
+    (backup / "hello-0.7.0.py").write_text(plugin_file("0.7.0", broken=True))
+    (backup / "hello-world-2.0.py").write_text(plugin_file("2.0", plugin_id="world"))  # another plugin's copy
+    assert info(client)["update"]["backups"] == ["0.9.0", "0.8.0", "0.7.0"]
+
+    r = client.post("/api/plugins/hello/updates/restore", json={"version": "0.9.0"})
+    assert r.status_code == 409 and r.json()["detail"]["permissions"] == ["Reads your files"]
+    assert "no plugin 'hello'" in client.post("/api/plugins/hello/updates/restore", json={"version": "0.8.0"}).text
+    assert "doesn't load" in client.post("/api/plugins/hello/updates/restore", json={"version": "0.7.0"}).text
+    assert manager.plugins["hello"].version == "1.0.0" and (PLUGINS / "hello.py").read_text() == plugin_file("1.0.0")
+
+    r = client.post("/api/plugins/hello/updates/restore",
+                    json={"version": "0.9.0", "accept_permissions": ["Reads your files"]})
+    assert r.status_code == 200 and info(client)["version"] == "0.9.0"
+
+
+def test_install_an_earlier_release(client, gh):
+    gh.releases = [{"tag_name": "v1.2.0-beta", "prerelease": True}, {"tag_name": "v1.1.0", "published_at": "2026-10-02"},
+                   {"tag_name": "v1.0.0"}, {"tag_name": "v0.9.0"}, {"tag_name": "draft", "draft": True}]
+    assert [x["version"] for x in client.get("/api/plugins/hello/updates/releases").json()["releases"]] == [
+        "v1.1.0", "v1.0.0", "v0.9.0"]
+    client.post("/api/plugins/hello/updates/check")
+    gh.files["v0.9.0"] = plugin_file("0.9.0")
+    r = client.post("/api/plugins/hello/updates/install", json={"version": "v0.9.0"})
+    assert r.status_code == 200, r.text
+    assert r.json()["message"] == "Hello went back from 1.0.0 to 0.9.0"
+    # 1.0.0 wasn't the newest release, so the newest is still offered
+    u = info(client)["update"]
+    assert u["available"] and not u["skipped"] and u["backups"] == ["1.0.0"]
+    assert client.post("/api/plugins/hello/updates/install", json={"version": "0.9"}).status_code == 400  # installed
+    assert client.post("/api/plugins/hello/updates/install", json={"version": "../x"}).status_code == 400
+    gh.status = 500
+    assert client.get("/api/plugins/hello/updates/releases").status_code == 400
 
 
 def test_version_compare():

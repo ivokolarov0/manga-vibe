@@ -11,6 +11,14 @@ How it works (see DECISIONS.md, "Auto-update"):
 - If the new version changes the Dockerfile or the entrypoint, files alone are not enough: the
   update is refused and the user is told to get a new image.
 - A version that fails to start three times is put back by the entrypoint (DATA_DIR/code/failed).
+
+Going back (Settings -> Updates, "Go back to an earlier version"): any earlier release, the
+versions still on disk (no download) or the code built into the image. The version that was left
+is skipped, so it isn't offered again until a newer one is out.
+Database migrations only go forward. Before a version that has more migrations than the database
+starts, the database is copied to DATA_DIR/code/.db-backups/schema-<n>.db. Going back to a version
+with fewer migrations than the database needs the owner's choice: put that copy back (changes since
+then are lost) or keep the newer database (the older code may not understand it).
 """
 import io
 import json
@@ -18,6 +26,7 @@ import logging
 import os
 import re
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tarfile
@@ -38,9 +47,24 @@ CHECK_EVERY = 24 * 3600
 IMAGE_FILES = {"Dockerfile": "Dockerfile", "docker/entrypoint.sh": "entrypoint.sh"}  # repo path -> copy in image
 KEEP_FILES = ("app/", "examples/", "requirements.txt", "Dockerfile", "docker/entrypoint.sh")
 
+DB_BACKUPS = ".db-backups"  # in code/: copies of the database from before migrations ran
+KEEP_DB_BACKUPS = 3
+
 lock = threading.Lock()
 latest = None   # last check result: {sha, version, date, message, url, needs_image, checked_at} or None
-status = {"state": "idle", "message": "", "error": None, "checked_at": None}  # state: idle|checking|installing|restarting|error
+# state: idle|checking|installing|restarting|error; needs_db: see NeedsDbChoice
+status = {"state": "idle", "message": "", "error": None, "checked_at": None, "needs_db": None}
+offered = {}    # sha -> version, from the last versions() list: what a rollback may switch to
+pending_restore = None  # schema number of the database copy to put back right before the restart
+
+
+class NeedsDbChoice(RuntimeError):
+    """The version is older than the database: the owner must choose to restore a copy or keep it."""
+
+    def __init__(self, have, target, backup):
+        self.detail = {"have": have, "target": target, "backup": backup}
+        super().__init__("This version is older than your database: it knows "
+                         f"{target} of the database's {have} changes.")
 
 
 def code_dir():
@@ -146,6 +170,20 @@ def release_info(rel, sha):
             **release_notes(rel.get("body") or "")}
 
 
+def fetch_releases():
+    """The newest published releases (no drafts or pre-releases), newest first, with their commits.
+    Two requests: the releases, and the tags (which name each tag's commit)."""
+    api = f"https://api.github.com/repos/{config.UPDATE_REPO}"
+    with _client() as c:
+        r = c.get(f"{api}/releases", params={"per_page": 30})
+        r.raise_for_status()
+        rels = [x for x in r.json() if not x.get("draft") and not x.get("prerelease")]
+        r = c.get(f"{api}/tags", params={"per_page": 100})
+        r.raise_for_status()
+        shas = {t["name"]: t["commit"]["sha"] for t in r.json()}
+    return [release_info(rel, shas[rel["tag_name"]]) for rel in rels if rel["tag_name"] in shas]
+
+
 _PR_CREDIT = re.compile(r"\s+by @\S+ in https://github\.com/\S+/pull/(\d+)\s*$")
 
 
@@ -189,7 +227,7 @@ def check(force=False):
         return latest
     if status["state"] in ("installing", "restarting"):
         return latest
-    status.update(state="checking", error=None)
+    status.update(state="checking", error=None, needs_db=None)
     try:
         latest = fetch_latest()
         status.update(state="idle", message="")
@@ -321,15 +359,44 @@ def _run(cmd, cwd, env=None, timeout=900):
     if p.returncode != 0:
         tail = "\n".join((p.stderr or p.stdout).strip().splitlines()[-8:])
         raise RuntimeError(tail or f"exit code {p.returncode}")
+    return p.stdout
 
 
-def install(sha=None, downloader=_download):
-    """Download, prepare and switch to a version. Returns the new folder. Raises with a readable message."""
+# Run in a version's folder: does it start, and how many database migrations does it know?
+_TEST = ("import app.main\n"
+         "try:\n    from app.db import MIGRATIONS\nexcept Exception:\n    MIGRATIONS = None\n"
+         "print('MIGRATIONS', -1 if MIGRATIONS is None else len(MIGRATIONS))\n")
+
+
+def _test(folder, import_main=True):
+    """Import the version in `folder` in a separate process. Returns its number of migrations
+    (None when it can't tell). Raises when it doesn't import."""
+    script = _TEST if import_main else _TEST.replace("import app.main\n", "", 1)
+    with tempfile.TemporaryDirectory() as tmp:
+        env = {**os.environ, "DATA_DIR": tmp, "START_WORKERS": "0",
+               "PYTHONPATH": os.pathsep.join([str(folder / "deps"), str(folder)])}
+        out = _run([sys.executable, "-c", script], cwd=folder, env=env, timeout=120) or ""
+    m = re.search(r"^MIGRATIONS (-?\d+)$", out, re.M)
+    return int(m.group(1)) if m and int(m.group(1)) >= 0 else None
+
+
+def install(sha=None, downloader=_download, meta=None, db_choice=None):
+    """Download, prepare and switch to a version. Returns the new folder. Raises with a readable message.
+    `meta` is what the folder remembers of the version (default: the last check's); `db_choice`
+    is the owner's answer to NeedsDbChoice ("restore" or "keep")."""
     sha = sha or (latest or {}).get("sha")
     if not sha or not re.fullmatch(r"[0-9a-f]{40}", sha):
         raise RuntimeError("No version to install. Check for updates first.")
     if latest and latest.get("sha") == sha and latest.get("needs_image"):
         raise RuntimeError("This version needs a new Docker image. See github.com/ivokolarov0/manga-vibe#updating")
+    final = _prepare(sha, downloader, meta)
+    _go(sha, _read_json(final / ".info.json").get("migrations"), db_choice)
+    log.info("Installed version %s", sha[:7])
+    return final
+
+
+def _prepare(sha, downloader, meta=None):
+    """Download a version into code/<sha>, install its packages and test it. Doesn't switch."""
     code = code_dir()
     code.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".staging-", dir=code))
@@ -354,12 +421,11 @@ def install(sha=None, downloader=_download):
             deps.mkdir(exist_ok=True)
             (deps / DEPS_LIST).write_text("\n".join(extra) + "\n", encoding="utf-8")
         status["message"] = "Testing the new version…"
-        with tempfile.TemporaryDirectory() as tmp:
-            env = {**os.environ, "DATA_DIR": tmp, "START_WORKERS": "0",
-                   "PYTHONPATH": os.pathsep.join([str(staging / "deps"), str(staging)])}
-            _run([sys.executable, "-c", "import app.main"], cwd=staging, env=env, timeout=120)
-        meta = latest if latest and latest.get("sha") == sha else {"sha": sha}
-        (staging / ".info.json").write_text(json.dumps({k: meta.get(k) for k in ("sha", "version", "date", "message")}))
+        migrations = _test(staging)
+        if meta is None:
+            meta = latest if latest and latest.get("sha") == sha else {"sha": sha}
+        keep = {k: meta.get(k) for k in ("version", "date", "message")}
+        (staging / ".info.json").write_text(json.dumps({"sha": sha, **keep, "migrations": migrations}))
         (staging / ".image").write_text(image_sha())  # a newer image runs its own code (entrypoint.sh)
         final = code / sha
         if final.exists():
@@ -369,10 +435,111 @@ def install(sha=None, downloader=_download):
     except BaseException:
         shutil.rmtree(staging, ignore_errors=True)
         raise
-    _switch(sha)
-    _cleanup(keep={sha, _read(code / "previous")})
-    log.info("Installed version %s", sha[:7])
     return final
+
+
+# ---------------- the database across versions ----------------
+
+def _db_file():
+    from app import db as database
+    return Path(database.engine.url.database) if database.engine is not None else None
+
+
+def db_schema():
+    """How many migrations the database has had (None before it's opened)."""
+    f = _db_file()
+    if f is None or not f.exists():
+        return None
+    try:
+        conn = sqlite3.connect(f, timeout=30)
+        try:
+            row = conn.execute("SELECT version FROM schema_version").fetchone()
+        finally:
+            conn.close()
+        return row[0] if row else None
+    except sqlite3.Error:
+        return None
+
+
+def _backups():
+    return code_dir() / DB_BACKUPS
+
+
+def backup_info(schema):
+    """{date, version} of the database copy made at `schema` migrations, or None."""
+    d = _backups()
+    if schema is None or not (d / f"schema-{schema}.db").is_file():
+        return None
+    return _read_json(d / f"schema-{schema}.json") or {"date": None, "version": None}
+
+
+def _copy_db(src, dst):
+    """SQLite's own backup: a consistent copy even while the app writes."""
+    a = sqlite3.connect(src, timeout=30)
+    try:
+        b = sqlite3.connect(dst, timeout=30)
+        try:
+            a.backup(b)
+        finally:
+            b.close()
+    finally:
+        a.close()
+
+
+def backup_db(schema, version):
+    """Copy the database (at `schema` migrations) before a version with more migrations starts.
+    Only the newest few copies are kept."""
+    d = _backups()
+    d.mkdir(parents=True, exist_ok=True)
+    tmp = d / f"schema-{schema}.db.tmp"
+    tmp.unlink(missing_ok=True)
+    _copy_db(_db_file(), tmp)
+    os.replace(tmp, d / f"schema-{schema}.db")
+    (d / f"schema-{schema}.json").write_text(json.dumps(
+        {"date": datetime.now(timezone.utc).isoformat(), "version": version}))
+    copies = sorted(d.glob("schema-*.json"), key=lambda f: (_read_json(f) or {}).get("date") or "", reverse=True)
+    for f in copies[KEEP_DB_BACKUPS:]:
+        f.unlink(missing_ok=True)
+        f.with_suffix(".db").unlink(missing_ok=True)
+    log.info("Database copied to %s before its migrations", d / f"schema-{schema}.db")
+
+
+def restore_db(schema):
+    """Put back the copy made at `schema` migrations. Run right before the restart."""
+    from app import db as database
+    src = _backups() / f"schema-{schema}.db"
+    if database.engine is not None:
+        database.engine.dispose()
+    _copy_db(src, _db_file())
+    log.info("Database put back as it was at %s migrations", schema)
+
+
+def _db_plan(target, choice):
+    """What switching to a version with `target` migrations does to the database: "backup" (it has
+    more, so the database is copied first), "restore", or None. Raises NeedsDbChoice when the
+    version is older than the database and the owner hasn't chosen."""
+    have = db_schema()
+    if target is None or have is None or target == have:
+        return None
+    if target > have:
+        return "backup"
+    backup = backup_info(target)
+    if choice == "keep":
+        return None
+    if choice == "restore" and backup:
+        return "restore"
+    raise NeedsDbChoice(have, target, backup)
+
+
+def _go(sha, migrations, db_choice):
+    """Switch to a prepared version (None: the built-in code), minding the database."""
+    global pending_restore
+    plan = _db_plan(migrations, db_choice)
+    if plan == "backup":
+        backup_db(db_schema(), _short(current()))
+    pending_restore = migrations if plan == "restore" else None
+    _switch(sha)
+    _cleanup()
 
 
 def _read(path):
@@ -393,19 +560,140 @@ def _write_atomic(path, text):
 
 
 def _switch(sha):
+    """Point code/current at a version; None runs the code built into the image."""
     code = code_dir()
     old = _read(code / "current")
     if old and old != sha:
         _write_atomic(code / "previous", old)
+    if sha is None:
+        (code / "current").unlink(missing_ok=True)
+        return
     _write_atomic(code / "current", sha)
     if failed_sha() == sha:
         (code / "failed").unlink()
 
 
-def _cleanup(keep):
+def _cleanup():
+    """Remove downloaded versions other than the current and the previous one."""
+    keep = {_read(code_dir() / "current"), _read(code_dir() / "previous")}
     for d in code_dir().iterdir():
         if d.is_dir() and d.name not in keep and not d.name.startswith("."):
             shutil.rmtree(d, ignore_errors=True)
+
+
+# ---------------- going back ----------------
+
+def _on_disk():
+    """{sha: {sha, version, date, message}} of the downloaded versions this image can run right
+    away (not the one that failed to start)."""
+    out, img, failed = {}, image_sha(), failed_sha()
+    if not code_dir().is_dir():
+        return out
+    for d in code_dir().iterdir():
+        if (re.fullmatch(r"[0-9a-f]{40}", d.name) and d.name != failed and (d / "app" / "main.py").is_file()
+                and (_read(d / ".image") or "") == img):
+            info = _read_json(d / ".info.json") or {}
+            out[d.name] = {"sha": d.name, **{k: info.get(k) for k in ("version", "date", "message")}}
+    return out
+
+
+def versions():
+    """What the owner can go back to, newest first: earlier releases, the versions still on disk
+    (`on_disk`: no download) and the code built into the image (`builtin`). Never raises: `error`
+    says why GitHub's part is missing. Remembered in `offered`, the only versions rollback() takes."""
+    global offered
+    cur = current()
+    found, error = {}, None
+    try:
+        for v in fetch_releases():
+            found[v["sha"]] = {**v, "on_disk": False, "builtin": False}
+    except Exception as e:
+        log.warning("Could not list the releases: %s", e)
+        error = f"Could not list the earlier versions on GitHub. {_why(e)}"
+    for sha, meta in _on_disk().items():
+        found[sha] = {**meta, **found.get(sha, {}), "on_disk": True, "builtin": False}
+    img = image_sha()
+    if img and not cur["builtin"] and (config.BUILTIN_DIR / "app" / "main.py").is_file():
+        found[img] = {"sha": img, "version": None, "date": None, "message": None,
+                      **found.get(img, {}), "on_disk": True, "builtin": True}
+    since = cur["date"] or found.get(cur["sha"], {}).get("date")
+    found.pop(cur["sha"], None)
+    items = [{**v, "short": _short(v)} for v in found.values()
+             if not (since and v.get("date") and v["date"] > since)]  # newer ones are updates
+    items.sort(key=lambda v: v.get("date") or "", reverse=True)
+    offered = {v["sha"]: v for v in items}
+    return {"current": {**cur, "short": _short(cur)}, "versions": items, "error": error}
+
+
+def _migrations_of(folder):
+    """How many migrations the version in `folder` knows (remembered in its .info.json)."""
+    info = _read_json(folder / ".info.json")
+    if info is not None and "migrations" in info:
+        return info["migrations"]
+    n = _test(folder, import_main=False)
+    if info is not None:
+        try:
+            (folder / ".info.json").write_text(json.dumps({**info, "migrations": n}))
+        except OSError:
+            pass
+    return n
+
+
+def _target(sha):
+    """(sha for code/current, or None for the built-in code; its folder or None before a download)."""
+    v = offered.get(sha)
+    if v is None:
+        raise RuntimeError("That version isn't in the list. Open the list of versions again.")
+    if v["builtin"]:
+        return None, config.BUILTIN_DIR
+    d = code_dir() / sha
+    return sha, d if v["on_disk"] and (d / "app" / "main.py").is_file() else None
+
+
+def check_rollback(sha, db_choice=None):
+    """Before a rollback starts: raises NeedsDbChoice right away for a version that's on disk."""
+    _, folder = _target(sha)
+    if folder is not None:
+        _db_plan(_migrations_of(folder), db_choice)
+
+
+def rollback(sha, db_choice=None, downloader=None):
+    """Switch to an earlier version from versions(). Returns the sha of the version left."""
+    left = current()["sha"]
+    target, folder = _target(sha)
+    if folder is None:
+        folder = _prepare(sha, downloader or _download, meta=offered[sha])
+    _go(target, _migrations_of(folder), db_choice)
+    log.info("Went back from version %s to %s", (left or "?")[:7], sha[:7])
+    return left
+
+
+def skip_left(left):
+    """After going back: don't offer the version that was left until a newer one is out."""
+    from app import db as database
+    if not left or (latest and latest.get("sha") != left):
+        return  # what's offered is newer than the version left, so it may be offered
+    with database.SessionLocal() as s:
+        database.set_setting(s, "update_skipped", left)
+        s.commit()
+
+
+def _finish(old_current):
+    """Right before the restart: put the database copy back if the switch asked for it. When that
+    fails, the switch is undone and the error raised."""
+    global pending_restore
+    if pending_restore is None:
+        return
+    try:
+        restore_db(pending_restore)
+    except Exception:
+        if old_current:
+            _write_atomic(code_dir() / "current", old_current)
+        else:
+            (code_dir() / "current").unlink(missing_ok=True)
+        raise
+    finally:
+        pending_restore = None
 
 
 def restart():
@@ -416,22 +704,38 @@ def restart():
     os.execv("/bin/sh", ["/bin/sh", str(config.ENTRYPOINT)])
 
 
-def install_in_background(sha=None):
-    """Used by the API: install, then restart. Progress is in `status`."""
+def _in_background(job, what):
+    """Run job() (install or rollback; returns the version left after a rollback, else None),
+    then restart. Progress is in `status`."""
     if not lock.acquire(blocking=False):
         raise RuntimeError("An update is already running")
-    status.update(state="installing", message="Starting…", error=None)
+    status.update(state="installing", message="Starting…", error=None, needs_db=None)
 
     def work():
+        old = _read(code_dir() / "current")
         try:
-            install(sha)
+            left = job()
             status.update(state="restarting", message="Restarting…")
             time.sleep(1.5)  # let the browser get the answer first
+            _finish(old)
+            skip_left(left)  # after the database is put back, or the restored copy would lose it
             restart()
+        except NeedsDbChoice as e:
+            status.update(state="error", message="", error=str(e), needs_db=e.detail)
         except Exception as e:
-            log.error("Update failed: %s", e)
-            status.update(state="error", message="", error=f"Update failed. {_why(e)}")
+            log.error("%s failed: %s", what, e)
+            status.update(state="error", message="", error=f"{what} failed. {_why(e)}")
         finally:
             lock.release()
 
     threading.Thread(target=work, daemon=True, name="update").start()
+
+
+def install_in_background(sha=None, db_choice=None):
+    """Used by the API: install, then restart."""
+    _in_background(lambda: install(sha, db_choice=db_choice) and None, "Update")
+
+
+def rollback_in_background(sha, db_choice=None):
+    """Used by the API: go back to an earlier version, then restart."""
+    _in_background(lambda: rollback(sha, db_choice), "Going back")

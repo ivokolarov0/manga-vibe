@@ -20,6 +20,10 @@ same id. The old one is kept in plugins/.backup/ (the loader skips folders that 
 
 When the new version lists permissions the installed one doesn't, nothing is installed until the
 owner approves exactly those (Update asks, then sends them back as `accepted`).
+
+Going back: a version in plugins/.backup/ can be put back (restore), or any published release
+installed (install with `version`), with the same checks. The version that was left is skipped
+when it's the newest release, so it isn't offered again until a newer one is out.
 """
 import importlib.util
 import io
@@ -47,6 +51,8 @@ MAX_ZIP = 50_000_000  # a release's source zip (the whole repo at the tag)
 MAX_FOLDER = 20_000_000  # a folder plugin, unpacked
 TOKEN_KEY = "plugin_github_token"
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+TAG_RE = re.compile(r"^[A-Za-z0-9_.+-]{1,50}$")  # a release tag the owner may pick
+VERSION_RE = re.compile(r"^v?\d[A-Za-z0-9_.+-]*$")  # the version in a plugins/.backup/ name
 transport = None  # tests put an httpx.MockTransport here
 _lock = threading.Lock()  # one install at a time
 
@@ -143,7 +149,8 @@ def info(db, p):
     return {"supported": supported, "repo": p.repo or None,
             "latest": latest, "url": st.get("url"), "checked_at": st.get("checked_at"),
             "error": st.get("error"),
-            "available": newer, "skipped": newer and st.get("skipped") == latest}
+            "available": newer, "skipped": newer and st.get("skipped") == latest,
+            "backups": backups(p) if supported else []}
 
 
 # ---------------- GitHub ----------------
@@ -308,86 +315,186 @@ def reload_plugins(db):
     manager.disabled = set(get_setting(db, "plugins_disabled", []) or [])
 
 
-def install(db, plugin_id, accepted=None):
-    """Download the newest release's file, check it, swap it in and reload the plugins.
-    `accepted` is the list of new permissions the owner approved.
+def _plugin(plugin_id):
+    p = manager.plugins.get(plugin_id)
+    path = path_of(p) if p else None
+    if path is None:
+        raise UpdateError("MangaVibe can't update this plugin")
+    return p, path
+
+
+def _what(path):
+    return f"{path.name}/" if path.is_dir() else path.name
+
+
+def _fetch(db, p, path, tag):
+    """The plugin's file (or the release's source zip, for a folder plugin) at a tag."""
+    folder = path.is_dir()
+    q = quote(tag, safe="")
+    url = (f"https://api.github.com/repos/{p.repo}/zipball/{q}" if folder
+           else f"https://raw.githubusercontent.com/{p.repo}/{q}/{quote(path.name)}")
+    try:
+        with _client(db) as c:
+            r = c.get(url)
+            r.raise_for_status()
+    except Exception as e:
+        raise UpdateError(f"Could not download {_what(path)} {tag}. {_why(e, p.repo)}") from e
+    if len(r.content) > (MAX_ZIP if folder else MAX_SIZE):
+        raise UpdateError(f"The downloaded {_what(path)} is too big to be a plugin")
+    return r.content
+
+
+def _put_in(db, p, path, fill, label, accepted):
+    """Write a version into plugins/.staging (fill(new) does it), check that it loads on its own,
+    defines the same plugin and asks for no unapproved permissions, then swap it in (the installed
+    one is kept in plugins/.backup/) and reload the plugins. Returns (old version, new version)."""
+    folder, what = path.is_dir(), _what(path)
+    staging = config.PLUGINS_DIR / ".staging"
+    staging.mkdir(exist_ok=True)
+    new = staging / path.name
+
+    def discard():
+        if new.is_dir():
+            shutil.rmtree(new, ignore_errors=True)
+        else:
+            new.unlink(missing_ok=True)
+
+    discard()  # left over from an update that was cut off
+    try:
+        fill(new)
+        found = _plugins_in_folder(new) if folder else _plugins_in(new)
+    except UpdateError:
+        discard()
+        raise
+    except Exception as e:
+        discard()
+        raise UpdateError(f"{p.name} {label} doesn't load, so it wasn't installed: "
+                          f"{type(e).__name__}: {e}") from e
+    match = next(((v, perms) for pid, v, perms in found if pid == p.id), None)
+    if match is None:
+        discard()
+        raise UpdateError(f"{what} {label} has no plugin '{p.id}', so it wasn't installed")
+    new_version, perms = match
+    added = new_permissions(permissions_of(p), perms)
+    if any(x not in (accepted or []) for x in added):
+        discard()
+        raise NeedsApproval(p.name, label, added)
+
+    backup = config.PLUGINS_DIR / ".backup"
+    backup.mkdir(exist_ok=True)
+    old_version = p.version
+    if folder:
+        try:
+            _swap_folder(new, path, backup / f"{path.name}-{old_version}", staging)
+        except OSError as e:
+            discard()
+            raise UpdateError(f"Could not replace the {what} folder, so nothing changed: {e}") from e
+    else:
+        shutil.copy2(path, backup / f"{path.stem}-{old_version}.py")
+        os.replace(new, path)
+        Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)  # see _plugins_in
+    reload_plugins(db)
+    return old_version, new_version
+
+
+def _done(db, p, old_version, new_version):
+    """Save the state after a version went in, and say what happened. Going back skips the version
+    that was left (when it's the newest release), so the daily check doesn't offer it again."""
+    if version_tuple(new_version) >= version_tuple(old_version):
+        _update_state(db, p.id, error=None, skipped=None)
+        log.info("Plugin %s updated from %s to %s", p.id, old_version, new_version)
+        return f"{p.name} updated from {old_version} to {new_version}"
+    latest = _states(db).get(p.id, {}).get("latest")
+    left = {"skipped": latest} if latest and version_tuple(latest) <= version_tuple(old_version) else {}
+    _update_state(db, p.id, error=None, **left)
+    log.info("Plugin %s went back from %s to %s", p.id, old_version, new_version)
+    return f"{p.name} went back from {old_version} to {new_version}"
+
+
+def install(db, plugin_id, accepted=None, version=None):
+    """Download the newest release (or the release tagged `version`, older ones too), check it, swap
+    it in and reload the plugins. `accepted` is the list of new permissions the owner approved.
     Returns a message; raises UpdateError (NeedsApproval for unapproved new permissions) when
     nothing was changed."""
     with _lock:
-        p = manager.plugins.get(plugin_id)
-        path = path_of(p) if p else None
-        if path is None:
-            raise UpdateError("MangaVibe can't update this plugin")
-        latest = _states(db).get(p.id, {}).get("latest")
-        if not latest or version_tuple(latest) <= version_tuple(p.version):
-            raise UpdateError(f"{p.name} is up to date. Press Check for updates to look again.")
-        folder = path.is_dir()
-        what = f"{path.name}/" if folder else path.name
-        tag = quote(latest, safe="")
-        url = (f"https://api.github.com/repos/{p.repo}/zipball/{tag}" if folder
-               else f"https://raw.githubusercontent.com/{p.repo}/{tag}/{quote(path.name)}")
-        try:
-            with _client(db) as c:
-                r = c.get(url)
-                r.raise_for_status()
-        except Exception as e:
-            raise UpdateError(f"Could not download {what} {latest}. {_why(e, p.repo)}") from e
-        if len(r.content) > (MAX_ZIP if folder else MAX_SIZE):
-            raise UpdateError(f"The downloaded {what} is too big to be a plugin")
+        p, path = _plugin(plugin_id)
+        if version is None:
+            version = _states(db).get(p.id, {}).get("latest")
+            if not version or version_tuple(version) <= version_tuple(p.version):
+                raise UpdateError(f"{p.name} is up to date. Press Check for updates to look again.")
+        elif not TAG_RE.match(version):
+            raise UpdateError("That isn't a release's tag")
+        elif version_tuple(version) == version_tuple(p.version):
+            raise UpdateError(f"{p.name} {p.version} is the version installed")
+        data = _fetch(db, p, path, version)
 
-        staging = config.PLUGINS_DIR / ".staging"
-        staging.mkdir(exist_ok=True)
-        new = staging / path.name
-
-        def discard():
-            if new.is_dir():
-                shutil.rmtree(new, ignore_errors=True)
-            else:
-                new.unlink(missing_ok=True)
-
-        discard()  # left over from an update that was cut off
-        try:
-            if folder:
+        def fill(new):
+            if path.is_dir():
                 new.mkdir()
-                _unpack_folder(r.content, path.name, new)
-                found = _plugins_in_folder(new)
+                _unpack_folder(data, path.name, new)
             else:
-                new.write_bytes(r.content)
-                found = _plugins_in(new)
-        except UpdateError:
-            discard()
-            raise
-        except Exception as e:
-            discard()
-            raise UpdateError(f"{p.name} {latest} doesn't load, so it wasn't installed: "
-                              f"{type(e).__name__}: {e}") from e
-        match = next(((v, perms) for pid, v, perms in found if pid == p.id), None)
-        if match is None:
-            discard()
-            raise UpdateError(f"{what} {latest} has no plugin '{p.id}', so it wasn't installed")
-        new_version, perms = match
-        added = new_permissions(permissions_of(p), perms)
-        if any(x not in (accepted or []) for x in added):
-            discard()
-            raise NeedsApproval(p.name, latest, added)
+                new.write_bytes(data)
 
-        backup = config.PLUGINS_DIR / ".backup"
-        backup.mkdir(exist_ok=True)
-        old_version, name = p.version, p.name
-        if folder:
-            try:
-                _swap_folder(new, path, backup / f"{path.name}-{old_version}", staging)
-            except OSError as e:
-                discard()
-                raise UpdateError(f"Could not replace the {what} folder, so nothing changed: {e}") from e
-        else:
-            shutil.copy2(path, backup / f"{path.stem}-{old_version}.py")
-            os.replace(new, path)
-            Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)  # see _plugins_in
-        reload_plugins(db)
-        _update_state(db, plugin_id, error=None, skipped=None)
-        log.info("Plugin %s updated from %s to %s", plugin_id, old_version, new_version)
-        return f"{name} updated from {old_version} to {new_version}"
+        return _done(db, p, *_put_in(db, p, path, fill, version, accepted))
+
+
+def _backup_of(path, version):
+    d = config.PLUGINS_DIR / ".backup"
+    return d / f"{path.name}-{version}" if path.is_dir() else d / f"{path.stem}-{version}.py"
+
+
+def backups(p):
+    """Versions of the plugin kept in plugins/.backup/ (by updates), newest first, without the one
+    installed."""
+    path = path_of(p)
+    d = config.PLUGINS_DIR / ".backup"
+    if path is None or not d.is_dir():
+        return []
+    folder = path.is_dir()
+    start = f"{path.name if folder else path.stem}-"
+    out = []
+    for f in d.iterdir():
+        if f.is_dir() != folder or (not folder and f.suffix != ".py"):
+            continue
+        name = f.name if folder else f.stem
+        v = name[len(start):] if name.startswith(start) else ""
+        if (VERSION_RE.match(v) and version_tuple(v) != version_tuple(p.version)
+                and v not in out and _backup_of(path, v) == f):
+            out.append(v)
+    return sorted(out, key=version_tuple, reverse=True)
+
+
+def restore(db, plugin_id, version, accepted=None):
+    """Put back a version kept in plugins/.backup/, with the same checks as an update."""
+    with _lock:
+        p, path = _plugin(plugin_id)
+        if version not in backups(p):
+            raise UpdateError(f"There's no copy of {p.name} {version} in plugins/.backup")
+        src = _backup_of(path, version)
+
+        def fill(new):
+            if path.is_dir():
+                shutil.copytree(src, new, ignore=shutil.ignore_patterns("__pycache__"))
+            else:
+                shutil.copy2(src, new)
+
+        return _done(db, p, *_put_in(db, p, path, fill, version, accepted))
+
+
+def releases(db, p):
+    """The plugin's published releases (no drafts or pre-releases), newest first:
+    [{version, date, url}]. Raises UpdateError."""
+    if path_of(p) is None:
+        raise UpdateError("MangaVibe can't update this plugin")
+    try:
+        with _client(db) as c:
+            r = c.get(f"https://api.github.com/repos/{p.repo}/releases", params={"per_page": 30})
+            r.raise_for_status()
+            rels = r.json()
+    except Exception as e:
+        raise UpdateError(f"Could not list the releases. {_why(e, p.repo)}") from e
+    return [{"version": str(x["tag_name"])[:50], "date": x.get("published_at"), "url": x.get("html_url")}
+            for x in rels if not x.get("draft") and not x.get("prerelease") and TAG_RE.match(str(x["tag_name"]))]
 
 
 # ---------------- daily ----------------

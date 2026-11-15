@@ -428,20 +428,56 @@ def check_plugin_update(plugin_id: str, db=Depends(get_db)):
     return _plugin_dict(p, db)
 
 
-@router.post("/plugins/{plugin_id}/updates/install", dependencies=[manage])
-def install_plugin_update(plugin_id: str, body: dict | None = None, db=Depends(get_db)):
-    _installed_plugin(plugin_id)
+def _accepted(body):
     accepted = (body or {}).get("accept_permissions") or []
     if not isinstance(accepted, list):
         raise HTTPException(400, "accept_permissions must be a list")
+    return [str(x) for x in accepted]
+
+
+def _version(body):
+    v = (body or {}).get("version")
+    if v is not None and not isinstance(v, str):
+        raise HTTPException(400, "version must be a text")
+    return v
+
+
+def _put_in_version(db, run):
     try:
-        message = plugin_updates.install(db, plugin_id, [str(x) for x in accepted])
+        message = run()
     except plugin_updates.NeedsApproval as e:
         # 409: the browser shows the list and sends it back once the owner agrees
         raise HTTPException(409, {"message": str(e), "permissions": e.permissions})
     except plugin_updates.UpdateError as e:
         raise HTTPException(400, str(e))
     return {"message": message, **list_plugins(db)}
+
+
+@router.post("/plugins/{plugin_id}/updates/install", dependencies=[manage])
+def install_plugin_update(plugin_id: str, body: dict | None = None, db=Depends(get_db)):
+    """The newest release, or the release tagged `version` (older ones too)."""
+    _installed_plugin(plugin_id)
+    accepted, version = _accepted(body), _version(body)
+    return _put_in_version(db, lambda: plugin_updates.install(db, plugin_id, accepted, version))
+
+
+@router.post("/plugins/{plugin_id}/updates/restore", dependencies=[manage])
+def restore_plugin_version(plugin_id: str, body: dict | None = None, db=Depends(get_db)):
+    """Put back the version `version` kept in plugins/.backup/."""
+    _installed_plugin(plugin_id)
+    accepted, version = _accepted(body), _version(body)
+    if not version:
+        raise HTTPException(400, "Which version? Send it as version")
+    return _put_in_version(db, lambda: plugin_updates.restore(db, plugin_id, version, accepted))
+
+
+@router.get("/plugins/{plugin_id}/updates/releases", dependencies=[manage])
+def plugin_releases(plugin_id: str, db=Depends(get_db)):
+    p = _installed_plugin(plugin_id)
+    try:
+        return {"releases": plugin_updates.releases(db, p)}
+    except plugin_updates.UpdateError as e:
+        raise HTTPException(400, str(e))
 
 
 @router.post("/plugins/reload", dependencies=[manage])

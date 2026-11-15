@@ -37,3 +37,4 @@ UPDATE_REPO = _env("UPDATE_REPO", "ivokolarov0/manga-vibe")
 AUTO_UPDATE = _env("AUTO_UPDATE", "1") != "0"
 IMAGE_DIR = Path(_env("IMAGE_DIR", "/opt/mangavibe/image"))  # copies of the files the image was built from
 ENTRYPOINT = Path(_env("ENTRYPOINT", "/entrypoint.sh"))
+BUILTIN_DIR = Path("/app")  # the code built into the image (docker/entrypoint.sh runs it without code/current)

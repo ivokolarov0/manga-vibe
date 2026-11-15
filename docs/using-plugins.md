@@ -92,6 +92,18 @@ Plugins never update by themselves. The new version is checked before it replace
 your plugin settings are kept. For other plugins, replace the file (or folder) and press **Reload
 plugins**.
 
+### Go back to an earlier version
+
+If a new version of a plugin has a problem, open its page and look under **Earlier versions**:
+
+- **Go back to X** puts back the copy MangaVibe kept when it updated the plugin (in
+  `plugins/.backup/`). Nothing is downloaded.
+- **Other versions…** lists the plugin's releases on GitHub. Pick one and press **Install**.
+
+The version you go back to is checked the same way as an update: it has to load, and if it asks
+for permissions the installed version doesn't have, you're asked first. The version you left
+isn't offered again until a newer one is out.
+
 A plugin whose GitHub repo is private needs a token: create a
 [fine-grained token](https://github.com/settings/personal-access-tokens/new) with access to that
 repo and **Contents: Read-only**, then paste it under **Settings → Plugins → GitHub token for

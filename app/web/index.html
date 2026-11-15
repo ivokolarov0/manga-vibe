@@ -923,6 +923,28 @@
                     <a class="btn small" x-show="plugin.update.available && plugin.update.url" :href="plugin.update.url"
                        target="_blank" rel="noopener noreferrer">What's new<svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
                   </div>
+                  <!-- going back: the copies kept by updates, or any release -->
+                  <h3>Earlier versions</h3>
+                  <p class="muted">If a new version has a problem. The version you leave isn't offered again until a newer one is out.</p>
+                  <div class="btn-row plugin-actions">
+                    <template x-for="v in plugin.update.backups.slice(0, 3)" :key="v">
+                      <button class="btn small" :disabled="busyAction === plugin.id + ':update'"
+                              @click="restorePluginVersion(plugin, v)" x-text="`Go back to ${v}`"></button>
+                    </template>
+                    <button class="btn small" x-show="!pluginReleases[plugin.id]" :disabled="busyAction === plugin.id + ':update'"
+                            @click="loadPluginReleases(plugin)">Other versions…</button>
+                  </div>
+                  <template x-if="pluginReleases[plugin.id]?.length">
+                    <div class="btn-row plugin-actions">
+                      <select x-model="pluginPick[plugin.id]" aria-label="Release to install">
+                        <template x-for="r in pluginReleases[plugin.id]" :key="r.version">
+                          <option :value="r.version" x-text="r.version + (r.date ? ' · ' + new Date(r.date).toLocaleDateString() : '')"></option>
+                        </template>
+                      </select>
+                      <button class="btn small" :disabled="busyAction === plugin.id + ':update'"
+                              @click="installPluginRelease(plugin)">Install</button>
+                    </div>
+                  </template>
                 </div>
               </template>
             </div>
@@ -969,6 +991,28 @@
                 <button class="btn small" x-show="!upd.available.skipped" @click="skipUpdate()">Skip this version</button>
                 <button class="btn small primary" x-show="!upd.available.needs_image" :disabled="!!$store.app.updating"
                         @click="installUpdate()" x-text="upd.available.failed ? 'Try again' : 'Update now'"></button>
+              </div>
+            </div>
+          </template>
+          <!-- going back (GET /api/update/versions asks GitHub, so only on a press) -->
+          <div class="setting-row" x-show="upd?.supported">
+            <div class="label">
+              <span>Go back to an earlier version</span>
+              <small>If a new version has a problem. The version you leave isn't offered again until a newer one is out.</small>
+              <small x-show="olderError" x-text="olderError"></small>
+            </div>
+            <button class="btn small" :disabled="loadingOlder" @click="loadOlder()"
+                    x-text="loadingOlder ? 'Loading…' : older ? 'Look again' : 'Show versions'"></button>
+          </div>
+          <template x-if="older && !older.length">
+            <p class="muted">No earlier version found.</p>
+          </template>
+          <template x-for="v in older || []" :key="v.sha">
+            <div class="setting-row">
+              <div class="label"><span x-text="v.short"></span><small x-text="olderText(v)"></small></div>
+              <div class="btn-row">
+                <a class="btn small" x-show="v.url" :href="v.url" target="_blank" rel="noopener">Notes<svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
+                <button class="btn small" :disabled="!!$store.app.updating" @click="goBack(v)">Go back</button>
               </div>
             </div>
           </template>
@@ -1442,7 +1486,8 @@
     </template>
     <template x-if="busy">
       <div>
-        <strong x-text="busy.error ? 'Update failed' : 'Updating MangaVibe…'"></strong>
+        <strong x-text="$store.app.updatingBack ? (busy.error ? 'Going back failed' : 'Going back to an earlier version…')
+                        : (busy.error ? 'Update failed' : 'Updating MangaVibe…')"></strong>
         <small x-text="busy.error || busy.message || 'Working…'"></small>
         <small x-show="!busy.error">The page reloads by itself when the new version is running.</small>
         <div class="btn-row" x-show="busy.error"><button class="btn small" @click="close()">Close</button></div>
