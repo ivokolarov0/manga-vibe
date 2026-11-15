@@ -128,11 +128,6 @@
       }
     }
 
-    /* sun / moon: the one for the theme you'd switch to turns in */
-    & #theme-toggle .ic {
-      animation: theme-icon 0.4s var(--ease);
-    }
-
     /* Settings, with the Needs attention count on it */
     & #settings-link {
       padding: 0;
@@ -169,13 +164,6 @@
       line-height: 16px;
       text-align: center;
       box-shadow: 0 0 0 2px var(--bg);
-    }
-  }
-
-  @keyframes theme-icon {
-    from {
-      opacity: 0;
-      transform: rotate(-90deg) scale(0.5);
     }
   }
 

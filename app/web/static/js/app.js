@@ -1504,7 +1504,7 @@ const SETTINGS_NAV = [["library", "Library folders", "folder"], ["display", "Dis
 const ON_OFF = [["true", "On"], ["false", "Off"]];
 const SETTING_ROWS = {
   display: [
-    { key: "theme", label: "Theme", hint: "For everyone. The sun and moon button in the top bar changes it on one device only",
+    { key: "theme", label: "Theme", hint: "Just for you", personal: true,
       options: [["dark", "Dark"], ["light", "Light"], ["auto", "Match device"]] },
     { key: "card_size", label: "Card size", options: [["small", "Small"], ["medium", "Medium"], ["large", "Large"]] },
     { key: "nav_position", label: "Navigation bar", hint: "Where Library and Continue sit",
@@ -1556,8 +1556,9 @@ const SETTING_ROWS = {
       hint: "In the reader: volume down goes to the next page, volume up goes back", options: ON_OFF },
   ],
 };
-// Settings pages that are each person's own (with accounts, everyone sees them; the rest is for admins)
-const PERSONAL_PAGES = new Set(["reader", "app"]);
+// Settings pages that are each person's own (with accounts, everyone sees them; the rest is for admins).
+// Display is the app's, but its personal rows (the theme) are everyone's.
+const PERSONAL_PAGES = new Set(["display", "reader", "app"]);
 const ANDROID = /Android/i.test(navigator.userAgent);
 // on Android phones (in the app or the browser) Settings gets an "Android app" page
 if (ANDROID) SETTINGS_NAV.splice(2, 0, ["app", "Android app", "phone"]);
@@ -1588,6 +1589,8 @@ function settingsView() {
     },
     get attNav() { return this.$store.app.admin ? ATT_TABS : []; },
     rows: SETTING_ROWS,  // the plain dropdown settings of each page
+    // Display: all of it for an admin, only the personal rows for others
+    get displayRows() { return this.$store.app.admin ? SETTING_ROWS.display : SETTING_ROWS.display.filter((r) => r.personal); },
     get section() {
       const s = this.$store.app.sub || this.nav[0][0];
       return s.startsWith("plugin-") ? "plugin" : s;
@@ -1720,8 +1723,7 @@ function settingsView() {
       if (v === "true" || v === "false") v = v === "true";
       else if (typeof v === "string" && /^\d+$/.test(v)) v = +v;
       await api("/api/settings", { method: "PUT", body: { [key]: v } });
-      // the theme chosen here also ends this device's own choice (the top bar's button)
-      if (key === "theme") { settings.theme = v; setDeviceTheme(""); }
+      if (key === "theme") setTheme(v);
       await loadSettings();
       if (["title_language", "library_listing", "library_page_size"].includes(key)) this.$store.app.libraryDirty++;
       toast("Saved");

@@ -190,9 +190,9 @@ def scan_status():
     return walker.status
 
 
-# Settings → Reader: each user's own (app/users.py), starting from the shared ones (the owner's). The rest
-# is the app's, changed by admins only.
-PERSONAL_SETTINGS = {"reader_mode", "reader_fit", "auto_fullscreen", "preload", "reader_autohide",
+# Settings → Reader, and the theme: each user's own (app/users.py), starting from the shared ones (the
+# owner's). The rest is the app's, changed by admins only.
+PERSONAL_SETTINGS = {"theme", "reader_mode", "reader_fit", "auto_fullscreen", "preload", "reader_autohide",
                      "reader_drawer_side", "reader_tap_layout", "reader_volume_keys", "overlay_opacity",
                      "overlay_outline", "reader_brightness", "reader_contrast", "reader_colors",
                      "library_page_size"}  # the library page's own "per page" picker, there for everyone
@@ -216,7 +216,7 @@ def get_settings(db=Depends(get_db)):
 
 @router.put("/settings")
 def put_settings(body: dict, db=Depends(get_db)):
-    """Settings → Reader are saved for the current user; the others only by an admin."""
+    """Settings → Reader and the theme are saved for the current user; the others only by an admin."""
     known = {k: v for k, v in body.items() if k in DEFAULT_SETTINGS}
     if any(k not in PERSONAL_SETTINGS for k in known) and not users.current().can_manage:
         raise HTTPException(403, "Only an admin can change these settings")
