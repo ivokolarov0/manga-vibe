@@ -6,6 +6,7 @@ import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -131,6 +132,10 @@ app.add_middleware(UploadSizeLimit, limit=MAX_UPLOAD + 64 * 1024)  # + room for 
 app.add_middleware(RememberAddress)
 # the plugins' own guards (Plugin.middleware), e.g. libraries: a locked library's series, books and pages
 app.add_middleware(plugin_web.PluginMiddleware)
+# Outermost, so it compresses the final response. The JS/CSS ship unminified; gzip makes them
+# ~75% smaller over the wire. Page images are on Starlette's skip list (already compressed).
+# Level 6 instead of the default 9: nearly the same size, much less CPU on a small NAS.
+app.add_middleware(GZipMiddleware, minimum_size=1024, compresslevel=6)
 
 
 app.include_router(system.router)

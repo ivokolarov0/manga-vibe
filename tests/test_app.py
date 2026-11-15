@@ -31,6 +31,15 @@ def test_book_order_and_revisions(client):
     assert hidden == ["Hana_to_Akuma_v01_ch03_[OT].zip"]
 
 
+def test_list_view_details(client):
+    names = series_by_name(client)
+    # the last book in reading order, skipping the unnumbered one (the omake) after it
+    assert names["Hana to Akuma"]["latest"] == "Ch 52"
+    assert names["Series B"]["latest"] == "Ch 5"
+    assert all(isinstance(s["updated_at"], int) and abs(s["updated_at"] - time.time()) < 86400
+               for s in names.values())
+
+
 def test_image_folder_book(client):
     sid = series_by_name(client)["Series B"]["id"]
     books = client.get(f"/api/series/{sid}/books").json()
@@ -59,6 +68,17 @@ def test_pages_and_resize(client):
     assert client.get(f"/api/books/{book['id']}/pages/99").status_code == 404
     assert client.get(f"/api/books/{book['id']}/thumbnail").status_code == 200
     assert client.get(f"/api/series/{sid}/poster").status_code == 200
+
+
+def test_text_is_gzipped_but_pages_are_not(client):
+    gz = {"Accept-Encoding": "gzip"}
+    for url in ("/static/js/app.js", "/static/css/base.css", "/"):
+        r = client.get(url, headers=gz)
+        assert r.status_code == 200 and r.headers.get("content-encoding") == "gzip", url
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    book = client.get(f"/api/series/{sid}/books").json()[0]
+    page = client.get(f"/api/books/{book['id']}/pages/0", headers=gz)
+    assert page.status_code == 200 and "content-encoding" not in page.headers
 
 
 def test_files_are_sent_without_holding_a_database_connection(client):

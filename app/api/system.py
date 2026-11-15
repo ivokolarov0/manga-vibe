@@ -32,6 +32,7 @@ DEFAULT_SETTINGS = {
     "nav_position": "bottom",      # bottom | top: where the Library / Continue bar sits
     "library_listing": "lazy",     # lazy (infinite scroll) | paged (numbered pages)
     "library_page_size": 80,       # series per page in paged mode: 40 | 80 | 120 (see PAGE_SIZES)
+    "library_view": "grid",        # grid (poster cards) | list (one series per row)
     "reader_mode": "paged",        # paged | vertical
     "reader_fit": "screen",        # width | height | screen | original
     "auto_fullscreen": True,
@@ -197,7 +198,8 @@ def scan_status():
 PERSONAL_SETTINGS = {"theme", "reader_mode", "reader_fit", "auto_fullscreen", "preload", "reader_autohide",
                      "reader_drawer_side", "reader_tap_layout", "reader_volume_keys", "overlay_opacity",
                      "overlay_outline", "reader_brightness", "reader_contrast", "reader_colors",
-                     "library_page_size",  # the library page's own "per page" picker, there for everyone
+                     # the library page's own "per page" picker and grid/list switch, there for everyone
+                     "library_page_size", "library_view",
                      "grid_columns", "page_width"}  # what suits depends on the person's screen
 
 # The "per page" choices: they divide evenly by 2, 4, 5, 8 and 10 columns (120 also by 3, 6 and 12), so

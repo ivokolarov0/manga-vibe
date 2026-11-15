@@ -108,6 +108,16 @@ function cardSub(s) {
   return STATUS_LABELS[st] || st;
 }
 
+/* "today", "yesterday", "3 days ago", "2 months ago" for a time in ms */
+const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+function ago(ms) {
+  const days = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(ms).setHours(0, 0, 0, 0)) / 864e5);
+  if (days < 7) return RELATIVE.format(-Math.max(days, 0), "day");
+  if (days < 30) return RELATIVE.format(-Math.floor(days / 7), "week");
+  if (days < 365) return RELATIVE.format(-Math.floor(days / 30), "month");
+  return RELATIVE.format(-Math.floor(days / 365), "year");
+}
+
 /* ---------------- global store + router ---------------- */
 
 /* x-dialog="<close>" on a .modal or .sheet: a click on its backdrop (the element itself, not what's in
@@ -426,6 +436,7 @@ function library() {
   return {
     items: [], cursor: 0, done: false, loading: false, total: null, key: null, stale: false,
     paged: false, page: 1, size: 60, base: null,
+    layout: "grid",  // grid (poster cards) | list (one series per row): the library_view setting
     quick: QUICK,
     init() {
       // reload when the filters (URL) change; keep cards + scroll position otherwise
@@ -457,7 +468,9 @@ function library() {
       document.title = "MangaVibe";
       const paged = settings.library_listing === "paged";
       const page = paged ? Math.max(1, parseInt(new URLSearchParams(this.$store.app.query).get("page")) || 1) : 1;
-      // with a fixed column count, a page is whole rows (80 in 6 columns: 84), so its last row is full
+      this.layout = settings.library_view === "list" ? "list" : "grid";
+      // with a fixed column count, a page is whole rows (80 in 6 columns: 84), so the grid's last row is full
+      // (the same in the list view, which switches without reloading)
       const pageSize = +settings.library_page_size || 80, cols = +settings.grid_columns || 0;
       const size = cols ? Math.ceil(pageSize / cols) * cols : pageSize;
       // listsDirty: a plugin said the same filters now show something else (e.g. a library was unlocked)
@@ -523,6 +536,19 @@ function library() {
       const p = libParams();
       if (p.has("page")) navigateLibrary(p);  // back to page 1; the query change reloads
       else { this.key = null; this.sync(); }
+    },
+    async setLayout(v) {  // the same cards, so nothing reloads
+      if (v === this.layout) return;
+      this.layout = v;
+      try {
+        await api("/api/settings", { method: "PUT", body: { library_view: v } });
+        await loadSettings();
+      } catch (e) {
+        toast("Could not save the view: " + e.message, 3000, "error");
+      }
+    },
+    updatedText(s) {
+      return s.updated_at ? "Updated " + ago(s.updated_at * 1000) : "";
     },
     goPage(n, replace = false) {
       n = Math.min(Math.max(1, n), this.pages());
@@ -1522,6 +1548,9 @@ const SETTING_ROWS = {
       options: [["lazy", "Lazy load"], ["paged", "Paginated"]] },
     { key: "library_page_size", label: "Series per page", options: PAGE_SIZES.map((n) => [String(n), String(n)]),
       show: (st) => st.library_listing === "paged" },
+    // also the grid/list switch above the library (the library picks it up when shown again)
+    { key: "library_view", label: "Library view", hint: "Just for you", personal: true,
+      options: [["grid", "Grid"], ["list", "List"]] },
     { key: "title_language", label: "Title language", hint: "Falls back to the next one if missing",
       options: [["english", "English"], ["romaji", "Romaji"], ["native", "Native"]] },
   ],

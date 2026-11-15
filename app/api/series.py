@@ -1,6 +1,7 @@
 """Library grid, series details, continue reading, plugin actions."""
 import logging
 import traceback
+from datetime import timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
@@ -9,7 +10,8 @@ from sqlalchemy import and_, func
 
 from app.api import filters
 from app.api.common import (READING_STATUSES, book_dict, continue_target, emit_reading_events, get_or_404, now,
-                            series_card, series_counts, status_of, title_lang, visible_books_query)
+                            latest_labels, series_card, series_counts, status_of, title_lang,
+                            visible_books_query)
 from app.api.common import load_states, my_progress, my_state, retry_on_conflict
 from app.api.filters import visible_series
 from app import config, users
@@ -82,13 +84,23 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
     load_states(db, [s for s, _ in page])  # the user's favorites and statuses, in one go
     nxt = cursor + len(rows)
     have_of = filters.collections(db, [s for s, _ in page if s.publication_status == "FINISHED"])
+    latest_of = latest_labels(db, ids)  # for the list view
     items = []
     for s, counts in page:
         card = series_card(s, counts, lang)
         card["incomplete"] = have_of.get(s.id, {}).get("state") == "incomplete"
+        card["latest"] = latest_of.get(s.id)
+        card["updated_at"] = _utc_seconds(s.updated_at)
         items.append(card)
     return {"items": items,
             "next_cursor": nxt if nxt < total else None, "total": total}
+
+
+def _utc_seconds(t):
+    """Unix seconds of a stored time (SQLite gives them back without a timezone: they are UTC)."""
+    if t is None:
+        return None
+    return int((t if t.tzinfo else t.replace(tzinfo=timezone.utc)).timestamp())
 
 
 @router.get("/tags")
