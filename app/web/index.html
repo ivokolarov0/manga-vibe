@@ -817,9 +817,22 @@
           </div>
           <div class="setting-row">
             <div class="label"><span>Plugins and custom styles</span>
-              <small>Plugin .py files go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css</small></div>
+              <small>Plugins (a .py file or a folder) go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css</small></div>
             <button class="btn small" @click="reloadPlugins()">Reload plugins</button>
           </div>
+          <!-- a token lets updates come from private GitHub repos; it is never shown again -->
+          <form class="setting-row" @submit.prevent="saveGitHubToken(false)">
+            <span class="label"><span>GitHub token for private plugins</span>
+              <small x-text="{ settings: 'Saved. Updates from private repos use it.',
+                               env: 'Set by GITHUB_TOKEN. A token saved here is used instead.' }[ghTokenFrom]
+                             || 'Only needed when a plugin updates from a private repo. A fine-grained token with read-only Contents access is enough.'"></small></span>
+            <span class="btn-row">
+              <input type="password" x-model="ghToken" autocomplete="off" aria-label="GitHub token"
+                     :placeholder="ghTokenFrom === 'settings' ? 'Saved (type to replace)' : 'github_pat_…'">
+              <button class="btn small" type="submit" :disabled="!ghToken.trim()">Save</button>
+              <button class="btn small" type="button" x-show="ghTokenFrom === 'settings'" @click="saveGitHubToken(true)">Remove</button>
+            </span>
+          </form>
         </section>
 
         <!-- one plugin's page (#/settings/plugin-<id>) -->

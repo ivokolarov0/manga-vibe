@@ -282,9 +282,16 @@ class Tracker(Plugin):
 ```
 
 - **Where updates come from:** the repo's newest **published release** (drafts and pre-releases are
-  left out). MangaVibe downloads the file with the same name as the installed one (e.g.
-  `tracker.py`) at the release's tag. The tag is the version (`v1.2.0` or `1.2.0`) and is compared
+  left out), at the release's tag. The tag is the version (`v1.2.0` or `1.2.0`) and is compared
   with `version`, so keep the two the same.
+  - A single-file plugin: the file with the same name as the installed one (e.g. `tracker.py`).
+  - A folder plugin (`plugins/tracker/__init__.py`): the folder with the same name in the
+    release's source zip (e.g. `tracker/` in the repo), or the whole repo when its `__init__.py` is
+    at the top. The folder is replaced as a whole; dot-files (`.github`, `.gitignore`) are left out.
+    No release files need to be attached: GitHub's source zip is used.
+- **Private repos:** the owner adds a GitHub token in **Settings → Plugins → GitHub token for
+  private plugins** (or sets `GITHUB_TOKEN` on the container). A fine-grained token with read-only
+  *Contents* access to the repo is enough. It is only sent to GitHub, and never shown again.
 - **To publish an update:** raise `version` in the file, merge it, then create a release with the
   tag `v<version>`. Nothing reaches users before the release.
 - **Always the owner's choice:** MangaVibe checks once a day (or on **Check for updates**) and shows
@@ -298,10 +305,13 @@ class Tracker(Plugin):
   one counts as new. They aren't enforced (a plugin is Python and can do anything the app can); they
   tell the owner what changed. Built-in plugins aren't updated this way (they come with the app),
   but they list their permissions too, and a test checks that each one does.
-- **Safe swap:** the new file must load on its own and define a plugin with the same `id`, or
-  nothing changes. The old file is kept in `plugins/.backup/`.
-- Only single-file plugins in the `plugins` folder can be updated. A plugin's settings and data are
-  kept, since they're in the database, not in the file.
+- **Safe swap:** the new version must load on its own and define a plugin with the same `id`, or
+  nothing changes. The old file or folder is kept in `plugins/.backup/`.
+- Only plugins in the `plugins` folder can be updated, not built-in ones, and not a folder that is
+  a link to somewhere else (a checkout you update yourself). A plugin's settings and data are kept,
+  since they're in the database, not in its files.
+- **Reload plugins** loads a folder plugin's own modules (`core.py`, `api.py`, ...) fresh too, so
+  copying a new version in and reloading is enough.
 
 ## Your own API and UI
 

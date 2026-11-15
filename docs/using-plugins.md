@@ -89,7 +89,13 @@ version:
   version isn't offered again, but a newer one is. **Show it again** brings it back.
 
 Plugins never update by themselves. The new version is checked before it replaces the old one, and
-your plugin settings are kept. For other plugins, replace the file and press **Reload plugins**.
+your plugin settings are kept. For other plugins, replace the file (or folder) and press **Reload
+plugins**.
+
+A plugin whose GitHub repo is private needs a token: create a
+[fine-grained token](https://github.com/settings/personal-access-tokens/new) with access to that
+repo and **Contents: Read-only**, then paste it under **Settings → Plugins → GitHub token for
+private plugins**. It's only sent to GitHub, and isn't shown again.
 
 ## Switch off or remove a plugin
 
