@@ -61,6 +61,17 @@ def test_pages_and_resize(client):
     assert client.get(f"/api/series/{sid}/poster").status_code == 200
 
 
+def test_text_is_gzipped_but_pages_are_not(client):
+    gz = {"Accept-Encoding": "gzip"}
+    for url in ("/static/js/app.js", "/static/css/base.css", "/"):
+        r = client.get(url, headers=gz)
+        assert r.status_code == 200 and r.headers.get("content-encoding") == "gzip", url
+    sid = series_by_name(client)["Hana to Akuma"]["id"]
+    book = client.get(f"/api/series/{sid}/books").json()[0]
+    page = client.get(f"/api/books/{book['id']}/pages/0", headers=gz)
+    assert page.status_code == 200 and "content-encoding" not in page.headers
+
+
 def test_files_are_sent_without_holding_a_database_connection(client):
     """Thumbnails and posters used to keep their request's database connection until the file was
     sent: a library page of thumbnails to a slow phone took all 60 and the site froze."""
