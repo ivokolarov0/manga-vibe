@@ -413,12 +413,23 @@
   }
 
   .grid {
+    --gap-x: 10px;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--card), 1fr));
-    gap: 14px 10px;
+    gap: 14px var(--gap-x);
 
     @media (min-width: 700px) {
-      gap: 20px 16px;
+      --gap-x: 16px;
+      gap: 20px var(--gap-x);
+    }
+
+    /* Settings → Display → Grid columns (common.js sets --cols): a column is a --cols-th of the row,
+       but at least --col-min wide, so a narrow screen shows fewer columns instead of tiny cards
+       (less 0.1px, so rounding never leaves the row one short) */
+    :root[data-cols] & {
+      --col-min: 76px;
+      grid-template-columns: repeat(auto-fill,
+        minmax(max(var(--col-min), (100% - (var(--cols) - 1) * var(--gap-x)) / var(--cols) - 0.1px), 1fr));
     }
   }
 

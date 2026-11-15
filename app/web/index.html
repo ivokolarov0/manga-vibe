@@ -148,8 +148,8 @@
       <div class="page-info" x-show="paged && total > 0" x-cloak>
         <span x-text="pageInfo"></span>
         <label>Per page
-          <select :value="size" @change="setPageSize($event.target.value)">
-            <template x-for="n in pageSizes" :key="n"><option :value="n" x-text="n" :selected="n === size"></option></template>
+          <select :value="pageSize" @change="setPageSize($event.target.value)">
+            <template x-for="n in pageSizes" :key="n"><option :value="n" x-text="n" :selected="n === pageSize"></option></template>
           </select></label>
       </div>
       <!-- multi-select: hold a card to start (see library() in app.js) -->

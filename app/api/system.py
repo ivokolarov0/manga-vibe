@@ -27,9 +27,10 @@ DEFAULT_SETTINGS = {
     "title_language": "english",   # english | romaji | native
     "theme": "dark",               # dark | light | auto (follows the device)
     "card_size": "medium",         # small | medium | large
+    "grid_columns": "auto",        # auto (from the screen width and card size) | 4 | 5 | 6 | 8 | 10
     "nav_position": "bottom",      # bottom | top: where the Library / Continue bar sits
     "library_listing": "lazy",     # lazy (infinite scroll) | paged (numbered pages)
-    "library_page_size": 60,       # series per page in paged mode
+    "library_page_size": 80,       # series per page in paged mode: 40 | 80 | 120 (see PAGE_SIZES)
     "reader_mode": "paged",        # paged | vertical
     "reader_fit": "screen",        # width | height | screen | original
     "auto_fullscreen": True,
@@ -195,13 +196,27 @@ def scan_status():
 PERSONAL_SETTINGS = {"theme", "reader_mode", "reader_fit", "auto_fullscreen", "preload", "reader_autohide",
                      "reader_drawer_side", "reader_tap_layout", "reader_volume_keys", "overlay_opacity",
                      "overlay_outline", "reader_brightness", "reader_contrast", "reader_colors",
-                     "library_page_size"}  # the library page's own "per page" picker, there for everyone
+                     "library_page_size",  # the library page's own "per page" picker, there for everyone
+                     "grid_columns"}  # how many columns suit depends on the person's screen
+
+# The "per page" choices: they divide evenly by 2, 4, 5, 8 and 10 columns (120 also by 3, 6 and 12), so
+# the last row of a page is full at most widths. Sizes saved before (30, 60) map to the next one up.
+PAGE_SIZES = (40, 80, 120)
+
+
+def _page_size(v):
+    try:
+        v = int(v)
+    except (TypeError, ValueError):
+        return DEFAULT_SETTINGS["library_page_size"]
+    return v if v in PAGE_SIZES else next((n for n in PAGE_SIZES if n >= v), PAGE_SIZES[-1])
 
 
 def personal_setting(db, key):
     """A Settings → Reader value for the current user: their own, else the shared one, else the default."""
     shared = get_setting(db, key, DEFAULT_SETTINGS[key])
-    return get_setting(db, users.personal_key(key), shared)
+    v = get_setting(db, users.personal_key(key), shared)
+    return _page_size(v) if key == "library_page_size" else v
 
 
 @router.get("/settings")

@@ -457,13 +457,15 @@ function library() {
       document.title = "MangaVibe";
       const paged = settings.library_listing === "paged";
       const page = paged ? Math.max(1, parseInt(new URLSearchParams(this.$store.app.query).get("page")) || 1) : 1;
-      const size = +settings.library_page_size || 60;
+      // with a fixed column count, a page is whole rows (80 in 6 columns: 84), so its last row is full
+      const pageSize = +settings.library_page_size || 80, cols = +settings.grid_columns || 0;
+      const size = cols ? Math.ceil(pageSize / cols) * cols : pageSize;
       // listsDirty: a plugin said the same filters now show something else (e.g. a library was unlocked)
       const base = `${paged ? "paged" : "lazy"}:${size}:${this.filters}:${this.$store.app.listsDirty}`;
       const key = `${base}:${page}`;
       if (key === this.key) return;
       const pageChange = paged && base === this.base && this.key !== null;  // same list, other page
-      Object.assign(this, { cursor: 0, done: false, loading: false, key, base, paged, page, size });
+      Object.assign(this, { cursor: 0, done: false, loading: false, key, base, paged, page, size, pageSize });
       if (!pageChange) Object.assign(this, { items: [], total: null });  // a new page keeps the old cards until it arrives
       paged ? this.loadPage(pageChange) : this.loadMore();
     },
@@ -513,7 +515,8 @@ function library() {
     get pageInfo() {
       return `Page ${this.page} of ${this.pages()} · ${this.total} series`;
     },
-    pageSizes: [30, 60, 120],
+    pageSizes: PAGE_SIZES,
+    pageSize: 80,  // the size picked; size is what a page holds (rounded to whole rows)
     async setPageSize(v) {  // the same setting as Settings → Display → Series per page
       await api("/api/settings", { method: "PUT", body: { library_page_size: +v } });
       await loadSettings();
@@ -1507,11 +1510,14 @@ const SETTING_ROWS = {
     { key: "theme", label: "Theme", hint: "Just for you", personal: true,
       options: [["dark", "Dark"], ["light", "Light"], ["auto", "Match device"]] },
     { key: "card_size", label: "Card size", options: [["small", "Small"], ["medium", "Medium"], ["large", "Large"]] },
+    { key: "grid_columns", label: "Grid columns", personal: true,
+      hint: "Just for you. Auto fits as many cards as the screen has room for; narrow screens show fewer than picked",
+      options: [["auto", "Auto"], ...GRID_COLUMNS.map((n) => [String(n), String(n)])] },
     { key: "nav_position", label: "Navigation bar", hint: "Where Library and Continue sit",
       options: [["bottom", "Bottom"], ["top", "Top"]] },
     { key: "library_listing", label: "Library listing", hint: "Load more while scrolling, or show numbered pages",
       options: [["lazy", "Lazy load"], ["paged", "Paginated"]] },
-    { key: "library_page_size", label: "Series per page", options: [["30", "30"], ["60", "60"], ["120", "120"]],
+    { key: "library_page_size", label: "Series per page", options: PAGE_SIZES.map((n) => [String(n), String(n)]),
       show: (st) => st.library_listing === "paged" },
     { key: "title_language", label: "Title language", hint: "Falls back to the next one if missing",
       options: [["english", "English"], ["romaji", "Romaji"], ["native", "Native"]] },
@@ -1728,7 +1734,7 @@ function settingsView() {
       await api("/api/settings", { method: "PUT", body: { [key]: v } });
       if (key === "theme") setTheme(v);
       await loadSettings();
-      if (["title_language", "library_listing", "library_page_size"].includes(key)) this.$store.app.libraryDirty++;
+      if (["title_language", "library_listing", "library_page_size", "grid_columns"].includes(key)) this.$store.app.libraryDirty++;
       toast("Saved");
     },
     async rescan(lib) {
