@@ -79,6 +79,19 @@
         ". main main";
       gap: 16px 28px;
     }
+
+    /* tablet: a big poster column leaves the panels too narrow (two columns of ~240px), so the
+       poster gets smaller, the controls sit beside it under the title, and the panels use the
+       full width below */
+    @media (min-width: 800px) and (max-width: 1099px) {
+      grid-template-columns: 200px minmax(0, 1fr) auto;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        "poster head tools"
+        "poster actions actions"
+        "main main main";
+      gap: 16px 24px;
+    }
   }
 
   .sp-tools {
@@ -342,6 +355,11 @@
     align-content: start;
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
+
+    /* tablet: the controls sit beside the poster, so put them two to a row */
+    @media (min-width: 800px) and (max-width: 1099px) {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    }
 
     & .ctl {
       width: 100%;
