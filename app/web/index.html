@@ -99,7 +99,8 @@
       <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>Continue</a>
   </nav>
 
-  <main>
+  <!-- home: the Library and Continue grids, which Settings → Display → Page width may let fill the screen -->
+  <main x-data :class="{ home: ['library', 'continue'].includes($store.app.view) }">
     <!-- ============ Android browser: offer the app (android/) ============ -->
     <div class="app-banner" x-data x-show="$store.app.appBanner && $store.app.view === 'library'" x-cloak>
       <img src="/static/icons/icon-192.png" alt="">
@@ -150,8 +151,8 @@
         <span x-text="paged ? pageInfo : `${total} series`"></span>
         <div class="page-tools">
           <label x-show="paged">Per page
-            <select :value="size" @change="setPageSize($event.target.value)">
-              <template x-for="n in pageSizes" :key="n"><option :value="n" x-text="n" :selected="n === size"></option></template>
+            <select :value="pageSize" @change="setPageSize($event.target.value)">
+              <template x-for="n in pageSizes" :key="n"><option :value="n" x-text="n" :selected="n === pageSize"></option></template>
             </select></label>
           <!-- grid or list: the library_view setting -->
           <div class="segmented view-switch" role="group" aria-label="View">

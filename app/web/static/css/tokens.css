@@ -54,6 +54,14 @@
     /* library grid: minimum card width */
     --card: 108px;
 
+    /* the widest the page content gets (main, and the top nav lined up with it). Settings → Display →
+       Page width: Full width lifts it on the Library and Continue grids (main.home, see index.html) */
+    --page-max: 1400px;
+
+    &[data-width="full"]:has(main.home) {
+      --page-max: 100%;
+    }
+
     /* series page poster width on desktop */
     --poster-width: 280px;
 

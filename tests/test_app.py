@@ -267,6 +267,20 @@ def test_page_look_settings(client):
     client.put("/api/settings", json={"reader_brightness": 100, "reader_contrast": 100, "reader_colors": "normal"})
 
 
+def test_library_grid_settings(client):
+    s = client.get("/api/settings").json()
+    assert (s["library_page_size"], s["grid_columns"], s["page_width"]) == (80, "auto", "contained")
+    # sizes no longer offered (saved before 40 / 80 / 120) show as the next one up
+    for saved, shown in [(30, 40), (60, 80), (120, 120), (200, 120), ("junk", 80)]:
+        client.put("/api/settings", json={"library_page_size": saved})
+        assert client.get("/api/settings").json()["library_page_size"] == shown
+    client.put("/api/settings", json={"grid_columns": 6})
+    assert client.get("/api/settings").json()["grid_columns"] == 6
+    client.put("/api/settings", json={"page_width": "full"})
+    assert client.get("/api/settings").json()["page_width"] == "full"
+    client.put("/api/settings", json={"library_page_size": 80, "grid_columns": "auto", "page_width": "contained"})
+
+
 def test_settings(client):
     assert client.get("/api/settings").json()["reader_mode"] == "paged"
     client.put("/api/settings", json={"reader_mode": "vertical", "bogus": 1})

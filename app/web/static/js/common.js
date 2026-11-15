@@ -110,12 +110,24 @@ function setTheme(choice) {
   return applyTheme();
 }
 
+/* The library's "per page" choices (as PAGE_SIZES in app/api/system.py) and the fixed column counts of
+   Settings → Display → Grid columns: the sizes fill whole rows in most of these. */
+const PAGE_SIZES = [40, 80, 120];
+const GRID_COLUMNS = [4, 5, 6, 8, 10, 12];
+
 /* App settings (theme, reader defaults, ...). One shared object; reload with loadSettings(). */
 const settings = {};
 async function loadSettings() {
   Object.assign(settings, await api("/api/settings"));
   applyTheme();
-  document.documentElement.dataset.card = settings.card_size;
+  const root = document.documentElement;
+  root.dataset.card = settings.card_size;
+  // a fixed column count for the library grid (library.css); none = as many as fit
+  const cols = +settings.grid_columns || 0;
+  if (cols) root.style.setProperty("--cols", cols);
+  else root.style.removeProperty("--cols");
+  root.toggleAttribute("data-cols", !!cols);
+  root.dataset.width = settings.page_width;  // full: the Library and Continue grids fill the screen (tokens.css)
   document.documentElement.dataset.nav = settings.nav_position;
   return settings;
 }
