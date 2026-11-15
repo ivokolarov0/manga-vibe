@@ -106,14 +106,16 @@ File names are messy and inconsistent, even within one series. This is a core fe
 7. Nothing found → no number; sort by natural filename order after numbered books.
 
 ### 4.3 Sorting
-- Books with a chapter number: sort by chapter (start of range).
-- Books with only a volume number: sort by volume, placed before loose chapters if their chapter range is unknown.
+- Numbered books sort by volume, then chapter (start of range): `v05`, `v06`, `v07 ch01`, `v07 ch02`.
+- A whole volume (no chapter) comes before that volume's chapters.
+- Chapters without a volume come after all volumes, by chapter.
 - Then extras (by extra index, then name).
 - Then unnumbered files (natural sort).
 - Natural sort means `file2` before `file10`.
 
 ### 4.4 Duplicates and revisions
 - Same chapter, different revision (`ch03` and `ch03v2`): keep the **highest revision** as the active book; keep the others as hidden "older revisions" (visible in the series' file list, not in reading order).
+- "Same chapter" means the same chapter number and volume: `v01 c01` and `v07 c01` are different chapters.
 - Same chapter, same revision (e.g. two groups): **keep both** and flag the series as having duplicates. **Never silently hide a file.**
 
 ### 4.5 Required test cases
