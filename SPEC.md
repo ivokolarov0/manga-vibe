@@ -232,7 +232,9 @@ The owner can edit any metadata field by hand (titles, description, tags, status
 - Column count adapts to screen width (≈3 per row on a phone, more on desktop). Card size setting (small/medium/large).
   **Grid columns** (Settings → Display, each person's own): Auto (as above) or a fixed 4 / 5 / 6 / 8 / 10 / 12, fewer
   on screens too narrow for that. **Page width** (also each person's own): Contained (at most 1400px wide) or Full
-  width, where the Library and Continue grids use the whole screen; the other pages stay contained. Paginated listing offers 40 / 80 / 120 per page, which fill the last row at
+  width, where the Library and Continue grids use the whole screen; with **Series page full width as well** ticked,
+  the series page does too; the other pages stay contained. **Card width** (each person's own, with Auto columns, on
+  screens 700px and wider): From card size, or a minimum of 120–320px; cards grow to fill the row (`minmax(width, 1fr)`). Paginated listing offers 40 / 80 / 120 per page, which fill the last row at
   most column counts; with a fixed column count a page is rounded up to whole rows.
 - **Infinite scroll** with cursor/offset pagination from the API (page size ~60). Lazy-load images (`loading="lazy"`), use the small cached poster.
 - Title shown in the owner's preferred language: setting **Title language = English / Romaji / Native**, falling back in that order to whatever exists, then the folder name.

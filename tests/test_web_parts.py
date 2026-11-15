@@ -9,7 +9,7 @@ def test_page_has_its_parts(client):
     page = client.get("/").text
     assert "<!-- part:" not in page
     assert page.count('class="meta-progress"') == 2  # Settings → Metadata and Needs attention
-    assert page.count('<label class="setting-row" x-show="!r.show || r.show(st)">') == 3  # Display, Reader, app
+    assert page.count('<label class="setting-row" :class="{ sub: r.sub }" x-show="!r.show || r.show(st)">') == 3  # Display, Reader, app
 
 
 def test_every_part_is_used():

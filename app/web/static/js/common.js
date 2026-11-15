@@ -114,6 +114,8 @@ function setTheme(choice) {
    Settings → Display → Grid columns: the sizes fill whole rows in most of these. */
 const PAGE_SIZES = [40, 80, 120];
 const GRID_COLUMNS = [4, 5, 6, 8, 10, 12];
+// Settings → Display → Card width (with Auto columns): a card's minimum width in px on wide screens
+const CARD_WIDTHS = [120, 140, 160, 180, 200, 240, 280, 320];
 
 /* App settings (theme, reader defaults, ...). One shared object; reload with loadSettings(). */
 const settings = {};
@@ -127,7 +129,13 @@ async function loadSettings() {
   if (cols) root.style.setProperty("--cols", cols);
   else root.style.removeProperty("--cols");
   root.toggleAttribute("data-cols", !!cols);
+  // with Auto columns: the cards' minimum width on wide screens, instead of the card size's (tokens.css)
+  const cardWidth = +settings.card_width || 0;
+  if (cardWidth) root.style.setProperty("--card-width", cardWidth + "px");
+  else root.style.removeProperty("--card-width");
+  root.toggleAttribute("data-card-width", !!cardWidth);
   root.dataset.width = settings.page_width;  // full: the Library and Continue grids fill the screen (tokens.css)
+  root.toggleAttribute("data-width-series", settings.page_width_series === true);  // ...and the series page
   document.documentElement.dataset.nav = settings.nav_position;
   return settings;
 }
