@@ -131,7 +131,8 @@ def test_bad_downloads_change_nothing(client, gh):
 def test_github_errors_are_shown(client, gh):
     gh.status = 404
     u = client.post("/api/plugins/hello/updates/check").json()["update"]
-    assert "Is someone/mv-hello public" in u["error"] and not u["available"]
+    assert "Does someone/mv-hello have a published release" in u["error"] and not u["available"]
+    assert "GitHub token" in u["error"]  # a private repo answers 404 too
     gh.status = 403
     assert "request limit" in client.post("/api/plugins/hello/updates/check").json()["update"]["error"]
 
@@ -186,6 +187,167 @@ def test_only_plugins_with_a_repo_in_the_plugins_folder(client, gh):
         assert plugin_updates.path_of(manager.plugins["no-repo"]) is None
     finally:
         del manager.plugins["no-repo"], manager.paths["no-repo"]
+
+
+# ---------------- folder plugins (plugins/<name>/__init__.py), from the release's source zip
+
+PKG = "hellopkg"
+
+
+def pkg_files(version, plugin_id="hellopkg"):
+    """A folder plugin whose version lives in a module of its own, so an update shows whether that
+    module was loaded fresh too."""
+    return {
+        "__init__.py": (f'from app.plugins import Plugin\nfrom . import core\n'
+                        f'class HelloPkg(Plugin):\n    id = "{plugin_id}"\n    name = "Hello folder"\n'
+                        f'    version = core.VERSION\n    repo = "{REPO}"\n'),
+        "core.py": f'VERSION = "{version}"\n',
+    }
+
+
+def source_zip(files, root=f"{PKG}/", extra=None):
+    """What GitHub's zipball answers: the repo at the tag under one top folder."""
+    import io
+    import zipfile
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("someone-mv-hello-abc123/README.md", "readme")
+        for name, text in files.items():
+            z.writestr(f"someone-mv-hello-abc123/{root}{name}", text)
+        for name, text in (extra or {}).items():
+            z.writestr(name, text)
+    return buf.getvalue()
+
+
+class FakeGitHubZip(FakeGitHub):
+    """Also answers zipball (redirected to codeload, like GitHub) and remembers the auth it got."""
+
+    def __init__(self):
+        super().__init__()
+        self.zips, self.auth = {}, {}
+
+    def __call__(self, request: httpx.Request):
+        self.auth[request.url.host] = request.headers.get("authorization")
+        if request.url.host == "api.github.com" and "/zipball/" in request.url.path:
+            self.requests.append(str(request.url))
+            tag = request.url.path.rsplit("/", 1)[1]
+            return httpx.Response(302, headers={"location": f"https://codeload.github.com/zip/{tag}?token=tmp"})
+        if request.url.host == "codeload.github.com":
+            self.requests.append(str(request.url))
+            tag = request.url.path.rsplit("/", 1)[1]
+            if tag not in self.zips:
+                return httpx.Response(404)
+            return httpx.Response(200, content=self.zips[tag])
+        return super().__call__(request)
+
+
+def write_pkg(files):
+    import shutil
+    shutil.rmtree(PLUGINS / PKG, ignore_errors=True)
+    (PLUGINS / PKG).mkdir()
+    for name, text in files.items():
+        (PLUGINS / PKG / name).write_text(text)
+
+
+@pytest.fixture()
+def ghz(client):
+    import shutil
+
+    from app import plugin_updates
+    from app.db import SessionLocal, set_setting
+    write_pkg(pkg_files("1.0.0"))
+    with SessionLocal() as db:
+        set_setting(db, "plugin_updates", {})
+        set_setting(db, plugin_updates.TOKEN_KEY, "")
+        db.commit()
+    client.post("/api/plugins/reload")
+    fake = FakeGitHubZip()
+    old, plugin_updates.transport = plugin_updates.transport, httpx.MockTransport(fake)
+    yield fake
+    plugin_updates.transport = old
+    shutil.rmtree(PLUGINS / PKG, ignore_errors=True)
+    shutil.rmtree(PLUGINS / ".backup" / f"{PKG}-1.0.0", ignore_errors=True)
+    with SessionLocal() as db:
+        set_setting(db, plugin_updates.TOKEN_KEY, "")
+        db.commit()
+    client.post("/api/plugins/reload")
+
+
+def pkg_info(client):
+    return next(p for p in client.get("/api/plugins").json()["plugins"] if p["id"] == "hellopkg")
+
+
+def test_folder_plugin_updates_from_the_source_zip(client, ghz):
+    assert pkg_info(client)["update"]["supported"]
+    client.post("/api/plugins/hellopkg/updates/check")
+    ghz.zips["v1.1.0"] = source_zip(pkg_files("1.1.0"), extra={
+        f"someone-mv-hello-abc123/{PKG}/.secret": "left out",
+        f"someone-mv-hello-abc123/{PKG}/__pycache__/x.pyc": "left out",
+        "someone-mv-hello-abc123/../escape.py": "left out"})
+    r = client.post("/api/plugins/hellopkg/updates/install")
+    assert r.status_code == 200, r.text
+    assert r.json()["message"] == "Hello folder updated from 1.0.0 to 1.1.0"
+    # core.py was loaded fresh: the version comes from it
+    assert pkg_info(client)["version"] == "1.1.0" and not pkg_info(client)["update"]["available"]
+    assert sorted(x.name for x in (PLUGINS / PKG).iterdir() if x.name != "__pycache__") == ["__init__.py", "core.py"]
+    assert not (PLUGINS / "escape.py").exists()
+    assert (PLUGINS / ".backup" / f"{PKG}-1.0.0" / "core.py").read_text() == pkg_files("1.0.0")["core.py"]
+    assert not list((PLUGINS / ".staging").glob(f"{PKG}*"))
+    assert ghz.auth["api.github.com"] is None  # no token saved: nothing sent
+
+
+def test_folder_plugin_that_is_the_whole_repo(client, ghz):
+    client.post("/api/plugins/hellopkg/updates/check")
+    ghz.zips["v1.1.0"] = source_zip(pkg_files("1.1.0"), root="")
+    assert client.post("/api/plugins/hellopkg/updates/install").status_code == 200
+    assert pkg_info(client)["version"] == "1.1.0"
+    assert (PLUGINS / PKG / "README.md").exists()
+
+
+def test_bad_folder_downloads_change_nothing(client, ghz):
+    client.post("/api/plugins/hellopkg/updates/check")
+    for zip_, why in ((source_zip(pkg_files("1.1.0"), root="other/"), "no hellopkg/ folder"),
+                      (source_zip(pkg_files("1.1.0", plugin_id="else")), "has no plugin 'hellopkg'"),
+                      (source_zip({"__init__.py": "raise RuntimeError('boom')"}), "doesn't load"),
+                      (b"not a zip", "isn't a zip"),
+                      (None, "Could not download")):
+        ghz.zips.pop("v1.1.0", None)
+        if zip_ is not None:
+            ghz.zips["v1.1.0"] = zip_
+        r = client.post("/api/plugins/hellopkg/updates/install")
+        assert r.status_code == 400 and why in r.json()["detail"], r.text
+        assert pkg_info(client)["version"] == "1.0.0"
+    assert not list((PLUGINS / ".staging").glob(f"{PKG}*"))
+
+
+def test_private_repo_token(client, ghz, monkeypatch):
+    assert client.get("/api/plugins").json()["github_token"] == ""
+    monkeypatch.setenv("GITHUB_TOKEN", "env-token")
+    assert client.get("/api/plugins").json()["github_token"] == "env"
+    r = client.put("/api/plugins/github-token", json={"token": " secret-token "})
+    assert r.json() == {"github_token": "settings"}  # where it comes from, never the token
+    assert "secret-token" not in client.get("/api/plugins").text
+
+    client.post("/api/plugins/hellopkg/updates/check")
+    assert ghz.auth["api.github.com"] == "Bearer secret-token"  # the saved one wins over the variable
+    ghz.zips["v1.1.0"] = source_zip(pkg_files("1.1.0"))
+    assert client.post("/api/plugins/hellopkg/updates/install").status_code == 200
+    assert ghz.auth["codeload.github.com"] is None  # not passed on to the redirect
+
+    client.put("/api/plugins/github-token", json={"token": ""})
+    assert client.get("/api/plugins").json()["github_token"] == "env"
+    gh_status = ghz.status
+    ghz.status = 401
+    u = client.post("/api/plugins/hellopkg/updates/check").json()["update"]
+    assert "refused the token" in u["error"]
+    ghz.status = gh_status
+
+
+def test_reload_loads_a_folder_plugins_modules_fresh(client, ghz):
+    """Reload plugins after changing a folder plugin's inner module uses the new code."""
+    (PLUGINS / PKG / "core.py").write_text('VERSION = "9.9.10"\n')  # another size: no stale .pyc
+    client.post("/api/plugins/reload")
+    assert pkg_info(client)["version"] == "9.9.10"
 
 
 def test_version_compare():

@@ -260,7 +260,21 @@ def _plugin_dict(p, db):
 @router.get("/plugins", dependencies=[manage])
 def list_plugins(db=Depends(get_db)):
     return {"plugins": [_plugin_dict(p, db) for p in plugins.plugins.values()],
-            "errors": plugins.errors, "categories": CATEGORIES}
+            "errors": plugins.errors, "categories": CATEGORIES,
+            # where the token for private plugin repos comes from: "settings", "env" or "" (never the token)
+            "github_token": plugin_updates.token_source(db)}
+
+
+class GitHubToken(BaseModel):
+    token: str = ""
+
+
+@router.put("/plugins/github-token", dependencies=[manage])
+def save_github_token(body: GitHubToken, db=Depends(get_db)):
+    """The GitHub token updates use for private plugin repos. "" removes it (GITHUB_TOKEN, if set,
+    is used then). It is never sent back."""
+    plugin_updates.set_token(db, body.token)
+    return {"github_token": plugin_updates.token_source(db)}
 
 
 def _enabled_plugin(plugin_id):
@@ -368,7 +382,7 @@ def _installed_plugin(plugin_id):
         raise HTTPException(404, "Plugin not found")
     if not plugin_updates.path_of(p):
         raise HTTPException(400, "MangaVibe can't update this plugin: it doesn't name a GitHub repo, "
-                                 "or it isn't a single file in the plugins folder")
+                                 "or it isn't a file or folder of its own in the plugins folder")
     return p
 
 

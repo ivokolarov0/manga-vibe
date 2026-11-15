@@ -1604,6 +1604,9 @@ function settingsView() {
     // the category, source (built in or installed) and status picked, kept per browser; the search isn't
     pf: { cat: "all", src: "all", status: "all", builtinOpen: false, q: "", ...loadPluginView() },
     pluginCats: {},  // category key -> label, in order (GET /api/plugins)
+    // the GitHub token for private plugin repos: where it comes from ("settings", "env", ""), never
+    // the token itself; ghToken is only what's being typed
+    ghTokenFrom: "", ghToken: "",
     savePluginView() {
       const { cat, src, status, builtinOpen } = this.pf;
       try { localStorage.setItem(PLUGIN_VIEW_KEY, JSON.stringify({ cat, src, status, builtinOpen })); } catch {}
@@ -1811,6 +1814,7 @@ Your files are not touched. `
     setPlugins(r) {
       this.plugins = r.plugins;
       this.pluginErrors = r.errors;
+      if ("github_token" in r) this.ghTokenFrom = r.github_token;
       if (r.categories) {
         this.pluginCats = r.categories;
         // a category saved by an older version, or one no longer there: show them all
@@ -1844,6 +1848,15 @@ Your files are not touched. `
         if (p.update.error) toast(p.update.error, 6000, "error");
         else toast(p.update.available ? `Version ${p.update.latest} is available` : `${p.name} is up to date`);
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.busyAction = ""; }
+    },
+    async saveGitHubToken(clear) {
+      const token = clear ? "" : this.ghToken.trim();
+      if (!clear && !token) return;
+      try {
+        const r = await api("/api/plugins/github-token", { method: "PUT", body: { token } });
+        this.ghTokenFrom = r.github_token; this.ghToken = "";
+        toast(clear ? "GitHub token removed" : "GitHub token saved");
+      } catch (e) { toast(e.message, 6000, "error"); }
     },
     async installPluginUpdate(p) {
       if (!confirm(`Install ${p.name} ${p.update.latest} from github.com/${p.update.repo}?`)) return;

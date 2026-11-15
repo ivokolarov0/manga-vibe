@@ -641,6 +641,10 @@ class PluginManager:
             else:
                 mod_name = f"mangavibe_plugin_{stem}"
                 folder = [str(path.parent)] if path.name == "__init__.py" else None  # relative imports
+                # a folder plugin's own modules (its core.py, api.py...) are loaded fresh too: left in
+                # sys.modules, `from . import core` would keep the old code after a reload or update
+                for name in [m for m in sys.modules if m.startswith(mod_name + ".")]:
+                    del sys.modules[name]
                 spec = importlib.util.spec_from_file_location(mod_name, path, submodule_search_locations=folder)
                 module = importlib.util.module_from_spec(spec)
                 sys.modules[mod_name] = module

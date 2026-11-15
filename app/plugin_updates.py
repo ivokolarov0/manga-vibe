@@ -1,20 +1,28 @@
 """Updating plugins from their GitHub releases.
 
 A plugin that sets `repo = "owner/name"` is updated from that repo's newest release (drafts and
-pre-releases are left out): the file with the same name as the installed one, at the release's tag.
-The tag is the version (v1.2.0 or 1.2.0) and is compared with the plugin's `version`.
+pre-releases are left out), at the release's tag. The tag is the version (v1.2.0 or 1.2.0) and is
+compared with the plugin's `version`.
+- A single-file plugin (plugins/tracker.py): the file with the same name in the repo.
+- A folder plugin (plugins/sources/): the folder with the same name in the release's source zip,
+  or the whole repo when the plugin is the repo itself (an __init__.py at its top).
+
+A private repo needs a GitHub token (Settings -> Plugins, or the GITHUB_TOKEN variable). It is sent
+only to GitHub.
 
 A new version is never installed by itself: the daily check (or Check for updates) only looks, and
 Settings shows it with Update and Skip. A skipped version isn't offered again; a newer one is.
-Only single-file plugins in the data folder's plugins/ are updated; built-in ones come with the app.
+Only plugins in the data folder's plugins/ are updated; built-in ones come with the app, and a
+folder that is a link (to a checkout) is the owner's to update.
 
-Before a new file replaces the old one, it must load on its own and define a plugin with the same
-id. The old file is kept in plugins/.backup/ (the loader skips folders that start with a dot).
+Before the new version replaces the old one, it must load on its own and define a plugin with the
+same id. The old one is kept in plugins/.backup/ (the loader skips folders that start with a dot).
 
 When the new version lists permissions the installed one doesn't, nothing is installed until the
 owner approves exactly those (Update asks, then sends them back as `accepted`).
 """
 import importlib.util
+import io
 import logging
 import os
 import re
@@ -23,7 +31,8 @@ import sys
 import threading
 import time
 import types
-from pathlib import Path
+import zipfile
+from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
 import httpx
@@ -34,6 +43,9 @@ from app.plugins import Plugin, manager
 log = logging.getLogger("mangavibe.plugin_updates")
 CHECK_EVERY = 24 * 3600
 MAX_SIZE = 1_000_000  # a plugin is one .py file; anything bigger isn't one
+MAX_ZIP = 50_000_000  # a release's source zip (the whole repo at the tag)
+MAX_FOLDER = 20_000_000  # a folder plugin, unpacked
+TOKEN_KEY = "plugin_github_token"
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 transport = None  # tests put an httpx.MockTransport here
 _lock = threading.Lock()  # one install at a time
@@ -99,13 +111,16 @@ def unskip(db, plugin_id):
 # ---------------- which plugins, which versions ----------------
 
 def path_of(p):
-    """The file an update replaces, or None when this plugin can't be updated."""
+    """What an update replaces: the plugin's .py file, or its folder (a folder plugin). None when
+    this plugin can't be updated."""
     path = manager.paths.get(p.id)
     if not p.repo or not REPO_RE.match(p.repo) or path is None or path.suffix != ".py":
         return None
+    if path.name == "__init__.py":
+        path = path.parent  # a folder plugin: the whole folder is replaced
     try:
         if path.resolve().parent != config.PLUGINS_DIR.resolve():
-            return None  # built in, or a package folder
+            return None  # built in, or a link to a folder elsewhere (a checkout)
     except OSError:
         return None
     return path
@@ -133,17 +148,44 @@ def info(db, p):
 
 # ---------------- GitHub ----------------
 
-def _client():
-    return httpx.Client(timeout=30, follow_redirects=True, transport=transport,
-                        headers={"User-Agent": "MangaVibe-plugin-updater",
-                                 "Accept": "application/vnd.github+json"})
+def token(db) -> str:
+    """The GitHub token for private plugin repos: the one saved in Settings, else GITHUB_TOKEN."""
+    from app.db import get_setting
+    return str(get_setting(db, TOKEN_KEY, "") or os.environ.get("GITHUB_TOKEN") or "").strip()
+
+
+def token_source(db) -> str:
+    """Where the token comes from, for Settings: "settings", "env" or ""."""
+    from app.db import get_setting
+    if str(get_setting(db, TOKEN_KEY, "") or "").strip():
+        return "settings"
+    return "env" if os.environ.get("GITHUB_TOKEN", "").strip() else ""
+
+
+def set_token(db, value: str):
+    from app.db import set_setting
+    set_setting(db, TOKEN_KEY, (value or "").strip())
+    db.commit()
+
+
+def _client(db):
+    headers = {"User-Agent": "MangaVibe-plugin-updater", "Accept": "application/vnd.github+json"}
+    tok = token(db)
+    if tok:
+        # only GitHub gets it: httpx drops Authorization when a redirect leaves the host (the source
+        # zip is redirected to codeload.github.com with a short-lived link of its own)
+        headers["Authorization"] = f"Bearer {tok}"
+    return httpx.Client(timeout=60, follow_redirects=True, transport=transport, headers=headers)
 
 
 def _why(e, repo):
     if isinstance(e, httpx.HTTPStatusError):
         code = e.response.status_code
         if code == 404:
-            return f"GitHub answered 404. Is {repo} public, and does it have a published release?"
+            return (f"GitHub answered 404. Does {repo} have a published release? If the repo is "
+                    "private, add a GitHub token that can read it (Settings → Plugins).")
+        if code == 401:
+            return "GitHub refused the token. Check it in Settings → Plugins."
         if code in (403, 429):
             return "GitHub's request limit was reached. Try again in an hour."
         return f"GitHub answered {code}"
@@ -155,7 +197,7 @@ def _why(e, repo):
 def check(db, p):
     """Ask GitHub for the plugin's newest release and save the answer. Never raises."""
     try:
-        with _client() as c:
+        with _client(db) as c:
             r = c.get(f"https://api.github.com/repos/{p.repo}/releases/latest")
             r.raise_for_status()
             rel = r.json()
@@ -168,6 +210,12 @@ def check(db, p):
 
 # ---------------- install ----------------
 
+def _found(module, name):
+    return [(cls.id, cls.version, permissions_of(cls)) for cls in vars(module).values()
+            if isinstance(cls, type) and issubclass(cls, Plugin) and cls is not Plugin
+            and cls.__module__ == name]
+
+
 def _plugins_in(file):
     """Load a downloaded file on its own: [(id, version, permissions)] of the plugins it defines."""
     name = f"mangavibe_plugin_update_check_{file.stem}"
@@ -178,11 +226,80 @@ def _plugins_in(file):
         module.__file__ = str(file)
         sys.modules[name] = module
         exec(compile(file.read_bytes(), str(file), "exec"), module.__dict__)
-        return [(cls.id, cls.version, permissions_of(cls)) for cls in vars(module).values()
-                if isinstance(cls, type) and issubclass(cls, Plugin) and cls is not Plugin
-                and cls.__module__ == name]
+        return _found(module, name)
     finally:
         sys.modules.pop(name, None)
+
+
+def _plugins_in_folder(folder):
+    """Load a downloaded folder plugin on its own (with its own modules, under a name of its own):
+    [(id, version, permissions)] of the plugins it defines."""
+    name = f"mangavibe_plugin_update_check_{folder.name}"
+    try:
+        spec = importlib.util.spec_from_file_location(name, folder / "__init__.py",
+                                                      submodule_search_locations=[str(folder)])
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+        return _found(module, name)
+    finally:
+        for m in [m for m in sys.modules if m == name or m.startswith(name + ".")]:
+            del sys.modules[m]
+        for cache in folder.rglob("__pycache__"):
+            shutil.rmtree(cache, ignore_errors=True)
+
+
+def _unpack_folder(data: bytes, folder_name: str, dest: Path):
+    """Unpack a folder plugin from a GitHub source zip (one top folder, the repo at the tag) into
+    `dest`: the folder named like the installed one, or the whole repo when the plugin is the repo
+    itself. Dot-files and __pycache__ are left out."""
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(data))
+    except zipfile.BadZipFile as e:
+        raise UpdateError("The release's download isn't a zip file") from e
+    with zf:
+        names = set(zf.namelist())
+        tops = {n.split("/", 1)[0] for n in names if n.strip("/")}
+        if len(tops) != 1:
+            raise UpdateError("The release's download isn't a GitHub source zip")
+        top = tops.pop()
+        prefix = next((pre for pre in (f"{top}/{folder_name}/", f"{top}/")
+                       if f"{pre}__init__.py" in names), None)
+        if prefix is None:
+            raise UpdateError(f"The release has no {folder_name}/ folder with an __init__.py")
+        total = 0
+        for info in zf.infolist():
+            if info.is_dir() or not info.filename.startswith(prefix):
+                continue
+            rel = PurePosixPath(info.filename[len(prefix):])
+            parts = rel.parts
+            if not parts or rel.is_absolute() or any(
+                    x in ("", "..") or x.startswith(".") or x == "__pycache__" or "\\" in x or ":" in x
+                    for x in parts):
+                continue  # dot-files (.github, .gitignore), caches, and anything leaving the folder
+            total += info.file_size
+            if total > MAX_FOLDER:
+                raise UpdateError(f"The release's {folder_name}/ folder is too big to be a plugin")
+            target = dest.joinpath(*parts)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with zf.open(info) as src, open(target, "wb") as out:
+                shutil.copyfileobj(src, out)
+
+
+def _swap_folder(new: Path, path: Path, backup: Path, staging: Path):
+    """Put the new folder in the old one's place. The old one is copied to `backup` first, and put
+    back if the new one can't be moved in."""
+    shutil.rmtree(backup, ignore_errors=True)
+    shutil.copytree(path, backup, ignore=shutil.ignore_patterns("__pycache__"))
+    old = staging / f"{path.name}.old"
+    shutil.rmtree(old, ignore_errors=True)
+    os.replace(path, old)
+    try:
+        os.replace(new, path)
+    except OSError:
+        os.replace(old, path)
+        raise
+    shutil.rmtree(old, ignore_errors=True)
 
 
 def reload_plugins(db):
@@ -204,43 +321,69 @@ def install(db, plugin_id, accepted=None):
         latest = _states(db).get(p.id, {}).get("latest")
         if not latest or version_tuple(latest) <= version_tuple(p.version):
             raise UpdateError(f"{p.name} is up to date. Press Check for updates to look again.")
-        url = (f"https://raw.githubusercontent.com/{p.repo}/{quote(latest, safe='')}/"
-               f"{quote(path.name)}")
+        folder = path.is_dir()
+        what = f"{path.name}/" if folder else path.name
+        tag = quote(latest, safe="")
+        url = (f"https://api.github.com/repos/{p.repo}/zipball/{tag}" if folder
+               else f"https://raw.githubusercontent.com/{p.repo}/{tag}/{quote(path.name)}")
         try:
-            with _client() as c:
+            with _client(db) as c:
                 r = c.get(url)
                 r.raise_for_status()
         except Exception as e:
-            raise UpdateError(f"Could not download {path.name} {latest}. {_why(e, p.repo)}") from e
-        if len(r.content) > MAX_SIZE:
-            raise UpdateError(f"The downloaded {path.name} is too big to be a plugin")
+            raise UpdateError(f"Could not download {what} {latest}. {_why(e, p.repo)}") from e
+        if len(r.content) > (MAX_ZIP if folder else MAX_SIZE):
+            raise UpdateError(f"The downloaded {what} is too big to be a plugin")
 
         staging = config.PLUGINS_DIR / ".staging"
         staging.mkdir(exist_ok=True)
         new = staging / path.name
-        new.write_bytes(r.content)
+
+        def discard():
+            if new.is_dir():
+                shutil.rmtree(new, ignore_errors=True)
+            else:
+                new.unlink(missing_ok=True)
+
+        discard()  # left over from an update that was cut off
         try:
-            found = _plugins_in(new)
+            if folder:
+                new.mkdir()
+                _unpack_folder(r.content, path.name, new)
+                found = _plugins_in_folder(new)
+            else:
+                new.write_bytes(r.content)
+                found = _plugins_in(new)
+        except UpdateError:
+            discard()
+            raise
         except Exception as e:
-            new.unlink(missing_ok=True)
+            discard()
             raise UpdateError(f"{p.name} {latest} doesn't load, so it wasn't installed: "
                               f"{type(e).__name__}: {e}") from e
         match = next(((v, perms) for pid, v, perms in found if pid == p.id), None)
         if match is None:
-            new.unlink(missing_ok=True)
-            raise UpdateError(f"{path.name} {latest} has no plugin '{p.id}', so it wasn't installed")
+            discard()
+            raise UpdateError(f"{what} {latest} has no plugin '{p.id}', so it wasn't installed")
         new_version, perms = match
         added = new_permissions(permissions_of(p), perms)
         if any(x not in (accepted or []) for x in added):
-            new.unlink(missing_ok=True)
+            discard()
             raise NeedsApproval(p.name, latest, added)
 
         backup = config.PLUGINS_DIR / ".backup"
         backup.mkdir(exist_ok=True)
         old_version, name = p.version, p.name
-        shutil.copy2(path, backup / f"{path.stem}-{old_version}.py")
-        os.replace(new, path)
-        Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)  # see _plugins_in
+        if folder:
+            try:
+                _swap_folder(new, path, backup / f"{path.name}-{old_version}", staging)
+            except OSError as e:
+                discard()
+                raise UpdateError(f"Could not replace the {what} folder, so nothing changed: {e}") from e
+        else:
+            shutil.copy2(path, backup / f"{path.stem}-{old_version}.py")
+            os.replace(new, path)
+            Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)  # see _plugins_in
         reload_plugins(db)
         _update_state(db, plugin_id, error=None, skipped=None)
         log.info("Plugin %s updated from %s to %s", plugin_id, old_version, new_version)
