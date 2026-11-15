@@ -38,16 +38,20 @@ class Parsed:
     ref: object = None  # caller's object (e.g. a Book row), carried through order()
 
     def sort_key(self):
-        """Groups: volume-only books, chapters, extras, unnumbered (spec 4.3). An extra with a
-        chapter or volume number stays in its place, right after that chapter or volume."""
+        """Groups: numbered books, extras, unnumbered (spec 4.3). Numbered books sort by volume,
+        then chapter: a whole volume comes before its chapters, chapters without a volume after
+        all volumes. An extra with a chapter or volume number stays in its place, right after
+        that chapter or volume (after the volume's chapters)."""
         inf = float("inf")
-        vol = self.volume if self.volume is not None else inf
         name = natural_key(self.name)
         after = 1 if self.extra else 0
-        if self.chapter is not None:
-            return (1, self.chapter, vol, after, name)
-        if self.volume is not None:
-            return (0, self.volume, 0, after, name)
+        if self.chapter is not None or self.volume is not None:
+            vol = self.volume if self.volume is not None else inf
+            if self.chapter is not None:
+                ch = self.chapter
+            else:
+                ch = inf if self.extra else -inf
+            return (0, vol, ch, after, name)
         if self.extra:
             return (2, self.extra_index if self.extra_index is not None else inf, 0, 0, name)
         return (3, 0, 0, 0, name)
@@ -153,7 +157,7 @@ def order_parsed(parsed):
         if p.extra or (p.chapter is None and p.volume is None):
             key = ("file", p.name)
         elif p.chapter is not None:
-            key = ("ch", p.chapter, p.chapter_end)
+            key = ("ch", p.volume, p.chapter, p.chapter_end)  # v01 c01 and v07 c01 aren't the same
         else:
             key = ("vol", p.volume)
         groups.setdefault(key, []).append(p)

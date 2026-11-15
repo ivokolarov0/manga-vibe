@@ -132,6 +132,16 @@ def test_group_order_volumes_chapters_extras_unnumbered():
                                       "Readme thing.zip", "T Omake.zip"]
 
 
+def test_volumes_and_chapters_sort_by_volume_then_chapter():
+    files = ["BotI - v07 - c02.zip", "BotI - v06.zip", "BotI - v01 - c01 - Criminal.zip", "BotI - v05.zip",
+             "BotI - c200.zip", "BotI - v07 - c01.zip", "BotI - v01 - c02.zip", "BotI - v07.zip"]
+    kept, _, dups = order(files, "BotI")
+    assert [p.name for p in kept] == ["BotI - v01 - c01 - Criminal.zip", "BotI - v01 - c02.zip", "BotI - v05.zip",
+                                      "BotI - v06.zip", "BotI - v07.zip", "BotI - v07 - c01.zip",
+                                      "BotI - v07 - c02.zip", "BotI - c200.zip"]
+    assert dups == []
+
+
 def test_marked_extra_with_a_chapter_stays_after_that_chapter():
     from app.scanner.parser import Parsed, order_parsed
     parsed = [parse(f, "Nana") for f in ["Nana ch06.zip", "Nana ch05.zip", "Nana ch04.zip", "Nana v02.cbz", "Nana v01.cbz"]]

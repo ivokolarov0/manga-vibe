@@ -14,10 +14,11 @@ Choices made where the spec was open. Newest at the bottom.
   will use the same `Plugin` interface (`app/plugins/builtin/`).
 - **Plugin fields** are stored in a separate `plugin_field` table (series, plugin, key, value)
   instead of new columns, so plugins never need database migrations.
-- **Sort order inside a series:** volume-only books first (by volume), then chapters (by chapter,
-  volume as tie-breaker), then extras (by extra number), then unnumbered files (natural sort).
-  The reference parser put volume-only books after chapters and unnumbered before extras; spec 4.3
-  says otherwise, so it was changed.
+- **Sort order inside a series:** numbered books by volume, then chapter (a whole volume before its
+  chapters, chapters without a volume after all volumes), then extras (by extra number), then
+  unnumbered files (natural sort). Earlier all volume-only books came first and chapters after
+  them by chapter number, so `v05, v06, v01 ch01` happened in series mixing whole volumes and
+  chapters. The reference parser put unnumbered before extras; spec 4.3 says otherwise.
 - **Frontend is a single page** (`app/web/index.html` + `app/web/static/{css,js,icons}`), no build step.
 - **Pages are resized to fixed widths** (720/1080/1440/1800/2160/2880) picked from the screen size, so
   the disk cache gets reused. Resized pages are WebP. Page URLs include the file's mtime, so the

@@ -94,6 +94,10 @@ MIGRATIONS = [
         "CREATE INDEX ix_progress_user_state ON progress (user_id, book_id, completed, page)",
         "CREATE INDEX ix_progress_book_id ON progress (book_id)",
         "CREATE INDEX ix_progress_updated_at ON progress (updated_at)")],
+    # 16: books sort by volume, then chapter ("v07 c01" after "v06", not after all volume-only
+    # books): the next scan sorts the series that have volume numbers again
+    lambda conn: conn.execute(text("UPDATE book SET sort_index = 0 "
+                                   "WHERE COALESCE(override_volume, volume) IS NOT NULL")),
 ]
 
 
