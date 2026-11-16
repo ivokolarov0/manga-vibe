@@ -895,9 +895,23 @@ async function ovSetStyle(change) {
   catch (e) { toast(e.message, 6000, "error"); }
 }
 
+/* what is being read, for plugin scripts (MangaVibe.reader.where()); null while the reader is closed */
+function where() {
+  return R.book ? { book: R.book.id, series: R.book.series_id, page: R.page, pages: R.book.page_count } : null;
+}
+
+/* draw the pages' overlays again (MangaVibe.reader.redraw()): a plugin's script changed what its
+   page_overlay() gives, e.g. in an editor of its own */
+function redraw() {
+  if (R.ov) ovForget();
+}
+
 async function ovAction(a) {
   if (a.confirm && !confirm(a.confirm)) return;
   try {
+    // the plugin's own script may do the button's work in the page (its "book-action" handler says
+    // so by returning true), e.g. open an editor: then the server isn't asked
+    if ((await emitPlugins("book-action", [a.key, where()], { only: a.plugin })).length) return;
     await showActionResult(await api(`/api/books/${R.book.id}/actions/${a.plugin}/${a.key}`, { method: "POST" }));
   } catch (e) { toast(e.message, 6000, "error"); }
   if (R.ov) ovForget();
@@ -1559,6 +1573,8 @@ return {
   back,
   spoke,
   speaking,
+  where,
+  redraw,
   get isOpen() { return !$("#reader").hidden; },
 };
 })();

@@ -54,6 +54,7 @@ class Hello(Plugin):
 | **Keep something per series** for the plugin itself (e.g. notes on the characters) | `ctx.set_series_data(series, key, value)`, `ctx.get_series_data(series, key)`; never shown in the app |
 | **Labels on books** in the series list | `book_badges(ctx, books)` returning `{book_id: "Translated"}` |
 | **Buttons for the open book** (in the plugin's panel in the reader's options) | `book_actions = [Action("all", "Translate this chapter")]` and `run_book_action(ctx, key, book)` |
+| **A tool of its own on the page being read** (e.g. an editor for its boxes) | a `book_actions` button that the plugin's `js` handles: `MangaVibe.on(id, "book-action", fn)`, `MangaVibe.reader.where()` and `.redraw()` (see [Drawing on pages](#drawing-on-pages)). Plugin API 12 |
 | **Work for hours** without holding up other plugins | `ctx.run_in_thread(fn)`; the loop returns when `ctx.should_stop()` |
 | **An API of its own** | `router = APIRouter()` (FastAPI), served at `/api/plugins/<id>/api/...` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 7 |
 | **Its own buttons, sheets and scripts in the app** | `html = {"library-tools": "<button>…</button>"}` and `js = "…"` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 7 |
@@ -227,6 +228,25 @@ Haruka says: Hey!")`
 - **Show progress** with `book_badges` (a label per book in the series list, e.g. `"12/40"`; use
   `ctx.page_data_counts(books)`), and offer `book_actions` such as "Translate this chapter" in the
   reader. Series-wide buttons (`actions`) stay on the series page.
+- **A button that opens something in the page** (an editor for the page's boxes, a dictionary…): list
+  it in `book_actions` like any other, and handle it in the plugin's `js`. The reader asks the
+  script first; when the handler returns `true`, `run_book_action` isn't called:
+
+  ```js
+  MangaVibe.on("notes", "book-action", (key, at) => {
+    if (key !== "edit") return;          // other buttons go to run_book_action() as usual
+    openMyEditor(at.book, at.page);      // at: { book, series, page, pages }; page counts from 0
+    return true;
+  });
+  // later, once the editor saved what page_overlay() gives:
+  MangaVibe.reader.redraw();
+  ```
+
+  `MangaVibe.reader.where()` gives the same `{ book, series, page, pages }` at any time (`null`
+  while no book is open). The button is only there while the plugin is switched on, like all of a
+  plugin's buttons; `run_book_action` still gets the key if the script didn't take it (return a
+  message such as "Reload the page"). Plugin API 12: on older MangaVibe there is no
+  `MangaVibe.reader`, and the button always goes to `run_book_action`.
 - **Progress shows live:** while the series page is open it asks for `book_badges` again every few
   seconds, and Settings does the same for `status()` while a plugins page is open (both slow down
   after a minute without a change). So a label like "Translated 12/40" or "Queue: 30 pages" counts
@@ -394,6 +414,8 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `listsChanged()` | the same lists show something else now (e.g. a library was unlocked): they reload |
 | `settingsPage(pluginId, key, label, icon, at)` | a page of your own in Settings at `#/settings/<key>`, at place `at` in the menu (0: first). `icon` is the name of a built-in icon (`"users"`, see Icons below) or any character, e.g. an emoji. Call it in `start`; it goes away when the plugin is switched off |
 | `denied(error, retry)` | used by the app when the server answered 403: the `denied` event gets the answer's `detail` |
+| `reader.where()` | what is being read: `{ book, series, page, pages }` (ids; `page` counts from 0), or `null` while no book is open. Plugin API 12 |
+| `reader.redraw()` | the reader asks for the pages' overlays again and draws them, after your script changed what `page_overlay()` gives. Plugin API 12 |
 
 **Events** (`MangaVibe.on(pluginId, event, fn)`). `fn` may be async unless it says otherwise.
 
@@ -408,6 +430,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `edit-changed (series)` | not async: `true` if your fields changed (else Save just closes) |
 | `edit-save (series)` | Save, after the metadata: save your fields, return `{ message }`, or `{ message, leave: true }` when the series can't be shown any more (the app goes back to the library). Throw to show an error |
 | `settings-open ()` | Settings opened: refresh what you show there |
+| `book-action (key, at)` | one of your `book_actions` buttons was pressed in the reader; `at` is `MangaVibe.reader.where()`. Return `true` if your script does it (e.g. opens an editor): then `run_book_action` isn't called. Plugin API 12 |
 | `folders-changed ()` | a library folder was added or removed |
 
 Switching the plugin on or off in Settings adds or takes out its markup in place, without reloading the

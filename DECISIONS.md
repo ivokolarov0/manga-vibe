@@ -800,3 +800,19 @@ JPEG pages are converted too.
   another app) or just as it comes back (browsers send that event late), the next tap goes fullscreen
   again; browsers allow fullscreen only on a tap. Leaving it yourself (Esc, the back gesture, the
   button) is kept. Going to the next chapter stays fullscreen (the reader isn't closed in between).
+
+## Plugin tools on the page being read (Plugin API 12)
+
+For Manga Translate's editor (change the text, move and style boxes, read text that was missed).
+
+- **The editor is the plugin's, not the reader's.** The reader only gives a plugin's script what it
+  can't know itself: a `book_actions` button it may handle in the page (the `book-action` event; a
+  handler that returns `true` keeps the server out of it), what is being read
+  (`MangaVibe.reader.where()`), and a way to draw the overlays again (`MangaVibe.reader.redraw()`).
+  Before, the plugin had to find these in the reader's markup, which can change in any version.
+- **No button without the plugin.** The button is one of the plugin's `book_actions`, so it's in the
+  plugin's panel of the reading options only while that plugin is installed and switched on. The
+  reader has no edit button of its own.
+- **Not an `Action` field** (e.g. `client=True`): an older MangaVibe would refuse the unknown
+  argument and the plugin wouldn't load. With the event, the same plugin file runs on both: where
+  nobody handles the button, `run_book_action` gets it as before.
