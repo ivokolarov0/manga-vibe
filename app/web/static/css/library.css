@@ -319,6 +319,35 @@
       width: 100%;
       margin-bottom: 12px;
     }
+
+    /* Length: "Chapters [min] – [max]", one row per unit */
+    & .frange {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 14px;
+
+      & > span:first-child {
+        width: 72px;
+        flex: none;
+      }
+
+      & input {
+        width: 0;
+        flex: 1;
+        min-width: 0;
+        max-width: 110px;
+      }
+    }
+
+    & .funknown {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      font-size: 14px;
+    }
   }
 
   /* the row of filters that are on: pills with a round ✕, then Clear all; Save search on the right */

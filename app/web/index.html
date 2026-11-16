@@ -1241,6 +1241,31 @@
           </div>
         </section>
       </template>
+      <section class="fgroup" :class="{ open: open.length }">
+        <button class="fgroup-head" :aria-expanded="!!open.length" @click="toggleGroup('length')">
+          <span>Length</span>
+          <span class="fcount" x-show="selected('length')" x-text="selected('length')"></span>
+          <span class="chev" aria-hidden="true"></span>
+        </button>
+        <div x-show="open.length">
+          <p class="fhint">The published total, from the metadata. Leave a box empty for no limit.</p>
+          <template x-for="[u, label] in lengthUnits" :key="u">
+            <div class="frange">
+              <span x-text="label"></span>
+              <input type="number" min="0" step="1" inputmode="numeric" placeholder="Min"
+                     :aria-label="label + ', at least'" :value="bound(u + '_min')"
+                     @change="setBound(u + '_min', $event.target.value)">
+              <span aria-hidden="true">–</span>
+              <input type="number" min="0" step="1" inputmode="numeric" placeholder="Max"
+                     :aria-label="label + ', at most'" :value="bound(u + '_max')"
+                     @change="setBound(u + '_max', $event.target.value)">
+            </div>
+          </template>
+          <label class="funknown" x-show="selected('length')">
+            <input type="checkbox" :checked="lengthUnknown" @change="setLengthUnknown($event.target.checked)">
+            Also show series with no known total (ongoing, no metadata)</label>
+        </div>
+      </section>
       <section class="fgroup" :class="{ open: open.genres }">
         <button class="fgroup-head" :aria-expanded="!!open.genres" @click="toggleGroup('genres')">
           <span>Genres</span>

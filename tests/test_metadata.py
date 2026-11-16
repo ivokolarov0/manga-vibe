@@ -335,6 +335,12 @@ def test_filters(client):
     have = client.get(f"/api/series/{sid}").json()["collection"]  # other tests edit these books
     assert (have["unit"], have["total"], have["state"]) == ("chapter", 54, "incomplete") and have["owned"] < 54
     assert ids("match=matched") == [sid]
+    # length: the published total (54 chapters); the rest have no total, so only match with length_unknown
+    assert ids("chapters_min=54") == [sid] and ids("chapters_min=10&chapters_max=60") == [sid]
+    assert ids("chapters_min=55") == [] and ids("chapters_max=53") == []
+    assert sid not in ids("chapters_max=53&length_unknown=true")
+    assert len(ids("chapters_max=53&length_unknown=true")) == total - 1
+    assert sorted(ids("chapters_min=54&length_unknown=true")) == sorted(ids(""))
     assert ids("format=manhwa") == []
     assert ids("q=Devil") == [sid]            # synonym search
     assert ids("q=Oto") == [sid]              # author search

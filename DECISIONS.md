@@ -238,6 +238,10 @@ Choices made where the spec was open. Newest at the bottom.
 - **Filter sheet groups fold** (accordion, not separate modals: one place, fewer taps). Reading status is
   open by default, and any group with something selected opens when the sheet opens. Each heading shows
   how many options are on. Chips say their state with a symbol too (✓ include, ⊘ exclude), not colour only.
+- **Length filters on the published totals** (metadata `chapters_total`/`volumes_total`), not the books
+  on disk: simpler, and it's what tells a quick read from a long run. Owned counts can come later as
+  an aggregate over books. Series with no total (ongoing, no metadata) don't match a range unless
+  "Also show series with no known total" is ticked (`length_unknown=true`).
 
 
 ## Plugin API v2: reading events, plugin settings, callbacks (for tracker sync)

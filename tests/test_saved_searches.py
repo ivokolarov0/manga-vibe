@@ -13,7 +13,9 @@ def test_saved_searches(client):
     # the same name again replaces its filters
     again = client.post(API, json={"name": "isekai", "query": "genre=Isekai&genre=Magic"}).json()
     assert again["id"] == first["id"] and again["query"] == "genre=Isekai&genre=Magic"
-    assert [x["name"] for x in client.get(API).json()] == ["Isekai", "Reading"]
+    short = client.post(API, json={"name": "Short", "query": "volumes_max=10&length_unknown=true&page=2"}).json()
+    assert short["query"] == "volumes_max=10&length_unknown=true"
+    assert [x["name"] for x in client.get(API).json()] == ["Isekai", "Reading", "Short"]
     assert client.post(API, json={"name": "Empty", "query": "page=2"}).status_code == 400
     assert client.post(API, json={"name": "", "query": "fav=1"}).status_code == 422
     for x in client.get(API).json():

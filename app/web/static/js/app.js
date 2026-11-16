@@ -27,6 +27,16 @@ const FILTER_GROUPS = [
     unknown: "Can't tell if complete" }],
 ];
 const LIST_KEYS = ["read", "pub", "match", "format", "have", "genre", "exclude"];
+// length filter: the published totals (metadata) within a range, e.g. chapters_min=100
+const LENGTH_UNITS = [["chapters", "Chapters"], ["volumes", "Volumes"]];
+const LENGTH_KEYS = [...LENGTH_UNITS.flatMap(([u]) => [`${u}_min`, `${u}_max`]), "length_unknown"];
+// "10–50 chapters", "100+ chapters", "up to 10 volumes"; "" when that unit has no range
+function lengthLabel(p, unit) {
+  const lo = p.get(`${unit}_min`), hi = p.get(`${unit}_max`);
+  if (lo && hi) return lo === hi ? `${lo} ${unit}` : `${lo}–${hi} ${unit}`;
+  if (lo) return `${lo}+ ${unit}`;
+  return hi ? `Up to ${hi} ${unit}` : "";
+}
 // first-letter filter (letter=B); "#" is everything else: numbers, symbols, other scripts
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Completed"],
@@ -620,7 +630,8 @@ function library() {
     // toolbar: Filter (with count), Sort, Letter
     get filterCount() {
       const p = this.params;
-      return LIST_KEYS.reduce((a, k) => a + getList(p, k).length, 0) + (p.get("fav") ? 1 : 0);
+      return LIST_KEYS.reduce((a, k) => a + getList(p, k).length, 0) + (p.get("fav") ? 1 : 0)
+        + LENGTH_UNITS.filter(([u]) => lengthLabel(p, u)).length;
     },
     get customSort() { return !!this.params.get("sort"); },
     get letter() { return this.params.get("letter") || ""; },
@@ -633,6 +644,10 @@ function library() {
       }
       for (const v of getList(p, "genre")) out.push({ k: "genre", v, label: v });
       for (const v of getList(p, "exclude")) out.push({ k: "exclude", v, label: "not " + v, ex: true });
+      for (const [u] of LENGTH_UNITS) {
+        const label = lengthLabel(p, u);
+        if (label) out.push({ k: "length", v: u, label: label + (p.get("length_unknown") ? " or unknown" : "") });
+      }
       if (p.get("letter")) out.push({ k: "letter", v: p.get("letter"), label: "Starts with " + p.get("letter") });
       const sort = p.get("sort");
       if (sort && sort !== "title") out.push({ k: "sort", v: sort,
@@ -643,7 +658,10 @@ function library() {
       const p = libParams();
       if (c.k === "sort") { p.delete("sort"); p.delete("order"); }
       else if (c.k === "letter") p.delete("letter");
-      else setList(p, c.k, getList(p, c.k).filter((x) => x !== c.v));
+      else if (c.k === "length") {
+        p.delete(`${c.v}_min`); p.delete(`${c.v}_max`);
+        if (!LENGTH_UNITS.some(([u]) => lengthLabel(p, u))) p.delete("length_unknown");
+      } else setList(p, c.k, getList(p, c.k).filter((x) => x !== c.v));
       navigateLibrary(p);
     },
     clearAll() {
@@ -786,6 +804,7 @@ function filterSheet() {
         if (sheet !== "filter") return;
         // unfold the groups that have something selected, so nothing chosen is hidden
         for (const [k] of FILTER_GROUPS) if (this.selected(k)) this.open[k] = true;
+        if (this.selected("length")) this.open.length = true;
         this.tags = await api(`/api/tags?${scopeParam()}`).catch(() => this.tags);
         for (const k of ["genres", "tags"]) if (this.selected(k)) this.open[k] = true;
       });
@@ -793,6 +812,7 @@ function filterSheet() {
     toggleGroup(k) { this.open[k] = !this.open[k]; },
     // how many options of a group are on (include and exclude both count)
     selected(k) {
+      if (k === "length") return LENGTH_UNITS.filter(([u]) => lengthLabel(this.p, u)).length;
       if (k !== "genres" && k !== "tags") return getList(this.p, k).length;
       const names = new Set(this.tags.filter((t) => (t.kind === "genre") === (k === "genres")).map((t) => t.name));
       return [...getList(this.p, "genre"), ...getList(this.p, "exclude")].filter((n) => names.has(n)).length;
@@ -811,8 +831,20 @@ function filterSheet() {
       this.apply((p) => { const cur = getList(p, k); setList(p, k, cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]); });
     },
     clearAll() {
-      this.apply((p) => { for (const k of [...LIST_KEYS, "fav", "letter"]) p.delete(k); });
+      this.apply((p) => { for (const k of [...LIST_KEYS, ...LENGTH_KEYS, "fav", "letter"]) p.delete(k); });
     },
+    // length range inputs: a whole number of at least 0, or empty for no bound
+    lengthUnits: LENGTH_UNITS,
+    bound(k) { return this.p.get(k) || ""; },
+    setBound(k, value) {
+      const n = String(value).trim() === "" ? NaN : Math.floor(Number(value));
+      this.apply((p) => {
+        Number.isFinite(n) && n >= 0 ? p.set(k, n) : p.delete(k);
+        if (!LENGTH_UNITS.some(([u]) => lengthLabel(p, u))) p.delete("length_unknown");
+      });
+    },
+    get lengthUnknown() { return this.p.get("length_unknown") === "true"; },
+    setLengthUnknown(on) { this.apply((p) => (on ? p.set("length_unknown", "true") : p.delete("length_unknown"))); },
     cycleTag(t) {  // include -> exclude -> off
       this.apply((p) => {
         const inc = getList(p, "genre"), exc = getList(p, "exclude");
@@ -871,7 +903,8 @@ function sortSheet() {
 /* ---------------- the library page's filters, as plugins see them ----------------
    e.g. the built-in saved searches plugin (app/plugins/builtin/saved_searches/) keeps them under a name. */
 
-const SEARCH_PARAMS = ["q", ...LIST_KEYS, "fav", "letter", "year_min", "year_max", "score_min", "sort", "order"];
+const SEARCH_PARAMS = ["q", ...LIST_KEYS, "fav", "letter", "year_min", "year_max", "score_min", ...LENGTH_KEYS,
+  "sort", "order"];
 
 // the filters and sort of a query (no page), always in the same order, so two can be compared
 function searchQuery(p) {
@@ -887,6 +920,7 @@ function searchParts(qs) {
   for (const v of getList(p, "genre")) out.push(v);
   for (const v of getList(p, "exclude")) out.push("not " + v);
   for (const [k, , labels] of FILTER_GROUPS) for (const v of getList(p, k)) out.push(labels[v] || v);
+  for (const [u] of LENGTH_UNITS) if (lengthLabel(p, u)) out.push(lengthLabel(p, u));
   if (p.get("fav")) out.push("Favorites");
   if (p.get("letter")) out.push("Starts with " + p.get("letter"));
   const sort = SORTS.find(([k]) => k === p.get("sort"))?.[1];
