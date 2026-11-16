@@ -44,7 +44,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 11
+API_VERSION = 12
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 
 # Where a plugin is listed in Settings -> Plugins (Plugin.category), in the order shown there
@@ -167,7 +167,9 @@ class Plugin:
     # Settings. Not enforced (a plugin is Python); an update that adds one asks the owner first.
     permissions: list[str] = []
     overlay_label = ""   # e.g. "Translation": a reader toggle that draws page_overlay() over pages
-    book_actions: list[Action] = []  # buttons for the open book, in the reader's options
+    # buttons for the open book, in the reader's options. The plugin's `js` can do one's work in the
+    # page instead of run_book_action(), with a "book-action" handler (e.g. open an editor; Plugin API 12)
+    book_actions: list[Action] = []
     # --- its own API and UI (Plugin API 7, see app/plugins/web.py) ---
     router = None        # a FastAPI APIRouter, served at /api/plugins/<id>/api/<its paths>
     js = ""              # JavaScript run in the web app before it starts (window.MangaVibe is there)

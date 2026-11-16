@@ -968,6 +968,10 @@ window.MangaVibe = {
     nav.splice(Math.min(at, nav.length), 0, [key, label, icon, pluginId, personal]);
     app.settingsNav = nav;
   },
+  // the reader, for a plugin that works on the page being read (Plugin API 12): where() gives
+  // { book, series, page, pages } (ids; page from 0), or null while no book is open; redraw() draws
+  // the pages' overlays again after the plugin changed what its page_overlay() gives
+  reader: { where: () => Reader.where(), redraw: () => Reader.redraw() },
   // the server refused something (an api() error): a plugin may know what to do, e.g. ask for a
   // library's password and then call retry(). Whether one did.
   async denied(err, retry) {
