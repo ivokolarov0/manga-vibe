@@ -264,6 +264,9 @@ The owner can edit any metadata field by hand (titles, description, tags, status
     has one volume (or one chapter): a one-shot.
   - Library
   - Favorites only
+  - Length: chapters and volumes from–to (e.g. at least 100 chapters, up to 10 volumes), on the
+    published totals from the metadata. Series with no known total (ongoing, no metadata) are left
+    out unless "Also show series with no known total" is on.
   - Year range, score range (nice to have)
 - **Sort:** Title, Recently added, Recently read, Recently updated (new files), Score, Year, Unread count. Ascending/descending.
 

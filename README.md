@@ -68,7 +68,7 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 ### Finding something to read
 - **Search** titles, alternative names and authors.
 - **Filter** by genre and tag (include or exclude), reading status, format, favorites, first
-  letter, and complete or incomplete collections (finished series with volumes missing); **sort** by title, date added, last updated, last read, score, year or unread count.
+  letter, length (e.g. under 10 volumes, at least 100 chapters), and complete or incomplete collections (finished series with volumes missing); **sort** by title, date added, last updated, last read, score, year or unread count.
   **Save a search** (e.g. only Isekai) and pick it again from the Saved button, in any library.
 - **Continue**: everything you're in the middle of, to pick up where you left off.
 - **Reading status** worked out from your progress (reading, completed, …), or set by hand, plus

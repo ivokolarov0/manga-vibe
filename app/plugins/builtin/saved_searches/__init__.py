@@ -25,7 +25,8 @@ KEY = "saved_searches"
 MAX = 200
 # what a saved search keeps: the library page's filters and sort, not the page number
 PARAMS = {"q", "genre", "exclude", "pub", "read", "match", "format", "have", "fav", "letter",
-          "year_min", "year_max", "score_min", "sort", "order"}
+          "year_min", "year_max", "score_min", "chapters_min", "chapters_max", "volumes_min", "volumes_max",
+          "length_unknown", "sort", "order"}
 
 router = APIRouter(prefix="/searches")
 

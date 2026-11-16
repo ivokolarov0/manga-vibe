@@ -81,7 +81,10 @@ def status_expr(agg):
 
 def filter_query(db, query, f, title, agg):
     """The query with the filters in f added: the GET /api/series filters (q, genre, exclude, pub, read,
-    match, format, have, fav, year_min, year_max, score_min, letter). The read filter needs agg joined."""
+    match, format, have, fav, year_min, year_max, score_min, chapters_min/max, volumes_min/max,
+    length_unknown, letter). The read filter needs agg joined.
+    The chapter/volume ranges are on the published totals (metadata), not the books here; a series
+    with no known total (ongoing, no metadata) only matches them with length_unknown on."""
     if f.get("q"):
         like = f"%{f['q']}%"
         query = query.filter(or_(Series.folder_name.ilike(like), Series.title_english.ilike(like),
@@ -113,6 +116,13 @@ def filter_query(db, query, f, title, agg):
         query = query.filter(Series.start_year <= f["year_max"])
     if f.get("score_min"):
         query = query.filter(Series.average_score >= f["score_min"])
+    for unit, col in (("chapters", Series.chapters_total), ("volumes", Series.volumes_total)):
+        lo, hi = f.get(f"{unit}_min"), f.get(f"{unit}_max")
+        if lo is None and hi is None:
+            continue
+        cond = and_(col.is_not(None), *([col >= lo] if lo is not None else []),
+                    *([col <= hi] if hi is not None else []))
+        query = query.filter(or_(col.is_(None), cond) if f.get("length_unknown") else cond)
     letter = (f.get("letter") or "").strip().lower()
     first = func.substr(func.ltrim(title), 1, 1)
     if len(letter) == 1 and "a" <= letter <= "z":

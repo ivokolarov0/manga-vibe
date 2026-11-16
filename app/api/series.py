@@ -37,12 +37,16 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
                 exclude: list[str] = Query(default=[]),
                 pub: str = "", read: str = "", match: str = "", format: str = "", have: str = "",
                 fav: bool = False, year_min: int | None = None, year_max: int | None = None,
-                score_min: int | None = None, letter: str = "", ids_only: bool = False, db=Depends(get_db)):
+                score_min: int | None = None, chapters_min: int | None = None, chapters_max: int | None = None,
+                volumes_min: int | None = None, volumes_max: int | None = None, length_unknown: bool = False,
+                letter: str = "", ids_only: bool = False, db=Depends(get_db)):
     """Library grid. Multi-value filters are comma-separated (genre=Romance,Comedy).
     Plugins narrow it further (filters.visible_series), e.g. the libraries plugin's shelf=<id>.
     library=<id>: one library folder.
     letter=a..z keeps titles starting with that letter, letter=# the rest (numbers, symbols, other scripts).
     have=complete,incomplete,unknown: finished series with every volume/chapter here, or something missing.
+    chapters_min/max, volumes_min/max: the published total (metadata) in that range; series with no
+    known total are left out unless length_unknown=true.
     ids_only=true: just {"ids": [...]} of every match, in order (multi-select's "Select all")."""
     limit = max(1, min(limit, 200))
     shown = visible_series(db, request)
@@ -62,7 +66,9 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
         query = query.filter(Series.library_id == library)
     f = {"q": q, "genre": genre, "exclude": exclude, "pub": pub, "read": read, "match": match,
          "format": format, "have": have, "fav": fav, "year_min": year_min, "year_max": year_max,
-         "score_min": score_min, "letter": letter}
+         "score_min": score_min, "chapters_min": chapters_min, "chapters_max": chapters_max,
+         "volumes_min": volumes_min, "volumes_max": volumes_max, "length_unknown": length_unknown,
+         "letter": letter}
     query = filters.filter_query(db, query, f, title, agg)
 
     sorts = {"title": title, "added": Series.added_at, "updated": Series.updated_at,
