@@ -828,7 +828,12 @@ So an assistant, and later a voice through the Manga Accessibility plugin, can u
   shouldn't sit in every install as an extra way in, and it can be released on its own pace. What it
   needs from the app stays here as Plugin API 13 (`McpTool`, `run_mcp_tool()`, `find_user()`,
   `users.SCOPE_KEY`, `MangaVibe.screenCommand()`, the reader API, the `mangavibe.internal` scope mark),
-  so saved searches and libraries keep their tools. The paths below (`protocol.py`, `screens.py`...)
+  so saved searches and libraries keep their tools, with app-side tests in `tests/test_plugin_api13.py`.
+  **After updating from 2.17.0** the plugin is gone (`MOVED` in app/plugins/__init__.py): its id is
+  forgotten from `plugins_known` and added to `plugins_disabled`, so installing it later starts it off
+  like a new plugin and old keys don't work again until the owner switches it on; whoever had it on is
+  told in Settings → Plugins where it went (`plugins_moved`), until it's installed. The keys stay in
+  the settings, for when it is. The paths below (`protocol.py`, `screens.py`...)
   are in that repo. The owner switches it on; then everyone makes
   their own keys in Settings → Remote control (a page every account sees).
 - **Two kinds of tools.** *Data* tools (search, filters, a series, Continue, settings, marking read)

@@ -282,6 +282,8 @@ def _plugin_dict(p, db):
 def list_plugins(db=Depends(get_db)):
     return {"plugins": [_plugin_dict(p, db) for p in plugins.plugins.values()],
             "errors": plugins.errors, "categories": CATEGORIES,
+            # built-in plugins someone used that are now installed from their own repo
+            "moved": [{"id": pid, **m} for pid, m in plugins.moved.items()],
             # where the token for private plugin repos comes from: "settings", "env" or "" (never the token)
             "github_token": plugin_updates.token_source(db)}
 
