@@ -122,7 +122,8 @@ class RememberAddress:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] == "http" and scope["path"].startswith("/api/"):
+        # not the server's own calls (the MCP plugin calls the API on someone's behalf): no address there
+        if scope["type"] == "http" and scope["path"].startswith("/api/") and not scope.get("mangavibe.internal"):
             plugins.base_url = str(Request(scope).base_url).rstrip("/")
         return await self.app(scope, receive, send)
 

@@ -108,6 +108,9 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 - **Make books smaller** (Optimize, in Settings → Plugins): converts PNG and JPEG pages to JPEG XL (or
   AVIF, WebP), for one series or all of them. Often half the size or less. It replaces your files.
 - **Plugins** add features: tracker sync, translation, accessibility. See [Plugins](docs/using-plugins.md).
+- **Remote control** (MCP, in Settings → Plugins): an assistant like Claude can search, read, turn
+  pages, change settings and press any button for you, and say what is on the screen. The base for
+  voice control. See [Remote control](docs/remote-control.md).
 - **Your own styles** in `custom.css` in the data folder (created on first start, with examples).
 - **Updates itself** (see below).
 

@@ -25,6 +25,9 @@ class User:
 
 OWNER = User(1)  # the only user without accounts; the first account (the admin) gets this id and its data
 _current: ContextVar[User] = ContextVar("mangavibe_user", default=OWNER)
+# a request's ASGI scope can carry its user under this key, put there by server code that already knows
+# who it is (the MCP server, from a key); an accounts plugin then takes it instead of asking for a login
+SCOPE_KEY = "mangavibe.user"
 
 
 def current() -> User:

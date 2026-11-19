@@ -906,6 +906,86 @@ function redraw() {
   if (R.ov) ovForget();
 }
 
+/* ---------------- the reader from a script (MangaVibe.reader, Plugin API 13) ----------------
+   What a person does with taps and keys, for remote control (the MCP plugin) and voice control: each
+   does what the matching button does. */
+
+/* all there is to know about the open book, or null */
+function state() {
+  if (!R.book) return null;
+  const b = R.book, on = R.ov?.on || [];
+  return { ...where(), label: b.label, series_title: b.series_title, mode: R.mode,
+    fit: settings.reader_fit || "screen", options_open: R.drawer, panel: R.panel,
+    at_end: !!$("#reader .endcard"), fullscreen: !!document.fullscreenElement,
+    previous: b.prev ? { book: b.prev.id, label: b.prev.label } : null,
+    next: b.next ? { book: b.next.id, label: b.next.label } : null,
+    // what plugins put in the reading options: an overlay to switch on and off, buttons
+    plugins: drawerPlugins(b).map((p) => ({ plugin: p.id, name: p.name,
+      overlay: p.overlay ? { label: p.overlay.label, on: on.includes(p.id) } : null,
+      buttons: p.actions.map((i) => ({ key: b.actions[i].key, label: b.actions[i].label })) })) };
+}
+
+/* the next or previous page, like → and ← (vertical mode: the next page's top). At the last page,
+   forward shows the end card; forward again there goes on to the next book */
+function step(forward) {
+  if (!R.book) return false;
+  if (R.mode === "vertical") goTo(R.page + (forward ? 1 : -1));
+  else if (forward) next(); else prev();
+  return true;
+}
+
+/* another book of the series: "next", "previous" or a book id; page from 0 (default: the start, or the
+   saved place for an id) */
+function openBook(which, page = null) {
+  if (!R.book) return false;
+  const id = which === "next" ? R.book.next?.id : which === "previous" ? R.book.prev?.id : +which;
+  if (!id) return false;
+  saveProgress(true);
+  location.replace(`#/read/${id}` + (page !== null ? `?page=${page}` : which === "next" ? "?page=0" : ""));
+  return true;
+}
+
+/* paged or vertical: the series' own mode, as the drawer's mode button sets it (admins) */
+async function setMode(mode) {
+  if (!R.book || !(mode in MODES)) return false;
+  if (mode !== R.mode) {
+    await api(`/api/series/${R.book.series_id}`, { method: "PATCH", body: { reader_mode: mode } });
+    saveProgress(true);
+    await openReader(R.book.id, R.page);
+  }
+  return true;
+}
+
+/* open or close the reading options (the drawer), with the bars */
+function options(open) {
+  if (!R.book) return false;
+  if (open) openMenu(); else setDrawer(false);
+  return true;
+}
+
+/* a plugin's overlay on or off (on: true/false, or null to switch it) */
+function overlay(plugin, on = null) {
+  if (!R.book || !R.book.overlays.some((o) => o.plugin === plugin)) return false;
+  if (on === null || on !== R.ov.on.includes(plugin)) ovToggle(plugin);
+  return true;
+}
+
+/* press one of a plugin's buttons (book_actions); its script may handle it in the page */
+async function press(plugin, key) {
+  const a = R.book?.actions.find((x) => x.plugin === plugin && x.key === key);
+  if (!a) return false;
+  await ovAction(a);
+  return true;
+}
+
+/* open the reader again, e.g. after its settings changed elsewhere */
+async function refresh() {
+  if (!R.book) return false;
+  saveProgress(true);
+  await openReader(R.book.id, R.page);
+  return true;
+}
+
 async function ovAction(a) {
   if (a.confirm && !confirm(a.confirm)) return;
   try {
@@ -1575,6 +1655,8 @@ return {
   speaking,
   where,
   redraw,
+  state, step, goTo: (i) => (R.book ? (goTo(+i), true) : false), openBook, setMode, options, overlay, press,
+  refresh, leave: () => (R.book ? (leaveReader(), true) : false),
   get isOpen() { return !$("#reader").hidden; },
 };
 })();

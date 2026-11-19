@@ -33,6 +33,21 @@ MangaVibe.onStart(() => {
   });
   Alpine.store("savedSearches").load();
 
+  // for an assistant or voice control (the Remote control plugin, Plugin API 13)
+  MV.screenCommand?.("saved-searches", "show", {
+    description: "Show the library with one of your saved searches (by its name; saved_searches__list lists them)",
+    params: { name: { type: "string" } }, required: ["name"],
+  }, async ({ name }) => {
+    const store = Alpine.store("savedSearches");
+    await store.load();
+    const want = String(name || "").trim().toLowerCase();
+    const x = store.items.find((i) => i.name.toLowerCase() === want)
+      || store.items.find((i) => i.name.toLowerCase().includes(want));
+    if (!x) throw new Error(`No saved search "${name}": ${store.items.map((i) => i.name).join(", ") || "none saved"}`);
+    MV.showLibrary(new URLSearchParams(x.query));
+    return { showing: x.name, filters: MV.filterLabels(x.query) };
+  });
+
   Alpine.data("savedSearchesSheet", () => ({
     get store() { return this.$store.savedSearches; },
     isOn(x) { return this.store.current?.id === x.id; },

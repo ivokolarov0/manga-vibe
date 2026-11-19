@@ -18,6 +18,12 @@ Plugins add features without changing the app. A plugin is a single `.py` file.
 > to its data, including the logins other plugins save. Install plugins from this list or ones whose
 > code you've read.
 
+## Remote control (built in)
+
+Lets an assistant (Claude, or any app that speaks MCP) use MangaVibe for you: search, read, turn pages,
+change settings and press any button on an open screen. The base for voice control. Off until you
+switch it on; see [Remote control](remote-control.md).
+
 ## Optimize (built in)
 
 Makes your books smaller by converting their PNG, JPEG, BMP and TIFF pages to **JPEG XL** (or AVIF
