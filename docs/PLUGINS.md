@@ -478,8 +478,8 @@ makes a page everyone sees.
 
 ## Assistants and voice control
 
-Plugin API 13. The built-in **Remote control** plugin is an MCP server (see
-[Remote control](remote-control.md)): an assistant uses the app through it, as the person whose key it
+Plugin API 13. The **Remote control** plugin is an MCP server (see
+[manga-vibe-mcp](https://github.com/ivokolarov0/manga-vibe-mcp)): an assistant uses the app through it, as the person whose key it
 has. Its `screen_describe` and `screen_press` tools already reach the buttons, fields and switches your
 `html` adds, so a plugin works by voice without doing anything. Give it tools of its own when a step is
 easier said than clicked ("translate this chapter", "describe this page").

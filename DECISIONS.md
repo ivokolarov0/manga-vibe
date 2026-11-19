@@ -821,8 +821,15 @@ For Manga Translate's editor (change the text, move and style boxes, read text t
 
 So an assistant, and later a voice through the Manga Accessibility plugin, can use the whole app.
 
-- **A built-in plugin, off by default** (`app/plugins/builtin/mcp/`, "Remote control (MCP)"): it's a
-  new way into the app, so an update mustn't open it. The owner switches it on; then everyone makes
+- **A plugin of its own, off by default** ("Remote control (MCP)", the `mcp/` folder plugin in
+  [manga-vibe-mcp](https://github.com/ivokolarov0/manga-vibe-mcp)): it's a new way into the app, so
+  installing it mustn't open it. It first came built in (`app/plugins/builtin/mcp/`, 2.17.0) and was
+  moved to its own repo right after, like the other optional plugins: most people won't use it, it
+  shouldn't sit in every install as an extra way in, and it can be released on its own pace. What it
+  needs from the app stays here as Plugin API 13 (`McpTool`, `run_mcp_tool()`, `find_user()`,
+  `users.SCOPE_KEY`, `MangaVibe.screenCommand()`, the reader API, the `mangavibe.internal` scope mark),
+  so saved searches and libraries keep their tools. The paths below (`protocol.py`, `screens.py`...)
+  are in that repo. The owner switches it on; then everyone makes
   their own keys in Settings → Remote control (a page every account sees).
 - **Two kinds of tools.** *Data* tools (search, filters, a series, Continue, settings, marking read)
   answer from the server, so they work with no screen open. *Screen* tools act on an app the person

@@ -23,7 +23,8 @@ What a plugin can do:
 - its own UI:         `js` runs in the web app; `html` puts markup into the page's slots (see app/plugins/web.py)
 - the app's lists:    series_filter() narrows what a request sees; `middleware` guards every request;
                       reading_mode(), series_info(), on_start(), can_switch_off(), folder hooks
-- assistants (MCP):   `mcp_tools` and run_mcp_tool() add tools to the MCP server (builtin/mcp/);
+- assistants (MCP):   `mcp_tools` and run_mcp_tool() add tools to the MCP server (the Remote control
+                      plugin, github.com/ivokolarov0/manga-vibe-mcp);
                       find_user() says who a user id is, for a request that comes with a key (Plugin API 13)
 
 Some of the app's own features are built-in plugins (app/plugins/builtin/), e.g. saved searches and
@@ -135,7 +136,7 @@ class Overlay:
 
 @dataclass
 class McpTool:
-    """A tool an assistant can use through the MCP server (Remote control, builtin/mcp/), run by
+    """A tool an assistant can use through the MCP server (the Remote control plugin), run by
     run_mcp_tool(). `params` is a JSON Schema "properties" object, e.g. {"name": {"type": "string",
     "description": "..."}}; `required` lists the ones that must be given. `admin`: only for people who
     may manage the app (it's left out of the list for the others). The tool is called
@@ -200,7 +201,7 @@ class Plugin:
     # lower runs first (outermost). Who is asking is known from 0 on (accounts), so guards that look at
     # the user (e.g. libraries' LockGuard) need a higher number; equal ones keep the plugins' order
     middleware_order = 100
-    # tools for assistants, through the MCP server (builtin/mcp/), run by run_mcp_tool(). Plugin API 13
+    # tools for assistants, through the MCP server (the Remote control plugin), run by run_mcp_tool(). Plugin API 13
     mcp_tools: list[McpTool] = []
 
     # --- assistants (MCP, Plugin API 13) ---------------------------------------------
