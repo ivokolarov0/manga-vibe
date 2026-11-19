@@ -144,7 +144,7 @@ class AccountsGuard:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
         # a request whose user is already known: one that came with a key (the MCP server checked it,
-        # app/plugins/builtin/mcp/), or the server's own call on someone's behalf. Only server code can
+        # the Remote control plugin), or the server's own call on someone's behalf. Only server code can
         # put it in the scope; a browser can't send it.
         user = scope.get(users.SCOPE_KEY)
         if user is None:

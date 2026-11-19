@@ -2,7 +2,7 @@
 
 [← Back to the README](../README.md)
 
-Plugins add features without changing the app. A plugin is a single `.py` file.
+Plugins add features without changing the app. A plugin is a single `.py` file, or a folder.
 
 ## Available plugins
 
@@ -12,17 +12,12 @@ Plugins add features without changing the app. A plugin is a single `.py` file.
 | [Manga Translate](https://github.com/ivokolarov0/manga-vibe-ext-translate) | Shows English over the speech bubbles of Japanese manga while you read. Small AI models on your own computer find, read and translate the text: free, private, nothing is sent online. Needs a computer with a graphics card on your network (or the same one). |
 | [Manga Accessibility](https://github.com/ivokolarov0/manga-vibe-ext-accessibility) | For readers who are blind or have low vision: describes every panel, who says what and the sound effects, and MangaVibe reads it aloud. Needs only Ollama with a model that can see pictures (e.g. gemma4), on a computer on your network. |
 | [Official chapters](https://github.com/ivokolarov0/manga-vibe-ext-official-chapters) | Finds how many chapters a series really has, since AniList's count is often wrong or behind. Checks the series' official Japanese sites and MangaUpdates, and searches the web (free, no account) when they have no number. Every source is listed with its number under **Details**, so you can compare them. Optional: Ollama (e.g. gemma4) to read pages and search results it has no parser for. |
+| [Remote control (MCP)](https://github.com/ivokolarov0/manga-vibe-mcp) | Lets an assistant (Claude, or any app that speaks MCP) use MangaVibe for you: search, read, turn pages, change settings and press any button on an open screen. The base for voice control. Each person makes their own keys; a key acts as them. A folder plugin: copy its `mcp` folder into `plugins`. |
 
 > [!WARNING]
 > **Only install plugins you trust.** A plugin is code that runs inside MangaVibe with full access
 > to its data, including the logins other plugins save. Install plugins from this list or ones whose
 > code you've read.
-
-## Remote control (built in)
-
-Lets an assistant (Claude, or any app that speaks MCP) use MangaVibe for you: search, read, turn pages,
-change settings and press any button on an open screen. The base for voice control. Off until you
-switch it on; see [Remote control](remote-control.md).
 
 ## Optimize (built in)
 
@@ -59,7 +54,9 @@ if you also read the files elsewhere.
 
 ## Install a plugin
 
-1. Download the plugin's `.py` file (on GitHub: open the file → **Download raw file**).
+1. Download the plugin's `.py` file (on GitHub: open the file → **Download raw file**). A folder
+   plugin (e.g. Remote control's `mcp`): download the repo (**Code → Download ZIP**), unpack it and
+   take that folder.
 2. Put it in the `plugins` folder of your data folder: `docker/mangavibe/plugins` on a Synology, or
    `plugins` inside the folder you mounted as `/data` (create it if it isn't there).
 3. In MangaVibe: **Settings → Plugins → Reload plugins**. The plugin appears under **Installed**.
