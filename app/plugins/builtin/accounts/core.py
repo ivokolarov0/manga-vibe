@@ -144,8 +144,10 @@ class AccountsGuard:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
         # a request whose user is already known: one that came with a key (the MCP server checked it,
-        # the Remote control plugin), or the server's own call on someone's behalf. Only server code can
-        # put it in the scope; a browser can't send it.
+        # the Remote control plugin from manga-vibe-mcp), or the server's own call on someone's behalf.
+        # A browser can't send it, but any installed plugin's middleware that runs before this one
+        # (middleware_order < 0) can set it, and so log a request in as anyone: that is a power only
+        # plugins you trust get (docs/PLUGINS.md, "Who is asking").
         user = scope.get(users.SCOPE_KEY)
         if user is None:
             cookie = Request(scope).cookies.get(COOKIE)

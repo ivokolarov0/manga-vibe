@@ -1809,7 +1809,7 @@ function settingsView() {
     openAndroidApp,
     changeServer() { androidApp?.changeServer(); },
     attCount(k) { return this.$store.app.att?.[k]?.filter((x) => !x.ignored).length || 0; },
-    st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, scan: {}, scanText: "", metaText: "", timers: [],
+    st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, pluginsMoved: [], scan: {}, scanText: "", metaText: "", timers: [],
     init() {
       this.$watch("$store.app.view", (v) => (v === "settings" ? this.load() : this.stop()));
       // phone: the navigation is a scrolling strip; keep the open section's button in view
@@ -1972,6 +1972,7 @@ Your files are not touched. `
     setPlugins(r) {
       this.plugins = r.plugins;
       this.pluginErrors = r.errors;
+      this.pluginsMoved = r.moved || [];
       if ("github_token" in r) this.ghTokenFrom = r.github_token;
       if (r.categories) {
         this.pluginCats = r.categories;

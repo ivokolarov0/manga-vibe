@@ -464,6 +464,13 @@ logged-in person; without it, as the owner (id 1), who may do everything.
 | `users.current()` | the user of this request: `.id`, `.name`, `.can_manage` (an admin) |
 | `dependencies=[users.manage]` | on a route of your own: admins only (403 for others) |
 | `users.personal_key("my_key")` | a settings key for the current user's own copy (the owner keeps `my_key`) |
+| `scope[users.SCOPE_KEY] = user` | in a `middleware` with `middleware_order < 0` (before accounts, 0): this request runs as `user`, no login asked. Plugin API 13 |
+
+**`users.SCOPE_KEY` logs people in.** A request with a user in its scope skips the accounts login and
+runs as that user, admins included. Only a middleware before accounts (`middleware_order < 0`) can set
+it, so such a plugin decides who may do what in the app: Remote control sets it after checking a key.
+Set it only after checking who is asking yourself, and as an owner, only install a plugin with a negative
+`middleware_order` when you trust it as much as the app.
 
 Reading progress, reading status, favorites and last read are each user's own. Reading events
 (`on_book_started`…) only fire for **the owner** (the first admin): plugins like tracker syncs are set up

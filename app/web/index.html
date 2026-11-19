@@ -819,6 +819,12 @@
                 </div>
               </template>
 
+              <!-- built-in plugins you used that moved to a repo of their own: switched off until installed -->
+              <template x-for="m in pluginsMoved" :key="m.id">
+                <p class="err"><strong x-text="m.name"></strong> is no longer built in and is switched off.
+                  To keep using it, install it from <a :href="m.url" target="_blank" rel="noopener" x-text="m.url"></a>
+                  and switch it on again.</p>
+              </template>
               <p class="muted plugin-empty" x-show="!plugins.length && !pluginErrorCount">No plugins installed.</p>
               <p class="muted plugin-empty" x-show="plugins.length && pf.status !== 'errors' && !pview.installed.length && !pview.builtin.length">
                 No plugins match. <a href="#" @click.prevent="Object.assign(pf, { cat: 'all', src: 'all', status: 'all', q: '' }); savePluginView()">Show all</a></p>

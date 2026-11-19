@@ -49,6 +49,8 @@ from app import config
 log = logging.getLogger("mangavibe.plugins")
 API_VERSION = 13
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
+# built-in plugins that moved to a repo of their own: id -> its name and where to get it now
+MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
 
 # Where a plugin is listed in Settings -> Plugins (Plugin.category), in the order shown there
 CATEGORIES = {
@@ -615,6 +617,7 @@ class PluginManager:
         self.paths: dict[str, Path] = {}   # plugin id -> the file it was loaded from
         self.categories: dict[str, list[str]] = {}  # plugin id -> categories_of(), worked out at load
         self.disabled: set[str] = set()
+        self.moved: dict[str, dict] = {}  # built-in plugins someone used that moved to a repo of their own
         self.base_url = "http://localhost:8080"  # updated from each request (see main.py)
         self._queue = queue.Queue()
         self._worker = None
@@ -724,12 +727,33 @@ class PluginManager:
         from app.db import get_setting, set_setting
         self.disabled = set(get_setting(db, "plugins_disabled", []) or [])
         known = set(get_setting(db, "plugins_known", []) or [])
+        self._forget_moved(db, known)
         new = [pid for pid in self.plugins if pid not in known]
         if new:
             self.disabled |= {pid for pid in new if not self.plugins[pid].enabled_by_default}
             set_setting(db, "plugins_disabled", sorted(self.disabled))
             set_setting(db, "plugins_known", sorted(known | set(new)))
             db.commit()
+
+    def _forget_moved(self, db, known: set):
+        """A built-in plugin that moved to its own repo (MOVED) is gone after the update. Forget it was
+        seen and switch it off, so installing it later starts it off like any new plugin (old keys
+        don't come back to life on their own); and remember to tell the owner where it went
+        (plugins_moved, shown in Settings -> Plugins until it is installed again)."""
+        from app.db import get_setting, set_setting
+        moved = set(get_setting(db, "plugins_moved", []) or [])
+        gone = {pid for pid in MOVED if pid in known and pid not in self.plugins}
+        if gone:
+            moved |= {pid for pid in gone if pid not in self.disabled}  # only those someone used
+            known -= gone
+            self.disabled |= gone
+            set_setting(db, "plugins_known", sorted(known))
+            set_setting(db, "plugins_disabled", sorted(self.disabled))
+        back = {pid for pid in moved if pid in self.plugins}
+        if gone or back:
+            set_setting(db, "plugins_moved", sorted(moved - back))
+            db.commit()
+        self.moved = {pid: MOVED[pid] for pid in sorted(moved - back) if pid in MOVED}
 
     def series_conditions(self, db, request) -> list:
         """Every enabled plugin's series_filter() for this request. Errors are not caught: a request

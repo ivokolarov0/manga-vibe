@@ -75,7 +75,9 @@ itself; what needs care when adding a feature:
 - **Open things as dialogs or sheets** (`.modal`, `.sheet` with `x-dialog`): `screen_describe` then
   lists only what's in them, and Escape closes them.
 - **New library filters, sorts or settings**: add them to `FILTERS`, `SORTS` or `SETTINGS` in
-  manga-vibe-mcp's `mcp/tools.py` too. Its `tests/test_mcp.py` fails until the lists match the page's.
+  manga-vibe-mcp's `mcp/tools.py` too. Here, `tests/test_plugin_api13.py` keeps a copy of those lists
+  and fails when the page's change, to remind you; update both. (manga-vibe-mcp's own
+  `tests/test_mcp.py` checks its lists against the page's too.)
 - **Something faster to say than to click** (a whole flow, or a page that isn't on screen): a tool in
   manga-vibe-mcp's `tools.py`, or in a plugin `mcp_tools` / `MangaVibe.screenCommand()` (docs/PLUGINS.md,
   Plugin API 13).
