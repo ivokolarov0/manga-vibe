@@ -143,8 +143,13 @@ class AccountsGuard:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
-        cookie = Request(scope).cookies.get(COOKIE)
-        user = await run_in_threadpool(session_user, cookie) if cookie else None
+        # a request whose user is already known: one that came with a key (the MCP server checked it,
+        # app/plugins/builtin/mcp/), or the server's own call on someone's behalf. Only server code can
+        # put it in the scope; a browser can't send it.
+        user = scope.get(users.SCOPE_KEY)
+        if user is None:
+            cookie = Request(scope).cookies.get(COOKIE)
+            user = await run_in_threadpool(session_user, cookie) if cookie else None
         if user is None and not PUBLIC.match(scope["path"]):
             detail = {"message": "Log in first", "login": True}
             return await JSONResponse({"detail": detail}, status_code=401)(scope, receive, send)

@@ -50,7 +50,8 @@ app/api/                series.py, books.py, system.py, filters.py (what a list 
 app/plugins/            plugin system; web.py: plugins' own API, UI (page slots, scripts) and middleware
 app/plugins/builtin/    plugins that come with the app: AniList, MangaUpdates, saved_searches/, libraries/
                         (libraries: Manga, Comics...; "shelves" in the code, passwords, LockGuard),
-                        accounts/ (logins, AccountsGuard; off until switched on)
+                        accounts/ (logins, AccountsGuard; off until switched on),
+                        mcp/ (Remote control: the MCP server at /mcp, keys, screens; off until switched on)
 app/updater.py          auto-update from the newest GitHub release
 app/images.py           thumbnails, resized page cache
 app/web/index.html      the page: Alpine templates for every view
@@ -62,3 +63,19 @@ android/                the Android app: MangaVibe in a fullscreen WebView (andr
 examples/plugins/       example plugins
 docker/entrypoint.sh    container start script
 ```
+
+## New features and remote control
+
+Everything a person can do should stay possible through [Remote control](remote-control.md) (MCP), so
+voice control doesn't fall behind. `screen_describe` / `screen_press` reach any control on the page by
+itself; what needs care when adding a feature:
+
+- **Give controls a name** a screen reader would read: text, `aria-label` or a `<label>`. An icon-only
+  button without one shows up as a nameless "button" to an assistant (and to TalkBack).
+- **Open things as dialogs or sheets** (`.modal`, `.sheet` with `x-dialog`): `screen_describe` then
+  lists only what's in them, and Escape closes them.
+- **New library filters, sorts or settings**: add them to `FILTERS`, `SORTS` or `SETTINGS` in
+  `app/plugins/builtin/mcp/tools.py` too. `tests/test_mcp.py` fails until the lists match the page's.
+- **Something faster to say than to click** (a whole flow, or a page that isn't on screen): a tool in
+  `tools.py`, or in a plugin `mcp_tools` / `MangaVibe.screenCommand()` (docs/PLUGINS.md, Plugin API 13).
+- **The reader**: new buttons go into `MangaVibe.reader` (reader.js `state()` and friends) as well.

@@ -61,6 +61,7 @@ class Hello(Plugin):
 | **Decide what the lists show** (e.g. libraries, accounts) | `series_filter(ctx, request)`, `middleware`, `reading_mode()`, `series_info()`, `on_start()`, `can_switch_off()` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 8 |
 | **Know who is asking** (accounts) | `users.current()`, `users.manage`, `users.personal_key()`, `enabled_by_default` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 9 |
 | **Be listed under the right category** in Settings → Plugins | `category = "reader"`, or several: `category = ["reader", "library"]` (see [Categories](#categories)). Plugin API 10 |
+| **Tools for assistants and voice control** (MCP) | `mcp_tools = [McpTool(...)]` and `run_mcp_tool(ctx, name, args)` on the server, `MangaVibe.screenCommand()` in the page (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
 
 ## Categories
 
@@ -416,6 +417,9 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `denied(error, retry)` | used by the app when the server answered 403: the `denied` event gets the answer's `detail` |
 | `reader.where()` | what is being read: `{ book, series, page, pages }` (ids; `page` counts from 0), or `null` while no book is open. Plugin API 12 |
 | `reader.redraw()` | the reader asks for the pages' overlays again and draws them, after your script changed what `page_overlay()` gives. Plugin API 12 |
+| `reader.state()`, `.step(forward)`, `.goTo(page)`, `.openBook(which, page)`, `.setMode(mode)`, `.options(open)`, `.overlay(plugin, on)`, `.press(plugin, key)`, `.leave()`, `.refresh()` | the reader from a script, doing what its own buttons do (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
+| `screenCommand(pluginId, name, spec, fn)` | something the page can do for an assistant or voice control (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
+| `reloadSettings()` | load the settings again and show them, after they changed elsewhere. Plugin API 13 |
 
 **Events** (`MangaVibe.on(pluginId, event, fn)`). `fn` may be async unless it says otherwise.
 
@@ -471,6 +475,79 @@ Two more slots: `topbar` (the top bar, before Settings; inside a component) and 
 account in Settings → Accounts, with the accounts plugin; `a` is the account: `a.id`, `a.name`, `a.admin`).
 `$store.app.admin` says whether the person may manage the app; `MangaVibe.settingsPage(..., { personal: true })`
 makes a page everyone sees.
+
+## Assistants and voice control
+
+Plugin API 13. The built-in **Remote control** plugin is an MCP server (see
+[Remote control](remote-control.md)): an assistant uses the app through it, as the person whose key it
+has. Its `screen_describe` and `screen_press` tools already reach the buttons, fields and switches your
+`html` adds, so a plugin works by voice without doing anything. Give it tools of its own when a step is
+easier said than clicked ("translate this chapter", "describe this page").
+
+**On the server**: a tool that answers from the server, even with no screen open.
+
+```python
+from app.plugins import McpTool, Plugin
+
+class Notes(Plugin):
+    id = "notes"
+    mcp_tools = [McpTool("add", "Add a note to a series",
+                         {"series_id": {"type": "integer"}, "text": {"type": "string"}},
+                         required=["series_id", "text"]),
+                 McpTool("wipe", "Remove every note", admin=True)]  # admins only
+
+    def run_mcp_tool(self, ctx, name, args):
+        if name == "add":
+            ctx.set_series_data(args["series_id"], "note", args["text"])
+            return "Saved"                        # text, or anything JSON can hold
+        raise ValueError(f"No tool {name}")       # an error the assistant sees
+```
+
+The tools are called `<plugin id>__<name>` (here `notes__add`; a `-` in the id becomes `_`). `params`
+is a JSON Schema `properties` object. `run_mcp_tool` runs as the person whose key it is
+(`users.current()`), in a request of its own; what it changes in `ctx.db` is committed. Raise
+`ValueError`, `HTTPException` or `PermissionError` to report what went wrong.
+
+A MangaVibe from before Plugin API 13 has no `McpTool`, so importing it there stops the plugin loading.
+To run on both: `try: from app.plugins import McpTool` / `except ImportError: McpTool = None`, and set
+`mcp_tools` only when `McpTool` is there.
+
+**In the page**: a command for the screen the person is looking at, from your `js`.
+
+```js
+MangaVibe.onStart(() => {
+  MangaVibe.screenCommand("notes", "show", {
+    description: "Open the notes of the series on the screen",
+    params: { tab: { type: "string" } }, required: [],
+  }, async ({ tab }) => {
+    Alpine.store("notes").open = true;
+    return { open: true };               // what the assistant gets; throw an Error to say it failed
+  });
+});
+```
+
+It's offered as the tool `notes__show` while a screen with your plugin on is open (the assistant can pick
+which screen). The built-in plugins have examples: saved searches (`saved_searches__list` on the server,
+`saved_searches__show` in the page) and libraries (`libraries__list`, `libraries__pick`).
+
+**The reader from a script** (`MangaVibe.reader`), each doing what the reader's own button does and
+giving `false` while no book is open:
+
+| | |
+|---|---|
+| `state()` | `where()` and more: `label`, `series_title`, `mode`, `fit`, `options_open`, `at_end`, `previous` / `next` (`{ book, label }`), and `plugins`: each one's overlay (`{ label, on }`) and buttons (`[{ key, label }]`) |
+| `step(forward)` | the next or previous page (vertical: the next page's top). Forward at the last page shows the end card |
+| `goTo(page)` | a page of this book, from 0 |
+| `openBook(which, page)` | `"next"`, `"previous"` or a book id, at `page` (from 0) or where it was left |
+| `setMode(mode)` | `"paged"` or `"vertical"`, saved for the series (admins) |
+| `options(open)` | the reading options (the drawer) open or closed |
+| `overlay(plugin, on)` | a plugin's overlay on (`true`), off (`false`), or switched (`null`) |
+| `press(plugin, key)` | one of a plugin's `book_actions` buttons (your `book-action` handler gets it as from a tap) |
+| `leave()`, `refresh()` | back out of the reader; open the book again (e.g. after its settings changed) |
+
+**Who a user is** (`find_user(ctx, user_id)`): a request with a key instead of a login asks the plugins
+who that user is. The accounts plugin answers; a plugin of your own that keeps accounts should too
+(return a `users.User`, or `None` once the account is gone).
 
 ## Styling: plugins and your own custom.css
 

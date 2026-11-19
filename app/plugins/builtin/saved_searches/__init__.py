@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 
 from app import users
 from app.db import get_setting, set_setting
-from app.plugins import Context, Plugin
+from app.plugins import Context, McpTool, Plugin
 from app.plugins.web import plugin_ctx
 
 HERE = Path(__file__).parent
@@ -100,6 +100,14 @@ class SavedSearches(Plugin):
     permissions = ["Adds the Saved and Save search buttons to the library page",
                    "Keeps its searches in MangaVibe's database; connects to nothing"]
     router = router
+    # for assistants (the Remote control plugin); "show" is a screen command in saved_searches.js
+    mcp_tools = [McpTool("list", "Your saved searches: each one's name, its filters as words, and its query")]
+
+    def run_mcp_tool(self, ctx, name, args):
+        if name == "list":
+            return {"saved_searches": [{"name": x["name"], "query": x["query"]} for x in _all(ctx.db)]}
+        raise ValueError(f"No tool {name}")
+
     js = _read("saved_searches.js")
     css = _read("saved_searches.css")
     html = {"library-tools": _read("tool.html"),

@@ -935,6 +935,7 @@ function searchParts(qs) {
 let alpineStarted = false;
 const pluginHandlers = [];         // [plugin id, event, fn] (MangaVibe.on)
 const stoppedPlugins = new Set();  // switched off since the page loaded: their handlers don't run
+const screenCommands = new Map();  // "<plugin id>\n<name>" -> { plugin, name, spec, fn } (MangaVibe.screenCommand)
 
 window.MangaVibe = {
   // run fn when Alpine starts (Alpine.store, Alpine.data), or now if it already has
@@ -971,7 +972,33 @@ window.MangaVibe = {
   // the reader, for a plugin that works on the page being read (Plugin API 12): where() gives
   // { book, series, page, pages } (ids; page from 0), or null while no book is open; redraw() draws
   // the pages' overlays again after the plugin changed what its page_overlay() gives
-  reader: { where: () => Reader.where(), redraw: () => Reader.redraw() },
+  // Plugin API 13, for remote and voice control: the rest does what the reader's own buttons do and gives
+  // false while no book is open. state() is where() and more (labels, mode, the plugins' buttons and
+  // overlays); step(forward) turns a page; goTo(page); openBook("next" | "previous" | id, page);
+  // setMode("paged" | "vertical"); options(open): the reading options; overlay(plugin, on);
+  // press(plugin, key): a book_actions button; leave(): back out of the reader; refresh(): open it again
+  reader: { where: () => Reader.where(), redraw: () => Reader.redraw(), state: () => Reader.state(),
+    step: (forward = true) => Reader.step(forward), goTo: (page) => Reader.goTo(page),
+    openBook: (which, page = null) => Reader.openBook(which, page), setMode: (mode) => Reader.setMode(mode),
+    options: (open = true) => Reader.options(open), overlay: (plugin, on = null) => Reader.overlay(plugin, on),
+    press: (plugin, key) => Reader.press(plugin, key), leave: () => Reader.leave(),
+    refresh: () => Reader.refresh() },
+  // something the page can do for an assistant or voice control (the MCP plugin offers it as a tool
+  // named <plugin id>__<name>), Plugin API 13. spec: { description, params: { name: { type,
+  // description } }, required: [names] }; fn(args) gives the answer (text, or anything JSON can hold)
+  // and may be async; throw to report an error. Only while the plugin is on.
+  screenCommand(pluginId, name, spec, fn) {
+    screenCommands.set(`${pluginId}\n${name}`, { plugin: pluginId, name, spec: spec || {}, fn });
+  },
+  screenCommands: () => [...screenCommands.values()].filter((c) => !stoppedPlugins.has(c.plugin)),
+  // the settings changed elsewhere (another device, an assistant): load them again and show them
+  async reloadSettings() {
+    const s = await loadSettings();
+    if (s.me) Alpine.store("app").me = s.me;
+    Alpine.store("app").libraryDirty++;
+    await Reader.refresh();
+    return s;
+  },
   // the server refused something (an api() error): a plugin may know what to do, e.g. ask for a
   // library's password and then call retry(). Whether one did.
   async denied(err, retry) {

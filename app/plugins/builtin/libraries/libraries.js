@@ -113,6 +113,30 @@ MangaVibe.onStart(() => {
   });
   const store = Alpine.store("libraries");
 
+  // for an assistant or voice control (the Remote control plugin, Plugin API 13): the home screen's tabs
+  MV.screenCommand?.(ID, "list", {
+    description: "The libraries (Manga, Comics...) this screen can show, which one it shows, and which are locked",
+  }, async () => {
+    await store.load();
+    return { showing: store.picked ? store.name(store.picked) : "All",
+      libraries: store.list.map((s) => ({ id: s.id, name: s.name, locked: s.locked, series: s.series })),
+      hint: "library_search takes more: {shelf: <id>} for one library" };
+  });
+  MV.screenCommand?.(ID, "pick", {
+    description: "Show one library on the home screen (its name or id; All for every library). A locked one "
+      + "asks for its password on the screen",
+    params: { library: { type: "string" } }, required: ["library"],
+  }, async ({ library }) => {
+    await store.load();
+    const want = String(library ?? "").trim().toLowerCase();
+    if (want === "all" || want === "0") { store.set(0); return { showing: "All" }; }
+    const s = store.list.find((x) => String(x.id) === want || x.name.toLowerCase() === want)
+      || store.list.find((x) => x.name.toLowerCase().includes(want));
+    if (!s) throw new Error(`No library "${library}": ${store.list.map((x) => x.name).join(", ")}`);
+    store.pick(s.id);
+    return s.locked ? { asking_for_password: s.name } : { showing: s.name };
+  });
+
   /* the password dialog of a locked library (store.openUnlock) */
   Alpine.data("libraryUnlock", () => ({
     password: "", error: "", busy: false,

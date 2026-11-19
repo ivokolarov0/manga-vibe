@@ -816,3 +816,61 @@ For Manga Translate's editor (change the text, move and style boxes, read text t
 - **Not an `Action` field** (e.g. `client=True`): an older MangaVibe would refuse the unknown
   argument and the plugin wouldn't load. With the event, the same plugin file runs on both: where
   nobody handles the button, `run_book_action` gets it as before.
+
+## Remote control: an MCP server (Plugin API 13, issue #192)
+
+So an assistant, and later a voice through the Manga Accessibility plugin, can use the whole app.
+
+- **A built-in plugin, off by default** (`app/plugins/builtin/mcp/`, "Remote control (MCP)"): it's a
+  new way into the app, so an update mustn't open it. The owner switches it on; then everyone makes
+  their own keys in Settings → Remote control (a page every account sees).
+- **Two kinds of tools.** *Data* tools (search, filters, a series, Continue, settings, marking read)
+  answer from the server, so they work with no screen open. *Screen* tools act on an app the person
+  has open: navigate, turn pages, press buttons, say what is shown.
+- **Data tools call the app's own API**, as an ASGI request through the whole app (every middleware,
+  so the plugins' guards too), as the key's person. Not the route functions directly: those take
+  FastAPI dependencies, and calling them would skip LockGuard and `series_filter`. This way a tool can
+  never do more than the person could in the app: owner-only settings stay owner-only, a locked
+  library stays locked (the unlock is a browser cookie, which an assistant doesn't have). The calls
+  are marked so `RememberAddress` doesn't take their made-up host as the app's address. `api_request`
+  opens the rest of the API the same way, for anything without a tool of its own.
+- **Screens poll for commands** (long polling: each open page asks, and waits up to 25 seconds;
+  `screens.py`). Not a WebSocket: uvicorn has no WebSocket library in the image, and an extra
+  dependency for this isn't worth it. Not an event stream: a poll is a plain request that gets through
+  every proxy and the Android WebView, and a page that goes away just stops asking. Kept in memory:
+  MangaVibe is one process. State changes (shown, touched, moved to another page) are sent at once on
+  their own, so the poll is never cut short; a cut poll could lose a command handed to it.
+- **Which screen**: the one asked for (its id or a part of its name), else the person's screen that is
+  shown and was touched last. Only their own screens: with accounts, each person's are apart.
+- **Generic over specific for the UI.** `screen_describe` lists the controls the page shows (in the
+  dialog or sheet on top, or the reader's open panel, else the page) with their accessible names and
+  state, each with a ref; `screen_press` / `screen_fill` / `screen_key` use them. That reaches every
+  button, including plugins' and future ones, the way a screen reader does, so voice control can't
+  fall behind. Specific tools are added where saying it is easier (navigate, the library's filters, the
+  reader's page and book); the reader got a small API for them (`MangaVibe.reader.state/step/goTo...`),
+  doing what its buttons do. A test checks that the tools' filters, sorts and settings match the page's.
+- **Keys, not the login.** An MCP client has no cookie, and a person's password shouldn't sit in a
+  config file. A key is `mvk_<user id>_<secret>`; only its SHA-256 is kept (the secret is random, so a
+  slow hash adds nothing), in the person's own `mcp_keys` setting, so deleting an account deletes its
+  keys (`users.forget`). A key is checked by the plugin's middleware, which runs before the accounts
+  plugin's; it puts the user in the request's scope (`users.SCOPE_KEY`), and AccountsGuard takes a
+  user found there instead of asking for a login. Only server code can put it there.
+- **Who a key belongs to** is asked of the plugins (`find_user`, Plugin API 13), so the MCP plugin
+  doesn't import the accounts plugin. Without accounts only the owner (1) exists: a key made by
+  someone else while accounts were on stops working when they're switched off.
+- **The protocol is written out** (`protocol.py`, ~100 lines): JSON-RPC over Streamable HTTP,
+  stateless, answers as JSON (no stream, no sessions). The `mcp` package would bring its own
+  dependencies for a handful of methods. `/mcp` is the address (short, to type into a client); the
+  middleware hands it to the plugin's own route. Calls with an `Origin` from another site are refused,
+  as the spec asks (else any web page could drive the app from someone's browser). The key may also
+  come as `?key=` for clients that can't set headers.
+- **Plugins add tools** both ways: `mcp_tools` + `run_mcp_tool()` on the server, and
+  `MangaVibe.screenCommand()` in the page (offered while a screen with the plugin is open). Not an
+  `Action` field: a new class (`McpTool`) an older MangaVibe doesn't import would stop the plugin
+  loading, so plugins that want to run on both import it inside a `try`. Saved searches and libraries
+  have tools of their own as examples.
+- **Settings changed by an assistant show at once** on the person's open screens (a command with no
+  answer wanted, `MangaVibe.reloadSettings()`), and series changes make them reload their lists.
+- **Not done here**: Claude's website and phone app connect from Anthropic's servers, which can't reach
+  a server at home, so they need a public HTTPS address and OAuth; MangaVibe stays off the internet.
+  The voice part is the accessibility plugin's (a follow-up there).

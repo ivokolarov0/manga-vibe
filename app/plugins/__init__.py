@@ -23,6 +23,8 @@ What a plugin can do:
 - its own UI:         `js` runs in the web app; `html` puts markup into the page's slots (see app/plugins/web.py)
 - the app's lists:    series_filter() narrows what a request sees; `middleware` guards every request;
                       reading_mode(), series_info(), on_start(), can_switch_off(), folder hooks
+- assistants (MCP):   `mcp_tools` and run_mcp_tool() add tools to the MCP server (builtin/mcp/);
+                      find_user() says who a user id is, for a request that comes with a key (Plugin API 13)
 
 Some of the app's own features are built-in plugins (app/plugins/builtin/), e.g. saved searches and
 libraries, so the owner can switch them off and anyone can write a replacement.
@@ -44,7 +46,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 12
+API_VERSION = 13
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 
 # Where a plugin is listed in Settings -> Plugins (Plugin.category), in the order shown there
@@ -132,6 +134,20 @@ class Overlay:
 
 
 @dataclass
+class McpTool:
+    """A tool an assistant can use through the MCP server (Remote control, builtin/mcp/), run by
+    run_mcp_tool(). `params` is a JSON Schema "properties" object, e.g. {"name": {"type": "string",
+    "description": "..."}}; `required` lists the ones that must be given. `admin`: only for people who
+    may manage the app (it's left out of the list for the others). The tool is called
+    `<plugin id>__<name>` (hyphens become _). Plugin API 13."""
+    name: str
+    description: str
+    params: dict = field(default_factory=dict)
+    required: list = field(default_factory=list)
+    admin: bool = False
+
+
+@dataclass
 class Candidate:
     """A search result from a metadata provider."""
     provider_id: str
@@ -184,6 +200,21 @@ class Plugin:
     # lower runs first (outermost). Who is asking is known from 0 on (accounts), so guards that look at
     # the user (e.g. libraries' LockGuard) need a higher number; equal ones keep the plugins' order
     middleware_order = 100
+    # tools for assistants, through the MCP server (builtin/mcp/), run by run_mcp_tool(). Plugin API 13
+    mcp_tools: list[McpTool] = []
+
+    # --- assistants (MCP, Plugin API 13) ---------------------------------------------
+    def run_mcp_tool(self, ctx, name, args: dict):
+        """Run one of `mcp_tools` for an assistant, as the person whose key it uses (users.current()).
+        Return text, or anything JSON can hold; raise (e.g. HTTPException or ValueError) to report an
+        error to the assistant."""
+        return "Not implemented"
+
+    def find_user(self, ctx, user_id):
+        """Who user `user_id` is (a users.User), or None if there is no such user any more. Asked for a
+        request that comes with a key instead of a login (the MCP server): the accounts plugin answers.
+        Without any plugin answering, only the owner (id 1) exists."""
+        return None
 
     # --- shaping the app's lists and pages (Plugin API 8): how features like libraries plug in ---
     def series_filter(self, ctx, request) -> list:
@@ -313,7 +344,7 @@ def implements(plugin, hook):
 
 # what a plugin can set besides css; a plugin with css and none of these is a theme
 _FEATURES = ("fields", "actions", "choices", "settings_fields", "global_actions", "book_actions",
-             "overlay_label", "router", "js", "html", "middleware", "is_provider")
+             "overlay_label", "router", "js", "html", "middleware", "is_provider", "mcp_tools")
 # the hooks that do something, so a theme overriding one isn't only a theme. status() only shows a line,
 # and search()/fetch() count only for providers (is_provider is in _FEATURES)
 _HOOKS = tuple(k for k, v in vars(Plugin).items()
@@ -704,6 +735,15 @@ class PluginManager:
         whose filter fails fails too, instead of showing what a plugin hides."""
         return [cond for p in self.enabled() if implements(p, "series_filter")
                 for cond in p.series_filter(Context(p, db), request)]
+
+    def find_user(self, db, user_id):
+        """Who user `user_id` is, from the first enabled plugin that knows (find_user()), else the
+        owner for id 1 (the app without accounts), else None."""
+        from app import users
+        for p in self.enabled():
+            if implements(p, "find_user"):
+                return p.find_user(Context(p, db), user_id)
+        return users.OWNER if user_id == users.OWNER.id else None
 
     def reading_mode(self, db, series):
         """(mode, why) from the first enabled plugin with a default for this series, else None."""

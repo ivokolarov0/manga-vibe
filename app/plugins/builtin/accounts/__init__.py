@@ -43,3 +43,8 @@ class Accounts(Plugin):
     html = {"topbar": (_read("menu.html"), 90),  # the account menu last, next to Settings
             "settings": _read("settings.html"),
             "sheets": _read("login.html")}
+
+    def find_user(self, ctx, user_id):
+        """The account with this id as a user (e.g. for an MCP key), or None once it was deleted."""
+        account = core.find(core.load(ctx.db), user_id)
+        return core.user_of(account) if account else None
