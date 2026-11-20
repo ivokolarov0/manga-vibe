@@ -5,12 +5,29 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+// how long the library and the reader wait for the server before saying so (with "Try again")
+const LOAD_TIMEOUT = 30000;
+
+/* opts.timeout (ms): give up when the server hasn't answered by then (a request that hangs would
+   otherwise leave the page loading forever), with an error that says so */
 async function api(path, opts = {}) {
-  const res = await fetch(path, {
-    ...opts,
-    headers: opts.body ? { "Content-Type": "application/json" } : {},
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-  });
+  const { timeout, ...rest } = opts;
+  let res;
+  try {
+    res = await fetch(path, {
+      ...rest,
+      headers: opts.body ? { "Content-Type": "application/json" } : {},
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      signal: rest.signal || (timeout ? AbortSignal.timeout(timeout) : undefined),
+    });
+  } catch (e) {
+    if (e.name === "TimeoutError") {
+      const err = new Error("The server is taking too long to answer");
+      err.timeout = true;
+      throw err;
+    }
+    throw e;
+  }
   if (!res.ok) {
     // not logged in (an accounts plugin): it shows the login
     if (res.status === 401) window.dispatchEvent(new CustomEvent("mv-login-needed"));
@@ -22,7 +39,11 @@ async function api(path, opts = {}) {
     err.detail = detail;
     throw err;
   }
-  return res.json();
+  try { return await res.json(); } catch (e) {
+    // the answer stopped coming partway (the timeout also covers reading it)
+    if (e.name === "TimeoutError") throw new Error("The server is taking too long to answer");
+    throw e;
+  }
 }
 
 /* Short message at the bottom. kind "error" marks it as an error (red stripe). */

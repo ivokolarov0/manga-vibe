@@ -473,6 +473,7 @@ function library() {
   return {
     items: [], cursor: 0, done: false, loading: false, total: null, key: null, stale: false,
     paged: false, page: 1, size: 60, base: null,
+    failed: "",  // why the last load didn't come (shown with "Try again"); "" when it did
     layout: "grid",  // grid (poster cards) | list (one series per row): the library_view setting
     quick: QUICK,
     init() {
@@ -515,20 +516,22 @@ function library() {
       const key = `${base}:${page}`;
       if (key === this.key) return;
       const pageChange = paged && base === this.base && this.key !== null;  // same list, other page
-      Object.assign(this, { cursor: 0, done: false, loading: false, key, base, paged, page, size, pageSize });
+      Object.assign(this, { cursor: 0, done: false, loading: false, failed: "", key, base, paged, page, size, pageSize });
       if (!pageChange) Object.assign(this, { items: [], total: null });  // a new page keeps the old cards until it arrives
       paged ? this.loadPage(pageChange) : this.loadMore();
     },
     async loadPage(scroll) {
       const key = this.key;
       this.loading = true;
+      this.failed = "";
       try {
-        const data = await api(`/api/series?cursor=${(this.page - 1) * this.size}&limit=${this.size}&${this.filters}`);
+        const data = await api(`/api/series?cursor=${(this.page - 1) * this.size}&limit=${this.size}&${this.filters}`,
+          { timeout: LOAD_TIMEOUT });
         if (key !== this.key) return;
         if (!data.items.length && data.total && this.page > 1) return this.goPage(this.pages(data.total), true);  // past the end
         Object.assign(this, { items: data.items, total: data.total, done: true });
       } catch (e) {
-        toast("Could not load library: " + e.message, 3000, "error");
+        if (key === this.key) this.failed = e.message;
       } finally {
         if (key === this.key) this.loading = false;
       }
@@ -594,24 +597,30 @@ function library() {
       const url = "#/" + (p.toString() ? "?" + p : "");
       replace ? location.replace(url) : (location.hash = url);  // a new history entry, so Back returns to the last page
     },
+    /* "Try again" after a load failed or timed out */
+    retry() {
+      this.failed = "";
+      this.paged ? this.loadPage(false) : this.loadMore();
+    },
     async loadMore() {
-      if (this.paged || this.loading || this.done || this.key === null) return;
+      // after a failure only "Try again" loads more (else scrolling would retry it over and over)
+      if (this.paged || this.loading || this.done || this.failed || this.key === null) return;
       this.loading = true;
       const key = this.key;
       try {
-        const data = await api(`/api/series?cursor=${this.cursor}&limit=60&${this.filters}`);
+        const data = await api(`/api/series?cursor=${this.cursor}&limit=60&${this.filters}`, { timeout: LOAD_TIMEOUT });
         if (key !== this.key) return;  // filters changed while loading
         this.items.push(...data.items);
         this.cursor = data.next_cursor ?? this.cursor;
         this.done = data.next_cursor === null;
         this.total = data.total;
       } catch (e) {
-        toast("Could not load library: " + e.message, 3000, "error");
+        if (key === this.key) this.failed = e.message;
       } finally {
         if (key === this.key) this.loading = false;
       }
       await this.$nextTick();
-      if (!this.done && key === this.key && this.$refs.sentinel.getBoundingClientRect().top < innerHeight + 600) this.loadMore();
+      if (!this.done && !this.failed && key === this.key && this.$refs.sentinel.getBoundingClientRect().top < innerHeight + 600) this.loadMore();
     },
     get params() { return new URLSearchParams(this.$store.app.query); },
     quickOn(v) {
