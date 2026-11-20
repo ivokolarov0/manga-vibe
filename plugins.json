@@ -1,0 +1,45 @@
+{
+  "name": "MangaVibe",
+  "plugins": [
+    {
+      "id": "mal-profile-sync",
+      "name": "MyAnimeList sync",
+      "description": "Sends Reading / Completed to your MyAnimeList list as you read, and pulls them back with Sync all.",
+      "category": "library",
+      "repo": "ivokolarov0/manga-vibe-ext-mal-profile-sync",
+      "file": "mal_profile_sync.py"
+    },
+    {
+      "id": "manga-translate",
+      "name": "Manga Translate",
+      "description": "Shows English over the speech bubbles of Japanese manga while you read. Small AI models on your own computer find, read and translate the text. Needs a computer with a graphics card on your network.",
+      "category": "reader",
+      "repo": "ivokolarov0/manga-vibe-ext-translate",
+      "file": "manga_translate.py"
+    },
+    {
+      "id": "manga-accessibility",
+      "name": "Manga Accessibility",
+      "description": "For readers who are blind or have low vision: describes every panel, who says what and the sound effects, and reads it aloud. Needs Ollama with a model that can see pictures.",
+      "category": "reader",
+      "repo": "ivokolarov0/manga-vibe-ext-accessibility",
+      "file": "manga_accessibility.py"
+    },
+    {
+      "id": "official-chapters",
+      "name": "Official chapters",
+      "description": "Finds how many chapters a series really has, from its official Japanese sites, MangaUpdates and a web search, since AniList's count is often wrong or behind.",
+      "category": "library",
+      "repo": "ivokolarov0/manga-vibe-ext-official-chapters",
+      "file": "official_chapters.py"
+    },
+    {
+      "id": "mcp",
+      "name": "Remote control (MCP)",
+      "description": "Lets an assistant (Claude, or any app that speaks MCP) use MangaVibe for you: search, read, turn pages, change settings. The base for voice control.",
+      "category": "system",
+      "repo": "ivokolarov0/manga-vibe-mcp",
+      "folder": "mcp"
+    }
+  ]
+}

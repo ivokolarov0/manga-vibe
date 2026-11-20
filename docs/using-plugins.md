@@ -54,6 +54,26 @@ if you also read the files elsewhere.
 
 ## Install a plugin
 
+**Settings → Plugins → Get plugins** lists the plugins you can install with one button: MangaVibe's
+own (the ones above) and those of any other source you added. **Install** downloads the plugin's
+newest release from its GitHub repo into the `plugins` folder of your data folder, checks that it
+loads, shows what it uses (its permissions) and asks you first, then switches it on. Plugins you have
+already are marked *Installed*. The list follows the search box and the category you picked.
+
+### Plugin sources
+
+A source is a list of plugins someone publishes (a `plugins.json` file, see
+[PLUGINS.md](PLUGINS.md#publish-your-plugins-in-a-source)). Under **Plugin sources**, type its GitHub
+repo (`owner/name`, or its github.com address) or the address of the file, and press **Add source**.
+Its plugins then show under **Get plugins**, tagged with the source's name. **Remove** stops listing
+it; plugins you installed from it stay. **Refresh** asks every source again (they're kept for ten
+minutes otherwise). MangaVibe's own source is always there.
+
+> [!WARNING]
+> Add only sources you trust: whoever runs a source decides which code **Install** downloads.
+
+### By hand
+
 1. Download the plugin's `.py` file (on GitHub: open the file → **Download raw file**). A folder
    plugin (e.g. Remote control's `mcp`): download the repo (**Code → Download ZIP**), unpack it and
    take that folder.

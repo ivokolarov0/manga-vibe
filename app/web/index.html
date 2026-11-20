@@ -841,7 +841,66 @@
                 <template x-for="[f, e] in Object.entries(pluginErrors)" :key="f"><p class="err"><strong x-text="f"></strong> <span x-text="e"></span></p></template>
               </div>
               <p class="muted plugin-empty" x-show="pf.status === 'errors' && !pluginErrorCount">Every plugin loaded.</p>
+
+              <!-- plugins the sources list (their plugins.json): installed with one button into the
+                   data folder's plugins/. Follows the search and the category. -->
+              <div class="plugin-group plugin-get" x-show="pf.status === 'all' && pf.src !== 'builtin'">
+                <div class="plugin-get-head">
+                  <h3 class="plugin-group-title">Get plugins</h3>
+                  <button class="btn small" @click="loadAvailable(true)" :disabled="availBusy"
+                          :class="{ busy: availBusy }">Refresh</button>
+                </div>
+                <p class="muted plugin-empty" x-show="!avail.loaded">Loading the plugin sources…</p>
+                <p class="muted plugin-empty" x-show="avail.loaded && !availList.length"
+                   x-text="avail.plugins.length ? 'No plugin from the sources matches.' : 'The sources list no plugins yet.'"></p>
+                <div class="plugin-list">
+                  <template x-for="a in availList" :key="a.source + ' ' + a.id">
+                    <div class="plugin-item" :class="{ off: a.installed }"
+                         @click="a.installed ? openPlugin(a) : window.open(a.homepage, '_blank', 'noopener')">
+                      <span class="plugin-ico" aria-hidden="true" x-html="navIcon(catIcon(a.category))"></span>
+                      <span class="plugin-text">
+                        <span class="plugin-title">
+                          <a :href="a.homepage" target="_blank" rel="noopener" @click.stop x-text="a.name"></a>
+                          <span class="plugin-tag" x-text="catLabel(a.category)"></span>
+                          <span class="plugin-tag" x-show="!a.official" :title="a.source" x-text="a.sourceName"></span>
+                        </span>
+                        <small class="plugin-desc" x-show="a.description" :title="a.description" x-text="a.description"></small>
+                        <small x-text="`github.com/${a.repo}`"></small>
+                      </span>
+                      <span class="row-buttons">
+                        <span class="chip" x-show="a.installed"
+                              x-text="a.builtin ? 'Built in' : `Installed v${a.installed_version}`"></span>
+                        <button class="btn small primary" x-show="!a.installed" @click.stop="installAvailable(a)"
+                                :disabled="!!availInstalling" :class="{ busy: availInstalling === a.source + ' ' + a.id }">Install</button>
+                      </span>
+                    </div>
+                  </template>
+                </div>
+              </div>
             </div>
+          </div>
+          <!-- where Get plugins comes from: MangaVibe's own list, and the ones the owner added -->
+          <div class="plugin-sources">
+            <div class="label"><span>Plugin sources</span>
+              <small>A source is a list of plugins (a plugins.json file). Add one by its GitHub repo
+                (owner/name) or the file's address.</small></div>
+            <template x-for="s in avail.sources" :key="s.url">
+              <div class="plugin-source">
+                <span class="plugin-text">
+                  <strong x-text="s.name"></strong>
+                  <small x-text="s.official ? 'MangaVibe\'s own plugins' : s.url"></small>
+                  <small class="err" x-show="s.error" x-text="s.error"></small>
+                  <small x-show="!s.error" x-text="s.count === 1 ? '1 plugin' : `${s.count} plugins`"></small>
+                </span>
+                <button class="btn small" x-show="!s.official" @click="removeSource(s)">Remove</button>
+              </div>
+            </template>
+            <form class="btn-row" @submit.prevent="addSource()">
+              <input type="text" x-model="newSource" placeholder="owner/repo or https://…/plugins.json"
+                     aria-label="New plugin source" autocomplete="off" spellcheck="false">
+              <button class="btn small" type="submit" :disabled="!newSource.trim() || availBusy">Add source</button>
+            </form>
+            <small class="muted">Only add sources you trust: a plugin runs inside MangaVibe with full access to its data.</small>
           </div>
           <div class="setting-row">
             <div class="label"><span>Plugins and custom styles</span>

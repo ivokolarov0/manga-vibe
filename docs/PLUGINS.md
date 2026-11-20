@@ -334,6 +334,37 @@ class Tracker(Plugin):
 - **Reload plugins** loads a folder plugin's own modules (`core.py`, `api.py`, ...) fresh too, so
   copying a new version in and reloading is enough.
 
+## Publish your plugins in a source
+
+A source lists plugins so owners can install them from **Settings → Plugins → Get plugins**. It's a
+JSON file anywhere on the web; on GitHub, put it at the top of a repo as `plugins.json` and owners add
+it as `owner/name`. MangaVibe's own is [plugins.json](../plugins.json) in this repo.
+
+```json
+{
+  "name": "My plugins",
+  "plugins": [
+    {"id": "tracker", "name": "Tracker", "category": "library",
+     "description": "Sends what you read to Tracker.",
+     "repo": "your-name/mangavibe-tracker", "file": "tracker.py"},
+    {"id": "remote", "name": "Remote", "category": "system",
+     "repo": "your-name/mangavibe-remote", "folder": "remote"}
+  ]
+}
+```
+
+- `id`: the plugin's `id`. The download has to define a plugin with it, or nothing is installed.
+- `repo`: the GitHub repo it's installed from, at its newest **published release** (like
+  [updates](#updates)). Give the plugin the same `repo`, so it's updated from there afterwards.
+- `file` for a single-file plugin (that file at the release's tag), or `folder` for a folder plugin
+  (that folder in the release's source zip, or the whole repo when its `__init__.py` is at the top).
+  It's also the name it gets in `plugins/`.
+- `name`, `description`, `category` (one of [the categories](#categories)) and `homepage` (the repo's
+  page if left out) are what **Get plugins** shows.
+
+An entry missing `id`, `repo` or one of `file` / `folder` is left out. Install asks for every
+permission the plugin lists, and never replaces a file or folder that's already in `plugins/`.
+
 ## Your own API and UI
 
 Plugin API 7 (API and markup) and 8 (the hooks below). Some of the app's own features are plugins built

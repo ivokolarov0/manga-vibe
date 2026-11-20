@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from sqlalchemy import func
 
-from app import config, plugin_updates, users
+from app import config, plugin_sources, plugin_updates, users
 from app.api.common import get_or_404
 from app.users import manage
 from app.api.filters import visible_series
@@ -480,6 +480,49 @@ def plugin_releases(plugin_id: str, db=Depends(get_db)):
         return {"releases": plugin_updates.releases(db, p)}
     except plugin_updates.UpdateError as e:
         raise HTTPException(400, str(e))
+
+
+@router.get("/plugins/available", dependencies=[manage])
+def available_plugins(refresh: bool = False, db=Depends(get_db)):
+    """The plugin sources and the plugins they list (Settings → Plugins → Get plugins)."""
+    return plugin_sources.available(db, refresh)
+
+
+class PluginSource(BaseModel):
+    url: str
+
+
+@router.post("/plugins/sources", dependencies=[manage])
+def add_plugin_source(body: PluginSource, db=Depends(get_db)):
+    """Add a source: a GitHub repo (owner/name, its plugins.json) or a .json file's address."""
+    try:
+        plugin_sources.add(db, body.url)
+    except plugin_sources.SourceError as e:
+        raise HTTPException(400, str(e))
+    return plugin_sources.available(db)
+
+
+@router.post("/plugins/sources/remove", dependencies=[manage])
+def remove_plugin_source(body: PluginSource, db=Depends(get_db)):
+    """Stop listing a source. Plugins installed from it stay."""
+    try:
+        plugin_sources.remove(db, body.url)
+    except plugin_sources.SourceError as e:
+        raise HTTPException(400, str(e))
+    return plugin_sources.available(db)
+
+
+@router.post("/plugins/available/install", dependencies=[manage])
+def install_available_plugin(body: dict | None = None, db=Depends(get_db)):
+    """Install a plugin a source lists ({source, id}), into the data folder's plugins/. A 409 lists
+    its permissions; send them back as accept_permissions once the owner agrees."""
+    body = body or {}
+    source, plugin_id = body.get("source"), body.get("id")
+    if not isinstance(source, str) or not isinstance(plugin_id, str):
+        raise HTTPException(400, "Send the plugin's source and id")
+    accepted = _accepted(body)
+    r = _put_in_version(db, lambda: plugin_sources.install(db, source, plugin_id, accepted))
+    return {**r, "available": plugin_sources.available(db)}
 
 
 @router.post("/plugins/reload", dependencies=[manage])
