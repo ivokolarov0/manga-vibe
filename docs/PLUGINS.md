@@ -364,6 +364,9 @@ it as `owner/name`. MangaVibe's own is [plugins.json](../plugins.json) in this r
 
 An entry missing `id`, `repo` or one of `file` / `folder` is left out. Install asks for every
 permission the plugin lists, and never replaces a file or folder that's already in `plugins/`.
+Write `id` and `permissions` as plain values in the class (`permissions = ["…", "…"]`): Install
+reads them from the file before running any of it. When they're worked out by code, the owner is
+first asked whether the plugin may run just to say what it uses.
 
 ## Your own API and UI
 

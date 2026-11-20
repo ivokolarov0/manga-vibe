@@ -132,13 +132,72 @@ def test_permissions_are_asked_for(client, src):
     assert r.status_code == 200 and (PLUGINS / "srchello.py").exists()
 
 
+def test_nothing_runs_before_the_permissions_are_approved(client, src):
+    marker = TMP / "srchello-ran"
+    marker.unlink(missing_ok=True)
+    src.files["someone/srchello"] = (f"open({str(marker)!r}, 'w').close()\n"
+                                     + plugin_code("srchello", permissions=["Reads book files"]))
+    r = client.post("/api/plugins/available/install", json={"source": OFFICIAL, "id": "srchello"})
+    assert r.status_code == 409 and r.json()["detail"]["permissions"] == ["Reads book files"]
+    assert not marker.exists()
+    r = client.post("/api/plugins/available/install",
+                    json={"source": OFFICIAL, "id": "srchello", "accept_permissions": ["Reads book files"]})
+    assert r.status_code == 200 and marker.exists()
+    marker.unlink()
+
+
+def test_permissions_worked_out_by_code(client, src):
+    from app.plugin_sources import UNREADABLE
+    src.files["someone/srchello"] = ("PERMS = ['Reads book files']\n"
+                                     + plugin_code("srchello").replace('    repo', '    permissions = list(PERMS)\n    repo'))
+    send = lambda accept: client.post("/api/plugins/available/install",  # noqa: E731
+                                      json={"source": OFFICIAL, "id": "srchello", "accept_permissions": accept})
+    r = send([])
+    assert r.status_code == 409 and r.json()["detail"]["permissions"] == [UNREADABLE]
+    r = send([UNREADABLE])  # it may run to say them: then they're asked for
+    assert r.status_code == 409 and r.json()["detail"]["permissions"] == ["Reads book files"]
+    assert not (PLUGINS / "srchello.py").exists()
+    assert send([UNREADABLE, "Reads book files"]).status_code == 200
+
+
+def test_installing_starts_the_other_plugins_again(client, src):
+    log = TMP / "starter-log"
+    log.unlink(missing_ok=True)
+    (PLUGINS / "starter.py").write_text(
+        "from app.plugins import Plugin\n"
+        "class S(Plugin):\n    id = 'starter'\n    name = 'Starter'\n    version = '1'\n"
+        f"    def on_start(self, ctx):\n        open({str(log)!r}, 'a').write('x')\n")
+    try:
+        client.post("/api/plugins/reload")
+        before = log.read_text()
+        assert client.post("/api/plugins/available/install", json={"source": OFFICIAL, "id": "srchello"}).status_code == 200
+        assert len(log.read_text()) == len(before) + 1
+    finally:
+        (PLUGINS / "starter.py").unlink()
+        log.unlink(missing_ok=True)
+
+
+def test_a_too_big_download_is_refused(client, src):
+    src.files["someone/srchello"] = "#" * 1_000_001
+    r = client.post("/api/plugins/available/install", json={"source": OFFICIAL, "id": "srchello"})
+    assert r.status_code == 400 and "too big" in r.json()["detail"]
+
+
 def test_a_download_without_the_plugin_changes_nothing(client, src):
+    from app.plugin_sources import UNREADABLE
+    body = {"source": OFFICIAL, "id": "srchello"}
+    # no class with that id in its text: it's asked whether it may run, then refused
     src.files["someone/srchello"] = plugin_code("someone-else")
-    r = client.post("/api/plugins/available/install", json={"source": OFFICIAL, "id": "srchello"})
+    r = client.post("/api/plugins/available/install", json=body)
+    assert r.status_code == 409 and r.json()["detail"]["permissions"] == [UNREADABLE]
+    r = client.post("/api/plugins/available/install", json={**body, "accept_permissions": [UNREADABLE]})
     assert r.status_code == 400 and "has no plugin 'srchello'" in r.json()["detail"]
-    src.files["someone/srchello"] = "raise RuntimeError('boom')"
-    r = client.post("/api/plugins/available/install", json={"source": OFFICIAL, "id": "srchello"})
+    src.files["someone/srchello"] = "raise RuntimeError('boom')\n" + plugin_code("srchello")
+    r = client.post("/api/plugins/available/install", json=body)
     assert r.status_code == 400 and "doesn't load" in r.json()["detail"]
+    src.files["someone/srchello"] = "def (:\n"
+    r = client.post("/api/plugins/available/install", json=body)
+    assert r.status_code == 400 and "SyntaxError" in r.json()["detail"]
     assert not (PLUGINS / "srchello.py").exists()
 
 
@@ -207,6 +266,25 @@ def test_source_addresses():
     assert (normalize("https://github.com/someone/list/blob/main/x/plugins.json")
             == "https://raw.githubusercontent.com/someone/list/main/x/plugins.json")
     assert normalize(" https://example.com/a.json ") == "https://example.com/a.json"
+    # one spelling per GitHub repo, so a source isn't listed twice
+    assert normalize("IvoKolarov0/Manga-Vibe") == OFFICIAL
+    assert normalize("https://raw.githubusercontent.com/IvoKolarov0/Manga-Vibe/HEAD/plugins.json") == OFFICIAL
+    # an address without https:// isn't taken for a repo
+    with pytest.raises(Exception, match="https://"):
+        normalize("myserver.lan/plugins.json")
+
+
+def test_entries_with_odd_repos_are_left_out():
+    from app.plugin_sources import parse
+    good = {"id": "a", "repo": "someone/a", "file": "a.py"}
+    for repo in ("../user", "someone/..", "someone/.hidden", "some.one/a"):
+        _, plugins = parse(json.dumps({"plugins": [good, {**good, "id": "b", "repo": repo}]}).encode())
+        assert [p["id"] for p in plugins] == ["a"], repo
+
+
+def test_the_official_source_cant_be_added_twice(client, src):
+    r = client.post("/api/plugins/sources", json={"url": "IvoKolarov0/Manga-Vibe"})
+    assert r.status_code == 400 and "already" in r.json()["detail"]
 
 
 def test_the_official_list_is_valid():

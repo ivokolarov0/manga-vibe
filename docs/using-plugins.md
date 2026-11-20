@@ -56,8 +56,9 @@ if you also read the files elsewhere.
 
 **Settings → Plugins → Get plugins** lists the plugins you can install with one button: MangaVibe's
 own (the ones above) and those of any other source you added. **Install** downloads the plugin's
-newest release from its GitHub repo into the `plugins` folder of your data folder, checks that it
-loads, shows what it uses (its permissions) and asks you first, then switches it on. Plugins you have
+newest release from its GitHub repo into the `plugins` folder of your data folder, shows what it
+uses (its permissions) and asks you before any of it runs, checks that it loads, and switches it on
+(except plugins that start off, like Remote control: switch those on yourself). Plugins you have
 already are marked *Installed*. The list follows the search box and the category you picked.
 
 ### Plugin sources
