@@ -623,6 +623,13 @@ class PluginManager:
         self._worker = None
         self._lock = threading.Lock()
         self._stops: dict[int, threading.Event] = {}  # id(plugin object) -> its threads' stop signal
+        self._load_lock = threading.RLock()  # load() empties and refills the dicts: see installed()
+
+    def installed(self) -> dict[str, tuple[str, bool]]:
+        """id -> (version, built in) of every loaded plugin, read while no load() is half done (a
+        request in another thread may be reloading the plugins)."""
+        with self._load_lock:
+            return {pid: (p.version, self.is_builtin(pid)) for pid, p in self.plugins.items()}
 
     def stop_event(self, plugin) -> threading.Event:
         """The signal the plugin's current threads (ctx.run_in_thread) watch."""
@@ -645,6 +652,10 @@ class PluginManager:
                 self.stop_threads(self.plugins[plugin_id])
 
     def load(self, folders=None):
+        with self._load_lock:
+            self._load(folders)
+
+    def _load(self, folders=None):
         for p in self.plugins.values():  # the old plugin objects are about to be replaced
             self.stop_threads(p)
         self.plugins.clear()

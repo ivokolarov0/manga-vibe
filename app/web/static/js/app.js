@@ -1841,6 +1841,7 @@ function settingsView() {
       this.st = strings();
       Object.assign(this, { libs, providers });
       this.setPlugins(plug);
+      if (!this.avail.loaded) this.loadAvailable();  // asks the sources: not waited for
       this.stop();
       this.pollScan();
       this.pollMeta();
@@ -2072,6 +2073,75 @@ Your files are not touched. `
         this.loadProviders();
       } catch (e) { toast(e.message, 8000, "error"); } finally { this.busyAction = ""; }
     },
+    // ---- Settings → Plugins → Get plugins: what the plugin sources list ----
+    avail: { loaded: false, sources: [], plugins: [] },
+    availBusy: false, availInstalling: "", newSource: "",
+    // the sources' plugins that match the search and category; not installed ones first
+    get availList() {
+      const q = this.pf.q.trim().toLowerCase(), cat = this.pf.cat;
+      const names = Object.fromEntries(this.avail.sources.map((s) => [s.url, s]));
+      return this.avail.plugins
+        .filter((a) => (cat === "all" || a.category === cat) &&
+                       (!q || `${a.name} ${a.description} ${a.id} ${a.repo}`.toLowerCase().includes(q)))
+        .map((a) => ({ ...a, official: !!names[a.source]?.official, sourceName: names[a.source]?.name || "" }))
+        .sort((a, b) => (a.installed - b.installed) || a.name.localeCompare(b.name));
+    },
+    async loadAvailable(refresh = false) {
+      this.availBusy = true;
+      try {
+        this.avail = { loaded: true, ...await api(`/api/plugins/available${refresh ? "?refresh=1" : ""}`) };
+        if (refresh) {
+          const bad = this.avail.sources.filter((s) => s.error);
+          toast(bad.length ? `${bad[0].name}: ${bad[0].error}` : "Plugin sources refreshed", bad.length ? 8000 : 3000,
+                bad.length ? "error" : "");
+        }
+      } catch (e) {
+        this.avail.loaded = true;
+        if (refresh) toast(e.message, 6000, "error");
+      } finally { this.availBusy = false; }
+    },
+    async addSource() {
+      const url = this.newSource.trim();
+      if (!url) return;
+      if (!confirm("Plugins from this source run inside MangaVibe with full access to its data. " +
+                   "Only add sources you trust. Add it?")) return;
+      this.availBusy = true;
+      try {
+        this.avail = { loaded: true, ...await api("/api/plugins/sources", { method: "POST", body: { url } }) };
+        this.newSource = "";
+        toast("Source added");
+      } catch (e) { toast(e.message, 8000, "error"); } finally { this.availBusy = false; }
+    },
+    async removeSource(s) {
+      if (!confirm(`Remove the source ${s.name}? Plugins you installed from it stay.`)) return;
+      try {
+        this.avail = { loaded: true, ...await api("/api/plugins/sources/remove", { method: "POST", body: { url: s.url } }) };
+      } catch (e) { toast(e.message, 6000, "error"); }
+    },
+    async installAvailable(a) {
+      if (!confirm(`Install ${a.name} from github.com/${a.repo}?` +
+                   (a.official ? "" : `\n\nIt's listed by ${a.sourceName}, not by MangaVibe.`))) return;
+      this.availInstalling = a.source + " " + a.id;
+      const send = (accept) => api("/api/plugins/available/install",
+                                   { method: "POST", body: { source: a.source, id: a.id, accept_permissions: accept } });
+      try {
+        let r;
+        try { r = await send([]); } catch (e) {
+          if (e.status !== 409 || !e.detail.permissions) throw e;
+          const perms = e.detail.permissions;
+          if (!confirm(`${a.name} asks for these permissions:\n\n` + perms.map((x) => `• ${x}`).join("\n") +
+                       "\n\nAllow them and install it?")) { toast("Nothing was installed"); return; }
+          r = await send(perms);
+        }
+        const p = r.plugins.find((x) => x.id === a.id);
+        // a plugin that adds to the page shows once the page loads again
+        if (p?.ui && p.enabled) { toast(r.message); return setTimeout(() => location.reload(), 800); }
+        this.setPlugins(r);
+        this.avail = { loaded: true, ...r.available };
+        toast(r.message);
+        this.loadProviders();
+      } catch (e) { toast(e.message, 8000, "error"); } finally { this.availInstalling = ""; }
+    },
     busyAction: "",
     async runGlobalAction(p, a) {
       if (a.confirm && !confirm(a.confirm)) return;
@@ -2089,6 +2159,7 @@ Your files are not touched. `
       if (before || r.plugins.some((p) => p.ui && p.enabled)) return location.reload();
       this.setPlugins(r);
       this.loadProviders();
+      this.loadAvailable();  // which of the sources' plugins are installed now
     },
     async pollScan() {
       const st = await api("/api/scan/status").catch(() => null);
