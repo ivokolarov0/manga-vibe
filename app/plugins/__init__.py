@@ -26,6 +26,8 @@ What a plugin can do:
 - assistants (MCP):   `mcp_tools` and run_mcp_tool() add tools to the MCP server (the Remote control
                       plugin, github.com/ivokolarov0/manga-vibe-mcp);
                       find_user() says who a user id is, for a request that comes with a key (Plugin API 13)
+- other books:        `reads` names book formats it has a reader for (e.g. "epub-text", light novels);
+                      ctx.text_sections() lists a text book's sections (Plugin API 14)
 
 Some of the app's own features are built-in plugins (app/plugins/builtin/), e.g. saved searches and
 libraries, so the owner can switch them off and anyone can write a replacement.
@@ -47,7 +49,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 13
+API_VERSION = 14
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
@@ -205,6 +207,9 @@ class Plugin:
     middleware_order = 100
     # tools for assistants, through the MCP server (the Remote control plugin), run by run_mcp_tool(). Plugin API 13
     mcp_tools: list[McpTool] = []
+    # book formats this plugin has a reader for, e.g. ["epub-text"] (light novels): such a book opens in
+    # the reader its `js` gives MangaVibe.registerReader() instead of the page reader (Plugin API 14)
+    reads: list[str] = []
 
     # --- assistants (MCP, Plugin API 13) ---------------------------------------------
     def run_mcp_tool(self, ctx, name, args: dict):
@@ -347,7 +352,7 @@ def implements(plugin, hook):
 
 # what a plugin can set besides css; a plugin with css and none of these is a theme
 _FEATURES = ("fields", "actions", "choices", "settings_fields", "global_actions", "book_actions",
-             "overlay_label", "router", "js", "html", "middleware", "is_provider", "mcp_tools")
+             "overlay_label", "router", "js", "html", "middleware", "is_provider", "mcp_tools", "reads")
 # the hooks that do something, so a theme overriding one isn't only a theme. status() only shows a line,
 # and search()/fetch() count only for providers (is_provider is in _FEATURES)
 _HOOKS = tuple(k for k, v in vars(Plugin).items()
@@ -368,7 +373,7 @@ def categories_of(plugin) -> list[str]:
         log.warning("Plugin %s: unknown category %s (one of %s)", plugin.id, found, ", ".join(CATEGORIES))
     if plugin.is_provider:
         return ["metadata"]
-    if plugin.overlay_label or plugin.book_actions:
+    if plugin.overlay_label or plugin.book_actions or plugin.reads:
         return ["reader"]
     if plugin.css and not any(getattr(plugin, k) for k in _FEATURES) \
             and not any(implements(plugin, h) for h in _HOOKS):
@@ -466,6 +471,12 @@ class Context:
         """All entry names inside a book (not only images)."""
         from app.scanner import archives
         return archives.list_entries(book.path, book.format)
+
+    def text_sections(self, book):
+        """The sections of a text book (format "epub-text"): its spine documents in reading order,
+        entry names for read_entry(). Section n is page n of the book's progress. Plugin API 14."""
+        from app.scanner import archives
+        return archives.text_sections(book.path)
 
     def read_series_file(self, series, name) -> bytes | None:
         """Read a sidecar file in the series folder (e.g. 'series.json'), or None."""
@@ -726,6 +737,10 @@ class PluginManager:
 
     def providers(self):
         return [p for p in self.enabled() if p.is_provider]
+
+    def reader_for(self, book_format):
+        """The enabled plugin that reads books of this format (its `reads`), or None. Plugin API 14."""
+        return next((p for p in self.enabled() if book_format in (p.reads or ())), None)
 
     def get(self, plugin_id):
         """An enabled plugin by id, or None."""

@@ -35,11 +35,16 @@ def title_similarity(query, titles):
     return best
 
 
-def score(query, titles, year=None, cand_year=None, cand_format=None):
+def score(query, titles, year=None, cand_year=None, cand_format=None, novel=False):
+    """novel: the series' books are light novels (text EPUBs), so the novel is the right match."""
     s = title_similarity(query, titles)
     if year and cand_year:
         s += 5 if abs(year - cand_year) <= 1 else -10
-    if cand_format in ("NOVEL", "Novel") and "novel" not in query.lower():
+    is_novel = cand_format in ("NOVEL", "Novel")
+    if novel:
+        if cand_format and not is_novel:
+            s -= 15  # the books are the light novel; its manga adaptation is the wrong match
+    elif is_novel and "novel" not in query.lower():
         s -= 15  # the library is manga; a light novel with the same name is the wrong match
     return max(0, min(100, round(s)))
 

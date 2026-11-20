@@ -98,6 +98,9 @@ MIGRATIONS = [
     # books): the next scan sorts the series that have volume numbers again
     lambda conn: conn.execute(text("UPDATE book SET sort_index = 0 "
                                    "WHERE COALESCE(override_volume, volume) IS NOT NULL")),
+    # 17: text EPUBs (light novels) are books now, read by a plugin's reader (Plugin API 14): the next
+    # scan reads the ones that were listed under "Not supported" again
+    lambda conn: conn.execute(text("UPDATE book SET mtime = -1 WHERE error LIKE 'Text EPUB%'")),
 ]
 
 

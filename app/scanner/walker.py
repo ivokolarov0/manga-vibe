@@ -205,6 +205,16 @@ def _read_book(db, series, book, path: Path):
         return
     try:
         pages = archives.list_pages(str(path), book.format)
+    except archives.TextBook as e:
+        # a light novel: its sections count as pages, a plugin's reader shows it (Plugin API 14)
+        book.format, book.page_count = archives.TEXT_BOOK, len(e.sections)
+        cover = archives.epub_cover(str(path))
+        if cover:
+            try:
+                book.thumbnail_path = images.make_thumbnail(cover, book.id)
+            except Exception as err:
+                log.info("No thumbnail from the cover of %s: %s", path.name, err)
+        return
     except archives.ArchiveError as e:
         book.error, book.page_count = str(e), 0
         status["errors"] += 1

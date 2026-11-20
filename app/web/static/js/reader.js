@@ -140,8 +140,67 @@ function pageUrl(i) {
   return `/api/books/${R.book.id}/pages/${i}?v=${R.book.version}${w ? "&w=" + w : ""}`;
 }
 
+/* ---------------- a plugin's reader (Plugin API 14) ----------------
+   Books the page reader can't show (light novels: format "epub-text") open in the reader a plugin
+   registered with MangaVibe.registerReader(). It gets the reader's element to fill and `ctl`; this file
+   still owns opening, leaving, saving progress, the Android back and volume keys and the wake lock. */
+const PLUGIN_FORMATS = ["epub-text"];  // formats only a plugin's reader shows
+
+function openPluginReader(el, book, startPage) {
+  const own = book.reader && window.pluginReader?.(book.reader, book.format);
+  if (!own) {
+    el.innerHTML = `<div class="endcard"><p>${book.reader
+      ? "The reader for this book didn't load. Reload the page, or check its plugin in Settings → Plugins."
+      : "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."}</p>
+      <a class="btn" href="#/series/${book.series_id}">Back</a></div>`;
+    return;
+  }
+  const page = startPage !== null ? +startPage : (book.completed ? 0 : book.page);
+  Object.assign(R, { book, own, mode: "plugin", page: Math.max(0, Math.min(page, book.page_count - 1)) });
+  ovReset(null);  // pictures' overlays don't apply to text
+  R.preloaded.clear();
+  history.replaceState(history.state, "", `#/read/${book.id}`);
+  document.title = `${book.label} · ${book.series_title}`;
+  el.className = "plugin-reader";
+  el.innerHTML = "";
+  const ctl = {
+    page: R.page,  // where to start: the section (page) from 0
+    // the place being read: section `page`; completed true or false marks the book read or unread
+    // (reaching the last section doesn't, as the page reader does). Saved a moment later, or now.
+    save(page, completed = null) {
+      if (R.book !== book) return Promise.resolve();
+      R.page = Math.max(0, Math.min(+page || 0, book.page_count - 1));
+      if (completed === null) return saveProgress();
+      clearTimeout(R.saveTimer);
+      return api(`/api/books/${book.id}/progress`, { method: "PUT", body: { page: R.page, completed } })
+        .then((p) => { book.completed = p.completed; return p; });
+    },
+    leave: () => leaveReader(),
+    openBook: (which, page = null) => openBook(which, page),
+    fullscreen: () => toggleFullscreen(),
+  };
+  try {
+    own.open(el, book, ctl);
+  } catch (e) {
+    console.error("The plugin's reader failed to open", e);
+    el.innerHTML = `<div class="endcard"><p>The reader for this book failed: ${esc(e.message)}</p>
+      <a class="btn" href="#/series/${book.series_id}">Back</a></div>`;
+  }
+  requestWakeLock();
+  androidApp?.readerState(true, settings.reader_volume_keys !== false);
+}
+
+/* the plugin reader's own handler for something (step, goTo, volumeKey, back...), or undefined */
+function ownCall(name, ...args) {
+  const fn = R.own?.[name];
+  if (typeof fn !== "function") return undefined;
+  try { return fn.apply(R.own, args); } catch (e) { console.error(`The plugin's reader failed in ${name}`, e); }
+  return undefined;
+}
+
 async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   R.cameFromApp = cameFromApp;
+  if (R.own) { ownCall("close"); R.own = null; }  // another book after one a plugin's reader showed
   const el = $("#reader");
   el.hidden = false;
   // a spinner, and a way out while it waits (the reader's own Back button comes with the book)
@@ -163,6 +222,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   if (open !== R.opening || el.hidden) return;
   if (book.error) { el.innerHTML = `<div class="endcard"><p>${esc(book.error)}</p>
     <a class="btn" href="#/series/${book.series_id}">Back</a></div>`; return; }
+  if (book.reader || PLUGIN_FORMATS.includes(book.format)) return openPluginReader(el, book, startPage);
   Object.assign(R, { book, mode: book.reader_mode === "vertical" ? "vertical" : "paged",
     page: startPage !== null ? +startPage : (book.completed ? 0 : book.page) });
   R.page = Math.max(0, Math.min(R.page, book.page_count - 1));
@@ -941,6 +1001,7 @@ function state() {
    forward shows the end card; forward again there goes on to the next book */
 function step(forward) {
   if (!R.book) return false;
+  if (R.own) return ownCall("step", forward) !== false;
   if (R.mode === "vertical") goTo(R.page + (forward ? 1 : -1));
   else if (forward) next(); else prev();
   return true;
@@ -959,7 +1020,7 @@ function openBook(which, page = null) {
 
 /* paged or vertical: the series' own mode, as the drawer's mode button sets it (admins) */
 async function setMode(mode) {
-  if (!R.book || !(mode in MODES)) return false;
+  if (!R.book || R.own || !(mode in MODES)) return false;
   if (mode !== R.mode) {
     await api(`/api/series/${R.book.series_id}`, { method: "PATCH", body: { reader_mode: mode } });
     saveProgress(true);
@@ -971,13 +1032,14 @@ async function setMode(mode) {
 /* open or close the reading options (the drawer), with the bars */
 function options(open) {
   if (!R.book) return false;
+  if (R.own) return ownCall("options", open) !== false;
   if (open) openMenu(); else setDrawer(false);
   return true;
 }
 
 /* a plugin's overlay on or off (on: true/false, or null to switch it) */
 function overlay(plugin, on = null) {
-  if (!R.book || !R.book.overlays.some((o) => o.plugin === plugin)) return false;
+  if (!R.book || R.own || !R.book.overlays.some((o) => o.plugin === plugin)) return false;
   if (on === null || on !== R.ov.on.includes(plugin)) ovToggle(plugin);
   return true;
 }
@@ -1587,6 +1649,7 @@ function closeReader() {
   androidApp?.readerState(false, false);
   sayStop();
   S.key = null;
+  if (R.own) { ownCall("close"); R.own = null; }
   ovReset(null);
   R.book = null;
   R.firstTap = true;
@@ -1601,7 +1664,7 @@ function closeReader() {
 }
 
 document.addEventListener("keydown", (e) => {
-  if ($("#reader").hidden || !R.book) return;
+  if ($("#reader").hidden || !R.book || R.own) return;  // a plugin's reader takes its own keys
   if (e.key === "Escape") return R.panel ? openPanel(null) : R.drawer ? setDrawer(false) : leaveReader();
   if (e.ctrlKey || e.metaKey || e.altKey) return;  // the browser's own shortcuts
   // the slider and dropdowns take their own keys; Space and Enter press a focused button
@@ -1643,6 +1706,7 @@ document.addEventListener("visibilitychange", () => {
 function volumeKey(dir) {
   if ($("#reader").hidden || !R.book) return;
   const forward = dir === "next";
+  if (R.own) return void ownCall("step", forward);
   if (R.mode === "vertical") {
     $("#reader .vertical")?.scrollBy({ top: (forward ? 1 : -1) * innerHeight * 0.85, behavior: "smooth" });
   } else if (forward) next();
@@ -1652,6 +1716,7 @@ function volumeKey(dir) {
 /* the Android back button: closes a drawer panel, then the options drawer, then leaves the reader */
 function back() {
   if ($("#reader").hidden) return false;
+  if (R.own && ownCall("back") === true) return true;  // e.g. it closed a menu of its own
   if (R.panel) openPanel(null);
   else if (R.drawer) setDrawer(false);
   else leaveReader();
@@ -1667,7 +1732,8 @@ return {
   speaking,
   where,
   redraw,
-  state, step, goTo: (i) => (R.book ? (goTo(+i), true) : false), openBook, setMode, options, overlay, press,
+  state, step, openBook, setMode, options, overlay, press,
+  goTo: (i) => (!R.book ? false : R.own ? ownCall("goTo", +i) !== false : (goTo(+i), true)),
   refresh, leave: () => (R.book ? (leaveReader(), true) : false),
   get isOpen() { return !$("#reader").hidden; },
 };

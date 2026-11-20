@@ -53,8 +53,15 @@ def test_text_epub_is_not_shown_as_comic(tmp_path):
     pages = [("cover.xhtml", '<img src="../images/cover.png"/>')] + [(f"ch{i}.xhtml", long_text) for i in range(5)]
     p = tmp_path / "Some Light Novel v01.epub"
     make_epub(p, pages, {"cover.png": png("white")})
-    with pytest.raises(archives.UnsupportedFormat, match=archives.TEXT_EPUB):
+    with pytest.raises(archives.TextBook, match=archives.TEXT_EPUB) as e:
         archives.list_pages(str(p), "epub")
+    # its sections are the spine's documents, cover page included, in reading order
+    assert e.value.sections == ["OEBPS/text/cover.xhtml"] + [f"OEBPS/text/ch{i}.xhtml" for i in range(5)]
+    assert archives.text_sections(str(p)) == e.value.sections
+    assert archives.epub_cover(str(p)) == png("white")  # no cover named: the first picture
+    with pytest.raises(archives.ArchiveError, match="text book"):
+        archives.list_pages(str(p), archives.TEXT_BOOK)
+    assert archives.sniff(p, archives.TEXT_BOOK) == "epub"  # read again as epub, the scan tells it apart
 
 
 def test_pdf_pages_rendered(tmp_path):
@@ -86,10 +93,14 @@ def test_epub_and_pdf_in_library(client):
     sid = client.get("/api/series?q=Format Series").json()["items"][0]["id"]
     books = {b["file_name"]: b for b in client.get(f"/api/series/{sid}/books").json()}
     assert not books["Format Series v01.epub"]["error"] and books["Format Series v01.epub"]["page_count"] == 1
+    novel = books["Format Series Novel v02.epub"]
+    assert not novel["error"] and novel["format"] == archives.TEXT_BOOK and novel["page_count"] == 3
+    # without a plugin that reads text books it can't be read: listed under Not supported, not unreadable
     att = client.get("/api/attention").json()
     assert "Format Series Novel v02.epub" in [x["file"] for x in att["unsupported"]]
     assert "Format Series Novel v02.epub" not in [x["file"] for x in att["unreadable"]]
-    # unchanged, the light novel isn't opened (and logged) again on every scan
+    assert client.get(f"/api/books/{novel['id']}").json()["reader"] is None
+    # unchanged, the light novel isn't opened again on every scan
     opened, list_pages = [], archives.list_pages
     archives.list_pages = lambda p, f: (opened.append(p), list_pages(p, f))[1]
     try:

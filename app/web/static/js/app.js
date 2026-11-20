@@ -47,7 +47,7 @@ const ATT_TABS = [
   ["same", "Same match", "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."],
   ["duplicates", "Duplicates", "Two or more files with the same chapter number. Both are kept."],
   ["gaps", "Missing chapters", "Gaps in the chapter numbers. Often fine (volumes may cover them)."],
-  ["unsupported", "Not supported", "Text books (light novel EPUBs) are listed; a novel reader comes later."],
+  ["unsupported", "Not supported", "Light novels (text EPUBs) are listed here until a reader for text books is added in Plugins."],
 ];
 
 const ID_NAMES = { anilist_id: "AniList", mal_id: "MyAnimeList", mangaupdates_id: "MangaUpdates", mangadex_id: "MangaDex" };
@@ -945,6 +945,10 @@ let alpineStarted = false;
 const pluginHandlers = [];         // [plugin id, event, fn] (MangaVibe.on)
 const stoppedPlugins = new Set();  // switched off since the page loaded: their handlers don't run
 const screenCommands = new Map();  // "<plugin id>\n<name>" -> { plugin, name, spec, fn } (MangaVibe.screenCommand)
+const bookReaders = new Map();     // "<plugin id>\n<format>" -> reader (MangaVibe.registerReader)
+// the reader.js side: the reader a switched-on plugin registered for this format, or undefined
+window.pluginReader = (pluginId, format) =>
+  stoppedPlugins.has(pluginId) ? undefined : bookReaders.get(`${pluginId}\n${format}`);
 
 window.MangaVibe = {
   // run fn when Alpine starts (Alpine.store, Alpine.data), or now if it already has
@@ -1000,6 +1004,12 @@ window.MangaVibe = {
     screenCommands.set(`${pluginId}\n${name}`, { plugin: pluginId, name, spec: spec || {}, fn });
   },
   screenCommands: () => [...screenCommands.values()].filter((c) => !stoppedPlugins.has(c.plugin)),
+  // the reader for books of a format the page reader can't show, e.g. "epub-text" (light novels), for a
+  // plugin that lists the format in its `reads` (Plugin API 14). impl: { open(el, book, ctl), close(),
+  // and optional step(forward), goTo(page), options(open), back() }. open() fills `el` (the whole screen);
+  // `book` is GET /api/books/<id>; ctl: { page, save(page, completed), leave(), openBook(which, page),
+  // fullscreen() }. See docs/PLUGINS.md, "A reader of its own".
+  registerReader(pluginId, format, impl) { bookReaders.set(`${pluginId}\n${format}`, impl); },
   // the settings changed elsewhere (another device, an assistant): load them again and show them
   async reloadSettings() {
     const s = await loadSettings();

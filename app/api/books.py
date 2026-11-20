@@ -42,6 +42,8 @@ def get_book(book_id: int, db=Depends(get_db)):
             # reader toggles for plugins that draw over pages, and their buttons for this book
             "overlays": [{"plugin": p.id, "name": p.name or p.id, "label": p.overlay_label} for p in overlay_plugins()],
             "hidden_boxes": db.query(OverlayHidden).filter_by(book_id=b.id).count(),
+            # the plugin whose reader shows this book (e.g. a light novel), or None: the page reader
+            "reader": (r.id if (r := plugins.reader_for(b.format)) else None),
             "actions": [{"plugin": p.id, "name": p.name or p.id, "key": a.key, "label": a.label, "confirm": a.confirm}
                         for p in plugins.enabled() for a in p.book_actions]}
 
@@ -236,8 +238,10 @@ def put_progress(book_id: int, body: ProgressBody, db=Depends(get_db)):
     p.page = page
     if body.completed is not None:
         p.completed = body.completed
-    elif b.page_count and page >= b.page_count - 1:
-        p.completed = True  # reaching the last page marks the book read
+    elif b.page_count and page >= b.page_count - 1 and b.format != archives.TEXT_BOOK:
+        # reaching the last page marks the book read. A text book's last section is long: its reader
+        # says when it's read (completed: true)
+        p.completed = True
     p.updated_at = now()
     series.last_read_at = p.updated_at
     db.commit()
