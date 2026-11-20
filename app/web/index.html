@@ -774,10 +774,12 @@
                   <span class="ico" aria-hidden="true" x-html="navIcon(catIcon(c))"></span><span x-text="catLabel(c)"></span>
                   <span class="count" :class="{ zero: !n }" x-text="n"></span></button>
               </template>
+              <!-- no "everything" here (All above is enough): tapping the picked one again shows both -->
               <h4>Source</h4>
-              <template x-for="[s, label] in [['all', 'Everything'], ['installed', 'Installed'], ['builtin', 'Built in']]" :key="s">
-                <button :class="{ on: pf.src === s }" :aria-pressed="pf.src === s" @click="setPluginFilter('src', s)">
-                  <span class="ico" aria-hidden="true" x-text="{ all: '∗', installed: '⬇', builtin: '◆' }[s]"></span><span x-text="label"></span>
+              <template x-for="[s, label] in [['installed', 'Installed'], ['builtin', 'Built in']]" :key="s">
+                <button :class="{ on: pf.src === s }" :aria-pressed="pf.src === s"
+                        @click="setPluginFilter('src', pf.src === s ? 'all' : s)">
+                  <span class="ico" aria-hidden="true" x-text="{ installed: '⬇', builtin: '◆' }[s]"></span><span x-text="label"></span>
                   <span class="count" :class="{ zero: !pview.src[s] }" x-text="pview.src[s]"></span></button>
               </template>
             </nav>
