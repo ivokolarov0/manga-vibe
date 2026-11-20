@@ -206,10 +206,6 @@ document.addEventListener("alpine:init", () => {
   let lastView = null, libraryScroll = 0;
   history.scrollRestoration = "manual";  // we restore the library position ourselves
   function route() {
-    const to = location.hash.slice(1).split("?")[0].split("/").filter(Boolean);
-    posterTransition(lastView, Alpine.store("app").id, to[0] || "library", +to[1], showRoute);
-  }
-  function showRoute() {
     const app = Alpine.store("app");
     const [path, query] = location.hash.slice(1).split("?");
     const parts = (path || "/").split("/").filter(Boolean);
@@ -284,58 +280,6 @@ document.addEventListener("alpine:init", () => {
   });
   window.refreshAttentionCount = refreshAttentionCount;
 });
-
-/* ---------------- poster transition ----------------
-   Opening a series from the Library or Continue reading grows the card's poster into the series page's
-   poster, and going back shrinks it into its card again (View Transitions API; browsers without it, or
-   with reduced motion, just switch pages). Only the two posters get the shared name, and only while
-   the transition takes its pictures: two visible elements with one name would cancel it. */
-const POSTER_LISTS = ["library", "continue"];
-const POSTER_WAIT = 400;  // ms the old page may stay on screen while the series loads its data and poster
-
-const shown = (el) => el && el.getClientRects().length ? el : null;  // not inside a hidden (x-show) view
-const onScreen = (el) => { const r = el.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; };
-const cardPoster = (id) => [...document.querySelectorAll(`a.card[href="#/series/${id}"] .poster img`)]
-  .find(shown) || null;
-const seriesPoster = (id) => shown(document.querySelector(`.sp-poster img[data-series="${id}"]`));
-
-/* find() once it returns something and its image is decoded, or null after ms */
-async function waitForImage(find, ms) {
-  const end = Date.now() + ms;
-  for (;;) {
-    const img = find();
-    if (img) {
-      await Promise.race([img.decode().catch(() => {}), new Promise((r) => setTimeout(r, end - Date.now()))]);
-      return img;
-    }
-    if (Date.now() >= end) return null;
-    await new Promise((r) => setTimeout(r, 16));
-  }
-}
-
-function posterTransition(from, fromId, to, toId, show) {
-  let oldImg = null, findNew = null;
-  if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    if (POSTER_LISTS.includes(from) && to === "series") {
-      oldImg = cardPoster(toId);
-      findNew = () => seriesPoster(toId);
-    } else if (from === "series" && POSTER_LISTS.includes(to)) {
-      oldImg = seriesPoster(fromId);
-      findNew = () => cardPoster(fromId);
-    }
-  }
-  if (!oldImg || !onScreen(oldImg)) return show();
-  oldImg.style.viewTransitionName = "poster";
-  let newImg = null;
-  const t = document.startViewTransition(async () => {
-    oldImg.style.viewTransitionName = "";
-    show();
-    newImg = await waitForImage(findNew, POSTER_WAIT);
-    if (newImg && onScreen(newImg)) newImg.style.viewTransitionName = "poster";  // else the old one fades
-  });
-  t.ready.catch(() => {});  // skipped, e.g. by another navigation: the page still changes
-  t.finished.finally(() => newImg && (newImg.style.viewTransitionName = ""));
-}
 
 /* ---------------- Android app (android/) ----------------
    In the browser: a banner and Settings → Android app offer the app. In the app: the app sends the
