@@ -197,10 +197,19 @@ def clear_metadata(db, series):
 
 # ---------------------------------------------------------------- matching
 
-def _scored(candidates, query, year):
-    out = [(matcher.score(query, [c.title, *c.other_titles], year, c.year, c.format), c)
+def _scored(candidates, query, year, novel=False):
+    out = [(matcher.score(query, [c.title, *c.other_titles], year, c.year, c.format, novel), c)
            for c in candidates]
     return sorted(out, key=lambda x: -x[0])
+
+
+def _is_novel(db, series):
+    """Most of the series' books are text books (light novels), so it should match the novel."""
+    from app.models import Book
+    from app.scanner.archives import TEXT_BOOK
+    formats = [f for (f,) in db.query(Book.format).filter(Book.series_id == series.id,
+                                                          Book.missing_since.is_(None))]
+    return bool(formats) and sum(f == TEXT_BOOK for f in formats) * 2 > len(formats)
 
 
 def _candidate_dict(pid, sc, c):
@@ -214,6 +223,7 @@ def auto_match(db, series):
     Raises AllProvidersDown when no provider answered."""
     query, year = matcher.clean_query(series.folder_name)
     threshold = int(get_setting(db, "match_threshold", 90))
+    novel = _is_novel(db, series)
     saved, reached, down = [], False, []
     for p in ordered_providers():
         if _is_down(p.id):
@@ -226,7 +236,7 @@ def auto_match(db, series):
             down.append(p.id)
             continue
         reached = True
-        scored = _scored(cands, query, year)
+        scored = _scored(cands, query, year, novel)
         best = matcher.pick(scored, threshold)
         if best:
             data = best.data or p.fetch(Context(p, db), best.provider_id)
@@ -268,7 +278,8 @@ def search(db, series, provider_id_name, query):
     if p is None:
         raise ValueError(f"Unknown provider {provider_id_name}")
     _, year = matcher.clean_query(series.folder_name)
-    return [_candidate_dict(p.id, sc, c) for sc, c in _scored(p.search(Context(p, db), query, year), query, year)]
+    return [_candidate_dict(p.id, sc, c)
+            for sc, c in _scored(p.search(Context(p, db), query, year), query, year, _is_novel(db, series))]
 
 
 def manual_match(db, series, provider_id_name=None, item_id=None, url=None):

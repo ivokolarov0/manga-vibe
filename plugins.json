@@ -40,6 +40,14 @@
       "category": "system",
       "repo": "ivokolarov0/manga-vibe-mcp",
       "folder": "mcp"
+    },
+    {
+      "id": "light-novel",
+      "name": "Light novel reader",
+      "description": "Reads light novels (text EPUBs) as text: contents, font, size, spacing, colours, and pages or scrolling. Picks up where you left off, inside the chapter too.",
+      "category": "reader",
+      "repo": "ivokolarov0/manga-vibe-light-novel",
+      "folder": "light_novel"
     }
   ]
 }

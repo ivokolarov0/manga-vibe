@@ -33,8 +33,10 @@ from app.scanner.parser import natural_key
 IMAGE_EXT = {".jpg", ".jpeg", ".jpe", ".jfif", ".png", ".webp", ".gif", ".avif", ".bmp", ".tif", ".tiff", ".jxl"}
 ARCHIVE_FORMATS = {".cbz": "zip", ".zip": "zip", ".cbr": "rar", ".rar": "rar",
                    ".cb7": "7z", ".7z": "7z", ".epub": "epub", ".pdf": "pdf"}
-SUPPORTED = {"zip", "rar", "7z", "folder", "epub", "pdf"}
-TEXT_EPUB = "Text EPUB"  # start of the message for light novels (shown under "Not supported")
+TEXT_BOOK = "epub-text"  # a text EPUB (a light novel): read by a plugin's reader, not as pages (Plugin API 14)
+SUPPORTED = {"zip", "rar", "7z", "folder", "epub", "pdf", TEXT_BOOK}
+# start of the message older versions saved for light novels; the migration to API 14 reads them again
+TEXT_EPUB = "Text EPUB"
 PDF_WIDTH = 1600         # PDF pages are rendered this wide (px)
 MIME = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".jpe": "image/jpeg", ".jfif": "image/jpeg",
         ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".avif": "image/avif",
@@ -52,6 +54,15 @@ class ArchiveError(Exception):
 
 class UnsupportedFormat(ArchiveError):
     pass
+
+
+class TextBook(UnsupportedFormat):
+    """An EPUB that is text, not pictures (a light novel). `sections` are its spine documents in
+    reading order: the reader for text books shows them, and progress counts them like pages."""
+
+    def __init__(self, sections):
+        super().__init__(f"{TEXT_EPUB} (a novel, not a comic): it needs a reader for text books")
+        self.sections = sections
 
 
 def not_yet_supported(fmt, error):
@@ -103,8 +114,8 @@ def sniff(path: Path, ext_format=None):
     """Real format of a book file from its first bytes; falls back to the extension."""
     if path.is_dir():
         return "folder"
-    if ext_format == "epub":
-        return "epub"  # an epub is a zip, but needs its own reader
+    if ext_format in ("epub", TEXT_BOOK):
+        return "epub"  # an epub is a zip, but needs its own reader (the scan tells text ones apart)
     try:
         with open(path, "rb") as f:
             found = sniff_bytes(f.read(8))
@@ -244,7 +255,7 @@ def _7z_read(path, name):
 
 def _entries(path, fmt):
     """All file names inside a book (not only images)."""
-    if fmt == "epub":
+    if fmt in ("epub", TEXT_BOOK):
         fmt = "zip"
     if fmt == "pdf":
         return [f"{i + 1:04d}.jpg" for i in range(_pdf_count(path))]
@@ -280,7 +291,7 @@ def _entries(path, fmt):
 
 
 def _read(path, fmt, name) -> bytes:
-    if fmt == "epub":
+    if fmt in ("epub", TEXT_BOOK):
         fmt = "zip"
     if fmt == "pdf":
         return _pdf_page(path, int(PurePosixPath(name).stem) - 1)
@@ -378,27 +389,43 @@ _BODY = re.compile(r"<body\b.*?>(.*)</body>", re.I | re.S)
 _TAGS = re.compile(r"<[^>]+>")
 
 
+def _epub_join(d, href):
+    return posixpath.normpath(posixpath.join(d, unquote(href.split("#")[0])))
+
+
+def _epub_package(z):
+    """(manifest {id: (path, media type, properties)}, spine [(path, media type)], cover id) of an
+    open EPUB. Raises KeyError, AttributeError or ParseError when it isn't a well-formed one."""
+    container = ElementTree.fromstring(z.read("META-INF/container.xml"))
+    opf_path = container.find(".//{*}rootfile").get("full-path")
+    opf = ElementTree.fromstring(z.read(opf_path))
+    base = posixpath.dirname(opf_path)
+    manifest = {i.get("id"): (_epub_join(base, i.get("href")), i.get("media-type") or "", i.get("properties") or "")
+                for i in opf.findall(".//{*}manifest/{*}item")}
+    spine = [manifest[r.get("idref")][:2] for r in opf.findall(".//{*}spine/{*}itemref")
+             if r.get("idref") in manifest]
+    cover = next((k for k, (_, _, props) in manifest.items() if "cover-image" in props.split()), None)
+    if cover is None:  # EPUB 2: <meta name="cover" content="<item id>"/>
+        cover = next((m.get("content") for m in opf.findall(".//{*}metadata/{*}meta")
+                      if m.get("name") == "cover"), None)
+    return manifest, spine, cover
+
+
 def _epub_pages(path):
-    """Images of an EPUB in reading order (the book's spine). Raises for text-only books."""
+    """Images of an EPUB in reading order (the book's spine). Raises TextBook for text books."""
     try:
         with zipfile.ZipFile(path) as z:
             names = set(z.namelist())
-            container = ElementTree.fromstring(z.read("META-INF/container.xml"))
-            opf_path = container.find(".//{*}rootfile").get("full-path")
-            opf = ElementTree.fromstring(z.read(opf_path))
-            base = posixpath.dirname(opf_path)
-            join = lambda d, href: posixpath.normpath(posixpath.join(d, unquote(href.split("#")[0])))
-            manifest = {i.get("id"): (join(base, i.get("href")), i.get("media-type") or "")
-                        for i in opf.findall(".//{*}manifest/{*}item")}
-            spine = [manifest[r.get("idref")] for r in opf.findall(".//{*}spine/{*}itemref")
-                     if r.get("idref") in manifest]
-            images, text_pages = [], 0
+            _, spine, _ = _epub_package(z)
+            join = _epub_join
+            images, text_pages, sections = [], 0, []
             for href, media in spine:
                 if media.startswith("image/"):
                     images.append(href)
                     continue
                 if href not in names:
                     continue
+                sections.append(href)
                 doc = z.read(href).decode("utf-8", "replace")
                 images += [join(posixpath.dirname(href), src) for src in _IMG_REF.findall(doc)]
                 body = _BODY.search(doc)
@@ -414,9 +441,48 @@ def _epub_pages(path):
             seen.add(img)
             pages.append(img)
     if not pages or text_pages > len(pages):
-        raise UnsupportedFormat(f"{TEXT_EPUB} (a novel, not a comic). A reader for text books "
-                                "comes in a later version.")
+        if not sections:
+            raise ArchiveError("This EPUB has neither pictures nor text in its reading order")
+        raise TextBook(sections)
     return pages
+
+
+@lru_cache(maxsize=64)
+def _sections_cached(path: str, mtime: float):
+    try:
+        _epub_pages(path)
+    except TextBook as e:
+        return tuple(e.sections)
+    raise ArchiveError("This EPUB is a comic (pictures), not a text book")
+
+
+def text_sections(path: str):
+    """The spine documents of a text EPUB in reading order, e.g. ["OEBPS/text/ch01.xhtml", ...]. Book
+    progress counts them like pages: section n is "page" n. Raises ArchiveError for anything else."""
+    return list(_sections_cached(path, os.path.getmtime(path)))
+
+
+def epub_cover(path: str) -> bytes | None:
+    """The cover picture an EPUB names (EPUB 3 cover-image, or EPUB 2 <meta name="cover">), else the
+    first picture in its reading order; None when it has none."""
+    try:
+        with zipfile.ZipFile(path) as z:
+            names = set(z.namelist())
+            manifest, spine, cover = _epub_package(z)
+            if cover in manifest and manifest[cover][0] in names and is_image(manifest[cover][0]):
+                return z.read(manifest[cover][0])
+            for href, media in spine:
+                if media.startswith("image/") and href in names:
+                    return z.read(href)
+                if href in names and not media.startswith("image/"):
+                    doc = z.read(href).decode("utf-8", "replace")
+                    for src in _IMG_REF.findall(doc):
+                        img = _epub_join(posixpath.dirname(href), src)
+                        if img in names and is_image(img):
+                            return z.read(img)
+    except (KeyError, AttributeError, ElementTree.ParseError, zipfile.BadZipFile, OSError):
+        pass
+    return None
 
 
 # ---------------------------------------------------------------- PDF
@@ -449,6 +515,9 @@ def _pdf_page(path, index):
 
 @lru_cache(maxsize=256)
 def _pages_cached(path: str, fmt: str, mtime: float):
+    if fmt == TEXT_BOOK:
+        raise ArchiveError("This is a text book (a light novel): it has no page pictures. "
+                           "A reader for text books (a plugin) shows it.")
     if fmt == "epub":
         return tuple(_epub_pages(path))
     if fmt == "pdf":

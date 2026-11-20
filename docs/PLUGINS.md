@@ -62,6 +62,7 @@ class Hello(Plugin):
 | **Know who is asking** (accounts) | `users.current()`, `users.manage`, `users.personal_key()`, `enabled_by_default` (see [Your own API and UI](#your-own-api-and-ui)). Plugin API 9 |
 | **Be listed under the right category** in Settings → Plugins | `category = "reader"`, or several: `category = ["reader", "library"]` (see [Categories](#categories)). Plugin API 10 |
 | **Tools for assistants and voice control** (MCP) | `mcp_tools = [McpTool(...)]` and `run_mcp_tool(ctx, name, args)` on the server, `MangaVibe.screenCommand()` in the page (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
+| **A reader of its own** for books the page reader can't show (light novels) | `reads = ["epub-text"]`, `ctx.text_sections(book)` on the server, `MangaVibe.registerReader()` in the page (see [A reader of its own](#a-reader-of-its-own)). Plugin API 14 |
 
 ## Categories
 
@@ -589,6 +590,60 @@ giving `false` while no book is open:
 **Who a user is** (`find_user(ctx, user_id)`): a request with a key instead of a login asks the plugins
 who that user is. The accounts plugin answers; a plugin of your own that keeps accounts should too
 (return a `users.User`, or `None` once the account is gone).
+
+## A reader of its own
+
+Plugin API 14. Some books aren't pictures: an EPUB that is mostly text is a light novel. The scan
+keeps it as a book of format **`epub-text`**. Its spine documents, its **sections**, count as its
+pages: section *n* is page *n* of the book's progress, so Continue reading, Read/Unread, reading
+events and tracker sync work as for any book. Its thumbnail is the EPUB's cover. The page reader can't
+show it, and while no plugin reads it, it's listed under **Not supported**.
+
+A plugin reads such books with two parts:
+
+```python
+class LightNovels(Plugin):
+    id = "light-novel"
+    reads = ["epub-text"]   # the book formats it has a reader for
+    router = router         # serves the sections, e.g. GET /api/plugins/light-novel/api/books/<id>/sections/<n>
+    js = READER_JS          # registers the reader
+```
+
+On the server, `ctx.text_sections(book)` lists the sections (entry names, in reading order) and
+`ctx.read_entry(book, name)` reads one, or a picture they show. **Clean the XHTML before sending it to
+the page**: an EPUB can hold scripts, styles and links to other sites.
+
+In the page, register the reader for the format:
+
+```js
+MangaVibe.registerReader("light-novel", "epub-text", {
+  open(el, book, ctl) {     // el: the whole reader screen, empty; book: GET /api/books/<id>
+    el.innerHTML = "…";     // start at section ctl.page
+  },
+  close() {},               // leaving: stop timers, remove listeners added outside `el`
+  step(forward) {},         // optional: turn a page (volume keys, voice control)
+  goTo(section) {},         // optional
+  options(open) {},         // optional: show or hide its settings
+  back() { return false; }, // optional: Android back. true: it closed something of its own
+});
+```
+
+`ctl` is what the app does for the reader:
+
+| | |
+|---|---|
+| `ctl.page` | the section to start at (from 0): the saved place, or the `?page=` asked for |
+| `ctl.save(section, completed)` | save where the reader is. Without `completed` it's sent a moment later (and when leaving). `true` marks the book read, `false` unread; reaching the last section doesn't mark it read, since that's a whole chapter, not a page |
+| `ctl.leave()` | back to where the book was opened from |
+| `ctl.openBook(which, section)` | another book of the series: `"next"`, `"previous"` or a book id (`book.next`, `book.prev` say if there is one) |
+| `ctl.fullscreen()` | fullscreen on or off |
+
+The app keeps the screen on and gives the plugin the Android volume keys (`step`) and back button
+(`back`). Keys are the reader's own: the page reader's shortcuts are off while it shows a book. Where
+inside a section the reader is (a scroll position) is the plugin's own to keep, e.g. with
+`ctx.set_series_data()` from its API.
+
+A MangaVibe from before Plugin API 14 lists these books under Not supported and never calls the reader.
 
 ## Styling: plugins and your own custom.css
 

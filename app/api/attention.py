@@ -17,7 +17,8 @@ from app.api.filters import hidden_from, visible_series
 from app.db import get_db, get_setting, set_setting
 from app.metadata.service import ID_FIELDS
 from app.models import Book, Library, Series
-from app.scanner.archives import SUPPORTED, TEXT_EPUB
+from app.plugins import manager as plugins
+from app.scanner.archives import SUPPORTED, TEXT_BOOK, TEXT_EPUB
 from app.users import manage
 
 router = APIRouter(prefix="/api")
@@ -123,6 +124,10 @@ def attention(request: Request, ignored: bool = False, db=Depends(get_db)):
     live = {sid for (sid,) in db.query(Series.id).filter(Series.missing_since.is_(None), *shown)}
     errors = [b for b in db.query(Book).filter(Book.error.is_not(None), Book.missing_since.is_(None))
               if b.series_id in live]
+    # light novels open only with a plugin's reader for text books: without one they can't be read
+    unread_text = [] if plugins.reader_for(TEXT_BOOK) else [
+        b for b in db.query(Book).filter(Book.format == TEXT_BOOK, Book.missing_since.is_(None))
+        if b.series_id in live]
     flagged = {}
     for b in db.query(Book).filter(Book.duplicate_flag.is_(True), Book.missing_since.is_(None)):
         if b.series_id in live:
@@ -134,7 +139,7 @@ def attention(request: Request, ignored: bool = False, db=Depends(get_db)):
     failed = [sid for (sid,) in db.query(Series.id).filter(Series.match_status == "failed",
                                                            Series.missing_since.is_(None), *shown)]
     same = same_match_groups(_series_ids(db, shown))
-    needed = {b.series_id for b in errors} | set(flagged) | set(gaps) | set(failed) \
+    needed = {b.series_id for b in errors + unread_text} | set(flagged) | set(gaps) | set(failed) \
         | {sid for _, sids, _ in same for sid in sids}
     series = {s.id: s for s in db.query(Series).filter(Series.id.in_(needed))} if needed else {}
     name = lambda sid: display_title(series[sid], lang)
@@ -144,6 +149,12 @@ def attention(request: Request, ignored: bool = False, db=Depends(get_db)):
         add("unsupported" if not_yet else "unreadable", {
             "key": f"err:{b.id}", "series_id": b.series_id, "series": name(b.series_id), "book_id": b.id,
             "file": b.file_name, "path": b.path, "error": b.error, "format": b.format})
+    for b in unread_text:
+        add("unsupported", {
+            "key": f"err:{b.id}", "series_id": b.series_id, "series": name(b.series_id), "book_id": b.id,
+            "file": b.file_name, "path": b.path, "format": b.format,
+            "error": "A text book (a light novel). Add a reader for text books in Settings → Plugins "
+                     "to read it (e.g. Light novel reader)."})
     for sid, books in flagged.items():
         for part, group in duplicate_groups(books):
             add("duplicates", {"key": f"dup:{sid}:{part}", "series_id": sid, "series": name(sid),

@@ -106,7 +106,18 @@ Choices made where the spec was open. Newest at the bottom.
 - **Sort and filter are two menus.** Picking a sort closes its menu; the filter menu stays open while
   you select several things. Changing pages closes both.
 - **EPUB:** pages follow the book's spine (reading order), not file names. A book whose spine has more
-  text pages than pictures is a light novel: listed under "Not supported" until the novel reader exists.
+  text pages than pictures is a light novel: a text book (format `epub-text`).
+- **Light novels are read by a plugin, not by the app** (Plugin API 14). The app only does what every
+  reader needs: the scan keeps a text book as a book, its spine documents ("sections") count as its
+  pages, so progress, Continue reading, Read/Unread, reading events and tracker sync work unchanged;
+  the thumbnail is the EPUB's cover. A plugin with `reads = ["epub-text"]` and a reader from
+  `MangaVibe.registerReader()` gets the whole reader screen; the app still owns opening, leaving,
+  saving progress, Android back/volume keys and the wake lock. Without such a plugin switched on, text
+  books are listed under "Not supported" again (worked out per request, so switching the plugin needs
+  no rescan). Reaching the last section doesn't mark a text book read (it's a long chapter, not a
+  page): the reader says `completed`. Where inside a section the reader is, is the plugin's own data.
+- **A series of light novels matches the novel.** The matcher's penalty for `NOVEL` results turns
+  around when most of a series' books are text books: then manga adaptations score lower.
 - **PDF:** rendered page by page with PyMuPDF at 1600 px wide (JPEG). PyMuPDF is AGPL-licensed, which
   is fine for a personal, self-hosted app.
 - **7z/cb7** were already handled by the 7-Zip program in the image.
