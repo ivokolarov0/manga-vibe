@@ -694,6 +694,12 @@
     transition: opacity 0.15s 0.15s;  /* only dim when a page takes a moment */
   }
 
+  /* the library's "Loading…": only once it takes a moment, so a quick load doesn't flash it */
+  .lib-loading {
+    justify-content: center;
+    animation: fade-in 0.2s 0.2s backwards;
+  }
+
   .page-info {
     display: flex;
     flex-wrap: wrap;

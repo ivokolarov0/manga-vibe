@@ -87,6 +87,22 @@
         position: relative;
         max-width: 900px;
         margin: 0 auto;
+
+        /* a spinner on a page whose picture hasn't come yet */
+        &:has(> img:not(.loaded, .failed))::after {
+          content: "";
+          position: absolute;
+          top: 20vh;
+          left: 50%;
+          width: 28px;
+          height: 28px;
+          margin: -14px 0 0 -14px;
+          border: 3px solid #888;
+          border-right-color: transparent;
+          border-radius: 50%;
+          pointer-events: none;
+          animation: spin 0.7s linear infinite;
+        }
       }
 
       & img {
@@ -827,12 +843,39 @@
       }
     }
 
+    /* the book is on its way: a spinner above "Loading…", and a Back button under it */
     & .loading {
       position: absolute;
       top: 50%;
       left: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
       color: #888;
       transform: translate(-50%, -50%);
+
+      &::before {
+        content: "";
+        width: 28px;
+        height: 28px;
+        border: 3px solid #888;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+    }
+
+    & .loading-back {
+      position: absolute;
+      top: calc(50% + 60px);
+      left: 50%;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #fff;
+      transform: translateX(-50%);
+      animation: fade-in 0.3s 1.5s backwards;  /* only once it takes a while */
     }
   }
 

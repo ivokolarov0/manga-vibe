@@ -257,6 +257,13 @@
         </template>
       </div>
       <div x-ref="sentinel"></div>
+      <!-- the first cards, or more at the bottom, are on their way (a new page keeps the old cards, dimmed) -->
+      <p class="muted loading-line lib-loading" x-show="loading && !failed && (!items.length || !paged && !done)" x-cloak>Loading…</p>
+      <div class="empty" x-show="failed" x-cloak>
+        <svg class="ic" aria-hidden="true"><use href="#i-books"/></svg>
+        <span x-text="'Could not load the library: ' + failed"></span>
+        <button class="btn small" @click="retry()">Try again</button>
+      </div>
       <nav class="pager" x-show="paged && pages() > 1" x-cloak aria-label="Pages">
         <button class="pager-step" :disabled="page <= 1" @click="goPage(page - 1)" aria-label="Previous page"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg><span> Previous</span></button>
         <template x-for="(n, i) in pageNums" :key="i + '-' + n">

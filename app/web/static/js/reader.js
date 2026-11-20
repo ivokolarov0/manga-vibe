@@ -6,7 +6,8 @@ const Reader = (() => {
 
 const R = { book: null, page: 0, mode: "paged", ui: false, saveTimer: null, wake: null, firstTap: true,
   preloaded: new Map(), cameFromApp: false, hideTimer: null, sliding: false, hovering: false, drawer: false,
-  ov: null };  // plugin overlays (see "plugin overlays" below)
+  ov: null,  // plugin overlays (see "plugin overlays" below)
+  opening: 0 };  // counts openReader() calls, so a slow answer for an earlier one is dropped
 const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
 const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left: back, right: forward); the middle toggles the controls
 const CLICK_SIDE = 0.4;  // the same with a mouse: a wide screen leaves only a narrow middle strip for the controls
@@ -143,15 +144,23 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   R.cameFromApp = cameFromApp;
   const el = $("#reader");
   el.hidden = false;
-  el.innerHTML = `<div class="loading">Loading…</div>`;
+  // a spinner, and a way out while it waits (the reader's own Back button comes with the book)
+  el.innerHTML = `<div class="loading">Loading…</div>
+    <button class="btn loading-back" id="r-back">${ICONS.back} Back</button>`;
+  $("#r-back").onclick = () => leaveReader();
   document.body.style.overflow = "hidden";
+  const open = ++R.opening;  // a newer open (or leaving) makes this one stale
   let book;
-  try { book = await api(`/api/books/${bookId}`); } catch (e) {
-    el.innerHTML = `<div class="endcard"><p>${esc(e.message)}</p><a class="btn" href="#/">Back</a></div>`;
+  try { book = await api(`/api/books/${bookId}`, { timeout: LOAD_TIMEOUT }); } catch (e) {
+    if (open !== R.opening || el.hidden) return;  // left (or another book) meanwhile
+    el.innerHTML = `<div class="endcard"><p>${esc(e.message)}</p>
+      <div class="btn-row"><button class="btn primary" id="r-retry">Try again</button><a class="btn" href="#/">Back</a></div></div>`;
+    $("#r-retry").addEventListener("click", () => openReader(bookId, startPage, cameFromApp));
     // e.g. a locked library: its plugin asks for the password, then the book opens
     MangaVibe.denied(e, () => openReader(bookId, startPage, cameFromApp));
     return;
   }
+  if (open !== R.opening || el.hidden) return;
   if (book.error) { el.innerHTML = `<div class="endcard"><p>${esc(book.error)}</p>
     <a class="btn" href="#/series/${book.series_id}">Back</a></div>`; return; }
   Object.assign(R, { book, mode: book.reader_mode === "vertical" ? "vertical" : "paged",
@@ -764,10 +773,13 @@ function setupVertical() {
     `<div style="padding:40px 20px;text-align:center">
       ${R.book.next ? `<button class="btn primary" id="v-next">Next: ${esc(R.book.next.label)}</button>`
         : `<p class="muted">End of the series.</p>`}</div>`;
-  box.querySelectorAll("img").forEach((im) => (im.onload = () => {
-    im.classList.add("loaded");
-    ovFit(im.nextElementSibling);  // overlay boxes drawn before the image had a size
-  }));
+  box.querySelectorAll("img").forEach((im) => {
+    im.onload = () => {
+      im.classList.add("loaded");
+      ovFit(im.nextElementSibling);  // overlay boxes drawn before the image had a size
+    };
+    im.addEventListener("error", () => im.classList.add("failed"));  // no spinner forever on a broken page
+  });
   $("#v-next")?.addEventListener("click", () => location.replace(`#/read/${R.book.next.id}?page=0`));
   // current page = the image in the middle of the screen (robust to images loading late)
   let ticking = false;
