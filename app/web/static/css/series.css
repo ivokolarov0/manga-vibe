@@ -296,6 +296,24 @@
     }
   }
 
+  /* the poster moving between a card and the series page (posterTransition in app.js); the rest
+     of the page cross-fades */
+  ::view-transition-group(poster) {
+    animation-duration: 0.35s;
+    animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+
+  ::view-transition-image-pair(poster) {
+    overflow: hidden;
+    border-radius: 12px;  /* the card's .poster rounds the image, the image itself has no corners */
+  }
+
+  ::view-transition-old(poster),
+  ::view-transition-new(poster) {
+    height: 100%;
+    object-fit: cover;
+  }
+
   .sp-head {
     grid-area: head;
     align-self: end;
