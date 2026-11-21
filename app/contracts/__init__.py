@@ -75,6 +75,11 @@ for _key, _label in (("library", "Settings: Library folders"), ("display", "Sett
                  description=f"The {_label.split(': ')[1]} page of Settings"))
 
 
+# Plugin API 21 (#219): the Needs attention lists, a shared job: every plugin doing it adds lists
+register(Job("attention:list", "Needs attention lists", exclusive=False,
+             description="Lists of things in the library worth a look, in Settings → Needs attention"))
+
+
 def job_label(key: str) -> str:
     job = JOBS.get(key)
     return job.label if job else key

@@ -1083,3 +1083,25 @@ Plugin API version, and the app works after every one.
 - **Checked in Firefox** (Playwright): the menu in its order, every section, a setting saved, switching
   Updates off in Settings -> Plugins (gone after the reload), the Edit dialog saving, Fix match with its
   sources, and the search box.
+
+### Needs attention lists as a shared job (Plugin API 21, issue #219)
+
+- **A shared job**, `attention:list`: any number of plugins add lists. The app's six are the built-in
+  "Needs attention" plugin's, with the same row keys, so what the owner ignored stays ignored after the
+  update. The core keeps what every list shares: ignoring, "Show ignored", the counts and the frame.
+- **The core asks per list** (`attention_rows(ctx, key, request)`), not one call for everything: a list
+  that fails is logged and empty, the others still show. The built-in lists lost the one big pass that
+  shared its queries; each is still only the flagged rows, and the badge (asked every minute) has
+  `attention_count()`, which loads only ids and keys, as before.
+- **Ignoring looks the row up** instead of telling the series from the key's shape (`err:<book>` →
+  its series): a plugin's keys can be anything, and a row the request can see is exactly one it may
+  ignore, so a locked library's rows can't be ignored (403, as before). The page sends the list, so only
+  that one is worked out.
+- **The menu and the help come from the server** (`MV_ATTENTION_LISTS` in the page), like Settings' pages;
+  the red counts follow each list's `alert` instead of a list in app.js.
+- **Each list's markup is its plugin's template** (or a plain one), drawn into the core's frame under
+  `x-if="kind === '<key>'"`; the list key is a plain name, so it's safe in the attribute.
+- **A taken key is left out**, first come first served: a plugin can't replace a built-in list by its key
+  (it replaces the built-in plugin by switching it off, then its key is free).
+- **Checked in Firefox** (Playwright): every list in the menu with the right red counts, each list's rows,
+  a plugin's list in the plain template, and ignoring and restoring a row.

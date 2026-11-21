@@ -1,0 +1,29 @@
+{#- Missing metadata: each series with the closest candidates, Use / Fix match / Don't match. -#}
+{% from "ui/macros.html" import meta_progress %}
+            <div>
+              {{ meta_progress() }}
+              <template x-for="x in rows" :key="x.series_id">
+                <div class="item">
+                  <div class="cand own">
+                    <a :href="'#/series/' + x.series_id" :title="x.series"><img :src="x.cover" loading="lazy" alt=""></a>
+                    <div class="info"><a :href="'#/series/' + x.series_id"><b x-text="x.series"></b></a>
+                      <span class="muted" x-text="'Your copy · folder: ' + x.folder"></span></div>
+                  </div>
+                  <template x-for="c in x.candidates" :key="c.provider + c.provider_id">
+                    <div class="cand">
+                      <img :src="c.cover_url" x-show="c.cover_url" loading="lazy" alt="">
+                      <div class="info"><b x-text="c.title"></b>
+                        <span x-text="[c.year, c.format].filter(Boolean).join(' · ')"></span> ·
+                        <span class="score" :class="scoreCls(c.score)" x-text="c.score + '%'"></span> ·
+                        <span x-text="$store.app.providerName(c.provider)"></span></div>
+                      <button class="btn small" :class="{ busy: isMatching(x, c) }" :disabled="isMatching(x)"
+                              @click="use(x, c)" x-text="isMatching(x, c) ? 'Matching…' : 'Use'"></button>
+                    </div>
+                  </template>
+                  <div class="row">
+                    <button class="btn small" :disabled="isMatching(x)" @click="fix(x)">Fix match…</button>
+                    <button class="btn small" :disabled="isMatching(x)" @click="dontMatch(x)">Don't match</button>
+                  </div>
+                </div>
+              </template>
+            </div>

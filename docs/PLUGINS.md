@@ -916,6 +916,39 @@ each a plugin's job, `settings:library`, `settings:display`, `settings:reader`, 
   `android` only on Android phones. A page whose markup is the plugin's `html` in the `settings` slot works
   the same way, and so does `MangaVibe.settingsPage()` from a script.
 
+### The attention:list job
+
+Plugin API 21. **Lists in Settings → Needs attention**, a shared job: every plugin doing it adds lists.
+The app's own (Errors, Missing metadata, Same match, Duplicates, Missing chapters, Not supported) are the
+built-in "Needs attention" plugin's (`app/plugins/builtin/attention_lists/`).
+
+```python
+class NoCover(Plugin):
+    id = "no-cover"
+    provides = {"attention:list": 1}
+    attention_lists = [{"key": "nocover", "label": "No cover", "help": "Series without a poster.", "alert": True}]
+
+    def attention_rows(self, ctx, key, request):   # the series this request may see
+        return [{"key": f"nocover:{s.id}", "series_id": s.id, "series": s.folder_name, "text": "No poster"}
+                for s in ...]
+```
+
+- **`attention_lists`**: `key` (a plain name; one another plugin has already is left out), `label`, `help`
+  (under the title), `alert` (its rows count towards the red numbers and the badge on Settings), `view`.
+- **`attention_rows(ctx, key, request)`** gives one list's rows, of the series the request may see (use
+  `visible_series(ctx.db, request)` from `app.api.filters`, as the built-in lists do). A row is a dict;
+  **`key`** (`<something>:<id>`, e.g. `nocover:12`) lets the owner ignore it, and keep it the same for the
+  same problem, since ignored keys are saved. `series` sorts the list.
+- **Optionally `attention_count(ctx, key, request, ignored)`**: the badge's share (rows not in `ignored`),
+  cheaper than the rows. The badge is asked for every minute.
+- **Its markup**: `view: "files"` draws `templates/attention/files.html` of the plugin, in Settings'
+  attention component (`rows` is the open list's rows, `ignore(key, on)`, `fix(row)`, `rescan(seriesId)`…);
+  without one, a plain list: the row's `series` (a link to the series, or its `url`), its `text`, and
+  Ignore when it has a `key`.
+
+The core keeps the rest: ignoring and "Show ignored", the counts, the frame and the `attention-note` slot.
+The owner can only ignore a row they can see (`POST /api/attention/ignore` looks it up: `{key, ignore, list}`).
+
 ## Styling: plugins and your own custom.css
 
 All built-in CSS is in cascade layers (`app/web/static/css/`, one file per feature). Plugin CSS and

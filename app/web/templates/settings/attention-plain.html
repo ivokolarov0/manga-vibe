@@ -1,0 +1,13 @@
+{#- A Needs attention list without a template of its own: each row's series (a link), its `text`, and
+    Ignore when it has a `key`. A row: { key, series_id, series, text, url }. -#}
+            <div class="att-rows">
+              <template x-for="x in rows" :key="x.key || x.series_id">
+                <div class="att-row" :class="{ ignored: x.ignored }">
+                  <div class="what">
+                    <a :href="x.url || ('#/series/' + x.series_id)"><b x-text="x.series"></b></a>
+                    <span class="muted" x-show="x.text" x-text="x.text"></span>
+                  </div>
+                  <button class="btn small" x-show="x.key" @click="ignore(x.key, !x.ignored)" x-text="x.ignored ? 'Restore' : 'Ignore'"></button>
+                </div>
+              </template>
+            </div>

@@ -17,7 +17,7 @@
           <template x-for="[k, label] in attNav" :key="k">
             <button :class="{ active: section === 'att-' + k }" @click="go('att-' + k)">
               <span class="ico dot" aria-hidden="true"></span><span x-text="label"></span>
-              <span class="count" :class="{ zero: !attCount(k), alert: ['unreadable', 'matches', 'same', 'duplicates'].includes(k) }"
+              <span class="count" :class="{ zero: !attCount(k), alert: attAlert(k) }"
                     x-text="attCount(k)"></span></button>
           </template>
         </div>
