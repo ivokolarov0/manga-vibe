@@ -15,9 +15,7 @@
       grid-column: 1 / -1;
     }
 
-    /* The name, its hint and the lock on one line, the field under them. A wrapping row, not a grid:
-       as grid items the lock took a line of its own, so a locked field sat lower than the ones next
-       to it. */
+    /* The name and its hint on one line, the field under them, so fields side by side line up */
     & label {
       display: flex;
       flex-wrap: wrap;
@@ -31,12 +29,6 @@
         font-size: 11px;
         opacity: 0.8;
       }
-    }
-
-    /* a field changed by hand: kept when metadata is refreshed */
-    & .lock-mark {
-      display: inline-flex;
-      color: var(--warn);
     }
 
     & input,

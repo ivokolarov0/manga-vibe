@@ -12,35 +12,32 @@
 
           <!-- info -->
           <form class="edit-form" x-show="tab === 'info'" @submit.prevent="save()">
-            <p class="muted">Changed fields get a lock <svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg> and are kept when metadata is refreshed.
-              <button type="button" class="link-btn" x-show="lockedCount" @click="unlockAll()"
-                      x-text="`Unlock ${lockedCount} field${lockedCount > 1 ? 's' : ''}`"></button></p>
             <!-- plugins' fields, saved with the rest (e.g. Library) -->
             {{ slot("series-edit") }}
-            <label class="wide">English title <span x-show="locked('title_english')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label class="wide">English title
               <input x-model="f.title_english" maxlength="300"></label>
-            <label>Romaji title <span x-show="locked('title_romaji')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label>Romaji title
               <input x-model="f.title_romaji" maxlength="300"></label>
-            <label>Native title <span x-show="locked('title_native')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label>Native title
               <input x-model="f.title_native" maxlength="300"></label>
-            <label class="wide">Other titles <small>one per line</small> <span x-show="locked('synonyms')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label class="wide">Other titles <small>one per line</small>
               <textarea rows="3" x-model="f.synonyms"></textarea></label>
-            <label class="wide">Description <span x-show="locked('description')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label class="wide">Description
               <textarea rows="7" x-model="f.description" maxlength="20000"></textarea></label>
-            <label>Status <span x-show="locked('publication_status')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label>Status
               <select x-model="f.publication_status">
                 <template x-for="[k, v] in Object.entries(pubLabels)" :key="k"><option :value="k" :selected="k === f.publication_status" x-text="v"></option></template>
               </select></label>
-            <label>Type <span x-show="locked('format') || locked('country_of_origin')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label>Type
               <select x-model="f.type">
                 <option value="">Unknown</option><option value="manga">Manga</option><option value="manhwa">Manhwa</option>
                 <option value="manhua">Manhua</option><option value="one_shot">One-shot</option><option value="novel">Novel</option>
               </select></label>
-            <label>Year <span x-show="locked('start_year')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label>Year
               <input type="number" min="1900" max="2100" x-model="f.start_year"></label>
-            <label>Volumes <span x-show="locked('volumes_total')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label>Volumes
               <input type="number" min="0" x-model="f.volumes_total"></label>
-            <label>Chapters <span x-show="locked('chapters_total')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label>Chapters
               <input type="number" min="0" x-model="f.chapters_total"></label>
             <label title="Complete: count the collection as complete whatever the numbers say, e.g. for omnibus editions">Collection
               <select x-model="f.collection_complete">
@@ -50,13 +47,13 @@
               <select x-model="f.edition_volumes">
                 <template x-for="[v, label] in editions" :key="v"><option :value="v" x-text="label" :selected="v === f.edition_volumes"></option></template>
               </select></label>
-            <label class="wide">Authors <small>one per line: Name (Role)</small> <span x-show="locked('authors')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label class="wide">Authors <small>one per line: Name (Role)</small>
               <textarea rows="3" x-model="f.authors"></textarea></label>
-            <label class="wide">Genres <small>comma separated</small> <span x-show="locked('tags')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label class="wide">Genres <small>comma separated</small>
               <input x-model="f.genres"></label>
-            <label class="wide">Tags <small>comma separated</small> <span x-show="locked('tags')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label class="wide">Tags <small>comma separated</small>
               <textarea rows="2" x-model="f.tags"></textarea></label>
-            <label class="wide">Links <small>one per line: Site | https://…</small> <span x-show="locked('links')" class="lock-mark" title="Locked: kept when metadata is refreshed"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg></span>
+            <label class="wide">Links <small>one per line: Site | https://…</small>
               <textarea rows="3" x-model="f.links"></textarea></label>
             <div class="btn-row wide">
               <button class="btn primary" type="submit" :disabled="saving" x-text="saving ? 'Saving…' : 'Save'"></button>
