@@ -314,7 +314,8 @@ def test_example_plugin(client):
                 plugin_dir)
     (plugin_dir / "broken.py").write_text("raise RuntimeError('boom')")
     data = client.post("/api/plugins/reload").json()
-    assert [p["id"] for p in data["plugins"]] == ["accounts", "anilist", "cards", "libraries", "library-query", "mangaupdates",
+    assert [p["id"] for p in data["plugins"]] == ["accounts", "anilist", "cards", "continue-page", "libraries",
+                                                  "library-page", "library-query", "mangaupdates",
                                                   "optimize", "saved-searches", "series-page", "translation-groups"]
     assert "broken.py" in data["errors"]  # a broken plugin is reported, app keeps working
 

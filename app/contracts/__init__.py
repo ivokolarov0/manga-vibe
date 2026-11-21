@@ -51,6 +51,10 @@ register(Job("library-query", "Library filters and sorting", required=True,
 # "Replacing a view".
 register(Job("view:card", "Series cards", required=True,
              description="How a series looks in the library grid, its list view and Continue reading"))
+register(Job("view:library", "Library page", required=True,
+             description="The library: its filters' buttons, the cards, paging and multi-select, from MangaVibe.library"))
+register(Job("view:continue", "Continue reading page", required=True,
+             description="The series in progress, from MangaVibe.continue"))
 register(Job("view:series", "Series page", required=True,
              description="The page a series opens on, drawn from MangaVibe.series"))
 

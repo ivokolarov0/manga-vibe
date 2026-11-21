@@ -1,0 +1,21 @@
+{#- Continue reading: what's inside the page's <section class="view"> for it. Contract view:continue@1
+    (docs/PLUGINS.md, "The view:continue job"): the series in progress are MangaVibe.continue.items
+    ($store.continue); each card is {{ continue_card() }} (the card view inside its link). Keep the slot
+    continue-top. -#}
+{% from "ui/macros.html" import continue_card with context %}
+    <div class="continue-page-view" x-data>
+      <h2>Continue reading</h2>
+      {{ slot("continue-top") }}
+      {% block grid %}
+      <div class="grid">
+        <template x-for="s in $store.continue.items || []" :key="s.id">
+          {{ continue_card() }}
+        </template>
+      </div>
+      <div class="empty" x-show="$store.continue.items && !$store.continue.items.length">
+        <svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>
+        <span>Nothing in progress. Start a series and it shows up here.</span>
+        <a class="btn small primary" href="#/">Open the Library</a>
+      </div>
+      {% endblock %}
+    </div>

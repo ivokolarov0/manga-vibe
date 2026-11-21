@@ -231,6 +231,9 @@ document.addEventListener("alpine:init", () => {
 
   // the series page's data and actions (MangaVibe.series): loads the series the route shows by itself
   Alpine.store("series", seriesController());
+  // the library page's and Continue reading's (MangaVibe.library, MangaVibe.continue)
+  Alpine.store("library", libraryController());
+  Alpine.store("continue", continueController());
 
   window.addEventListener("mv-theme", (e) => (Alpine.store("app").theme = e.detail));
 
@@ -502,51 +505,75 @@ function pageList(page, pages) {
   return out;
 }
 
-function library() {
+/* Watch a reactive value outside a component: fn(new, old) after it changes (not at first). */
+function watchValue(get, fn) {
+  let first = true, old;
+  Alpine.effect(() => {
+    const v = get();
+    if (first) { first = false; old = v; return; }
+    if (v === old) return;
+    const was = old;
+    old = v;
+    queueMicrotask(() => fn(v, was));  // outside the effect: what fn reads isn't tracked
+  });
+}
+
+/* MangaVibe.library (Plugin API 19, issue #207): the library page's cards, filters, paging and
+   multi-select, for the view that draws it (the view:library plugin's; built in:
+   app/plugins/builtin/library_page). An Alpine store ($store.library). It loads what the address and the
+   plugins' list scope say by itself; a view draws `items` and calls these. */
+function libraryController() {
   return {
     items: [], cursor: 0, done: false, loading: false, total: null, key: null, stale: false,
     paged: false, page: 1, size: 60, base: null,
     failed: "",  // why the last load didn't come (shown with "Try again"); "" when it did
     layout: "grid",  // grid (poster cards) | list (one series per row): the library_view setting
+    end: null,       // the view's element at the end of the cards: near it, more are loaded (watchEnd)
     get quick() { return quickButtons(); },
-    get lib() { return this.$store.app.lib; },
+    get lib() { return Alpine.store("app").lib; },
     init() {
+      const app = () => Alpine.store("app");
       // reload when the filters (URL) change; keep cards + scroll position otherwise
-      this.$watch("$store.app.query", () => this.sync());
-      this.$watch("$store.app.view", () => this.sync());
-      this.$watch("$store.app.libraryDirty", () => { this.key = null; this.sync(); });
+      watchValue(() => app().query, () => { this.endSelect(); this.sync(); });
+      watchValue(() => app().view, (v) => {
+        if (v !== "library") this.endSelect();
+        this.sync();
+        this.refresh();
+      });
+      watchValue(() => app().libraryDirty, () => { this.key = null; this.sync(); });
       // a plugin changed what the lists show (e.g. another library, or one was unlocked)
-      this.$watch("$store.app.listKey", () => { this.endSelect(); this.sync(); });
+      watchValue(() => app().listKey, () => { this.endSelect(); this.sync(); });
       // after reading: update the cards in place (now, or when the library is next shown)
-      this.$watch("$store.app.progressDirty", () => { this.stale = true; this.refresh(); });
-      this.$watch("$store.app.view", () => this.refresh());
-      // other filters or another page: what was picked is out of sight, so selecting ends
-      this.$watch("$store.app.query", () => this.endSelect());
-      this.$watch("$store.app.view", (v) => { if (v !== "library") this.endSelect(); });
+      watchValue(() => app().progressDirty, () => { this.stale = true; this.refresh(); });
+      queueMicrotask(() => this.sync());
+    },
+    // the view's element after the last card: more are loaded when it comes near the screen
+    watchEnd(el) {
+      this.end = el;
       new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && this.$store.app.view === "library" && !this.paged) this.loadMore();
-      }, { rootMargin: "800px" }).observe(this.$refs.sentinel);
+        if (entries[0].isIntersecting && Alpine.store("app").view === "library" && !this.paged) this.loadMore();
+      }, { rootMargin: "800px" }).observe(el);
     },
     // the filters without the page number, and what plugins add (e.g. the library picked): what the API
     // gets besides cursor/limit
     get filters() {
-      const p = new URLSearchParams(this.$store.app.query);
+      const p = new URLSearchParams(Alpine.store("app").query);
       p.delete("page");
       for (const [k, v] of scopeEntries()) p.set(k, v);
       return p.toString();
     },
     sync() {
-      if (this.$store.app.view !== "library") return;
+      if (Alpine.store("app").view !== "library") return;
       document.title = "MangaVibe";
       const paged = settings.library_listing === "paged";
-      const page = paged ? Math.max(1, parseInt(new URLSearchParams(this.$store.app.query).get("page")) || 1) : 1;
+      const page = paged ? Math.max(1, parseInt(new URLSearchParams(Alpine.store("app").query).get("page")) || 1) : 1;
       this.layout = settings.library_view === "list" ? "list" : "grid";
       // with a fixed column count, a page is whole rows (80 in 6 columns: 84), so the grid's last row is full
       // (the same in the list view, which switches without reloading)
       const pageSize = +settings.library_page_size || 80, cols = +settings.grid_columns || 0;
       const size = cols ? Math.ceil(pageSize / cols) * cols : pageSize;
       // listsDirty: a plugin said the same filters now show something else (e.g. a library was unlocked)
-      const base = `${paged ? "paged" : "lazy"}:${size}:${this.filters}:${this.$store.app.listsDirty}`;
+      const base = `${paged ? "paged" : "lazy"}:${size}:${this.filters}:${Alpine.store("app").listsDirty}`;
       const key = `${base}:${page}`;
       if (key === this.key) return;
       const pageChange = paged && base === this.base && this.key !== null;  // same list, other page
@@ -569,15 +596,16 @@ function library() {
       } finally {
         if (key === this.key) this.loading = false;
       }
-      if (scroll) {
-        await this.$nextTick();
-        const top = this.$root.getBoundingClientRect().top + scrollY - 70;  // clear the top bar
+      const view = document.getElementById("library-view");  // the page's section around the view
+      if (scroll && view) {
+        await Alpine.nextTick();
+        const top = view.getBoundingClientRect().top + scrollY - 70;  // clear the top bar
         if (scrollY > top) scrollTo({ top: Math.max(0, top) });
       }
     },
     /* reload the cards already shown without clearing them, so the scroll position stays */
     async refresh() {
-      if (!this.stale || this.$store.app.view !== "library" || this.key === null) return;
+      if (!this.stale || Alpine.store("app").view !== "library" || this.key === null) return;
       this.stale = false;
       if (this.paged) return this.loadPage(false);
       const key = this.key, want = Math.max(this.items.length, 60), items = [];
@@ -650,10 +678,10 @@ function library() {
       } finally {
         if (key === this.key) this.loading = false;
       }
-      await this.$nextTick();
-      if (!this.done && !this.failed && key === this.key && this.$refs.sentinel.getBoundingClientRect().top < innerHeight + 600) this.loadMore();
+      await Alpine.nextTick();
+      if (!this.done && !this.failed && key === this.key && this.end?.getBoundingClientRect().top < innerHeight + 600) this.loadMore();
     },
-    get params() { return new URLSearchParams(this.$store.app.query); },
+    get params() { return new URLSearchParams(Alpine.store("app").query); },
     quickOn(v) {
       const p = this.params, read = getList(p, "read");
       if (v === "fav") return p.get("fav") === "1";
@@ -675,7 +703,7 @@ function library() {
     },
     get customSort() { return !!this.params.get("sort"); },
     get letter() { return this.params.get("letter") || ""; },
-    openSheet(kind) { this.$store.app.sheet = kind; },
+    openSheet(kind) { Alpine.store("app").sheet = kind; },  // the library-query plugin's sheets: filter, sort, letter
     get chips() {
       const p = this.params, out = [], read = getList(p, "read");
       for (const [k, , labels] of lib().groups) {
@@ -800,7 +828,7 @@ function library() {
         toast(msg(r.done) + (r.skipped && action === "refresh" ? ` (${r.skipped} without metadata skipped)` : ""));
         this.working = "";
         this.endSelect();
-        this.$store.app.libraryDirty++;
+        Alpine.store("app").libraryDirty++;
       } catch (e) { toast(e.message, 6000, "error"); this.working = ""; }
     },
     // the titles the delete dialog names (only loaded cards are known here)
@@ -828,7 +856,7 @@ function library() {
       if (failed.length) toast(`Deleted ${done} of ${ids.length}. ${failed[0]}`, 10000, "error");
       else toast(`Deleted ${done} series`);
       if (!failed.length) this.endSelect();
-      this.$store.app.libraryDirty++;
+      Alpine.store("app").libraryDirty++;
       refreshAttentionCount();
     },
   };
@@ -1006,6 +1034,27 @@ window.MangaVibe = {
   },
   // the series page's data and actions (Plugin API 18): a view:series plugin draws the page from it
   get series() { return Alpine.store("series"); },
+  // the library page's and Continue reading's (Plugin API 19): view:library and view:continue draw from them
+  get library() { return Alpine.store("library"); },
+  get continue() { return Alpine.store("continue"); },
+  // a component whose names are a store's (read, write, call), e.g. Alpine.data("myLibrary", () =>
+  // MangaVibe.bind(MangaVibe.library, { extra: 1 })): markup can say `items`, `bulk(...)`
+  bind(store, own = {}) {
+    const out = { ...own };
+    const names = new Set();
+    for (let o = Alpine.raw ? Alpine.raw(store) : store; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) {
+      Object.getOwnPropertyNames(o).forEach((n) => names.add(n));
+    }
+    for (const name of names) {
+      if (name in out || name === "init" || name === "constructor") continue;
+      Object.defineProperty(out, name, {
+        get: () => (typeof store[name] === "function" ? store[name].bind(store) : store[name]),
+        set: (v) => { store[name] = v; },
+        enumerable: true, configurable: true,
+      });
+    }
+    return out;
+  },
   // the library page's query (filters, sort, page) as URLSearchParams; reactive inside Alpine
   libraryFilters: () => new URLSearchParams(Alpine.store("app").query),
   filterQuery: searchQuery,   // its filters and sort only, in a fixed order: "" when none are on
@@ -1186,17 +1235,20 @@ async function removePluginUi(id) {
 
 /* ---------------- continue reading ---------------- */
 
-function continueView() {
+/* MangaVibe.continue (Plugin API 19): what's in progress, for the Continue reading view (the view:continue
+   plugin's; built in: app/plugins/builtin/continue_page). Loads by itself while that page is shown. */
+function continueController() {
   return {
-    items: null,
+    items: null,  // GET /api/continue-reading: the series in progress, the last read first; null until loaded
     init() {
-      this.$watch("$store.app.view", (v) => v === "continue" && this.load());
-      this.$watch("$store.app.progressDirty", () => this.load());
-      this.$watch("$store.app.listKey", () => this.load());  // e.g. another library, or one was unlocked
-      this.load();
+      const app = () => Alpine.store("app");
+      watchValue(() => app().view, (v) => v === "continue" && this.load());
+      watchValue(() => app().progressDirty, () => this.load());
+      watchValue(() => app().listKey, () => this.load());  // e.g. another library, or one was unlocked
+      queueMicrotask(() => this.load());
     },
     async load() {
-      if (this.$store.app.view !== "continue") return;
+      if (Alpine.store("app").view !== "continue") return;
       document.title = "Continue reading";
       this.items = await api(`/api/continue-reading?${scopeParam()}`).catch(() => this.items);
     },
