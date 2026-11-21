@@ -1,0 +1,39 @@
+/* The demo's badge (demo.js). Uses the app's own colours, so it follows the theme. */
+.mv-demo {
+  position: fixed;
+  z-index: 95;
+  left: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+/* phones: above the bottom bar (Library / Continue) instead of on it */
+@media (max-width: 720px) {
+  .mv-demo { left: auto; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .mv-demo-card { left: auto; right: 0; }
+}
+.mv-demo-pill {
+  border: 0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: var(--accent, #ff6fa8);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+}
+.mv-demo-card {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  width: min(320px, calc(100vw - 24px));
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--card, #1a1d23);
+  color: var(--text, #e8e8ec);
+  box-shadow: 0 8px 30px rgb(0 0 0 / 0.45);
+}
+.mv-demo-card p { margin: 6px 0; opacity: 0.85; }
+.mv-demo-card a { color: var(--accent, #ff6fa8); font-weight: 600; }
