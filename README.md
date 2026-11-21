@@ -107,7 +107,9 @@ Tap a section for the details.
   aren't guessed from names; mark them yourself.
 - **Reads** `.cbz/.zip`, `.cbr/.rar`, `.cb7/.7z`, image `.epub`, `.pdf` and folders of images, without
   unpacking them. Pages can be JPEG, PNG, WebP, GIF, AVIF, JPEG XL, BMP or TIFF. Archives inside
-  archives and files with the wrong extension work too.
+  archives and files with the wrong extension work too. **Light novels** (text `.epub`) are found
+  too, and read with the [Light novel reader](https://github.com/ivokolarov0/manga-vibe-light-novel)
+  plugin.
 - **Several library folders**, each scanned every few hours and on start. New files show up by
   themselves; a removed file disappears.
 - **Separate libraries**, e.g. Manga and Comics, as tabs on the home screen. A whole folder goes in
@@ -217,6 +219,7 @@ flowchart TB
         tr["Manga Translate"]
         a11y["Manga Accessibility"]
         mcp["Remote control"]
+        ln["Light novel reader"]
     end
 
     yours(["🧑‍💻 Your plugin"])
@@ -229,7 +232,7 @@ flowchart TB
 
 | | What it means |
 |---|---|
-| ➕ **Add features** | Tracker sync, translation over the speech bubbles, descriptions read aloud for blind readers, official chapter counts, remote control. One button in **Settings → Plugins → Get plugins**. |
+| ➕ **Add features** | Tracker sync, translation over the speech bubbles, descriptions read aloud for blind readers, official chapter counts, remote control, a reader for light novels. One button in **Settings → Plugins → Get plugins**. |
 | 🔁 **Replace parts of the app** | Each part (a page, the cards, the filters, the reader, the parser…) is a *job* done by a built-in plugin. Switch on another plugin for that job and the built-in one steps aside. If yours fails, the built-in one takes over, so the app never breaks. |
 | 🟰 **Same rules for everyone** | The built-in plugins use only the public plugin API, so a plugin you write can do anything they do. |
 | 🧑‍💻 **Write your own** | Python, with HTML, CSS and JavaScript for the page. Vibe coding one with an AI assistant works well. Start with the **[plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/)**: every part of a plugin, each with a minimal sample. |
