@@ -14,23 +14,44 @@ const STATUS_LABELS = { unread: "Unread", reading: "Reading", completed: "Comple
 const PUB_LABELS = { RELEASING: "Releasing", FINISHED: "Finished", HIATUS: "Hiatus", CANCELLED: "Cancelled",
   NOT_YET_RELEASED: "Not yet released", UNKNOWN: "Unknown status" };
 const COUNTRY = { JP: "Manga", KR: "Manhwa", CN: "Manhua", TW: "Manhua" };
-const SORTS = [["title", "Title"], ["added", "Recently added"], ["updated", "Recently updated"],
-  ["read", "Recently read"], ["score", "Score"], ["year", "Year"], ["unread", "Unread count"]];
-const FILTER_GROUPS = [
-  ["read", "Reading status", { unread: "Unread", reading: "Reading", completed: "Completed", on_hold: "On hold",
-    dropped: "Dropped", plan_to_read: "Plan to read" }],
-  ["pub", "Publication", { RELEASING: "Releasing", FINISHED: "Finished", HIATUS: "Hiatus", CANCELLED: "Cancelled",
-    NOT_YET_RELEASED: "Not yet released", UNKNOWN: "Unknown status" }],
-  ["match", "Metadata", { matched: "Has metadata", attention: "Needs attention", unmatched: "No metadata" }],
-  ["format", "Format", { manga: "Manga", manhwa: "Manhwa", manhua: "Manhua", one_shot: "One-shot", novel: "Novel" }],
-  // finished series only: are all volumes/chapters here? (best effort, see collection() in app/api/common.py)
-  ["have", "Collection", { complete: "Complete collection", incomplete: "Incomplete collection",
-    unknown: "Can't tell if complete" }],
-];
-const LIST_KEYS = ["read", "pub", "match", "format", "have", "genre", "exclude"];
-// length filter: the published totals (metadata) within a range, e.g. chapters_min=100
-const LENGTH_UNITS = [["chapters", "Chapters"], ["volumes", "Volumes"]];
-const LENGTH_KEYS = [...LENGTH_UNITS.flatMap(([u]) => [`${u}_min`, `${u}_max`]), "length_unknown"];
+/* The library's filters and sorts are the library-query plugin's (Plugin API 16, issue #204): what
+   GET /api/library/schema says, worked out once into what the sheets, chips and saved searches use, and
+   kept in $store.app.lib (so they redraw when another plugin takes over the job). By kind:
+   - choice: a group of options in the filter sheet (comma-separated values: read=unread,reading)
+   - tags: the Genres and Tags groups (include/exclude; one parameter per value: genre=A&genre=B)
+   - length: published totals within a range per unit (<unit>_min, <unit>_max, length_unknown)
+   - toggle "fav" and the "read" choice also make the quick buttons; letter: the Letter sheet
+   - text: the search box; anything "hidden" only comes through links and assistants */
+function deriveLib(s = {}) {
+  const filters = s.filters || [], sorts = s.sorts || [];
+  const choices = filters.filter((f) => f.kind === "choice" && !f.hidden && f.params?.length);
+  const tags = filters.find((f) => f.kind === "tags");
+  const length = filters.find((f) => f.kind === "length");
+  const read = choices.find((f) => f.params[0] === "read");
+  return {
+    plugin: s.plugin || null,
+    // [param, title, { value: label }] for each choice group of the filter sheet
+    groups: choices.map((f) => [f.params[0], f.label, Object.fromEntries(f.options || [])]),
+    sorts: sorts.map((x) => [x.key, x.label]),
+    sortInfo: Object.fromEntries(sorts.map((x) => [x.key, x])),
+    defaultSort: s.default_sort || sorts[0]?.key || "",
+    repeated: tags ? tags.params : [],         // one URL parameter per value
+    tags: !!tags,
+    listKeys: [...choices.map((f) => f.params[0]), ...(tags ? tags.params : [])],
+    lengthUnits: length ? length.units || [] : [],
+    lengthKeys: length ? length.params || [] : [],
+    letter: filters.some((f) => f.kind === "letter"),
+    fav: filters.some((f) => f.kind === "toggle" && f.params?.[0] === "fav"),
+    readValues: read ? read.options.map(([v]) => v) : [],
+    params: [...(s.params || []), "sort", "order"],  // what a search is (saved searches keep these)
+  };
+}
+// the library-query plugin's filters, as worked out above (before the schema is loaded: none)
+const lib = () => window.Alpine?.store("app")?.lib || NO_LIB;
+const NO_LIB = deriveLib();
+async function loadLibrarySchema() {
+  try { Alpine.store("app").lib = deriveLib(await api("/api/library/schema")); } catch {}
+}
 // "10–50 chapters", "100+ chapters", "up to 10 volumes"; "" when that unit has no range
 function lengthLabel(p, unit) {
   const lo = p.get(`${unit}_min`), hi = p.get(`${unit}_max`);
@@ -40,8 +61,10 @@ function lengthLabel(p, unit) {
 }
 // first-letter filter (letter=B); "#" is everything else: numbers, symbols, other scripts
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
+// the quick buttons above the grid, each shown while the library-query plugin has its filter (lib())
 const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Completed"],
   ["plan_to_read", "Plan to read"], ["fav", "Favorites"]];  // Favorites gets a star icon (templates/views/library.html)
+const quickButtons = () => QUICK.filter(([v]) => v === "" || (v === "fav" ? lib().fav : lib().readValues.includes(v)));
 const ATT_TABS = [
   ["unreadable", "Errors", "These files could not be opened. The message says why."],
   ["matches", "Missing metadata", "No confident match was found online. Pick the right one, or open Fix match."],
@@ -55,14 +78,13 @@ const ID_NAMES = { anilist_id: "AniList", mal_id: "MyAnimeList", mangaupdates_id
 
 /* ---------------- small helpers ---------------- */
 
-// genre/exclude hold free-text tag names (may contain commas): one URL param per value.
-// The other filters use fixed values, joined with commas.
-const REPEATED = ["genre", "exclude"];
-const getList = (p, k) => REPEATED.includes(k) ? p.getAll(k).filter(Boolean)
+// genre/exclude (the tags filter's parameters) hold free-text tag names (may contain commas): one URL
+// param per value. The other filters use fixed values, joined with commas.
+const getList = (p, k) => lib().repeated.includes(k) ? p.getAll(k).filter(Boolean)
   : (p.get(k) || "").split(",").filter(Boolean);
 function setList(p, k, values) {
   p.delete(k);
-  if (REPEATED.includes(k)) values.forEach((v) => p.append(k, v));
+  if (lib().repeated.includes(k)) values.forEach((v) => p.append(k, v));
   else if (values.length) p.set(k, values.join(","));
 }
 function libParams() {
@@ -193,6 +215,8 @@ document.addEventListener("alpine:init", () => {
     appBanner: ANDROID && !androidApp && !appBannerDismissed(),  // "Read in the app" on the library
     openFix(seriesId, onDone) { this.fix = { open: true, seriesId, onDone }; },
     openEdit(seriesId, onDone, tab = "info") { this.edit = { open: true, seriesId, onDone, tab }; },
+    // the library's filters and sorts: the library-query plugin's (deriveLib, GET /api/library/schema)
+    lib: deriveLib(),
     // what plugins add to every list's API call, per plugin: { libraries: { shelf: 3 } } (MangaVibe.setListScope)
     listScope: {},
     listsDirty: 0,       // bumped when what the lists show changed for another reason (MangaVibe.listsChanged)
@@ -272,9 +296,11 @@ document.addEventListener("alpine:init", () => {
   }
   queueMicrotask(async () => {
     await loadSettings().then((s) => s.me && (Alpine.store("app").me = s.me)).catch(() => {});
+    await loadLibrarySchema();  // before plugins start: e.g. saved searches label their filters with it
     // plugins get ready before anything is shown, e.g. accounts: the login; libraries: lock them on a
     // new tab, pick one
     await emitPlugins("start");
+    if (!Alpine.store("app").lib.plugin) await loadLibrarySchema();  // e.g. only now logged in (accounts)
     api("/api/providers").then((p) => (Alpine.store("app").providers = p)).catch(() => {});
     route();
     refreshAttentionCount();
@@ -479,7 +505,8 @@ function library() {
     paged: false, page: 1, size: 60, base: null,
     failed: "",  // why the last load didn't come (shown with "Try again"); "" when it did
     layout: "grid",  // grid (poster cards) | list (one series per row): the library_view setting
-    quick: QUICK,
+    get quick() { return quickButtons(); },
+    get lib() { return this.$store.app.lib; },
     init() {
       // reload when the filters (URL) change; keep cards + scroll position otherwise
       this.$watch("$store.app.query", () => this.sync());
@@ -643,28 +670,30 @@ function library() {
     // toolbar: Filter (with count), Sort, Letter
     get filterCount() {
       const p = this.params;
-      return LIST_KEYS.reduce((a, k) => a + getList(p, k).length, 0) + (p.get("fav") ? 1 : 0)
-        + LENGTH_UNITS.filter(([u]) => lengthLabel(p, u)).length;
+      return lib().listKeys.reduce((a, k) => a + getList(p, k).length, 0) + (lib().fav && p.get("fav") ? 1 : 0)
+        + lib().lengthUnits.filter(([u]) => lengthLabel(p, u)).length;
     },
     get customSort() { return !!this.params.get("sort"); },
     get letter() { return this.params.get("letter") || ""; },
     openSheet(kind) { this.$store.app.sheet = kind; },
     get chips() {
       const p = this.params, out = [], read = getList(p, "read");
-      for (const [k, , labels] of FILTER_GROUPS) {
+      for (const [k, , labels] of lib().groups) {
         if (k === "read" && read.length < 2) continue;  // a single reading status shows as a quick button
         for (const v of getList(p, k)) out.push({ k, v, label: labels[v] || v });
       }
-      for (const v of getList(p, "genre")) out.push({ k: "genre", v, label: v });
-      for (const v of getList(p, "exclude")) out.push({ k: "exclude", v, label: "not " + v, ex: true });
-      for (const [u] of LENGTH_UNITS) {
+      if (lib().tags) {
+        for (const v of getList(p, "genre")) out.push({ k: "genre", v, label: v });
+        for (const v of getList(p, "exclude")) out.push({ k: "exclude", v, label: "not " + v, ex: true });
+      }
+      for (const [u] of lib().lengthUnits) {
         const label = lengthLabel(p, u);
         if (label) out.push({ k: "length", v: u, label: label + (p.get("length_unknown") ? " or unknown" : "") });
       }
       if (p.get("letter")) out.push({ k: "letter", v: p.get("letter"), label: "Starts with " + p.get("letter") });
       const sort = p.get("sort");
-      if (sort && sort !== "title") out.push({ k: "sort", v: sort,
-        label: "Sort: " + (SORTS.find(([k]) => k === sort)?.[1] || sort) + (p.get("order") === "asc" ? " ↑" : "") });
+      if (sort && sort !== lib().defaultSort) out.push({ k: "sort", v: sort,
+        label: "Sort: " + (lib().sortInfo[sort]?.label || sort) + (p.get("order") === "asc" ? " ↑" : "") });
       return out;
     },
     removeChip(c) {
@@ -673,7 +702,7 @@ function library() {
       else if (c.k === "letter") p.delete("letter");
       else if (c.k === "length") {
         p.delete(`${c.v}_min`); p.delete(`${c.v}_max`);
-        if (!LENGTH_UNITS.some(([u]) => lengthLabel(p, u))) p.delete("length_unknown");
+        if (!lib().lengthUnits.some(([u]) => lengthLabel(p, u))) p.delete("length_unknown");
       } else setList(p, c.k, getList(p, c.k).filter((x) => x !== c.v));
       navigateLibrary(p);
     },
@@ -810,13 +839,15 @@ function library() {
 
 function filterSheet() {
   return {
-    tags: [], tagQuery: "", groups: FILTER_GROUPS,
+    tags: [], tagQuery: "",
+    get lib() { return this.$store.app.lib; },
+    get groups() { return this.lib.groups; },
     open: { read: true },  // which groups are unfolded
     init() {
       this.$watch("$store.app.sheet", async (sheet) => {
         if (sheet !== "filter") return;
         // unfold the groups that have something selected, so nothing chosen is hidden
-        for (const [k] of FILTER_GROUPS) if (this.selected(k)) this.open[k] = true;
+        for (const [k] of this.groups) if (this.selected(k)) this.open[k] = true;
         if (this.selected("length")) this.open.length = true;
         this.tags = await api(`/api/tags?${scopeParam()}`).catch(() => this.tags);
         for (const k of ["genres", "tags"]) if (this.selected(k)) this.open[k] = true;
@@ -825,7 +856,7 @@ function filterSheet() {
     toggleGroup(k) { this.open[k] = !this.open[k]; },
     // how many options of a group are on (include and exclude both count)
     selected(k) {
-      if (k === "length") return LENGTH_UNITS.filter(([u]) => lengthLabel(this.p, u)).length;
+      if (k === "length") return this.lib.lengthUnits.filter(([u]) => lengthLabel(this.p, u)).length;
       if (k !== "genres" && k !== "tags") return getList(this.p, k).length;
       const names = new Set(this.tags.filter((t) => (t.kind === "genre") === (k === "genres")).map((t) => t.name));
       return [...getList(this.p, "genre"), ...getList(this.p, "exclude")].filter((n) => names.has(n)).length;
@@ -844,16 +875,17 @@ function filterSheet() {
       this.apply((p) => { const cur = getList(p, k); setList(p, k, cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]); });
     },
     clearAll() {
-      this.apply((p) => { for (const k of [...LIST_KEYS, ...LENGTH_KEYS, "fav", "letter"]) p.delete(k); });
+      // every filter but the search box, and not the sort
+      this.apply((p) => { for (const k of this.lib.params) if (k !== "q" && k !== "sort" && k !== "order") p.delete(k); });
     },
     // length range inputs: a whole number of at least 0, or empty for no bound
-    lengthUnits: LENGTH_UNITS,
+    get lengthUnits() { return this.lib.lengthUnits; },
     bound(k) { return this.p.get(k) || ""; },
     setBound(k, value) {
       const n = String(value).trim() === "" ? NaN : Math.floor(Number(value));
       this.apply((p) => {
         Number.isFinite(n) && n >= 0 ? p.set(k, n) : p.delete(k);
-        if (!LENGTH_UNITS.some(([u]) => lengthLabel(p, u))) p.delete("length_unknown");
+        if (!this.lib.lengthUnits.some(([u]) => lengthLabel(p, u))) p.delete("length_unknown");
       });
     },
     get lengthUnknown() { return this.p.get("length_unknown") === "true"; },
@@ -888,19 +920,16 @@ function letterSheet() {
 
 function sortSheet() {
   return {
-    sorts: SORTS,
+    // the library-query plugin's sorts: each says the order it starts in and its order buttons' labels
+    get sorts() { return this.$store.app.lib.sorts; },
+    get info() { return this.$store.app.lib.sortInfo[this.sort] || {}; },
     get p() { return new URLSearchParams(this.$store.app.query); },
-    get sort() { return this.p.get("sort") || "title"; },
-    get asc() { return this.p.get("order") === "asc" || (!this.p.get("order") && this.sort === "title"); },
-    get orderLabels() {
-      return {
-        title: ["A → Z", "Z → A"], score: ["Lowest first", "Highest first"],
-        unread: ["Fewest first", "Most first"],
-      }[this.sort] || ["Oldest first", "Newest first"];
-    },
+    get sort() { return this.p.get("sort") || this.$store.app.lib.defaultSort; },
+    get asc() { return this.p.get("order") === "asc" || (!this.p.get("order") && this.info.order === "asc"); },
+    get orderLabels() { return this.info.order_labels || ["Ascending", "Descending"]; },
     setSort(v) {
       const p = libParams();
-      v === "title" ? p.delete("sort") : p.set("sort", v);
+      v === this.$store.app.lib.defaultSort ? p.delete("sort") : p.set("sort", v);
       p.delete("order");
       navigateLibrary(p);
       this.$store.app.sheet = null;  // like a menu: pick and close
@@ -916,12 +945,10 @@ function sortSheet() {
 /* ---------------- the library page's filters, as plugins see them ----------------
    e.g. the built-in saved searches plugin (app/plugins/builtin/saved_searches/) keeps them under a name. */
 
-const SEARCH_PARAMS = ["q", ...LIST_KEYS, "fav", "letter", "year_min", "year_max", "score_min", ...LENGTH_KEYS,
-  "sort", "order"];
-
-// the filters and sort of a query (no page), always in the same order, so two can be compared
+// the filters and sort of a query (no page), always in the same order, so two can be compared. Its
+// parameters are the library-query plugin's (lib().params)
 function searchQuery(p) {
-  return [...p].filter(([k, v]) => SEARCH_PARAMS.includes(k) && v)
+  return [...p].filter(([k, v]) => lib().params.includes(k) && v)
     .sort(([a, x], [b, y]) => a.localeCompare(b) || x.localeCompare(y))
     .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
 }
@@ -932,11 +959,11 @@ function searchParts(qs) {
   if (p.get("q")) out.push(`“${p.get("q")}”`);
   for (const v of getList(p, "genre")) out.push(v);
   for (const v of getList(p, "exclude")) out.push("not " + v);
-  for (const [k, , labels] of FILTER_GROUPS) for (const v of getList(p, k)) out.push(labels[v] || v);
-  for (const [u] of LENGTH_UNITS) if (lengthLabel(p, u)) out.push(lengthLabel(p, u));
+  for (const [k, , labels] of lib().groups) for (const v of getList(p, k)) out.push(labels[v] || v);
+  for (const [u] of lib().lengthUnits) if (lengthLabel(p, u)) out.push(lengthLabel(p, u));
   if (p.get("fav")) out.push("Favorites");
   if (p.get("letter")) out.push("Starts with " + p.get("letter"));
-  const sort = SORTS.find(([k]) => k === p.get("sort"))?.[1];
+  const sort = lib().sortInfo[p.get("sort")]?.label;
   if (sort) out.push("↓ " + sort);
   return out;
 }
@@ -2008,8 +2035,12 @@ Your files are not touched. `
         if (e.status === 401) return location.reload();  // e.g. Accounts: from now on, logging in first
         toast(`Reload the page to see the change (${e.message})`, 6000, "error");
       }
-      if ([...(r.started || []), ...(r.stopped || [])].some((id) => this.plugins.find((x) => x.id === id)?.provider)) {
-        this.loadProviders();
+      const changed = [...(r.started || []), ...(r.stopped || [])].map((id) => this.plugins.find((x) => x.id === id));
+      if (changed.some((x) => x?.provider)) this.loadProviders();
+      // another plugin filters and sorts the library now: its sheets, and the grid as it lists it
+      if (changed.some((x) => x?.provides?.["library-query"])) {
+        await loadLibrarySchema();
+        this.$store.app.libraryDirty++;
       }
       this.refreshPlugins();  // a switched-on plugin shows its settings and status
     },

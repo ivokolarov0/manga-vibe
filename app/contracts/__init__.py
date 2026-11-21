@@ -37,6 +37,15 @@ def register(job: Job) -> Job:
     return job
 
 
+# --- the jobs ---------------------------------------------------------------------------------
+
+# The library's filters and sorting (#204): what GET /api/series can filter and sort by, and what the
+# filter, sort and letter sheets show. Contract: docs/PLUGINS.md, "The library-query job";
+# the SDK side is app/plugins/query.py. Built in: app/plugins/builtin/library_query/.
+register(Job("library-query", "Library filters and sorting", required=True,
+             description="What the library can be filtered and sorted by, and how"))
+
+
 def job_label(key: str) -> str:
     job = JOBS.get(key)
     return job.label if job else key

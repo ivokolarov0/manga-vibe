@@ -10,8 +10,9 @@ from tests.conftest import TMP
 
 @pytest.fixture
 def jobs(monkeypatch):
-    """Two test jobs: an exclusive one the app needs, and a shared one."""
+    """Two test jobs next to the app's own: an exclusive one the app needs, and a shared one."""
     monkeypatch.setattr(contracts, "JOBS", {
+        **contracts.JOBS,
         "page": Job("page", "The page", versions=(1, 2), exclusive=True, required=True),
         "extra": Job("extra", "Extras", exclusive=False),
     })

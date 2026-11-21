@@ -3,16 +3,12 @@ whose user server code already knows (users.SCOPE_KEY), find_user(), plugins' ow
 built-in plugin that moved out, and the page's lists that the MCP plugin copies."""
 import asyncio
 import json
-import re
-from pathlib import Path
 
 from app import users
 from app.db import SessionLocal, get_setting, set_setting
 from app.models import Setting
 from app.plugins import MOVED, Context, Plugin, manager
 from app.plugins.builtin.accounts import core as accounts
-
-APP_JS = Path(__file__).parent.parent / "app" / "web" / "static" / "js" / "app.js"
 
 
 def call_guard(path, scope_user=None):
@@ -156,14 +152,12 @@ SEE = " changed: update this test's lists, and FILTERS / SORTS / SETTINGS in man
 
 
 def test_lists_remote_control_copies():
-    js = APP_JS.read_text(encoding="utf-8")
-    groups = js[js.index("const FILTER_GROUPS"):js.index("const LIST_KEYS")]
-    page_filters = {}
-    for key, body in re.findall(r'\["(\w+)", "[^"]*", \{([^}]*)\}', groups):
-        page_filters[key] = re.findall(r"(\w+):", body)
+    # the library's filters and sorts are the built-in library-query plugin's (#204); a plugin that
+    # replaces it says its own in GET /api/library/schema, which the MCP plugin could read instead
+    from app.plugins.builtin.library_query import SCHEMA
+    page_filters = {f["key"]: [v for v, _ in f["options"]] for f in SCHEMA["filters"] if f["kind"] == "choice"}
     assert page_filters == MCP_FILTERS, "The library filters" + SEE
-    sorts = js[js.index("const SORTS"):js.index("const FILTER_GROUPS")]
-    assert re.findall(r'\["(\w+)", "', sorts) == MCP_SORTS, "The library sorts" + SEE
+    assert [s["key"] for s in SCHEMA["sorts"]] == MCP_SORTS, "The library sorts" + SEE
     from app.api.system import DEFAULT_SETTINGS
     assert sorted(DEFAULT_SETTINGS) == sorted(MCP_SETTINGS), "The settings" + SEE
 

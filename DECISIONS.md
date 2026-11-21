@@ -969,3 +969,32 @@ Plugin API version, and the app works after every one.
   apart from comments and line breaks it's identical. Plugin templates (a view plugin extending a
   built-in view and changing one block) come with the views, #205, since which plugin's template is
   used depends on which plugin does the view's job.
+
+### Library filters and sorting as a plugin (Plugin API 16, issue #204)
+
+- **The first job, `library-query`**: exclusive and required. The filters and sorts lived in four
+  places that had to agree (the SQL in filters.py, the sorts in `list_series()`, the lists in app.js,
+  and a copy of the parameters in saved searches). Now there's one: the built-in plugin's
+  `query_schema()`, and everything else reads it (`GET /api/library/schema`).
+- **The schema is data, the UI draws it by kind** (choice, tags, length, toggle, letter, text). A
+  plugin adding a `choice` gets its group, chips and saved searches with no markup; the kinds with a UI
+  of their own (tags, length, letter) show only when the plugin has them. A whole UI of its own is the
+  views' business (#205).
+- **The plugin gets a `ListQuery`, not the request's query.** The core builds what may be seen
+  (missing series, other plugins' `series_filter`, the library), and applies it again after the plugin,
+  so a filter plugin can't show a locked library's series even if it builds a new query. The core adds
+  the last sorts (title, id) so paging stays stable whatever the plugin sorts by.
+- **The reading counts are joined by the core, after the plugin** (`lq.reading()` only makes the
+  subquery). Joining inside the plugin was easy to get wrong: `lq.query = lq.query.filter(
+  lq.reading_status() ...)` looks up `.filter` on the query before the join, and loses it (a cartesian
+  product, caught by running the tests with SQLAlchemy warnings as errors).
+- **Falling back**: a plugin that fails with anything but an `HTTPException` is logged and the built-in
+  one is asked instead (`manager.doing(job)`), the first use of the hub's fallback rule.
+- **Numbers**: FastAPI used to refuse a bad `year_min` (422); the plugin reads raw query parameters, so
+  `number()` refuses them the same way. `year_min`, `year_max`, `score_min` of 0 still mean no limit.
+- **Saved searches `requires` the job** and keeps the parameters its plugin names, so a replacement's
+  own filters are saved too.
+- **Contract tests** (`tests/contracts/`) run through the app's API against every plugin doing the
+  job: the built-in one and the example that extends it. Remote control (manga-vibe-mcp) still has a
+  copy of the built-in filters and sorts; its test now compares with the built-in plugin. It could read
+  `GET /api/library/schema` instead, and then follow a replacement too.

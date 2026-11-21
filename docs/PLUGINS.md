@@ -448,7 +448,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `api(path, { method, body })` | call the server; the JSON answer, or throws an `Error` with the server's message |
 | `toast(text, ms, kind)` | a short message at the bottom; `kind = "error"` for a red one |
 | `libraryFilters()` | the library page's query (filters, sort, page) as `URLSearchParams`; reactive in Alpine |
-| `filterQuery(params)` | just its filters and sort, in a fixed order (`""` when none are on), to compare two |
+| `filterQuery(params)` | just its filters and sort, in a fixed order (`""` when none are on), to compare two. Which parameters count is the [library-query plugin's](#the-library-query-job) (Plugin API 16) |
 | `filterLabels(query)` | short labels for them: `["Isekai", "not Horror", "Reading"]` |
 | `showLibrary(params)` | show the library page with these filters |
 | `on(pluginId, event, fn)` | listen to the app (events below); only while your plugin is on |
@@ -691,6 +691,77 @@ server keeps running every plugin. Leave it from the bar at the top, or by loadi
 
 A MangaVibe from before Plugin API 15 ignores `provides` and `requires`: the plugin runs next to the
 built-in part instead of replacing it.
+
+**If your plugin fails** while doing a job (an error that isn't an `HTTPException`, which is an
+answer), the error is logged and the built-in plugin for that job is asked instead, so a broken
+replacement never leaves that part of the app empty.
+
+### The library-query job
+
+Plugin API 16. **What the library can be filtered and sorted by**: exclusive and required. The built-in
+plugin is "Library filters and sorting" (`app/plugins/builtin/library_query/`); copy it to start, or
+extend it like `examples/plugins/description_filter.py`, which adds a Description filter.
+
+```python
+from app.models import Series
+from app.plugins import Plugin
+from app.plugins.query import values
+
+class MyFilters(Plugin):
+    id = "my-filters"
+    provides = {"library-query": 1}
+
+    def query_schema(self, ctx):          # what the page shows, as data
+        return {"filters": [...], "sorts": [...], "default_sort": "title"}
+
+    def filter_query(self, ctx, lq, params):   # add your conditions to lq.query
+        if values(params, "status"):
+            lq.query = lq.query.filter(Series.publication_status.in_(values(params, "status")))
+
+    def sort_order(self, ctx, lq, params):     # the ORDER BY: a list of SQL expressions
+        return [lq.title.asc()]
+```
+
+**`query_schema(ctx)`** says what the page shows. The filter, sort and letter sheets, the chips above the
+grid, the quick buttons, saved searches and `MangaVibe.filterLabels()` are all built from it:
+
+| | |
+|---|---|
+| `filters` | a list of `{key, label, kind, params, ...}`. `params` are the query parameters it reads; no two filters share one |
+| kind `choice` | a group of options in the filter sheet: `options: [[value, label], ...]`, values sent comma-separated (`read=unread,reading`). **Add one and it shows up, with its chips and in saved searches, without any markup.** `read` with the reading statuses also makes the quick buttons |
+| kind `tags` | the Genres and Tags groups: `params: ["genre", "exclude"]`, one parameter per name (`genre=A&genre=B`) |
+| kind `length` | published totals in a range: `units: [["chapters", "Chapters"], ...]`, params `<unit>_min`, `<unit>_max`, `length_unknown` |
+| kind `toggle` | on or off (`fav=1`); `fav` is the Favorites quick button |
+| kind `letter`, `text` | the Letter sheet (`letter=a`, `#` for the rest), the search box (`q`) |
+| `hidden: true` | read from links and assistants, not shown in the sheets (e.g. `year_min`) |
+| `sorts` | `{key, label, order, order_labels}`: `order` is the one it starts in (`asc`/`desc`), `order_labels` the order buttons' `[ascending, descending]` |
+| `default_sort` | the sort without `sort=` |
+
+`GET /api/library/schema` sends it, with `plugin` (who does the job) and `params` (every parameter the
+filters read: what saved searches keep, with `sort` and `order`).
+
+**`filter_query(ctx, lq, params)`** and **`sort_order(ctx, lq, params)`** build the list. `params` is the
+request's `QueryParams`; `app.plugins.query` has `values(params, key)` (comma-separated), `number()` (a
+whole number, 422 for anything else) and `flag()` (`1`/`true`/`yes`/`on`). `lq` is a `ListQuery`:
+
+| | |
+|---|---|
+| `lq.query` | the query on `models.Series`: filter it, join to it; don't take conditions away |
+| `lq.title` | the displayed title in lower case, for sorting and the first letter |
+| `lq.reading_status()`, `lq.unread_count()`, `lq.reading()` | the person's reading status, unread books, and the per-series counts behind them, as SQL. The counts are joined once your plugin is done, only if you used them: they're the slow part |
+| `lq.my_state("favorite")` | the person's own favorite, `last_read_at` or hand-picked `reading_status` |
+| `lq.collections(rows)` | complete / incomplete / unknown per series |
+
+**The core does the rest**, and your plugin can't change it: what the person may see at all (other
+plugins' `series_filter()`, e.g. a locked library, applied again after yours), the last sorts on the
+title and the series' id (paging needs a stable order), paging, counts and the cards.
+
+**Keep parameter names stable**: saved searches, bookmarks and links store them. Keep it **fast**: it
+runs for every page of the grid. **Test it** with `tests/contracts/test_library_query.py`: add your
+plugin to its `PLUGINS` and run it. It checks the schema, that every filter works, that saved searches
+keep every parameter, that every sort pages stably, and that a hidden series stays hidden.
+
+Saved searches `requires = {"library-query": 1}`: they keep that plugin's parameters.
 
 ## Styling: plugins and your own custom.css
 

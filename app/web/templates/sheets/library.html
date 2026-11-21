@@ -56,7 +56,8 @@
           </div>
         </section>
       </template>
-      <section class="fgroup" :class="{ open: open.length }">
+      <!-- the groups below are the library-query plugin's filters of those kinds (app.js deriveLib) -->
+      <section class="fgroup" :class="{ open: open.length }" x-show="lengthUnits.length">
         <button class="fgroup-head" :aria-expanded="!!open.length" @click="toggleGroup('length')">
           <span>Length</span>
           <span class="fcount" x-show="selected('length')" x-text="selected('length')"></span>
@@ -81,7 +82,7 @@
             Also show series with no known total (ongoing, no metadata)</label>
         </div>
       </section>
-      <section class="fgroup" :class="{ open: open.genres }">
+      <section class="fgroup" :class="{ open: open.genres }" x-show="lib.tags">
         <button class="fgroup-head" :aria-expanded="!!open.genres" @click="toggleGroup('genres')">
           <span>Genres</span>
           <span class="fcount" x-show="selected('genres')" x-text="selected('genres')"></span>
@@ -98,7 +99,7 @@
           </div>
         </div>
       </section>
-      <template x-if="tags.some((t) => t.kind !== 'genre')">
+      <template x-if="lib.tags && tags.some((t) => t.kind !== 'genre')">
         <section class="fgroup" :class="{ open: open.tags }">
           <button class="fgroup-head" :aria-expanded="!!open.tags" @click="toggleGroup('tags')">
             <span>Tags</span>

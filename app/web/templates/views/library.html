@@ -8,7 +8,7 @@
           <button class="tool" :class="{ on: customSort }" @click="openSheet('sort')">
             <svg aria-hidden="true"><use href="#i-sort"/></svg>
             <span>Sort</span></button>
-          <button class="tool" :class="{ on: letter }" @click="openSheet('letter')"
+          <button class="tool" :class="{ on: letter }" @click="openSheet('letter')" x-show="lib.letter"
                   :aria-label="letter ? 'Title starts with ' + letter : 'Filter by first letter'">
             <i class="az" aria-hidden="true">A<small>z</small></i>
             <span x-text="letter ? 'Starts with ' + letter : 'Letter'"></span></button>
