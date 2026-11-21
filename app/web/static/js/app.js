@@ -2063,6 +2063,11 @@ Your files are not touched. `
     },
     jobLabel(key) { return this.pluginJobs.find((j) => j.key === key)?.label || key; },
     jobsText(p) { return Object.keys(p.provides || {}).map((k) => this.jobLabel(k)).join(", "); },
+    // the only plugin doing a job MangaVibe needs: it can't be switched off until another one does it
+    requiredText(p) {
+      const jobs = (p.required_for || []).map((k) => this.jobLabel(k)).join(", ");
+      return jobs && `MangaVibe needs ${jobs}. To switch ${p.name} off, switch on another plugin that does it.`;
+    },
     async togglePlugin(p) {
       const replaced = p.enabled ? this.replacedBy(p) : [];
       if (replaced.length && !confirm(replaced.map(([q, job]) => `${p.name} replaces ${q.name} (${job.label}).`)

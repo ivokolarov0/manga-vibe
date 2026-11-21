@@ -676,7 +676,8 @@ class MyFilters(Plugin):
 - **A new plugin for a job that's already done starts off.** Installing yours doesn't replace anything;
   the owner switches it on when they want it.
 - **Required jobs** are ones the app needs. The only plugin doing one can't be switched off, only
-  replaced.
+  replaced: Settings → Plugins marks it **Required** and its switch can't be used until another plugin
+  does the job.
 - **A plugin that can't run doesn't.** A job or contract version this MangaVibe doesn't have, or a need
   no switched-on plugin meets, keeps the plugin from running (no hooks, API, markup or scripts), and
   Settings → Plugins says why. It stays switched on and starts once the reason is gone. A need is met
@@ -684,8 +685,8 @@ class MyFilters(Plugin):
 - Write `provides` and `requires` as plain values: `{"job": version}` (a list of names means version 1).
   Anything else keeps the plugin from running.
 
-`GET /api/plugins` sends each plugin's `provides`, `requires` and `blocked` (why it doesn't run, or
-`""`), and `jobs`: each job's `key`, `label`, `exclusive`, `required`, `versions`, the `plugins` that
+`GET /api/plugins` sends each plugin's `provides`, `requires`, `blocked` (why it doesn't run, or
+`""`) and `required_for` (the required jobs only it does now, so it can't be switched off), and `jobs`: each job's `key`, `label`, `exclusive`, `required`, `versions`, the `plugins` that
 can do it and the ones `doing` it now. `PUT /api/plugins/<id>` answers which plugins `started` and
 `stopped` running because of the switch.
 

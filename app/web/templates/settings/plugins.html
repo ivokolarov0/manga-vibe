@@ -70,7 +70,10 @@
                         <span class="row-buttons">
                           <span class="chip warn" x-show="hasUpdate(p)" x-text="`Update ${p.update.latest}`"></span>
                           <span class="chip err" x-show="p.update.error" title="The update check failed">Update check failed</span>
-                          <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" @click.stop :aria-label="`${p.name} on`">
+                          <!-- the only plugin doing a job the app needs: it stays on until another one does it -->
+                          <span class="chip required" x-show="requiredText(p)" :title="requiredText(p)">Required</span>
+                          <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" @click.stop
+                                 :disabled="!!requiredText(p)" :title="requiredText(p) || null" :aria-label="`${p.name} on`">
                         </span>
                       </div>
                     </template>
