@@ -200,7 +200,8 @@ def index(request: Request, safe: str = ""):
 
 @app.get("/plugins/{plugin_id}.js")
 def plugin_script(plugin_id: str):
-    p = plugins.get(plugin_id)
+    # a switched-on plugin's, or a built-in view plugin's even while another draws the view (web.base_views)
+    p = plugins.get(plugin_id) or next((b for b in plugin_web.base_views() if b.id == plugin_id), None)
     if p is None or not p.js:
         raise HTTPException(404, "No such plugin script")
     return Response(p.js, media_type="text/javascript", headers={"Cache-Control": "no-cache"})

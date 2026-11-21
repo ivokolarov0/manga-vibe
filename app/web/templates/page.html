@@ -40,7 +40,12 @@
 
 {% block continue %}{% include "views/continue.html" %}{% endblock %}
 
-{% block series %}{% include "views/series.html" %}{% endblock %}
+{% block series %}
+    <!-- ============ series page: the view:series plugin's (built in: Series page), from MangaVibe.series ============ -->
+    <section class="view series-view" x-show="$store.app.view === 'series'" x-cloak>
+      {{ view("series") }}
+    </section>
+{% endblock %}
 
 {% block settings %}{% include "views/settings.html" %}{% endblock %}
   </main>

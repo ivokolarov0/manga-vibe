@@ -1,5 +1,9 @@
-    <!-- ============ series page ============ -->
-    <section class="view series-view" x-data="seriesView()" x-show="$store.app.view === 'series'" x-cloak>
+{#- The series page: what's inside the page's <section class="view series-view">. Contract view:series@1
+    (docs/PLUGINS.md, "The view:series job"): the data and every action are MangaVibe.series
+    ($store.series); this markup only draws them, with seriesPage() (series_page.js) for what's open on
+    screen. Keep the slots series-actions, series-menu, series-panels, series-end and book-row.
+    A plugin's page can {% extends "@series-page/views/series.html" %} and change a block. -#}
+    <div class="series-page-view" x-data="seriesPage()">
       <template x-if="s">
         <div>
           <div class="sp-banner" x-show="s.banner_url" :style="s.banner_url && `background-image:url('${s.banner_url}')`"></div>
@@ -7,6 +11,7 @@
             <svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg>
             <span x-text="$store.app.seriesBack ? 'Back' : 'Library'"></span></button>
           <div class="sp">
+            {% block head %}
             <button class="sp-poster" title="Change poster" @click="editInfo('poster')"><img :src="s.poster_large" alt="">
               <span class="poster-hint"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>Poster</span></button>
             <header class="sp-head">
@@ -120,18 +125,22 @@
                 </template>
               </div>
             </div>
+            {% endblock %}
 
             <div class="sp-main">
+              {% block about %}
               <section class="panel wide about-panel" x-show="s.description || s.synonyms.length">
                 <h2>About</h2>
-                <div class="desc" :class="{ clamp: descLong && !descOpen }" x-ref="desc" x-html="formatText(s.description || 'No description.')"></div>
+                <div class="desc" :class="{ clamp: descLong && !descOpen }" x-ref="desc" x-html="MangaVibe.ui.text(s.description || 'No description.')"></div>
                 <button class="link-btn" x-show="descLong" @click="descOpen = !descOpen" x-text="descOpen ? 'Show less' : 'Show more'"></button>
                 <details class="other-titles" x-show="s.synonyms.length">
                   <summary class="muted" x-text="`Other titles (${s.synonyms.length})`"></summary>
                   <div class="muted" x-text="s.synonyms.join(' · ')"></div>
                 </details>
               </section>
+              {% endblock %}
 
+              {% block details %}
               <section class="panel">
                 <h2>Details</h2>
                 <div class="meta-grid">
@@ -140,8 +149,10 @@
                   </template>
                 </div>
               </section>
+              {% endblock %}
 
               <div class="stack">
+                {% block side %}
                 <section class="panel" x-show="s.links.length">
                   <h2>Links</h2>
                   <div class="links">
@@ -161,7 +172,8 @@
                   </p>
                   <div class="btn-row" x-show="$store.app.admin">
                     <button class="btn" @click="fixMatch()">Fix match</button>
-                    <button class="btn" x-show="s.metadata_source" @click="refreshMeta($el)">Refresh metadata</button>
+                    <button class="btn" x-show="s.metadata_source" :disabled="refreshing" @click="refreshMeta()"
+                            x-text="refreshing ? 'Refreshing…' : 'Refresh metadata'"></button>
                   </div>
                 </section>
                 <section class="panel">
@@ -192,9 +204,11 @@
                       :disabled="actionBusy === a.plugin + a.key" @click="runAction(a)" x-text="a.label"></button></template>
                   </div>
                 </section>
+                {% endblock %}
                 {{ slot("series-panels") }}
               </div>
 
+              {% block tags %}
               <section class="panel wide" x-show="s.tags.length">
                 <h2>Genres &amp; tags</h2>
                 <template x-if="genres.length">
@@ -214,7 +228,9 @@
                   </div></div>
                 </template>
               </section>
+              {% endblock %}
 
+              {% block books %}
               <section class="panel wide books-panel">
                 <div class="tabs">
                   <button :class="{ active: tab !== 'files' }" @click="setTab('')">Books <span class="count" x-text="s.book_count"></span></button>
@@ -290,10 +306,11 @@
                   </tbody></table>
                 </div>
               </section>
+              {% endblock %}
               {{ slot("series-end") }}
             </div>
           </div>
         </div>
       </template>
       <p class="muted" :class="{ 'loading-line': !error }" x-show="!s" x-text="error || 'Loading…'"></p>
-    </section>
+    </div>

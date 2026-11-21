@@ -229,6 +229,9 @@ document.addEventListener("alpine:init", () => {
     get admin() { return this.me.can_manage; },  // settings, folders, metadata, deleting...
   });
 
+  // the series page's data and actions (MangaVibe.series): loads the series the route shows by itself
+  Alpine.store("series", seriesController());
+
   window.addEventListener("mv-theme", (e) => (Alpine.store("app").theme = e.detail));
 
   let lastView = null, libraryScroll = 0;
@@ -996,7 +999,13 @@ window.MangaVibe = {
     editionText,   // an edition: "Kanzenban · 18 volumes (regular: 27)"
     icon,          // icon("star") -> the icon's <svg> as HTML (for x-html)
     libraryUrl,    // libraryUrl({ genre: "Isekai" }) -> "#/?genre=Isekai"
+    fileSize: (n) => (n >= 1073741824 ? (n / 1073741824).toFixed(1) + " GB"  // bytes -> "1.2 GB", "340.5 MB"
+      : n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.ceil(n / 1024) + " KB"),
+    number: (v) => (v === null || v === undefined ? "–" : v),  // a volume or chapter number, "–" when none
+    text: formatText,  // a description as HTML (for x-html): paragraphs, line breaks, links; escaped
   },
+  // the series page's data and actions (Plugin API 18): a view:series plugin draws the page from it
+  get series() { return Alpine.store("series"); },
   // the library page's query (filters, sort, page) as URLSearchParams; reactive inside Alpine
   libraryFilters: () => new URLSearchParams(Alpine.store("app").query),
   filterQuery: searchQuery,   // its filters and sort only, in a fixed order: "" when none are on
@@ -1196,28 +1205,32 @@ function continueView() {
 
 /* ---------------- series page ---------------- */
 
-function seriesView() {
+/* MangaVibe.series (Plugin API 18, issue #206): the series page's data and everything it does, for the view
+   that draws it (the view:series plugin's; built in: app/plugins/builtin/series_page). An Alpine store, so a
+   view reads it reactively: $store.series.s, or MangaVibe.series in a script. It loads the series the route
+   shows (#/series/<id>?tab=files) by itself; a view only draws it and calls these. */
+function seriesController() {
   return {
-    s: null, books: [], tab: "", loadedFor: null, badgeTimer: null, badgeSame: 0,
-    showAllTags: false, showSpoilers: false, descLong: false, descOpen: false,
-    statusLabels: STATUS_LABELS, pubLabels: PUB_LABELS,
+    s: null,        // GET /api/series/<id>: the series (docs/PLUGINS.md, "The view:series job")
+    books: [],      // GET /api/series/<id>/books (with ?all=1 on the Files tab): its books, in reading order
+    tab: "",        // "" (books) or "files"
+    error: "",      // shown instead of the page, e.g. when its library is locked
+    loads: 0,       // +1 after each load: a view can watch it (e.g. to measure the description)
+    loadedFor: null, badgeTimer: null, badgeSame: 0,
     init() {
-      const check = () => {
-        const app = this.$store.app;
-        if (app.view !== "series") return;
-        const key = `${app.id}|${app.params.tab || ""}`;
-        if (key !== this.loadedFor) this.load();
-        else if (!this.badgeTimer) this.watchBadges(true);  // back on the same series: labels may have moved on
-      };
-      this.$watch("$store.app.view", check);
-      this.$watch("$store.app.id", check);
-      this.$watch("$store.app.params", check);
-      this.$watch("$store.app.progressDirty", () => { this.loadedFor = null; check(); });  // back from the reader
-      check();
+      // load what the route shows: a series, its tab; again after the reader closed (progressDirty)
+      let dirty = null;
+      Alpine.effect(() => {
+        const app = Alpine.store("app"), view = app.view, id = app.id, tab = app.params.tab || "";
+        if (dirty !== app.progressDirty) { if (dirty !== null) this.loadedFor = null; dirty = app.progressDirty; }
+        if (view === "series") queueMicrotask(() => this.show(id, tab));  // outside the effect: not tracked
+      });
     },
-    error: "",  // shown instead of the page, e.g. when its library is locked
-    async load() {
-      const app = this.$store.app, id = app.id, tab = app.params.tab || "";
+    show(id, tab) {
+      if (`${id}|${tab}` !== this.loadedFor) this.load(id, tab);
+      else if (!this.badgeTimer) this.watchBadges(true);  // back on the same series: labels may have moved on
+    },
+    async load(id = Alpine.store("app").id, tab = Alpine.store("app").params.tab || "") {
       this.loadedFor = `${id}|${tab}`;
       this.error = "";
       // another series: drop the old one now, so the page shows "Loading…" instead of it until the new one is here
@@ -1233,25 +1246,20 @@ function seriesView() {
         return;
       }
       if (this.loadedFor !== `${id}|${tab}`) return;
-      const sameSeries = this.s?.id === s.id;
       Object.assign(this, { s, books, tab });
       this.watchBadges(true);
-      if (!sameSeries) {  // reloading the same series keeps "show more", tags, … as they were: no jumping
-        Object.assign(this, { showAllTags: false, showSpoilers: false, descOpen: false });
-      }
       document.title = s.title;
-      await this.$nextTick();
-      const d = this.$refs.desc;  // scrollHeight is the full text height, even while it's shortened
-      this.descLong = !!d && d.scrollHeight > parseFloat(getComputedStyle(d).lineHeight) * 6.5;
+      this.loads++;
     },
     reload() { this.loadedFor = null; this.load(); },
     /* back to where the series was opened from (the library keeps its place, search and filters);
        opened directly, there's no such page, so go to the library */
     back() {
-      const app = this.$store.app;
+      const app = Alpine.store("app");
       if (app.seriesBack) history.back();
       else location.replace("#/" + (app.query ? "?" + app.query : ""));
     },
+    get backLabel() { return Alpine.store("app").seriesBack ? "Back" : "Library"; },
     // the plugins' labels on the books (e.g. "Translated 12/40") stay live while the page is open:
     // asked every 3 s, every 30 s after a minute without a change; a load (e.g. after a plugin
     // button) makes it quick again. Nothing is asked while the tab is hidden or no plugin labels books.
@@ -1261,7 +1269,7 @@ function seriesView() {
       this.badgeTimer = setTimeout(() => this.pollBadges(), this.badgeSame >= 20 ? 30000 : 3000);
     },
     async pollBadges() {
-      const app = this.$store.app, key = this.loadedFor;
+      const app = Alpine.store("app"), key = this.loadedFor;
       this.badgeTimer = null;
       if (app.view !== "series" || !this.s) return;  // left the page: coming back starts it again
       if (document.hidden) return this.watchBadges();
@@ -1302,11 +1310,7 @@ function seriesView() {
       ].filter(([, v]) => v);
     },
     get genres() { return this.s.tags.filter((t) => t.kind === "genre"); },
-    get tagList() { return this.s.tags.filter((t) => t.kind !== "genre"); },
-    get visibleTags() {
-      return this.tagList.filter((t, i) => (this.showAllTags || i < 12) && (!t.spoiler || this.showSpoilers));
-    },
-    get spoilerCount() { return this.tagList.filter((t) => t.spoiler).length; },
+    get tagList() { return this.s.tags.filter((t) => t.kind !== "genre"); },  // the other tags (spoiler: t.spoiler)
     get matchLabel() {
       const s = this.s;
       return { auto: `Matched automatically · ${s.match_confidence ?? "?"}%`, manual: "Matched by you",
@@ -1316,13 +1320,13 @@ function seriesView() {
 
     async patch(body, reloadAfter = false) {
       await api(`/api/series/${this.s.id}`, { method: "PATCH", body });
-      this.$store.app.libraryDirty++;
+      Alpine.store("app").libraryDirty++;
       reloadAfter ? this.reload() : toast("Saved");
     },
+    // the reading status picked by hand (reading, completed, plan_to_read, on_hold, dropped); "" = automatic
     setStatus(v) { this.patch(v ? { reading_status: v } : { clear_reading_status: true }); },
-    /* ---- ⋯ menu and the reading mode dialog ---- */
-    menuOpen: false,
-    readerOpen: false,
+    statusLabels: STATUS_LABELS,
+    /* ---- the reading mode ---- */
     readerModes: [["", "Automatic", ""], ["paged", "Pages", "One page at a time, the next one on the right"],
       ["vertical", "Vertical", "Webtoons, long strips"]],
     get readerModeLabel() {
@@ -1338,36 +1342,36 @@ function seriesView() {
       return d.source === "series" ? "Its default (e.g. its library's), else Settings → Reader"
         : `${names[d.mode]} · ${d.why}`;
     },
-    async setReader(v) {
+    async setReadingMode(v) {  // "paged", "vertical", or "" for automatic
       await api(`/api/series/${this.s.id}`, { method: "PATCH", body: { reader_mode: v || "default" } });
       this.s.reader_mode = v || null;
       // what it comes to now (Automatic is worked out on the server)
       const fresh = await api(`/api/series/${this.s.id}`).catch(() => null);
       if (fresh) this.s.direction = fresh.direction;
-      this.readerOpen = false;
       toast(`Reading mode: ${this.readerModeLabel}`);
     },
-    async toggleFav() {  // flip at once, save in the background; nothing else on the page changes
+    async toggleFavorite() {  // flip at once, save in the background; nothing else on the page changes
       const on = !this.s.favorite;
       this.s.favorite = on;
       try {
         await api(`/api/series/${this.s.id}`, { method: "PATCH", body: { favorite: on } });
-        this.$store.app.libraryDirty++;
+        Alpine.store("app").libraryDirty++;
       } catch (e) {
         this.s.favorite = !on;
         toast(e.message, 6000, "error");
       }
     },
-    async refreshMeta(btn) {
-      btn.disabled = true;
-      btn.textContent = "Refreshing…";
+    refreshing: false,
+    async refreshMetadata() {
+      this.refreshing = true;
       try { await api(`/api/series/${this.s.id}/refresh`, { method: "POST" }); toast("Metadata refreshed"); this.reload(); }
-      catch (e) { toast(e.message, 6000, "error"); btn.disabled = false; btn.textContent = "Refresh metadata"; }
+      catch (e) { toast(e.message, 6000, "error"); }
+      finally { this.refreshing = false; }
     },
-    fixMatch() { this.$store.app.openFix(this.s.id, () => this.reload()); },
-    editInfo(tab = "info") { this.$store.app.openEdit(this.s.id, () => this.reload(), tab); },
+    fixMatch() { Alpine.store("app").openFix(this.s.id, () => this.reload()); },
+    edit(tab = "info") { Alpine.store("app").openEdit(this.s.id, () => this.reload(), tab); },  // "info" or "poster"
     actionBusy: "",  // plugin + key of the plugin button that is running (it can take a while)
-    async runAction(a) {
+    async runAction(a) {  // one of s.actions: a plugin's button
       if (a.confirm && !confirm(a.confirm)) return;
       this.actionBusy = a.plugin + a.key;
       try { await showActionResult(await api(`/api/series/${this.s.id}/actions/${a.plugin}/${a.key}`, { method: "POST" })); }
@@ -1376,62 +1380,59 @@ function seriesView() {
       this.reload();  // the plugin may have changed the status or its fields
     },
     choiceBusy: false,
-    async setChoice(c, v) {  // option values carry a "=" prefix, so an option may be "" itself
+    async setChoice(c, value) {  // one of s.choices (a plugin's dropdown) and one of its option values
       this.choiceBusy = true;
       try {
         await showActionResult(await api(`/api/series/${this.s.id}/choices/${c.plugin}/${c.key}`,
-          { method: "PUT", body: { value: v.slice(1) } }));
-        this.$store.app.libraryDirty++;
+          { method: "PUT", body: { value } }));
+        Alpine.store("app").libraryDirty++;
       } catch (e) { toast(e.message, 6000, "error"); }
       this.choiceBusy = false;
       this.reload();  // shows what was saved (or puts the old value back), and any status change
     },
-    setTab(t) { location.replace(`#/series/${this.s.id}${t ? "?tab=" + t : ""}`); },
+    setTab(t) { location.replace(`#/series/${this.s.id}${t ? "?tab=" + t : ""}`); },  // "" or "files"
 
     bookState(b) {
       if (b.error) return "";
       return (b.completed ? "Read" : b.page ? `Page ${b.page + 1} of ${b.page_count}` : `${b.page_count} pages`)
         + (b.duplicate ? " · duplicate" : "");
     },
-    async markAll(read) {
+    async markAll(read) {  // every book read (true) or unread (false, asks first)
       if (!read && !confirm("Clear progress for every book in this series? It will also be removed from Continue reading.")) return;
       await api(`/api/series/${this.s.id}/${read ? "mark-read" : "mark-unread"}`, { method: "POST" });
-      this.$store.app.libraryDirty++;
+      Alpine.store("app").libraryDirty++;
       this.reload();
     },
-    async toggleBook(b) {
+    async toggleBook(b) {  // one book read, or unread again
       await api(`/api/books/${b.id}/progress`, { method: "PUT",
         body: { page: b.completed ? 0 : b.page_count - 1, completed: !b.completed } });
-      this.$store.app.libraryDirty++;
+      Alpine.store("app").libraryDirty++;
       this.reload();
     },
-    // ✓↑ only helps when some book above this one is still unread; otherwise it is the same as Read.
+    // "Read up to here" only helps when some book before this one (its place in books) is still unread
     unreadBefore(i) {
       return this.books.slice(0, i).some((x) => !x.completed);
     },
-    async readUpTo(b) {
+    async readUpTo(b) {  // this book and every one before it read
       await api(`/api/series/${this.s.id}/mark-read?before_book=${b.id}`, { method: "POST" });
       await api(`/api/books/${b.id}/progress`, { method: "PUT", body: { page: 0, completed: true } });
-      this.$store.app.libraryDirty++;
+      Alpine.store("app").libraryDirty++;
       this.reload();
     },
+    bookProgress(b) { return b.page_count ? Math.round((b.page + 1) / b.page_count * 100) : 0; },  // % read
     /* ---- manual chapter numbers for one file (Files tab) ---- */
-    editing: null,
-    form: {},
-    startEdit(b) {
+    numbersForm(b) {  // the form's starting values: the owner's numbers, else the file name's
       const o = b.override, pick = (manual, auto) => (manual ?? auto ?? "");
-      this.form = {
+      return {
         volume: pick(o.volume, b.volume),
         chapter: pick(o.chapter, b.chapter),
         chapter_end: o.chapter !== null ? (o.chapter_end ?? "") : (b.chapter_end ?? ""),
         extra: o.extra ?? b.extra,
         hidden: b.hidden_by_owner,
       };
-      this.editing = b.id;
     },
-    async saveEdit(b) {
+    async saveNumbers(b, f) {  // true once saved (the list is re-ordered)
       const num = (v) => (v === "" || v === null ? null : +v);
-      const f = this.form;
       // only values that differ from what the file name says become manual overrides
       const chapterChanged = num(f.chapter) !== b.chapter || num(f.chapter_end) !== b.chapter_end;
       const body = {
@@ -1442,31 +1443,29 @@ function seriesView() {
         hidden: f.hidden,
       };
       if (body.chapter === null && chapterChanged && num(f.chapter_end) !== null) {
-        return toast("Enter the first chapter of the range");
+        toast("Enter the first chapter of the range");
+        return false;
       }
       try {
         await api(`/api/books/${b.id}`, { method: "PATCH", body });
-        this.editing = null;
         toast("Saved. The list is re-ordered.");
-        this.$store.app.libraryDirty++;
+        Alpine.store("app").libraryDirty++;
         this.reload();
-      } catch (e) { toast(e.message, 6000, "error"); }
+        return true;
+      } catch (e) { toast(e.message, 6000, "error"); return false; }
     },
-    async resetEdit(b) {
+    async resetNumbers(b) {  // back to the numbers from the file name
       await api(`/api/books/${b.id}`, { method: "PATCH", body: { reset: true } });
-      this.editing = null;
       toast("Back to the numbers from the file name");
       this.reload();
     },
 
     /* ---- the folder path: copy it (to paste into a file manager) ---- */
-    copied: false,
-    async copyPath() {
-      if (await copyText(this.s.host_path || this.s.folder_path)) {
-        this.copied = true;
-        clearTimeout(this.copiedTimer);
-        this.copiedTimer = setTimeout(() => { this.copied = false; }, 1600);
-      } else toast("Couldn't copy. Select the path and copy it by hand.", 5000, "error");
+    get path() { return this.s.host_path || this.s.folder_path; },  // on the NAS when known, else in Docker
+    async copyPath() {  // true when copied
+      if (await copyText(this.path)) return true;
+      toast("Couldn't copy. Select the path and copy it by hand.", 5000, "error");
+      return false;
     },
 
     /* ---- re-read this series' folder ---- */
@@ -1477,48 +1476,37 @@ function seriesView() {
         const r = await api(`/api/series/${this.s.id}/rescan`, { method: "POST" });
         if (r.removed) {
           toast("The series folder is gone, so the series was removed from the library");
-          this.$store.app.libraryDirty++;
+          Alpine.store("app").libraryDirty++;
           refreshAttentionCount();
           location.hash = "#/";
           return;
         }
         toast(`Rescanned: ${r.books} files` + (r.errors ? `, ${r.errors} with errors` : ""));
-        this.$store.app.libraryDirty++;
+        Alpine.store("app").libraryDirty++;
         refreshAttentionCount();
         this.reload();
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.rescanning = false; }
     },
-    /* ---- delete the series and its folder ---- */
-    del: { open: false, info: null, busy: false },
-    async openDelete() {
-      this.del = { open: true, info: null, busy: false };
-      try { this.del.info = await api(`/api/series/${this.s.id}/delete-info`); }
-      catch (e) { this.del.open = false; toast(e.message, 6000, "error"); }
+    /* ---- delete the series and its folder: ask deleteInfo() first and show it, then delete() ---- */
+    async deleteInfo() {  // { folder, files, size, can_delete, reason }, or null (an error was shown)
+      try { return await api(`/api/series/${this.s.id}/delete-info`); }
+      catch (e) { toast(e.message, 6000, "error"); return null; }
     },
-    closeDelete() { if (!this.del.busy) this.del.open = false; },
-    async confirmDelete() {
-      this.del.busy = true;
+    async delete() {  // true once deleted (the app goes back to the library)
+      const title = this.s.title;
       try {
         await api(`/api/series/${this.s.id}`, { method: "DELETE" });
-        toast(`Deleted: ${this.s.title}`);
-        this.del = { open: false, info: null, busy: false };
-        this.$store.app.libraryDirty++;
+        toast(`Deleted: ${title}`);
+        Alpine.store("app").libraryDirty++;
         refreshAttentionCount();
         location.hash = "#/";
+        return true;
       } catch (e) {
         toast(e.message, 8000, "error");
-        this.del.busy = false;
-        this.del.open = false;
         this.reload();  // a partial delete: show what is left
+        return false;
       }
     },
-    sizeText(n) {
-      return n >= 1073741824 ? (n / 1073741824).toFixed(1) + " GB"
-        : n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.ceil(n / 1024) + " KB";
-    },
-    progressPct(b) { return b.page_count ? Math.round((b.page + 1) / b.page_count * 100) : 0; },
-    mb(n) { return (n / 1048576).toFixed(1) + " MB"; },
-    n(v) { return v === null || v === undefined ? "–" : v; },
   };
 }
 

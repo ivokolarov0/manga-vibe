@@ -51,6 +51,8 @@ register(Job("library-query", "Library filters and sorting", required=True,
 # "Replacing a view".
 register(Job("view:card", "Series cards", required=True,
              description="How a series looks in the library grid, its list view and Continue reading"))
+register(Job("view:series", "Series page", required=True,
+             description="The page a series opens on, drawn from MangaVibe.series"))
 
 
 def job_label(key: str) -> str:

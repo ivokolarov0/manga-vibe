@@ -461,7 +461,8 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `reader.state()`, `.step(forward)`, `.goTo(page)`, `.openBook(which, page)`, `.setMode(mode)`, `.options(open)`, `.overlay(plugin, on)`, `.press(plugin, key)`, `.leave()`, `.refresh()` | the reader from a script, doing what its own buttons do (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
 | `screenCommand(pluginId, name, spec, fn)` | something the page can do for an assistant or voice control (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
 | `reloadSettings()` | load the settings again and show them, after they changed elsewhere. Plugin API 13 |
-| `ui.*` | to show things as the app does, in your markup or a view: `ui.cardSub(s)` ("Reading · 3/10"), `ui.updated(s)`, `ui.ago(ms)`, `ui.status(st)`, `ui.publication(p)`, `ui.kind(s)` ("Manhwa"), `ui.scoreCls(n)`, `ui.haveText(c)`, `ui.editionText(c)`, `ui.icon(name)`, `ui.libraryUrl(params)`. Plugin API 17 |
+| `ui.*` | to show things as the app does, in your markup or a view: `ui.cardSub(s)` ("Reading · 3/10"), `ui.updated(s)`, `ui.ago(ms)`, `ui.status(st)`, `ui.publication(p)`, `ui.kind(s)` ("Manhwa"), `ui.scoreCls(n)`, `ui.haveText(c)`, `ui.editionText(c)`, `ui.icon(name)`, `ui.libraryUrl(params)`. Plugin API 17. And `ui.fileSize(bytes)`, `ui.number(v)` ("–" for none), `ui.text(description)` (as HTML, escaped). Plugin API 18 |
+| `series` | the series page's data and actions: see [The view:series job](#the-viewseries-job). Plugin API 18 |
 
 **Events** (`MangaVibe.on(pluginId, event, fn)`). `fn` may be async unless it says otherwise.
 
@@ -805,6 +806,43 @@ which opens the series and does the library's multi-select (hold a card). It get
 
 It must keep **`{{ slot("card-badges") }}`** in the poster, in both layouts. It may leave out the list
 view's details.
+
+#### The view:series job
+
+Plugin API 18. The page a series opens on. Built in: "Series page" (`app/plugins/builtin/series_page/`):
+its markup `templates/views/series.html` (blocks `head`, `about`, `details`, `side`, `tags`, `books`) and
+its component `seriesPage()` in `series_page.js`, which keeps only what's open on screen.
+
+**Your `templates/views/series.html` is what's inside the page's `<section class="view series-view">`.**
+It only draws: the series, its books and everything the page does are **`MangaVibe.series`**, an Alpine
+store (`$store.series` in markup). It loads the series the address shows (`#/series/<id>`, `?tab=files`)
+by itself, again after the reader closes, and keeps the plugins' book labels up to date while the page is
+open. A page that only extends the built-in one gets `seriesPage()` too: its script is always loaded.
+
+| `MangaVibe.series.` | |
+|---|---|
+| `s`, `books`, `tab`, `error` | the series (`GET /api/series/<id>`), its books in reading order (on the Files tab every file), `""` or `"files"`, and why the page can't show (e.g. a locked library) |
+| `loads` | +1 after each load: watch it to do something with the new series (e.g. measure its text) |
+| `alt`, `facts`, `details`, `genres`, `tagList`, `matchLabel` | ready to show: other titles, `[year, "★ 92%", status, kind]`, `[[label, value]]` (the plugins' `series-info` rows and fields included), the genres and the other tags (`spoiler`), the metadata state |
+| `back()`, `backLabel` | back to where it was opened from, and what to call it ("Back" / "Library") |
+| `setStatus(v)`, `statusLabels` | the reading status picked by hand (`""`: automatic) |
+| `toggleFavorite()` | |
+| `setReadingMode(v)`, `readerModes`, `readerModeLabel`, `autoHint` | `"paged"`, `"vertical"`, `""` (automatic) |
+| `setChoice(choice, value)`, `choiceBusy` | a plugin's dropdown (`s.choices`) |
+| `runAction(action)`, `actionBusy` | a plugin's button (`s.actions`) |
+| `edit(tab)`, `fixMatch()`, `refreshMetadata()`, `refreshing` | the Edit dialog (`"info"`, `"poster"`), Fix match, refresh from the metadata site |
+| `markAll(read)`, `toggleBook(book)`, `readUpTo(book)`, `unreadBefore(i)`, `bookState(book)`, `bookProgress(book)` | reading: every book, one book, a book and the ones before it; "Page 5 of 20"; % read |
+| `setTab(t)` | `""` or `"files"` |
+| `numbersForm(book)`, `saveNumbers(book, form)`, `resetNumbers(book)` | a file's own volume and chapter numbers (Files tab): the form's values, save them (`true` when saved), back to the file name's |
+| `path`, `copyPath()` | the folder (on the NAS when known), copied to the clipboard (`true` when copied) |
+| `rescan()`, `rescanning` | read the folder again |
+| `deleteInfo()`, `delete()` | what deleting would remove (`{ folder, files, size, can_delete, reason }`), then delete the series and its folder: show the first and ask before the second |
+| `reload()` | load it again |
+
+The page **must keep the slots** `series-actions`, `series-menu`, `series-panels`, `series-end` and
+`book-row` (`b` is the book there), and should show the plugins' `s.choices`, `s.actions`, the `details`
+rows and the books' `badges`, or say in its description that it leaves some out. Hide what only admins may
+do unless `$store.app.admin`. It may lay the page out any way it likes.
 
 ## Styling: plugins and your own custom.css
 
