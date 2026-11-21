@@ -123,7 +123,7 @@ itself; what needs care when adding a feature:
 
 ## The online demo
 
-[The demo](https://ivokolarov0.github.io/manga-vibe.github.io/) is static files on GitHub Pages, with no
+[The demo](https://ivokolarov0.github.io/manga-vibe/) is static files on GitHub Pages, with no
 server behind it, made by the app itself so it never has to be kept in step by hand:
 
 ```mermaid
@@ -146,6 +146,6 @@ Build and try it locally: `python demo/build.py` writes `demo/site/` (git-ignore
 under a path like Pages does (the worker reads its base from its scope), e.g. copy `demo/site` to
 `srv/demo/`, run `python -m http.server -d srv` and open `http://localhost:8000/demo/`.
 
-It's published from [manga-vibe.github.io](https://github.com/ivokolarov0/manga-vibe.github.io): its
-workflow builds the latest release every 6 hours when there's a new one (or by hand, from any branch or
-tag). If a change makes the build fail (an API the build uses changed), fix `demo/build.py` with it.
+`.github/workflows/demo.yml` builds and publishes it (GitHub Pages, source: GitHub Actions) whenever a
+release is published, so the demo shows the newest release; run it by hand to publish a branch or tag.
+If a change makes the build fail (an API the build uses changed), fix `demo/build.py` with it.

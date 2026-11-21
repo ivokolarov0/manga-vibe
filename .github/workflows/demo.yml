@@ -1,0 +1,56 @@
+# Builds the online demo and publishes it on GitHub Pages: https://ivokolarov0.github.io/manga-vibe/
+#
+# The demo is made by the app itself (demo/build.py, see docs/developers.md "The online demo"): it runs
+# MangaVibe on a made-up library and records the page and its answers, so each release's demo is that
+# release's interface. Runs when a release is published (not pre-releases), or by hand (Actions → Demo →
+# Run workflow) from any branch or tag.
+#
+# Needs Settings → Pages → Source: GitHub Actions.
+name: Demo
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name != 'release' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Build the demo
+        run: |
+          pip install -r requirements.txt
+          python demo/build.py site
+          echo "${{ github.event.release.tag_name || github.ref_name }}" > site/version.txt
+          echo "Built from ${{ github.event.release.tag_name || github.ref_name }} ($(git rev-parse --short HEAD))" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
