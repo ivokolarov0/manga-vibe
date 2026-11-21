@@ -53,7 +53,10 @@ app/plugins/builtin/    plugins that come with the app: AniList, MangaUpdates, s
                         accounts/ (logins, AccountsGuard; off until switched on)
 app/updater.py          auto-update from the newest GitHub release
 app/images.py           thumbnails, resized page cache
-app/web/index.html      the page: Alpine templates for every view
+app/web/templates/      the page, as Jinja templates of Alpine markup (see "The page" below): page.html
+                        includes shell/ (icons, top bar, banners, toasts), views/ (library, continue,
+                        series, settings), settings/ (one file per section), sheets/, dialogs/;
+                        ui/macros.html holds the pieces used in several places
 app/web/static/css/     styles: main.css imports one file per feature (CSS layers)
 app/web/static/js/      app.js (Alpine data), reader.js (plain-JS reader), common.js,
                         vendor/alpine.min.js
@@ -62,6 +65,25 @@ android/                the Android app: MangaVibe in a fullscreen WebView (andr
 examples/plugins/       example plugins
 docker/entrypoint.sh    container start script
 ```
+
+## The page
+
+The app is one page, put together on the server from Jinja templates in `app/web/templates/` each time
+it loads (`render_index()` in `app/plugins/web.py`), and run in the browser by Alpine.js (`app.js`).
+Jinja only joins the files; everything that moves is Alpine. The two don't clash: Alpine never uses
+`{{ }}`, so in a template `{{ … }}` and `{% … %}` are always Jinja.
+
+- **`page.html`** is the page. It includes the rest: `shell/` (icons, top bar, banners, toasts),
+  `views/` (one file per view), `settings/` (one per Settings section), `sheets/` and `dialogs/`. Its
+  `{% block %}`s (library, series, settings, sheets…) are where a plugin will replace a part (#205).
+- **Markup used in more than one place is a macro** in `ui/macros.html` (`setting_rows(rows)`,
+  `meta_progress()`): `{% from "ui/macros.html" import setting_rows %}`, then `{{ setting_rows("rows.reader") }}`.
+- **Plugins' slots are `{{ slot("series-panels") }}`.** The name must be in `SLOTS`
+  (`app/plugins/web.py`), or the page fails to render (and its test with it).
+- **Autoescape is on** and a misspelt name is an error (`StrictUndefined`), so a template mistake shows up
+  in the tests, not as an empty place in the page. Templates are compiled once and reloaded when a file
+  changes, so an edit shows on the next page load.
+- A new template has to be included somewhere: a test fails on a file nobody uses.
 
 ## New features and remote control
 

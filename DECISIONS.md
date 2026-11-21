@@ -945,3 +945,27 @@ Plugin API version, and the app works after every one.
   switch the culprit off. `main.css` imports `/custom.css`, so the page can't leave plugin CSS out by
   itself: the safe page sets a session cookie that `/custom.css` reads (and leaves out custom.css too),
   and the normal page clears it.
+
+### The page from Jinja templates (issue #213)
+
+- **Jinja2, on the server only.** The page was one 1600-line `index.html` with `<!-- part:x -->` and
+  `<!-- slot:x -->` comments replaced as strings. Replacing a view (#205) needs blocks, includes and
+  pieces with arguments; Jinja is Python's Blade (`extends`, `block`, `include`, macros), Starlette
+  knows it, and it's one small dependency. No template engine in the browser (Handlebars and the
+  like): Alpine already draws there, a second one would be two ways to do the same thing.
+- **No clash with Alpine**: Alpine uses `x-text` and `:attr`, never `{{ }}` (the markup had none), so
+  in a template `{{ }}` is always Jinja.
+- **Split by what will be replaced**: `page.html` includes `shell/`, `views/` (one per view),
+  `settings/` (one per section), `sheets/`, `dialogs/`; its regions are `{% block %}`s. The two parts
+  became macros in `ui/macros.html` (`setting_rows(rows)` takes the list, so the three copies of the
+  `<template x-for>` around it went too).
+- **Slots are a function**, `slot("name")`: a name not in `SLOTS` is an error, so a typo fails the page
+  and its test instead of leaving a slot nobody fills. A plugin's own markup isn't a template (its
+  `{{` stays text, and a plugin can't run code in the page's templates through it); a slot it holds for
+  others stays a `<!-- slot:x -->` comment, filled one level deep as before.
+- **Strict**: autoescape on (plugin markup goes in as `Markup`), `StrictUndefined`, a test that every
+  template is used. Compiled once, reloaded when a file's time changes.
+- **The same page**: the rendered page was compared with the old one with every built-in plugin on;
+  apart from comments and line breaks it's identical. Plugin templates (a view plugin extending a
+  built-in view and changing one block) come with the views, #205, since which plugin's template is
+  used depends on which plugin does the view's job.

@@ -1,4 +1,5 @@
-/* MangaVibe UI with Alpine.js (https://alpinejs.dev). The markup lives in index.html;
+/* MangaVibe UI with Alpine.js (https://alpinejs.dev). The markup lives in the Jinja templates in
+   app/web/templates (page.html first);
    this file holds the data and actions. The reader is plain JS in reader.js.
 
    Routes use the URL hash:
@@ -40,7 +41,7 @@ function lengthLabel(p, unit) {
 // first-letter filter (letter=B); "#" is everything else: numbers, symbols, other scripts
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Completed"],
-  ["plan_to_read", "Plan to read"], ["fav", "Favorites"]];  // Favorites gets a star icon (index.html)
+  ["plan_to_read", "Plan to read"], ["fav", "Favorites"]];  // Favorites gets a star icon (templates/views/library.html)
 const ATT_TABS = [
   ["unreadable", "Errors", "These files could not be opened. The message says why."],
   ["matches", "Missing metadata", "No confident match was found online. Pick the right one, or open Fix match."],
@@ -1637,7 +1638,7 @@ function attentionView() {
 /* ---------------- settings ---------------- */
 
 // Settings' own pages; plugins add theirs to $store.app.settingsNav (e.g. libraries: Libraries, first)
-// The icon is the name of one in the sprite (index.html); a plugin may also give any character.
+// The icon is the name of one in the sprite (templates/shell/icons.html); a plugin may also give any character.
 const SETTINGS_NAV = [["library", "Library folders", "folder"], ["display", "Display", "palette"],
   ["reader", "Reader", "book-open"], ["metadata", "Metadata", "tag"], ["plugins", "Plugins", "blocks"],
   ["updates", "Updates", "download"]];
@@ -1724,7 +1725,7 @@ if (ANDROID) SETTINGS_NAV.splice(2, 0, ["app", "Android app", "phone"]);
 
 // Settings → Plugins: what each viewer picked (category, source, status, built-ins unfolded)
 const PLUGIN_VIEW_KEY = "plugins-view";
-// names of icons in the sprite (index.html), shown with navIcon()
+// names of icons in the sprite (templates/shell/icons.html), shown with navIcon()
 const PLUGIN_CAT_ICONS = { metadata: "tag", reader: "book-open", library: "books", system: "settings",
   appearance: "palette", other: "blocks" };
 function loadPluginView() {

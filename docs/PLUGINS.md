@@ -428,6 +428,11 @@ Settings. Plugin API 11.
 
 More slots are added as more of the app becomes plugins.
 
+The page itself is put together from Jinja templates (`app/web/templates/`), where a slot is
+`{{ slot("series-panels") }}`. **A plugin's `html` isn't a template**: it goes into the page as it is, so
+`{{` or `{%` in it stays text. To hold a slot for other plugins in your own markup, write
+`<!-- slot:<name> -->` there (as the accounts plugin does for `account-row`).
+
 **Dialogs and sheets.** Give a `.modal` or `.sheet` of your own `x-dialog="<how to close it>"`, e.g.
 `<div class="modal" x-show="$store.notes.open" x-dialog="$store.notes.open = false">`. A click on the
 backdrop, Escape and the Android app's back button then close it, like the app's own.
@@ -705,7 +710,7 @@ set it too if your accent needs the other.
 
 ### Icons
 
-The app's line icons are in one SVG sprite at the top of `index.html`. In your HTML:
+The app's line icons are in one SVG sprite at the top of the page (`app/web/templates/shell/icons.html`). In your HTML:
 
 ```html
 <button class="btn small"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>Favorite</button>

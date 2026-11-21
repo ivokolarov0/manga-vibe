@@ -1,0 +1,40 @@
+        <!-- library folders -->
+        <section x-show="section === 'library'">
+          <h2>Library folders</h2>
+          <template x-for="l in libs" :key="l.id">
+            <div class="lib-card" :class="{ missing: !l.available }">
+              <div class="libcard-head">
+                <span class="libcard-icon" aria-hidden="true"><svg class="ic"><use href="#i-folder"/></svg></span>
+                <div class="libcard-title">
+                  <strong x-text="l.name"></strong>
+                  <small x-text="l.root_path + ' · ' + l.series + ' series' + (l.available ? '' : ' · not found, check the volume mount')"></small>
+                  <small class="scan-progress" x-show="libScanText(l)" x-text="libScanText(l)"></small>
+                </div>
+                <div class="row-buttons">
+                  <button class="btn small" :disabled="!!scan.running" @click="rescan(l)"
+                          :title="scan.running ? 'A scan is running' : 'Scan only this folder'"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Scan</button>
+                  <button class="btn small danger" @click="removeLibrary(l)">Remove</button>
+                </div>
+              </div>
+              <!-- what plugins add for each folder (they can use l), e.g. its library -->
+              {{ slot("folder-row") }}
+              <label class="lib-option">
+                <span class="lib-option-text"><span>Path outside Docker</span>
+                  <small>What <code x-text="l.root_path"></code> is on your NAS or computer, e.g.
+                    <code class="ex">/volume1/manga</code> or <code class="ex">\\NAS\manga</code>. The series page shows and copies it.</small></span>
+                <input type="text" class="host-path" :value="l.host_path || ''" placeholder="/volume1/manga"
+                       spellcheck="false" autocomplete="off" @change="setLibraryHostPath(l, $event.target.value)"
+                       @keydown.enter="$event.target.blur()" :aria-label="'Path outside Docker for ' + l.name"></label>
+            </div>
+          </template>
+          <div class="setting-row">
+            <div class="label"><span>Add a folder</span>
+              <small>Only folders mounted in the container are visible (e.g. /library2).</small></div>
+            <button class="btn small primary" @click="$store.app.folderPicker = true"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Add folder</button>
+          </div>
+          <div class="setting-row">
+            <div class="label"><span x-text="scanText || 'Scan for new files'"></span>
+              <small>Runs by itself every 6 hours and on start.</small></div>
+            <button class="btn small" :class="{ busy: !!scan.running }" :disabled="!!scan.running" @click="rescan()">Rescan all</button>
+          </div>
+        </section>

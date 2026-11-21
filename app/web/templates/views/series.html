@@ -1,0 +1,299 @@
+    <!-- ============ series page ============ -->
+    <section class="view series-view" x-data="seriesView()" x-show="$store.app.view === 'series'" x-cloak>
+      <template x-if="s">
+        <div>
+          <div class="sp-banner" x-show="s.banner_url" :style="s.banner_url && `background-image:url('${s.banner_url}')`"></div>
+          <button class="sp-back" @click="back()">
+            <svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg>
+            <span x-text="$store.app.seriesBack ? 'Back' : 'Library'"></span></button>
+          <div class="sp">
+            <button class="sp-poster" title="Change poster" @click="editInfo('poster')"><img :src="s.poster_large" alt="">
+              <span class="poster-hint"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>Poster</span></button>
+            <header class="sp-head">
+              <h1 x-text="s.title"></h1>
+              <div class="alt-titles" x-show="alt.length" x-text="alt.join(' · ')"></div>
+              <!-- the score is "★ 92%": the star is drawn as an icon -->
+              <div class="sp-facts" x-show="facts.length"><template x-for="f in facts">
+                <span><svg class="ic" x-show="String(f).startsWith('★')" aria-hidden="true"><use href="#i-star"/></svg><span x-text="String(f).replace(/^★ /, '')"></span></span>
+              </template></div>
+              <div class="chips">
+                <span class="chip" x-text="s.book_count + ' books'"></span>
+                <span class="chip" x-text="s.unread_count + ' unread'"></span>
+                <span class="chip warn" x-show="s.has_duplicates">Duplicates</span>
+              </div>
+            </header>
+            <div class="sp-tools">
+              <button class="icon-btn star" :class="{ on: s.favorite }" @click="toggleFav()"
+                      :title="s.favorite ? 'Remove from favorites' : 'Add to favorites'"
+                      :aria-label="s.favorite ? 'Remove from favorites' : 'Add to favorites'"
+                      :aria-pressed="s.favorite">
+                <svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>
+              </button>
+              <button class="btn small" id="edit-series" x-show="$store.app.admin" @click="editInfo()">
+                <svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>Edit</button>
+              <!-- reading mode, rescan, match, delete: admins (with accounts) -->
+              <div class="menu" x-show="$store.app.admin" @click.outside="menuOpen = false" @keydown.escape="menuOpen = false">
+                <button class="icon-btn" aria-label="More" title="More" @click="menuOpen = !menuOpen">
+                  <svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg>
+                </button>
+                <div class="menu-pop" x-show="menuOpen" x-transition.opacity x-cloak>
+                  <button @click="menuOpen = false; readerOpen = true">
+                    <svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>Reading mode…
+                    <small x-text="readerModeLabel"></small></button>
+                  <button @click="menuOpen = false; rescan()">
+                    <svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Rescan this series</button>
+                  <button @click="menuOpen = false; fixMatch()">
+                    <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>Fix match…</button>
+                  {{ slot("series-menu") }}
+                  <button class="danger" @click="menuOpen = false; openDelete()">
+                    <svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Delete series…</button>
+                </div>
+              </div>
+            </div>
+            <div class="sp-actions">
+              <template x-if="s.continue">
+                <a class="btn primary ctl" :href="`#/read/${s.continue.book_id}?page=${s.continue.page}`"
+                   :title="`${s.continue.started ? 'Continue' : 'Start'} · ${s.continue.label}`">
+                  <svg class="ic fill" aria-hidden="true"><use href="#i-play"/></svg>
+                  <span class="ellipsis" x-text="`${s.continue.started ? 'Continue' : 'Start'} · ${s.continue.label}`"></span></a>
+              </template>
+              <span class="btn ctl disabled" x-show="!s.continue"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>All read</span>
+              <select class="ctl" aria-label="Reading status" @change="setStatus($event.target.value)">
+                <option value="" :selected="!s.manual_reading_status" x-text="'Status: ' + statusLabels[s.reading_status] + ' (auto)'"></option>
+                <template x-for="k in ['reading', 'completed', 'plan_to_read', 'on_hold', 'dropped']">
+                  <option :value="k" :selected="s.manual_reading_status === k" x-text="statusLabels[k]"></option>
+                </template>
+              </select>
+              <!-- plugin dropdowns, e.g. the status on MyAnimeList -->
+              <template x-for="c in $store.app.admin ? s.choices : []" :key="c.plugin + '/' + c.key">
+                <select class="ctl" :aria-label="c.label" :disabled="choiceBusy" @change="setChoice(c, $event.target.value)">
+                  <option value="" disabled hidden :selected="c.value === null" x-text="c.label + ': unknown'"></option>
+                  <template x-for="[v, label] in c.options" :key="v">
+                    <option :value="'=' + v" :selected="c.value === v"
+                            x-text="(c.value === v ? c.label + ': ' : '') + label"></option>
+                  </template>
+                </select>
+              </template>
+              {{ slot("series-actions") }}
+            </div>
+
+            <!-- reading mode for this series (from the ⋯ menu) -->
+            <div class="modal" x-show="readerOpen" x-cloak x-dialog="readerOpen = false">
+              <div class="small-dialog">
+                <div class="sheet-head"><b>Reading mode</b>
+                  <button class="btn small" @click="readerOpen = false">Close</button></div>
+                <p class="muted">Only for this series. “Automatic” follows its library (Settings → Libraries),
+                  else Settings → Reader.</p>
+                <div class="options" role="radiogroup" aria-label="Reading mode">
+                  <template x-for="[v, label, hint] in readerModes" :key="v">
+                    <button role="radio" :aria-checked="(s.reader_mode || '') === v"
+                            :class="{ on: (s.reader_mode || '') === v }" @click="setReader(v)">
+                      <span class="radio" aria-hidden="true"></span>
+                      <span class="text"><span x-text="label"></span><small x-text="v ? hint : autoHint"></small></span>
+                    </button>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- delete the series and its folder (from the ⋯ menu) -->
+            <div class="modal" x-show="del.open" x-cloak x-dialog="closeDelete()">
+              <div class="small-dialog delete-dialog">
+                <div class="sheet-head"><b>Delete series</b>
+                  <button class="btn small" :disabled="del.busy" @click="closeDelete()">Cancel</button></div>
+                <p class="muted" x-show="!del.info">Checking the folder…</p>
+                <template x-if="del.info">
+                  <div>
+                    <p>Deletes <b x-text="s.title"></b> from the drive and from MangaVibe:</p>
+                    <ul class="delete-what">
+                      <li>the folder <code class="break" x-text="del.info.folder"></code></li>
+                      <li x-text="`${del.info.files} files, ${sizeText(del.info.size)}`"></li>
+                      <li>its reading progress, metadata and poster</li>
+                    </ul>
+                    <p class="err" x-show="!del.info.can_delete" x-text="del.info.reason"></p>
+                    <p x-show="del.info.can_delete"><b>This can't be undone.</b> The files don't go to a recycle bin.</p>
+                    <div class="btn-row">
+                      <button class="btn danger" :class="{ busy: del.busy }" :disabled="!del.info.can_delete || del.busy"
+                              @click="confirmDelete()" x-text="del.busy ? 'Deleting…' : 'Delete series and files'"></button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <div class="sp-main">
+              <section class="panel wide about-panel" x-show="s.description || s.synonyms.length">
+                <h2>About</h2>
+                <div class="desc" :class="{ clamp: descLong && !descOpen }" x-ref="desc" x-html="formatText(s.description || 'No description.')"></div>
+                <button class="link-btn" x-show="descLong" @click="descOpen = !descOpen" x-text="descOpen ? 'Show less' : 'Show more'"></button>
+                <details class="other-titles" x-show="s.synonyms.length">
+                  <summary class="muted" x-text="`Other titles (${s.synonyms.length})`"></summary>
+                  <div class="muted" x-text="s.synonyms.join(' · ')"></div>
+                </details>
+              </section>
+
+              <section class="panel">
+                <h2>Details</h2>
+                <div class="meta-grid">
+                  <template x-for="[k, v] in details" :key="k">
+                    <div style="display:contents"><b x-text="k"></b><span class="pre" :class="{ 'muted break': k === 'Folder' }" x-text="v"></span></div>
+                  </template>
+                </div>
+              </section>
+
+              <div class="stack">
+                <section class="panel" x-show="s.links.length">
+                  <h2>Links</h2>
+                  <div class="links">
+                    <template x-for="l in s.links" :key="l.id">
+                      <a :href="l.url" target="_blank" rel="noopener noreferrer">
+                        <img class="site-icon" :src="'/api/links/' + l.id + '/icon'" alt="" loading="lazy" @error="$el.remove()">
+                        <span x-text="l.site"></span><svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
+                    </template>
+                  </div>
+                </section>
+                <section class="panel">
+                  <h2>Metadata</h2>
+                  <div class="chips"><span class="chip" :class="'match-' + s.match_status" x-text="matchLabel"></span></div>
+                  <p class="muted" x-show="s.metadata_source">
+                    Source: <span x-text="$store.app.providerName(s.metadata_source?.provider)"></span>
+                    <span x-show="s.metadata_source?.retry_primary"> (AniList will be tried again when it's back online)</span>
+                  </p>
+                  <div class="btn-row" x-show="$store.app.admin">
+                    <button class="btn" @click="fixMatch()">Fix match</button>
+                    <button class="btn" x-show="s.metadata_source" @click="refreshMeta($el)">Refresh metadata</button>
+                  </div>
+                </section>
+                <section class="panel">
+                  <h2>Folder</h2>
+                  <div class="path-field">
+                    <svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg>
+                    <code class="path" x-text="s.host_path || s.folder_path"
+                          :title="s.host_path ? s.host_path + '\n(in Docker: ' + s.folder_path + ')' : s.folder_path"></code>
+                    <button class="copy" :class="{ done: copied }" @click="copyPath()"
+                            :aria-label="copied ? 'Copied' : 'Copy path'" :title="copied ? 'Copied' : 'Copy path'">
+                      <svg x-show="!copied" class="ic" aria-hidden="true"><use href="#i-copy"/></svg>
+                      <svg x-show="copied" x-cloak class="ic" aria-hidden="true"><use href="#i-check"/></svg>
+                      <span x-text="copied ? 'Copied' : 'Copy'"></span>
+                    </button>
+                  </div>
+                  <p class="muted path-hint" x-show="!s.host_path">This is the path inside Docker. To see the one on your
+                    NAS, set <a href="#/settings/library">Path outside Docker</a> for its library folder.</p>
+                  <div class="btn-row" x-show="$store.app.admin">
+                    <button class="btn" :class="{ busy: rescanning }" :disabled="rescanning" @click="rescan()">
+                      <svg class="ic" x-show="!rescanning" aria-hidden="true"><use href="#i-refresh"/></svg>
+                      <span x-text="rescanning ? 'Rescanning…' : 'Rescan this series'"></span></button>
+                  </div>
+                </section>
+                <section class="panel" x-show="s.actions.length && $store.app.admin">
+                  <h2>Plugin tools</h2>
+                  <div class="btn-row">
+                    <template x-for="a in s.actions"><button class="btn" :class="{ busy: actionBusy === a.plugin + a.key }"
+                      :disabled="actionBusy === a.plugin + a.key" @click="runAction(a)" x-text="a.label"></button></template>
+                  </div>
+                </section>
+                {{ slot("series-panels") }}
+              </div>
+
+              <section class="panel wide" x-show="s.tags.length">
+                <h2>Genres &amp; tags</h2>
+                <template x-if="genres.length">
+                  <div><h3>Genres</h3><div class="chips">
+                    <template x-for="t in genres"><a class="chip tag" :href="tagUrl(t.name)" x-text="t.name"></a></template>
+                  </div></div>
+                </template>
+                <template x-if="tagList.length">
+                  <div><h3>Tags</h3><div class="chips">
+                    <template x-for="t in visibleTags" :key="t.name">
+                      <a class="chip tag" :class="{ spoiler: t.spoiler }" :href="tagUrl(t.name)" x-text="t.name"></a>
+                    </template>
+                    <button class="link-btn" x-show="!showAllTags && tagList.length > 12" @click="showAllTags = true"
+                            x-text="`+${tagList.length - 12} more`"></button>
+                    <button class="link-btn" x-show="spoilerCount && !showSpoilers" @click="showSpoilers = true; showAllTags = true"
+                            x-text="`Show ${spoilerCount} spoiler tag${spoilerCount > 1 ? 's' : ''}`"></button>
+                  </div></div>
+                </template>
+              </section>
+
+              <section class="panel wide books-panel">
+                <div class="tabs">
+                  <button :class="{ active: tab !== 'files' }" @click="setTab('')">Books <span class="count" x-text="s.book_count"></span></button>
+                  <button :class="{ active: tab === 'files' }" @click="setTab('files')">Files</button>
+                </div>
+
+                <div x-show="tab !== 'files'">
+                  <div class="row">
+                    <button class="btn small" @click="markAll(true)">
+                      <svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg>Mark all read</button>
+                    <button class="btn small" @click="markAll(false)">
+                      <svg class="ic" aria-hidden="true"><use href="#i-circle"/></svg>Mark all unread</button>
+                  </div>
+                  <ul class="books">
+                    <template x-for="(b, i) in books" :key="b.id">
+                      <li class="book" :class="{ read: b.completed, reading: !b.completed && b.page > 0 }">
+                        <a class="thumb" :href="'#/read/' + b.id"><img :src="b.thumbnail" loading="lazy" alt="">
+                          <span class="done-mark" x-show="b.completed"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span></a>
+                        <a class="info" :href="'#/read/' + b.id">
+                          <div class="label"><span x-text="b.label"></span>
+                            <span class="manual-mark" x-show="b.manual" title="Numbers set by you"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg></span>
+                            <template x-for="g in b.badges || []"><span class="book-badge" :title="g.name" x-text="g.text"></span></template></div>
+                          <div class="err" x-show="b.error" x-text="b.error"></div>
+                          <div class="meta" x-show="!b.error" x-text="bookState(b)"></div>
+                          <div class="book-progress" x-show="!b.completed && b.page > 0"><i :style="`width:${progressPct(b)}%`"></i></div>
+                        </a>
+                        {{ slot("book-row") }}
+                        <button class="btn small" title="Mark this and all previous as read"
+                                aria-label="Mark this and all previous as read" @click="readUpTo(b)"
+                          :style="{ visibility: unreadBefore(i) ? 'visible' : 'hidden' }"><svg class="ic" aria-hidden="true"><use href="#i-check-up"/></svg></button>
+                        <button class="btn small" @click="toggleBook(b)" x-text="b.completed ? 'Unread' : 'Read'"></button>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+
+                <div x-show="tab === 'files'">
+                  <p class="muted">Every file in the series folder, in reading order. Faded rows are older revisions or
+                    hidden. Use <b>Edit</b> when a file name has the wrong number or holds several chapters: your numbers
+                    re-order the list. The files themselves are never changed.</p>
+                  <table class="files"><tbody>
+                    <template x-for="b in books" :key="b.id">
+                      <tr :class="{ 'hidden-row': b.hidden }">
+                        <td x-text="b.sort_index"></td>
+                        <td>
+                          <div class="file-head">
+                            <div class="fname" x-text="b.file_name"></div>
+                            <button class="btn small" x-show="editing !== b.id" @click="startEdit(b)">Edit</button>
+                          </div>
+                          <span class="chip manual-chip" x-show="b.manual"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>manual</span>
+                          <div class="muted" x-text="`${b.label} · vol ${n(b.volume)} · ch ${n(b.chapter)}${b.chapter_end ? '–' + b.chapter_end : ''}${b.extra ? ' · extra' : ''} · rev ${b.revision} · ${mb(b.file_size)}`"></div>
+                          <div class="muted" x-show="b.hidden">Hidden (older revision)</div>
+                          <div class="err" x-show="b.duplicate">Duplicate of another file with the same number</div>
+                          <div class="err" x-show="b.error" x-text="b.error"></div>
+                          <form class="override-form" x-show="editing === b.id" @submit.prevent="saveEdit(b)">
+                            <label>Volume <input type="number" step="any" min="0" x-model="form.volume" placeholder="–"></label>
+                            <label>Chapter <input type="number" step="any" min="0" x-model="form.chapter" placeholder="–"></label>
+                            <label>to chapter <input type="number" step="any" min="0" x-model="form.chapter_end" placeholder="(single)"></label>
+                            <p class="muted">Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18.</p>
+                            <div class="checks">
+                              <label class="check"><input type="checkbox" x-model="form.extra"> Extra / bonus</label>
+                              <label class="check"><input type="checkbox" x-model="form.hidden"> Hide from reading</label>
+                            </div>
+                            <div class="btn-row">
+                              <button class="btn small primary" type="submit">Save</button>
+                              <button class="btn small" type="button" @click="editing = null">Cancel</button>
+                              <button class="btn small" type="button" x-show="b.manual" @click="resetEdit(b)">Use file name again</button>
+                            </div>
+                          </form>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody></table>
+                </div>
+              </section>
+              {{ slot("series-end") }}
+            </div>
+          </div>
+        </div>
+      </template>
+      <p class="muted" :class="{ 'loading-line': !error }" x-show="!s" x-text="error || 'Loading…'"></p>
+    </section>

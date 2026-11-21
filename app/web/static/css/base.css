@@ -58,7 +58,7 @@
   }
 
   /* ---------------------------------------------------------------- icons
-     Line icons from the sprite at the top of index.html:
+     Line icons from the sprite at the top of the page (templates/shell/icons.html):
      <svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>. They take the text colour
      and scale with the font size. In scripts: icon("star") (js/common.js). */
   .ic {

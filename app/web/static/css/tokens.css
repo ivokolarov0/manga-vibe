@@ -55,7 +55,7 @@
     --card: 108px;
 
     /* the widest the page content gets (main, and the top nav lined up with it). Settings → Display →
-       Page width: Full width lifts it on the Library and Continue grids (main.home, see index.html),
+       Page width: Full width lifts it on the Library and Continue grids (main.home, see templates/page.html),
        and on the series page too when that's ticked (data-width-series) */
     --page-max: 1400px;
 

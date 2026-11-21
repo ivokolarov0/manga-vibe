@@ -1,0 +1,21 @@
+    <!-- ============ continue reading ============ -->
+    <section class="view" x-data="continueView()" x-show="$store.app.view === 'continue'" x-cloak>
+      <h2>Continue reading</h2>
+      {{ slot("continue-top") }}
+      <div class="grid">
+        <template x-for="s in items || []" :key="s.id">
+          <a class="card" :href="'#/series/' + s.id">
+            <div class="poster"><img :src="s.poster" loading="lazy" alt="">
+              {{ slot("card-badges") }}
+              <div class="bar"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div></div>
+            <div class="card-title" x-text="s.title"></div>
+            <div class="card-sub reading" x-text="`${s.continue.label} · p${s.continue.page + 1}/${s.continue.page_count}`"></div>
+          </a>
+        </template>
+      </div>
+      <div class="empty" x-show="items && !items.length">
+        <svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>
+        <span>Nothing in progress. Start a series and it shows up here.</span>
+        <a class="btn small primary" href="#/">Open the Library</a>
+      </div>
+    </section>

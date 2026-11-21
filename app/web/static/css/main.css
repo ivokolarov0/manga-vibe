@@ -1,5 +1,5 @@
 /*
- * MangaVibe styles: the one stylesheet index.html loads.
+ * MangaVibe styles: the one stylesheet the page (templates/page.html) loads.
  *
  * Built-in styles live in cascade layers, in this order (later layers win):
  *   tokens → base → layout → components → pages → reader

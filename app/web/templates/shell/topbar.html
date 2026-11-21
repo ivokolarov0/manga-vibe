@@ -1,0 +1,31 @@
+  <!-- ============ top bar ============ -->
+  <header id="topbar" x-data="topbar()" x-show="$store.app.view !== 'read'">
+    <a href="#/" class="brand" aria-label="MangaVibe: Library">
+      <svg class="logo" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" width="8" height="20" rx="2"/><rect x="11" width="8" height="20" rx="2"/></svg>
+      <span>MangaVibe</span></a>
+    <label class="search-box">
+      <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="search" x-ref="search" type="search" placeholder="Search your library" autocomplete="off" aria-label="Search"
+             x-model="q" @input="search()" @keydown.escape="if (q) { q = ''; search() }">
+      <button type="button" class="search-clear" x-show="q" x-cloak aria-label="Clear the search" title="Clear"
+              @click="q = ''; search(); $refs.search.focus()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </label>
+    {{ slot("topbar") }}
+    <a href="#/settings" id="settings-link" class="iconbtn" :class="{ active: $store.app.view === 'settings' }"
+       :aria-current="$store.app.view === 'settings' ? 'page' : null"
+       :aria-label="$store.app.attentionCount ? `Settings, ${$store.app.attentionCount} need attention` : 'Settings'"
+       :title="$store.app.attentionCount ? `Settings (${$store.app.attentionCount} need attention)` : 'Settings'">
+      <svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>
+      <i id="att-count" x-show="$store.app.attentionCount" aria-hidden="true" x-cloak
+         x-text="$store.app.attentionCount > 99 ? '99+' : $store.app.attentionCount"></i>
+    </a>
+  </header>
+
+  <!-- ============ Library / Continue: fixed at the bottom, or under the top bar
+       (Settings → Display → Navigation bar), so it comes right after the top bar ============ -->
+  <nav id="bottomnav" x-data x-show="$store.app.view !== 'read'" aria-label="Main">
+    <a href="#/" :class="{ active: $store.app.view === 'library' }" :aria-current="$store.app.view === 'library' ? 'page' : null">
+      <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></span>Library</a>
+    <a href="#/continue" :class="{ active: $store.app.view === 'continue' }" :aria-current="$store.app.view === 'continue' ? 'page' : null">
+      <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>Continue</a>
+  </nav>
