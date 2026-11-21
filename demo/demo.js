@@ -2,6 +2,19 @@
    to MangaVibe. Hidden while reading, so it never covers a page. */
 (() => {
   try { sessionStorage.removeItem("mv-demo-tries"); } catch {}  // index.html: the demo started
+
+  /* Firefox sends keepalive requests (the reader saves progress with one, so it survives leaving the
+     page) straight to the network, past the service worker: on GitHub Pages that's a 405 page instead of
+     the demo's answer. The app's own requests don't need keepalive here, so they go without it. */
+  const appFetch = window.fetch;
+  window.fetch = (input, init) => {
+    if (init?.keepalive) {
+      const url = new URL(typeof input === "string" ? input : input.url, location.href);
+      if (url.origin === location.origin && url.pathname.startsWith("/api/")) init = { ...init, keepalive: false };
+    }
+    return appFetch(input, init);
+  };
+
   const badge = document.createElement("aside");
   badge.className = "mv-demo";
   badge.setAttribute("aria-label", "About this demo");
