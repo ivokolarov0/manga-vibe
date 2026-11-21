@@ -461,6 +461,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `reader.state()`, `.step(forward)`, `.goTo(page)`, `.openBook(which, page)`, `.setMode(mode)`, `.options(open)`, `.overlay(plugin, on)`, `.press(plugin, key)`, `.leave()`, `.refresh()` | the reader from a script, doing what its own buttons do (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
 | `screenCommand(pluginId, name, spec, fn)` | something the page can do for an assistant or voice control (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
 | `reloadSettings()` | load the settings again and show them, after they changed elsewhere. Plugin API 13 |
+| `ui.*` | to show things as the app does, in your markup or a view: `ui.cardSub(s)` ("Reading · 3/10"), `ui.updated(s)`, `ui.ago(ms)`, `ui.status(st)`, `ui.publication(p)`, `ui.kind(s)` ("Manhwa"), `ui.scoreCls(n)`, `ui.haveText(c)`, `ui.editionText(c)`, `ui.icon(name)`, `ui.libraryUrl(params)`. Plugin API 17 |
 
 **Events** (`MangaVibe.on(pluginId, event, fn)`). `fn` may be async unless it says otherwise.
 
@@ -762,6 +763,48 @@ plugin to its `PLUGINS` and run it. It checks the schema, that every filter work
 keep every parameter, that every sort pages stably, and that a hidden series stays hidden.
 
 Saved searches `requires = {"library-query": 1}`: they keep that plugin's parameters.
+
+### Replacing a view
+
+Plugin API 17. A **view** is a part of the page a plugin draws: the job `view:<name>`, exclusive and
+required. The page is put together from Jinja templates (`app/web/templates/`), and where a view goes
+it has `{{ view("<name>", ...) }}`: the markup comes from the plugin doing the view's job.
+
+- **A view plugin is a folder plugin** with its template in `templates/`, e.g.
+  `my_cards/templates/views/card.html`. It's a Jinja template of Alpine markup, like the page's own.
+- **Start from the built-in one and change a block.** A plugin's templates are reachable as
+  `@<plugin id>/<path>`, so `{% extends "@cards/views/card.html" %}` takes the built-in card, and a
+  `{% block text %}…{% endblock %}` replaces just that part. Or write the whole view yourself.
+- **Keep the slots the contract lists** with `{{ slot("<name>") }}`: other plugins put their markup there.
+  A missing one is reported in Settings → Plugins on your plugin ("leaves out the card-badges slot, so
+  badges on the cards (Libraries) won't show").
+- **Use `MangaVibe.ui.*`** for what the app's own markup shows (a card's line, an icon…), not app.js's
+  other functions, which can change in any version.
+- **If your template is missing or fails**, the error is logged, Settings says so, and the built-in view
+  is drawn instead. **Safe mode** always uses the built-in views.
+- **Switching a view plugin on or off reloads the page**, since views are drawn when the page is put
+  together.
+
+`examples/plugins/compact_cards/` is a complete one (a folder: copy all of it). Test yours with
+`tests/contracts/test_view_card.py`.
+
+#### The view:card job
+
+How a series looks in the library grid, its list view and Continue reading. Built in: "Series cards"
+(`app/plugins/builtin/cards/`), with the blocks `poster` (inside: `badges`), `text` and `details` in the
+library, and `continue_poster`, `continue_text` in Continue reading.
+
+Your `templates/views/card.html` is **what's inside the card's link**: the page keeps the link around it,
+which opens the series and does the library's multi-select (hold a card). It gets:
+
+| | |
+|---|---|
+| `layout` | `"library"` or `"continue"` (a Jinja variable: `{% if layout == "continue" %}`). The library's list view is the same markup: `.grid.list` in `library.css` shows `.card-meta` and lays the card out in a row |
+| `s` (Alpine) | the series: `id`, `title`, `poster` (small), `poster_large`, `book_count`, `unread_count`, `progress` (0–1), `reading_status`, `favorite`, `publication_status`, `match_status`; in the library also `incomplete` (a finished series with something missing), `latest` (the newest book's label), `updated_at` (seconds); in Continue `continue`: `{ book_id, page, label, page_count }` |
+| `selecting` (Alpine) | in the library: multi-select is on (the built-in card shows a tick mark) |
+
+It must keep **`{{ slot("card-badges") }}`** in the poster, in both layouts. It may leave out the list
+view's details.
 
 ## Styling: plugins and your own custom.css
 

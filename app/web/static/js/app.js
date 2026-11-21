@@ -618,9 +618,6 @@ function library() {
         toast("Could not save the view: " + e.message, 3000, "error");
       }
     },
-    updatedText(s) {
-      return s.updated_at ? "Updated " + ago(s.updated_at * 1000) : "";
-    },
     goPage(n, replace = false) {
       n = Math.min(Math.max(1, n), this.pages());
       const p = libParams();
@@ -718,7 +715,6 @@ function library() {
       // a plugin may know why (e.g. libraries: this one is locked, or nothing was moved here yet)
       return collectPlugins("empty-library")[0] || "No series yet. The first scan may still be running; see Settings.";
     },
-    cardSub,
 
     /* ---- multi-select: hold a card to start, then tap or shift-click to pick more ---- */
     selecting: false,
@@ -986,6 +982,21 @@ window.MangaVibe = {
   onStart(fn) { alpineStarted ? fn() : document.addEventListener("alpine:init", fn); },
   api,             // api(path, { method, body }) -> the JSON answer; throws Error(detail) on 4xx/5xx
   toast,           // toast(text, ms = 3000, kind = "" | "error")
+  // what views and plugin markup can use to show things as the app does (Plugin API 17), e.g. a card of
+  // your own: x-text="MangaVibe.ui.cardSub(s)"
+  ui: {
+    cardSub,       // a card's line under the title: "Reading · 3/10", "Unread · 4 books", "Completed"
+    updated: (s) => (s.updated_at ? "Updated " + ago(s.updated_at * 1000) : ""),  // a library card's last change
+    ago,           // ago(ms): "today", "3 days ago", "2 months ago"
+    status: (st) => STATUS_LABELS[st] || st,   // reading_status -> "Plan to read"
+    publication: (p) => PUB_LABELS[p] || p,     // publication_status -> "Releasing"
+    kind: kindOf,  // a series' kind: "Manga", "Manhwa", "Novel", "One-shot"
+    scoreCls,      // a score's class: "hi" (90+), "mid" (70+), "lo"
+    haveText,      // a collection: "8 / 8 volumes · complete"
+    editionText,   // an edition: "Kanzenban · 18 volumes (regular: 27)"
+    icon,          // icon("star") -> the icon's <svg> as HTML (for x-html)
+    libraryUrl,    // libraryUrl({ genre: "Isekai" }) -> "#/?genre=Isekai"
+  },
   // the library page's query (filters, sort, page) as URLSearchParams; reactive inside Alpine
   libraryFilters: () => new URLSearchParams(Alpine.store("app").query),
   filterQuery: searchQuery,   // its filters and sort only, in a fixed order: "" when none are on
@@ -2024,6 +2035,11 @@ Your files are not touched. `
       catch (e) {  // e.g. Libraries while one has a password, or the only plugin doing a job the app needs
         p.enabled = !p.enabled;
         return toast(e.message, 8000, "error");
+      }
+      // a view (the cards...) is drawn when the page is put together: load the page again to show the other one
+      const ids = [...(r.started || []), ...(r.stopped || [])];
+      if (ids.some((id) => Object.keys(this.plugins.find((x) => x.id === id)?.provides || {}).some((j) => j.startsWith("view:")))) {
+        return location.reload();
       }
       // what it adds to the page (e.g. Saved searches), and the plugins it replaced or that start or stop
       // with it: show that, or take it away. Safe mode leaves out the owner's own plugins

@@ -1,0 +1,57 @@
+{#- A series card: what's inside the card's link (the page keeps the link itself, which opens the series and
+    does multi-select). Contract view:card@1 (docs/PLUGINS.md, "Replacing a view"):
+    - layout: "library" (the grid, and its list view: .grid.list in library.css shows .card-meta) or
+      "continue" (Continue reading; s.continue is the book and page to go on with)
+    - s: the card's series (id, title, poster, book_count, unread_count, progress, reading_status,
+      favorite, publication_status; in the library also incomplete, latest, updated_at)
+    - in the library: selecting (multi-select is on)
+    - keep {{ slot("card-badges") }} in the poster: other plugins' badges go there
+    A plugin's card can {% extends "@cards/views/card.html" %} and change a block. -#}
+{% if layout == "continue" %}
+            <div class="poster">{% block continue_poster %}<img :src="s.poster" loading="lazy" alt="">
+              {{ slot("card-badges") }}
+              <div class="bar"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>{% endblock %}</div>
+            {% block continue_text %}
+            <div class="card-title" x-text="s.title"></div>
+            <div class="card-sub reading" x-text="`${s.continue.label} · p${s.continue.page + 1}/${s.continue.page_count}`"></div>
+            {% endblock %}
+{% else %}
+            <div class="poster">
+              {% block poster %}
+              <img :src="s.poster" loading="lazy" alt="" draggable="false">
+              <span class="pick" x-show="selecting" aria-hidden="true"></span>
+              {% block badges %}
+              <span class="badge done" x-show="s.reading_status === 'completed'" title="Completed" aria-label="Completed">
+                <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
+              <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="Dropped" aria-label="Dropped">
+                <svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></span>
+              <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"
+                    :title="s.unread_count + ' unread'"></span>
+              <span class="badge status" x-show="s.favorite" title="Favorite" aria-label="Favorite">
+                <svg class="ic fill" aria-hidden="true"><use href="#i-star"/></svg></span>
+              <span class="badge missing" x-show="s.incomplete" title="Finished series with volumes or chapters missing">Incomplete</span>
+              {% endblock %}
+              {{ slot("card-badges") }}
+              <div class="bar" x-show="s.reading_status === 'reading'"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
+              {% endblock %}
+            </div>
+            {% block text %}
+            <div class="card-text">
+              <div class="card-title" x-text="s.title"></div>
+              <div class="card-sub" :class="{ read: s.reading_status === 'completed', reading: s.reading_status === 'reading', dropped: s.reading_status === 'dropped' }"
+                   x-text="MangaVibe.ui.cardSub(s)"></div>
+            </div>
+            {% endblock %}
+            {% block details %}
+            <!-- list view only (library.css): what the poster's badges say, and the details -->
+            <div class="card-meta">
+              <span class="flags" x-show="s.favorite || s.incomplete">
+                <svg class="ic fill fav" x-show="s.favorite" aria-label="Favorite"><use href="#i-star"/></svg>
+                <span class="missing" x-show="s.incomplete" title="Finished series with volumes or chapters missing">Incomplete</span>
+              </span>
+              <span class="unread" x-text="s.unread_count && s.unread_count < s.book_count ? `${s.unread_count} unread` : ''"></span>
+              <span class="latest" x-text="s.latest ? 'Latest: ' + s.latest : ''"></span>
+              <span class="updated" x-text="MangaVibe.ui.updated(s)"></span>
+            </div>
+            {% endblock %}
+{% endif %}

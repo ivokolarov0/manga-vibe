@@ -5,11 +5,7 @@
       <div class="grid">
         <template x-for="s in items || []" :key="s.id">
           <a class="card" :href="'#/series/' + s.id">
-            <div class="poster"><img :src="s.poster" loading="lazy" alt="">
-              {{ slot("card-badges") }}
-              <div class="bar"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div></div>
-            <div class="card-title" x-text="s.title"></div>
-            <div class="card-sub reading" x-text="`${s.continue.label} · p${s.continue.page + 1}/${s.continue.page_count}`"></div>
+            {{ view("card", layout="continue") }}
           </a>
         </template>
       </div>

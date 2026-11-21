@@ -997,4 +997,27 @@ Plugin API version, and the app works after every one.
 - **Contract tests** (`tests/contracts/`) run through the app's API against every plugin doing the
   job: the built-in one and the example that extends it. Remote control (manga-vibe-mcp) still has a
   copy of the built-in filters and sorts; its test now compares with the built-in plugin. It could read
-  `GET /api/library/schema` instead, and then follow a replacement too.
+  `GET /api/library/schema` instead, and then follow a replacement too. (It does from v1.1.0,
+  manga-vibe-mcp#2, keeping the copies for older MangaVibe.)
+
+### Views a plugin can replace, starting with the cards (Plugin API 17, issue #205)
+
+- **A view is a template in the plugin's `templates/` folder**, not markup in a Python string (the issue
+  first said `views = {"card": markup}`). With #213's Jinja templates, a view plugin can extend the
+  built-in view and change one block, which is what most people want ("the same card, without the
+  line under the title"). A folder plugin's `templates/` is reachable as `@<plugin id>/<path>`.
+- **`{{ view("card", layout=...) }}`, a function, not a template name the loader swaps.** Which plugin
+  draws a view depends on the switches and on safe mode; a loader that gave different files for the
+  same name would fight Jinja's template cache. The function picks the plugin and renders
+  `@<id>/views/card.html`, a name that always means the same file.
+- **The page keeps the card's link**, the view is what's inside it: the link opens the series and does
+  multi-select (pointer handlers, `aria-pressed`), which a card plugin shouldn't have to copy or could
+  break. `layout` is `library` or `continue`; grid and list are one markup and CSS, as before.
+- **Failing safe**: the view is rendered on its own, inside try; a missing template or an error falls
+  back to the built-in plugin's and is logged, so a broken card never breaks the page. Settings shows it
+  too (`warnings`), worked out by rendering the plugin's view alone, with a slot() that notes which
+  slots it used: that's also how a missing `card-badges` is found, without loading the page.
+- **Reload on switch**: views are drawn when the page is put together, inside Alpine `x-for` templates,
+  so switching a view plugin reloads the page instead of swapping markup in place.
+- **`MangaVibe.ui`**: the helpers the built-in card used from app.js (`cardSub`, the "Updated…" line)
+  and the ones the next views will need, as public names. The built-in card uses only those.

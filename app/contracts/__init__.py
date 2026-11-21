@@ -46,6 +46,13 @@ register(Job("library-query", "Library filters and sorting", required=True,
              description="What the library can be filtered and sorted by, and how"))
 
 
+# Views (#205 on): a plugin draws a part of the page from its templates/ folder (VIEWS in
+# app/plugins/web.py says which template and which slots it must keep). Contract: docs/PLUGINS.md,
+# "Replacing a view".
+register(Job("view:card", "Series cards", required=True,
+             description="How a series looks in the library grid, its list view and Continue reading"))
+
+
 def job_label(key: str) -> str:
     job = JOBS.get(key)
     return job.label if job else key
