@@ -1715,11 +1715,14 @@ function attentionView() {
 
 /* ---------------- settings ---------------- */
 
-// Settings' own pages; plugins add theirs to $store.app.settingsNav (e.g. libraries: Libraries, first)
-// The icon is the name of one in the sprite (templates/shell/icons.html); a plugin may also give any character.
-const SETTINGS_NAV = [["library", "Library folders", "folder"], ["display", "Display", "palette"],
-  ["reader", "Reader", "book-open"], ["metadata", "Metadata", "tag"], ["plugins", "Plugins", "blocks"],
-  ["updates", "Updates", "download"]];
+// Settings' menu: [key, label, icon, plugin id, personal]. The pages are the running plugins' (their
+// settings_pages, put in the page as MV_SETTINGS_PAGES, Plugin API 20) and the core's (Plugins); plugins can
+// add more from their scripts with MangaVibe.settingsPage (e.g. libraries: Libraries, first). The icon is the
+// name of one in the sprite (templates/shell/icons.html); a plugin may also give any character.
+const ANDROID = /Android/i.test(navigator.userAgent);
+const SETTINGS_NAV = (window.MV_SETTINGS_PAGES || [{ key: "plugins", label: "Plugins", icon: "blocks" }])
+  .filter((p) => !p.android || ANDROID)  // e.g. the Android app's page: only on Android phones
+  .map((p) => [p.key, p.label, p.icon, p.plugin || "", !!p.personal]);
 /* The plain settings of a page: a label, a hint and a dropdown, saved when changed. Each is
    { key, label, hint, options: [[value, text], ...], show(st) }; show (when there) decides whether
    it's there at all. Values are strings, like st's; save() turns them into numbers or booleans. */
@@ -1794,12 +1797,9 @@ const SETTING_ROWS = {
       hint: "In the reader: volume down goes to the next page, volume up goes back", options: ON_OFF },
   ],
 };
-// Settings pages that are each person's own (with accounts, everyone sees them; the rest is for admins).
-// Display is the app's, but its personal rows (the theme) are everyone's.
-const PERSONAL_PAGES = new Set(["display", "reader", "app"]);
-const ANDROID = /Android/i.test(navigator.userAgent);
-// on Android phones (in the app or the browser) Settings gets an "Android app" page
-if (ANDROID) SETTINGS_NAV.splice(2, 0, ["app", "Android app", "phone"]);
+// Settings pages that are each person's own (with accounts, everyone sees them; the rest is for admins) are
+// the ones registered `personal`. Display is the app's, but its personal rows (the theme) are everyone's.
+const PERSONAL_PAGES = new Set();
 
 // Settings → Plugins: what each viewer picked (category, source, status, built-ins unfolded)
 const PLUGIN_VIEW_KEY = "plugins-view";
@@ -1910,7 +1910,7 @@ function settingsView() {
     openAndroidApp,
     changeServer() { androidApp?.changeServer(); },
     attCount(k) { return this.$store.app.att?.[k]?.filter((x) => !x.ignored).length || 0; },
-    st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, pluginsMoved: [], pluginJobs: [],
+    st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, pluginsMoved: [], pluginJobs: [], pageJobs: [],
     get safe() { return Alpine.store("app").safe; },
     scan: {}, scanText: "", metaText: "", timers: [],
     init() {
@@ -2076,9 +2076,11 @@ Your files are not touched. `
         p.enabled = !p.enabled;
         return toast(e.message, 8000, "error");
       }
-      // a view (the cards...) is drawn when the page is put together: load the page again to show the other one
+      // a view (the cards, a page, a dialog, a Settings section...) is drawn when the page is put together:
+      // load the page again to show the other one
       const ids = [...(r.started || []), ...(r.stopped || [])];
-      if (ids.some((id) => Object.keys(this.plugins.find((x) => x.id === id)?.provides || {}).some((j) => j.startsWith("view:")))) {
+      if (ids.some((id) => Object.keys(this.plugins.find((x) => x.id === id)?.provides || {})
+        .some((j) => this.pageJobs.includes(j)))) {
         return location.reload();
       }
       // what it adds to the page (e.g. Saved searches), and the plugins it replaced or that start or stop
@@ -2110,6 +2112,7 @@ Your files are not touched. `
       this.pluginErrors = r.errors;
       this.pluginsMoved = r.moved || [];
       if (r.jobs) this.pluginJobs = r.jobs;
+      if (r.page_jobs) this.pageJobs = r.page_jobs;
       if ("github_token" in r) this.ghTokenFrom = r.github_token;
       if (r.categories) {
         this.pluginCats = r.categories;

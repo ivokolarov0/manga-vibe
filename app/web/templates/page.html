@@ -26,7 +26,7 @@
 <body>
 {% include "shell/icons.html" %}
 
-{% block topbar %}{% include "shell/topbar.html" %}{% endblock %}
+{% block topbar %}{{ view("nav") }}{% endblock %}
 
   <!-- home: the Library and Continue grids, which Settings → Display → Page width may let fill the screen
        (series-page: so may the series page, when that's ticked too) -->
@@ -63,9 +63,9 @@
 {% block sheets %}{% include "sheets/library.html" %}{% endblock %}
 
 {% block dialogs %}
-{% include "dialogs/fix-match.html" %}
+{{ view("fix-match") }}
 
-{% include "dialogs/edit-series.html" %}
+{{ view("edit") }}
 
 {% include "dialogs/folder-picker.html" %}
 {% endblock %}
@@ -75,6 +75,8 @@
   <!-- plugins: their sheets and dialogs, then their scripts (app/plugins/web.py) -->
   {{ slot("sheets") }}
 
+  <!-- Settings' menu: the running plugins' settings_pages and the core's (app/plugins/web.py settings_pages) -->
+  <script>window.MV_SETTINGS_PAGES = {{ settings_pages | tojson }};</script>
   <script src="/static/js/common.js"></script>
   <script src="/static/js/reader.js"></script>
   <script src="/static/js/app.js"></script>

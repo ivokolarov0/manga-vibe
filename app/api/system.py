@@ -18,7 +18,7 @@ from app.db import get_db, get_setting, set_setting
 from app.models import Library, Series
 from app.plugins import (CATEGORIES, Context, OpenUrl, SwitchRefused, action_result, implements,
                          job_problem, manager as plugins, plugin_jobs)
-from app.plugins.web import ui_of, view_warnings, with_ui
+from app.plugins.web import PAGE_JOBS, ui_of, view_warnings, with_ui
 from app.scanner import walker
 from app.scanner.parser import natural_key
 
@@ -289,6 +289,8 @@ def list_plugins(db=Depends(get_db)):
     return {"plugins": [_plugin_dict(p, db) for p in plugins.plugins.values()],
             "errors": plugins.errors, "categories": CATEGORIES,
             "jobs": plugins.jobs_info(),  # the parts of the app plugins do, and which do them now
+            # the jobs drawn when the page is put together: switching a plugin for one reloads the page
+            "page_jobs": sorted(PAGE_JOBS),
             # built-in plugins someone used that are now installed from their own repo
             "moved": [{"id": pid, **m} for pid, m in plugins.moved.items()],
             # where the token for private plugin repos comes from: "settings", "env" or "" (never the token)

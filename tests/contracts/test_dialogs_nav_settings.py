@@ -1,0 +1,109 @@
+"""Plugin API 20 (issue #208): the Edit and Fix match dialogs, the top bar and Settings' sections as
+plugins. A top bar without the Settings button gets the built-in one instead; a Settings section whose
+plugin is off is gone, menu entry and all; Settings -> Plugins can't be replaced.
+"""
+import json
+import re
+import shutil
+
+import pytest
+
+from tests.conftest import TMP
+
+PLUGINS_DIR = TMP / "data" / "plugins"
+
+
+def settings_menu(page):
+    return [p["key"] for p in json.loads(re.search(r"window\.MV_SETTINGS_PAGES = (.*?);</script>", page).group(1))]
+
+
+def info(client, pid):
+    return next(p for p in client.get("/api/plugins").json()["plugins"] if p["id"] == pid)
+
+
+def test_the_built_in_ones(client):
+    page = client.get("/").text
+    assert 'id="settings-link"' in page and 'data-slot="topbar"' in page  # the top bar, with Settings
+    assert 'x-data="editSeries()"' in page and 'data-slot="series-edit"' in page
+    assert 'x-data="fixMatch()"' in page
+    for section in ("library", "display", "reader", "app", "metadata", "plugins", "updates"):
+        assert f"section === '{section}'" in page, section
+    assert settings_menu(page) == ["library", "display", "app", "reader", "metadata", "plugins", "updates"]
+    for pid in ("nav", "edit-dialog", "fix-match-dialog", "settings-display", "settings-updates"):
+        assert info(client, pid)["warnings"] == [], pid
+
+
+def test_a_section_switched_off_is_gone(client):
+    r = client.put("/api/plugins/settings-updates", json={"enabled": False})
+    assert r.status_code == 200, r.text  # not a job the app needs
+    try:
+        page = client.get("/").text
+        assert "section === 'updates'" not in page and "updates" not in settings_menu(page)
+        assert "section === 'plugins'" in page  # the core's
+    finally:
+        client.put("/api/plugins/settings-updates", json={"enabled": True})
+
+
+CODE = '''
+from app.plugins import Plugin
+
+class Mine(Plugin):
+    id = "{pid}"
+    name = "Mine"
+    category = "appearance"
+    provides = {provides}
+    settings_pages = {pages}
+'''
+
+
+@pytest.fixture
+def mine(client, tmp_path):
+    """mine(pid, provides, template_name, template, pages): a plugin of the test's own, switched on."""
+    made = []
+
+    def install(pid, provides, name, template, pages=()):
+        folder = tmp_path / pid.replace("-", "_")
+        (folder / "templates" / "views").mkdir(parents=True)
+        (folder / "__init__.py").write_text(CODE.format(pid=pid, provides=provides, pages=list(pages)), encoding="utf-8")
+        (folder / "templates" / "views" / name).write_text(template, encoding="utf-8")
+        shutil.copytree(folder, PLUGINS_DIR / folder.name)
+        client.post("/api/plugins/reload")
+        r = client.put(f"/api/plugins/{pid}", json={"enabled": True})
+        made.append((folder.name, r.json().get("stopped", [])))
+        return r
+    yield install
+    for name, stopped in made:
+        for builtin in stopped:
+            client.put(f"/api/plugins/{builtin}", json={"enabled": True})
+        shutil.rmtree(PLUGINS_DIR / name)
+    client.post("/api/plugins/reload")
+
+
+def test_a_top_bar_without_settings_gets_the_built_in_one(client, mine, caplog):
+    mine("my-nav", {"view:nav": 1}, "nav.html", '<header class="my-nav" x-data>{{ slot("topbar") }}</header>')
+    page = client.get("/").text
+    assert "my-nav" not in page and 'id="settings-link"' in page  # the built-in bar
+    assert "leaves out settings_link" in caplog.text
+    assert any("settings_link()" in w for w in info(client, "my-nav")["warnings"])
+
+
+def test_a_top_bar_of_its_own(client, mine):
+    mine("my-nav", {"view:nav": 1}, "nav.html",
+         '<header class="my-nav" x-data>{{ slot("topbar") }}{{ settings_link() }}</header>')
+    page = client.get("/").text
+    assert 'class="my-nav"' in page and 'id="settings-link"' in page
+    assert info(client, "my-nav")["warnings"] == []
+
+
+def test_a_settings_section_of_its_own(client, mine):
+    r = mine("my-display", {"settings:display": 1}, "settings-display.html",
+             '<section x-show="section === \'display\'"><h2>My display</h2></section>',
+             pages=[{"key": "display", "label": "Looks", "icon": "palette", "order": 20, "personal": True}])
+    assert "settings-display" in r.json()["stopped"]
+    page = client.get("/").text
+    assert "My display" in page and settings_menu(page).count("display") == 1
+
+
+def test_settings_plugins_cant_be_replaced(client, mine):
+    r = mine("my-plugins", {"settings:plugins": 1}, "x.html", "")
+    assert "doesn't have" in info(client, "my-plugins")["blocked"]  # no such job: Plugins is the core's

@@ -54,9 +54,11 @@ app/plugins/builtin/    plugins that come with the app: AniList, MangaUpdates, s
 app/updater.py          auto-update from the newest GitHub release
 app/images.py           thumbnails, resized page cache
 app/web/templates/      the page, as Jinja templates of Alpine markup (see "The page" below): page.html
-                        includes shell/ (icons, top bar, banners, toasts), views/ (library, continue,
-                        series, settings), settings/ (one file per section), sheets/, dialogs/;
-                        ui/macros.html holds the pieces used in several places
+                        includes shell/ (icons, banners, toasts), views/settings.html (the frame),
+                        settings/ (Plugins, a plugin's page, Needs attention), sheets/, dialogs/ (the
+                        folder picker); ui/macros.html holds the pieces used in several places.
+                        The views are the built-in plugins' templates/views/ (cards, library_page,
+                        continue_page, series_page, dialogs, nav, settings_pages), drawn with view()
 app/web/static/css/     styles: main.css imports one file per feature (CSS layers)
 app/web/static/js/      app.js (Alpine data), reader.js (plain-JS reader), common.js,
                         vendor/alpine.min.js

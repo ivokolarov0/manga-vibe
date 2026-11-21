@@ -9,6 +9,19 @@
   <template x-if="!r.check"><select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in r.options" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></template></label></template>
 {%- endmacro %}
 
+{#- The Settings button with the Needs attention count: what a top bar (view:nav) must have, as
+    settings_link() (the page gives it to the nav view and checks it's there). -#}
+{% macro settings_link_markup() -%}
+<a href="#/settings" id="settings-link" class="iconbtn" :class="{ active: $store.app.view === 'settings' }"
+   :aria-current="$store.app.view === 'settings' ? 'page' : null"
+   :aria-label="$store.app.attentionCount ? `Settings, ${$store.app.attentionCount} need attention` : 'Settings'"
+   :title="$store.app.attentionCount ? `Settings (${$store.app.attentionCount} need attention)` : 'Settings'">
+  <svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>
+  <i id="att-count" x-show="$store.app.attentionCount" aria-hidden="true" x-cloak
+     x-text="$store.app.attentionCount > 99 ? '99+' : $store.app.attentionCount"></i>
+</a>
+{%- endmacro %}
+
 {#- A series card in the library, inside an x-for over the series (`s`): the page's link, which opens the
     series and does multi-select (MangaVibe.library), with the card view (view:card) in it. Import it
     `with context` (it draws a view). -#}
