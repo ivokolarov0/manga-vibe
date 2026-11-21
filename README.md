@@ -11,13 +11,14 @@
   <a href="https://github.com/ivokolarov0/manga-vibe/actions/workflows/image.yml"><img alt="Docker image" src="https://img.shields.io/github/actions/workflow/status/ivokolarov0/manga-vibe/image.yml?label=docker%20image&logo=docker&logoColor=white"></a>
   <a href="https://github.com/ivokolarov0/manga-vibe/actions/workflows/android.yml"><img alt="Android app" src="https://img.shields.io/github/actions/workflow/status/ivokolarov0/manga-vibe/android.yml?label=android%20app&logo=android&logoColor=white"></a>
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab?logo=python&logoColor=white">
-  <a href="docs/PLUGINS.md"><img alt="Plugin API 24" src="https://img.shields.io/badge/plugin%20API-24-8b5cf6"></a>
-  <a href="docs/PLUGINS.md"><img alt="Plugins welcome" src="https://img.shields.io/badge/plugins-welcome-22c55e"></a>
+  <a href="https://ivokolarov0.github.io/manga-vibe/plugins/"><img alt="Plugin API 24" src="https://img.shields.io/badge/plugin%20API-24-8b5cf6"></a>
+  <a href="https://ivokolarov0.github.io/manga-vibe/plugins/"><img alt="Plugins welcome" src="https://img.shields.io/badge/plugins-welcome-22c55e"></a>
   <img alt="100% vibe coded" src="https://img.shields.io/badge/vibe%20coded-100%25-f97316">
 </p>
 
 <p align="center">
   <a href="https://ivokolarov0.github.io/manga-vibe/"><b>▶ Try the demo</b></a> ·
+  <a href="https://ivokolarov0.github.io/manga-vibe/plugins/"><b>🧩 Plugin reference</b></a> ·
   <a href="#-install">Install</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-make-it-yours-plugins">Plugins</a> ·
@@ -230,10 +231,14 @@ flowchart TB
 | ➕ **Add features** | Tracker sync, translation over the speech bubbles, descriptions read aloud for blind readers, official chapter counts, remote control. One button in **Settings → Plugins → Get plugins**. |
 | 🔁 **Replace parts of the app** | Each part (a page, the cards, the filters, the reader, the parser…) is a *job* done by a built-in plugin. Switch on another plugin for that job and the built-in one steps aside. If yours fails, the built-in one takes over, so the app never breaks. |
 | 🟰 **Same rules for everyone** | The built-in plugins use only the public plugin API, so a plugin you write can do anything they do. |
-| 🧑‍💻 **Write your own** | Python, with HTML, CSS and JavaScript for the page. Vibe coding one with an AI assistant works well: the [plugin guide](docs/PLUGINS.md) describes every job's contract. |
+| 🧑‍💻 **Write your own** | Python, with HTML, CSS and JavaScript for the page. Vibe coding one with an AI assistant works well. Start with the **[plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/)**: every part of a plugin, each with a minimal sample. |
 
-👉 [Plugins](docs/using-plugins.md) to install, swap and update them · [Writing plugins](docs/PLUGINS.md) to make one ·
-[Plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/): every part with a minimal sample ([also on GitHub](docs/PLUGIN-REFERENCE.md))
+> [!TIP]
+> **Writing a plugin? Start with the [plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/)**:
+> every part of a plugin, each described in a few lines with a minimal code sample. Read the text, the
+> code, or both ([also on GitHub](docs/PLUGIN-REFERENCE.md)).
+
+👉 [Plugins](docs/using-plugins.md) to install, swap and update them · [The full guide](docs/PLUGINS.md) for every detail and job contract
 
 ---
 
@@ -286,7 +291,7 @@ flowchart LR
 | 🧩 **[Plugins](docs/using-plugins.md)** | The available plugins, installing, updating and removing them, and replacing a part of the app |
 | 🛠️ **[Troubleshooting](docs/troubleshooting.md)** | Logs, permissions, more library folders |
 | ❓ **[Q&A](docs/qa.md)** | Why it's built the way it is, and the requests that are declined |
-| 👩‍💻 **[For developers](docs/developers.md)** | Running it from source, tests, releases, the code layout, and [writing a plugin](docs/PLUGINS.md) |
+| 👩‍💻 **[For developers](docs/developers.md)** | Running it from source, tests, releases, the code layout, and writing a plugin: the [reference](https://ivokolarov0.github.io/manga-vibe/plugins/) and [the full guide](docs/PLUGINS.md) |
 
 ---
 
