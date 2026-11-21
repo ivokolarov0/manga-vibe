@@ -1807,6 +1807,7 @@ function loadPluginView() {
     const v = JSON.parse(localStorage.getItem(PLUGIN_VIEW_KEY) || "{}");
     const ok = (x, allowed) => (typeof x === "string" && (!allowed || allowed.includes(x)) ? x : undefined);
     return Object.fromEntries(Object.entries({
+      tab: ok(v.tab, ["installed", "get", "setup"]),
       cat: ok(v.cat), src: ok(v.src, ["all", "installed", "builtin"]),
       status: ok(v.status, ["all", "on", "off", "update", "errors"]),
       builtinOpen: typeof v.builtinOpen === "boolean" ? v.builtinOpen : undefined,
@@ -1836,16 +1837,28 @@ function settingsView() {
     },
     // ---- Settings → Plugins: grouped by category, with search and filters ----
     // the category, source (built in or installed) and status picked, kept per browser; the search isn't
-    pf: { cat: "all", src: "all", status: "all", builtinOpen: false, q: "", ...loadPluginView() },
+    // tab: Installed, Get plugins (from the sources) or Sources & setup; getCat is Get plugins' category
+    pf: { tab: "installed", cat: "all", src: "all", status: "all", builtinOpen: false, q: "", getCat: "all",
+          ...loadPluginView() },
     pluginCats: {},  // category key -> label, in order (GET /api/plugins)
     // the GitHub token for private plugin repos: where it comes from ("settings", "env", ""), never
     // the token itself; ghToken is only what's being typed
     ghTokenFrom: "", ghToken: "",
     savePluginView() {
-      const { cat, src, status, builtinOpen } = this.pf;
-      try { localStorage.setItem(PLUGIN_VIEW_KEY, JSON.stringify({ cat, src, status, builtinOpen })); } catch {}
+      const { tab, cat, src, status, builtinOpen } = this.pf;
+      try { localStorage.setItem(PLUGIN_VIEW_KEY, JSON.stringify({ tab, cat, src, status, builtinOpen })); } catch {}
     },
-    setPluginFilter(key, value) { this.pf[key] = value; this.savePluginView(); },
+    // a filter of the installed list (an alert, a tag on a plugin's page) shows that list
+    setPluginFilter(key, value) {
+      this.pf[key] = value;
+      if (["cat", "src", "status"].includes(key)) this.pf.tab = "installed";
+      this.savePluginView();
+    },
+    // Get plugins: the categories its plugins are in, and how many of them aren't installed yet
+    get availCats() {
+      return Object.keys(this.pluginCats).filter((c) => this.avail.plugins.some((a) => a.category === c));
+    },
+    get availNew() { return this.avail.plugins.filter((a) => !a.installed).length; },
     catLabel(c) { return this.pluginCats[c] || c; },
     catIcon(c) { return PLUGIN_CAT_ICONS[c] || "blocks"; },
     hasUpdate(p) { return !!(p.update.available && !p.update.skipped); },
@@ -2210,7 +2223,7 @@ Your files are not touched. `
     availBusy: false, availInstalling: "", newSource: "",
     // the sources' plugins that match the search and category; not installed ones first
     get availList() {
-      const q = this.pf.q.trim().toLowerCase(), cat = this.pf.cat;
+      const q = this.pf.q.trim().toLowerCase(), cat = this.pf.getCat;
       const names = Object.fromEntries(this.avail.sources.map((s) => [s.url, s]));
       return this.avail.plugins
         .filter((a) => (cat === "all" || a.category === cat) &&

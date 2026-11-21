@@ -457,6 +457,42 @@
     container: plugins / inline-size;
   }
 
+  /* Installed / Get plugins / Sources & setup */
+  .plugin-tabs {
+    margin: 4px 0 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+
+    & button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    & .count {
+      min-width: 20px;
+      padding: 1px 6px;
+      border-radius: 9px;
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      text-align: center;
+
+      &.new {
+        background: var(--accent);
+        color: var(--accent-text);
+      }
+    }
+
+    & .dot {
+      width: 7px;
+      height: 7px;
+      background: var(--warn);
+      border-radius: 50%;
+    }
+  }
+
   .plugin-alerts {
     display: flex;
     flex-wrap: wrap;
@@ -806,16 +842,14 @@
 
   /* Get plugins: what the plugin sources list, with Install */
   .plugin-get {
-    margin-top: 18px;
-    padding-top: 6px;
-    border-top: 1px solid var(--border);
-
     & .plugin-get-head {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 8px;
-      margin-bottom: 6px;
+
+      & .plugin-search {
+        flex: 1;
+      }
     }
 
     & .plugin-desc {
@@ -830,7 +864,7 @@
   .plugin-sources {
     display: grid;
     gap: 8px;
-    margin: 16px 0;
+    margin: 0 0 16px;
 
     & .label {
       display: grid;
