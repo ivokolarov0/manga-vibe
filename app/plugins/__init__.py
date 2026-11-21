@@ -51,7 +51,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 22
+API_VERSION = 23
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
@@ -1131,6 +1131,27 @@ def action_result(result):
     if isinstance(result, OpenUrl):
         return {"message": result.message, "open_url": result.url}
     return {"message": str(result or "Done")}
+
+
+_job_failed: set = set()  # (plugin id, hook) already logged, so a broken plugin doesn't fill the log
+
+
+def ask_job(job, hook, *args, fallback):
+    """What the plugin doing `job` answers to `hook(*args)` (a server job like scanner:parser, #210). One
+    that fails is logged (once) and the built-in one is asked instead; `fallback(*args)` when nobody
+    answers: the plugins aren't loaded yet (a script, a test), or the job isn't required and is off."""
+    from app.contracts import JOBS
+    found = manager.doing(job)
+    if not JOBS[job].required and manager.provider_of(job) is None:
+        found = []  # switched off: the app's plain way
+    for p in found:
+        try:
+            return getattr(p, hook)(*args)
+        except Exception:
+            if (p.id, hook) not in _job_failed:
+                _job_failed.add((p.id, hook))
+                log.error("Plugin %s failed in %s:\n%s", p.id, hook, traceback.format_exc())
+    return fallback(*args)
 
 
 manager = PluginManager()

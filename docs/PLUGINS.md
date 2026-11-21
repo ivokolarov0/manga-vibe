@@ -958,6 +958,49 @@ gives the current person's), as `[{"id": 1, "name": "Isekai", "query": "genre=Is
 `query` is the library page's query string without the page. Read and write it with `get_setting` /
 `set_setting` from the SDK. The built-in plugin is `app/plugins/builtin/saved_searches/`.
 
+### Server jobs: the parser, the matcher and book labels
+
+Plugin API 23. Three pieces of the server's logic are jobs, each with a built-in plugin. Their hooks are
+plain functions (no `ctx`): they're asked very often and must be quick. One that raises is logged once
+and the built-in plugin answers instead. **Test yours** with `tests/contracts/test_server_jobs.py`, which
+asks whichever plugin does each job; the cases are the app's own (`tests/test_parser.py`,
+`tests/test_metadata.py`), so a failing case shows where yours differs.
+
+**`scanner:parser`** (exclusive, required; built in: "File name parser", `app/plugins/builtin/filename_parser/`):
+
+```python
+from app.plugins.sdk import Parsed
+
+class MyParser(Plugin):
+    id = "my-parser"
+    provides = {"scanner:parser": 1}
+
+    def parse_name(self, filename, series_title=""):   # series_title: the series' folder name
+        return Parsed(name=filename, volume=3.0, chapter=12.0, chapter_end=None, version=1)
+```
+
+`Parsed` has `name` (the file name, as given), `volume`, `chapter`, `chapter_end` (floats or `None`;
+12.5 for a half chapter), `version` (a revision: `c012v2` is 2, else 1), `extra` and `extra_index`
+(the built-in parser never guesses extras: the owner marks them). The core keeps the order of a series'
+books, revisions and duplicates. `on_book_scanned(ctx, book, parsed)` still runs after it, for small
+fixes. **After switching the parser** (or a new version of it), the next library scan reads every book's
+numbers again, without reading the files; progress and the owner's own numbers stay, they're the book's.
+
+**`metadata:matcher`** (exclusive, required; built in: "Title matcher", `app/plugins/builtin/title_matcher/`).
+Which provider result is the series. The providers stay plugins of their own (`is_provider`).
+
+| hook | gives |
+|---|---|
+| `match_query(folder_name)` | `(query, year)`: what to search the providers for, e.g. `"[Group] Berserk (1989)"` → `("Berserk", 1989)`; `year` may be `None` |
+| `match_score(query, titles, year=None, cand_year=None, cand_format=None, novel=False)` | 0–100: how well a result with these `titles` (its title and other titles), year and format (`MANGA`, `NOVEL`…) fits. `novel`: the series' books are light novels |
+| `match_pick(scored, threshold=90, lead=10)` | `scored` is `[(score, result)…]`, best first: the result to take on its own, or `None` (then the owner picks in Fix match). The built-in one wants `threshold` (Settings → Metadata) and `lead` points over the next |
+
+**`book:label`** (exclusive, not required; built in: "Book labels", `app/plugins/builtin/book_labels/`).
+`book_label(book)` → what the lists, the reader and Continue call a book: `"Vol 3"`, `"Ch 12-14"`,
+`"Extra 2"`. Use the owner's numbers: `book.eff_volume`, `eff_chapter`, `eff_chapter_end`, `eff_extra`
+(theirs where they changed one, else the parser's), and `book.extra_index`, `book.file_name`. With
+the job off, books are called by their file names.
+
 ## The SDK
 
 Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only this (a test checks it,

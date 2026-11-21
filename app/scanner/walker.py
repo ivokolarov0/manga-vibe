@@ -108,10 +108,11 @@ def scan_library(db, lib: Library):
                   key=lambda e: natural_key(e.name))
     status["total"] += len(dirs)
     seen = set()
+    reparse = _parser_switched(db, lib)
     for entry in dirs:
         status["current"] = entry.name
         try:
-            s = scan_series(db, lib, Path(entry.path))
+            s = scan_series(db, lib, Path(entry.path), reparse=reparse)
             if s is not None:
                 seen.add(s.id)
             db.commit()
@@ -125,13 +126,43 @@ def scan_library(db, lib: Library):
         if s.id not in seen and s.missing_since is None:
             s.missing_since = now()
     gone = _purge_missing(db, lib.id)
+    _parser_done(db, lib)
     db.commit()
     _remove_purged_files(*gone)
     log.info("Scanned library %s: %d series in %.1fs", lib.name, len(dirs), time.time() - t0)
 
 
-def scan_series(db, lib, folder: Path, recheck_errors=True) -> Series | None:
-    """recheck_errors=False leaves unchanged broken books alone (scans after a change, see scan_folder)."""
+PARSER_USED = "jobs:scanner:parser-used"  # {library id: "plugin@version"} that read its books' numbers
+
+
+def _parser_now() -> str:
+    p = plugins.provider_of("scanner:parser") or plugins.builtin_for("scanner:parser")
+    return f"{p.id}@{p.version}" if p else ""
+
+
+def _parser_switched(db, lib) -> bool:
+    """True when another plugin (or version) does the scanner:parser job than the one that read this
+    library's books (#210): the scan reads every book's numbers again."""
+    from app.db import get_setting
+    before = (get_setting(db, PARSER_USED, {}) or {}).get(str(lib.id))
+    if before is not None and before != _parser_now():
+        log.info("The file name parser is %s now (was %s): reading the numbers of %s again",
+                 _parser_now(), before, lib.name)
+        return True
+    return False
+
+
+def _parser_done(db, lib):
+    """Remember the parser that read this library (after its scan, so one cut short reads them again)."""
+    from app.db import get_setting, set_setting
+    used = dict(get_setting(db, PARSER_USED, {}) or {})
+    if used.get(str(lib.id)) != _parser_now():
+        set_setting(db, PARSER_USED, {**used, str(lib.id): _parser_now()})
+
+
+def scan_series(db, lib, folder: Path, recheck_errors=True, reparse=False) -> Series | None:
+    """recheck_errors=False leaves unchanged broken books alone (scans after a change, see scan_folder).
+    reparse: read the numbers of unchanged books again too (the parser plugin was switched)."""
     path_str = str(folder)
     series = db.query(Series).filter_by(folder_path=path_str).one_or_none()
     book_paths = list(find_books(folder))
@@ -159,6 +190,11 @@ def scan_series(db, lib, folder: Path, recheck_errors=True) -> Series | None:
         if (book and book.file_size == size and book.mtime == mtime and book.missing_since is None
                 and (book.error is None or not recheck_errors
                      or archives.not_yet_supported(book.format, book.error))):
+            if reparse:
+                before = (book.volume, book.chapter, book.chapter_end, book.extra, book.extra_index, book.revision)
+                _parse_name(db, series, book, path)
+                changed |= before != (book.volume, book.chapter, book.chapter_end, book.extra,
+                                      book.extra_index, book.revision)
             continue  # unchanged; damaged books are re-checked on every scan, light novels aren't
         if book is None:
             book = Book(series_id=series.id, path=key, file_name=path.name, format=fmt)
@@ -189,12 +225,17 @@ def scan_series(db, lib, folder: Path, recheck_errors=True) -> Series | None:
     return series
 
 
-def _read_book(db, series, book, path: Path):
-    """Count pages, make a thumbnail, parse the filename, run plugin hooks."""
+def _parse_name(db, series, book, path: Path):
+    """The book's numbers from its file name (the scanner:parser job), then on_book_scanned's fixes."""
     p = parse(path.name, series.folder_name)
     plugins.run_hook(db, "on_book_scanned", book, p)
     book.volume, book.chapter, book.chapter_end = p.volume, p.chapter, p.chapter_end
     book.extra, book.extra_index, book.revision = p.extra, p.extra_index, p.version
+
+
+def _read_book(db, series, book, path: Path):
+    """Count pages, make a thumbnail, parse the filename, run plugin hooks."""
+    _parse_name(db, series, book, path)
 
     book.error = None
     book.thumbnail_path = None

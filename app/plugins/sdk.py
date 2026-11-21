@@ -22,8 +22,9 @@ from app.passwords import MAX_TRIES, Throttle, TooManyTries, check_password, has
 # Reading direction: the modes a series or library can have (ctx.reading_direction() works one out)
 from app.direction import MODES as READING_MODES
 
-# The parser's numbers: sort names the way the scanner does (Vol 2 before Vol 10)
-from app.scanner.parser import natural_key
+# The parser's numbers: sort names the way the scanner does (Vol 2 before Vol 10); what a file name says
+# (the scanner:parser job's answer, #210)
+from app.scanner.parser import Parsed, natural_key
 
 # Book formats (Book.format): the ones the app reads; text books (light novels) a plugin's reader reads
 from app.scanner.archives import SUPPORTED as BOOK_FORMATS, TEXT_BOOK, TEXT_EPUB
@@ -38,13 +39,13 @@ from app.api.filters import visible_series
 # For metadata plugins: throttled HTTP with retries (also ctx.http), text clean-up, editions, the ids
 from app.metadata import editions, http
 from app.metadata.service import ID_FIELDS
-from app.metadata.text import clean_html, has_script
+from app.metadata.text import clean_html, has_script, normalize_title
 
 __all__ = [
     "Book", "Library", "Link", "PluginSeriesData", "Series", "SeriesTag", "Shelf", "Tag",
     "SessionLocal", "get_db", "get_setting", "set_setting",
     "MAX_TRIES", "Throttle", "TooManyTries", "check_password", "hash_password",
-    "READING_MODES", "natural_key", "BOOK_FORMATS", "TEXT_BOOK", "TEXT_EPUB",
+    "READING_MODES", "Parsed", "natural_key", "normalize_title", "BOOK_FORMATS", "TEXT_BOOK", "TEXT_EPUB",
     "book_label", "chapter_gaps", "display_title", "numberings", "poster_version", "title_lang",
     "get_or_404", "visible_series",
     "editions", "http", "ID_FIELDS", "clean_html", "has_script",
