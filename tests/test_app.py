@@ -314,9 +314,10 @@ def test_example_plugin(client):
                 plugin_dir)
     (plugin_dir / "broken.py").write_text("raise RuntimeError('boom')")
     data = client.post("/api/plugins/reload").json()
-    assert [p["id"] for p in data["plugins"]] == ["accounts", "anilist", "cards", "continue-page", "libraries",
-                                                  "library-page", "library-query", "mangaupdates",
-                                                  "optimize", "saved-searches", "series-page", "translation-groups"]
+    ids = [p["id"] for p in data["plugins"]]
+    # the built-in ones first (more come as the app becomes plugins, #202), then the owner's
+    assert {"accounts", "anilist", "libraries", "mangaupdates", "optimize", "saved-searches"} <= set(ids)
+    assert ids[-1] == "translation-groups" and all(p["builtin"] for p in data["plugins"][:-1])
     assert "broken.py" in data["errors"]  # a broken plugin is reported, app keeps working
 
     (TMP / "manga" / "Hana to Akuma" / "series.json").write_text(

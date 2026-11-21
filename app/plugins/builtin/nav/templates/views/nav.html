@@ -1,3 +1,8 @@
+{#- The top bar and the Library / Continue bar (view:nav). Contract (docs/PLUGINS.md, "The view:nav job"):
+    keep {{ settings_link() }}, the Settings button with the Needs attention count, which the page gives:
+    without it the built-in bar is drawn instead, so Settings → Plugins is always one tap away. Keep the
+    topbar slot (e.g. the account menu). topbar() is the search box's component. Hide it while reading
+    ($store.app.view === 'read'). -#}
   <!-- ============ top bar ============ -->
   <header id="topbar" x-data="topbar()" x-show="$store.app.view !== 'read'">
     <a href="#/" class="brand" aria-label="MangaVibe: Library">
@@ -11,14 +16,7 @@
               @click="q = ''; search(); $refs.search.focus()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
     </label>
     {{ slot("topbar") }}
-    <a href="#/settings" id="settings-link" class="iconbtn" :class="{ active: $store.app.view === 'settings' }"
-       :aria-current="$store.app.view === 'settings' ? 'page' : null"
-       :aria-label="$store.app.attentionCount ? `Settings, ${$store.app.attentionCount} need attention` : 'Settings'"
-       :title="$store.app.attentionCount ? `Settings (${$store.app.attentionCount} need attention)` : 'Settings'">
-      <svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>
-      <i id="att-count" x-show="$store.app.attentionCount" aria-hidden="true" x-cloak
-         x-text="$store.app.attentionCount > 99 ? '99+' : $store.app.attentionCount"></i>
-    </a>
+    {{ settings_link() }}
   </header>
 
   <!-- ============ Library / Continue: fixed at the bottom, or under the top bar

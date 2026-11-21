@@ -1,18 +1,13 @@
+{#- Settings → Reader and, on Android, Settings → Android app (settings:reader). Markup in Settings' component:
+    st, save(key), rows (SETTING_ROWS in app.js), appServer, appVersion, changeServer(), apkUrl(). -#}
 {% from "ui/macros.html" import setting_rows %}
-        <!-- display -->
-        <section x-show="section === 'display'">
-          <h2>Display</h2>
-          <!-- part of the page's settings: a dropdown each (SETTING_ROWS in app.js) -->
-          {{ setting_rows("displayRows") }}
-        </section>
-
         <!-- reader -->
         <section x-show="section === 'reader'">
           <h2>Reader</h2>
           {{ setting_rows("rows.reader") }}
         </section>
 
-        <!-- Android app (only on Android: see SETTINGS_NAV) -->
+        <!-- Android app (only on Android: the page is registered with android: True) -->
         <section x-show="section === 'app'">
           <h2>Android app</h2>
           <template x-if="$store.app.inApp">

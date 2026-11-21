@@ -878,6 +878,44 @@ The library page **must keep** the slots `library-tools`, `library-filters`, `se
 `library-end`, which can use `selCount`, `selMenu` and `bulk()` as names (bind gives them), and the cards'
 `card-badges`. Continue reading keeps `continue-top`.
 
+#### The dialogs
+
+Plugin API 20. **`dialog:edit`** (built in: "Edit dialog") and **`dialog:fix-match`** ("Fix match dialog"),
+`templates/views/edit.html` and `templates/views/fix-match.html` in `app/plugins/builtin/dialogs/`. What
+they do is the app's: the markup uses the components **`editSeries()`** and **`fixMatch()`**
+(`x-data="editSeries()"`), opened with `$store.app.openEdit(seriesId, onDone, tab)` and
+`$store.app.openFix(seriesId, onDone)`. A dialog of your own uses the same component and draws its fields
+its own way. The Edit dialog keeps the `series-edit` slot (other plugins' fields, e.g. a series' library),
+whose plugins hear `edit-open`, `edit-changed` and `edit-save`.
+
+#### The view:nav job
+
+Plugin API 20. The top bar and the Library / Continue bar (built in: "Top bar",
+`app/plugins/builtin/nav/templates/views/nav.html`; the search box's component is `topbar()`). It **must
+keep `{{ settings_link() }}`**, the Settings button with the Needs attention count, which the page gives:
+a top bar without it isn't drawn, the built-in one is, so Settings → Plugins is always one tap away. It
+keeps the `topbar` slot (e.g. the account menu) and hides while reading (`$store.app.view === 'read'`).
+
+#### Settings' sections
+
+Plugin API 20. Library folders, Display, Reader (with the Android app's page), Metadata and Updates are
+each a plugin's job, `settings:library`, `settings:display`, `settings:reader`, `settings:metadata`,
+`settings:updates` (built in: the "Settings: …" plugins in `app/plugins/builtin/settings_pages/`).
+**Settings → Plugins is the core's** and can't be replaced: it's where a broken plugin is switched off.
+
+- **Not required**: switched off, a section and its menu entry are gone. Its settings keep their values.
+- **The contract is the setting keys** the section changes (`GET` / `PUT /api/settings`): a replacement
+  changes the same ones, so the library and the reader keep reading them. It may leave some out.
+- **Its markup** is `templates/views/settings-<section>.html`, shown with `x-show="section === '<key>'"`, in
+  Settings' component: `st` (the settings, as strings), `save(key)`, `rows` (the built-in pages' rows,
+  `SETTING_ROWS` in app.js, to reuse with the `setting_rows("rows.reader")` macro), and the rest the
+  built-in sections use (`libs`, `providers`, `upd`…).
+- **Its menu entry** is the plugin's `settings_pages`, any plugin can have them:
+  `settings_pages = [{"key": "display", "label": "Display", "icon": "palette", "order": 20, "personal": True}]`.
+  `order` places it (Plugins is 50, Updates 60), `personal` shows it to everyone (else admins only),
+  `android` only on Android phones. A page whose markup is the plugin's `html` in the `settings` slot works
+  the same way, and so does `MangaVibe.settingsPage()` from a script.
+
 ## Styling: plugins and your own custom.css
 
 All built-in CSS is in cascade layers (`app/web/static/css/`, one file per feature). Plugin CSS and

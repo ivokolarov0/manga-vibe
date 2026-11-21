@@ -83,7 +83,25 @@ VIEWS = {
                "slots": {"series-actions": "buttons next to Continue", "series-menu": "entries in the ⋯ menu",
                          "series-panels": "panels on the series page", "series-end": "wide panels and dialogs",
                          "book-row": "labels and buttons on the books"}},
+    # Plugin API 20 (issue #208): the dialogs, the top bar and Settings' sections
+    "edit": {"job": "dialog:edit", "template": "views/edit.html",
+             "slots": {"series-edit": "fields in the Edit dialog (e.g. a series' library)"}},
+    "fix-match": {"job": "dialog:fix-match", "template": "views/fix-match.html", "slots": {}},
+    # parts: what the page gives the view and it must keep, else the built-in one is drawn (Settings, and
+    # with it Settings -> Plugins, always one tap away)
+    "nav": {"job": "view:nav", "template": "views/nav.html", "slots": {"topbar": "buttons in the top bar (e.g. the account menu)"},
+            "parts": {"settings_link": "the Settings button"}},
+    # optional: nothing is drawn while no plugin does the job (the section and its menu entry are gone)
+    "settings-library": {"job": "settings:library", "template": "views/settings-library.html", "optional": True,
+                         "slots": {"folder-row": "what plugins show for each folder (e.g. its library)"}},
+    "settings-display": {"job": "settings:display", "template": "views/settings-display.html", "optional": True, "slots": {}},
+    "settings-reader": {"job": "settings:reader", "template": "views/settings-reader.html", "optional": True, "slots": {}},
+    "settings-metadata": {"job": "settings:metadata", "template": "views/settings-metadata.html", "optional": True,
+                          "slots": {}},
+    "settings-updates": {"job": "settings:updates", "template": "views/settings-updates.html", "optional": True, "slots": {}},
 }
+# the jobs the page draws: switching a plugin that does one of them reloads the page (app.js)
+PAGE_JOBS = {spec["job"] for spec in VIEWS.values()}
 
 # where plugin markup can go: slot name -> where it is in the page
 SLOTS = {
@@ -133,7 +151,23 @@ def render_index(safe: bool = False, template: str = "page.html") -> str:
             found.append(base)
     scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in found if p.js)
     return templates.get_template(template).render(slot=slot_function(plugins), safe=safe, view=view,
-                                                   plugin_scripts=Markup(scripts))
+                                                   plugin_scripts=Markup(scripts),
+                                                   settings_pages=settings_pages(plugins))
+
+
+# Settings' own page, the core's: Plugins (how a broken plugin is switched off), in the middle of the menu
+CORE_SETTINGS_PAGES = [{"key": "plugins", "label": "Plugins", "icon": "blocks", "order": 50}]
+
+
+def settings_pages(plugins) -> list[dict]:
+    """Settings' menu: the running plugins' `settings_pages` and the core's, by their order (Plugin API
+    20). Each: key (the section, #/settings/<key>), label, icon, order, plugin, personal (everyone sees it,
+    not only admins), android (only on Android phones)."""
+    out = [dict(p) for p in CORE_SETTINGS_PAGES]
+    for plugin in plugins:
+        for page in getattr(plugin, "settings_pages", None) or []:
+            out.append({"order": 100, "personal": False, "android": False, **page, "plugin": plugin.id})
+    return sorted(out, key=lambda x: x["order"])
 
 
 def slot_function(plugins, used=None):
@@ -160,26 +194,60 @@ def base_views():
 
 def view_plugins(name, safe=False):
     """Who draws view `name`, in order: the running plugin doing its job (not in safe mode, unless it's
-    built in), then the built-in one as the fallback."""
-    return [p for p in manager.doing(VIEWS[name]["job"]) if not safe or manager.is_builtin(p.id)]
+    built in), then the built-in one as the fallback. An optional view (a Settings section) nobody does
+    isn't drawn at all."""
+    spec = VIEWS[name]
+    if spec.get("optional") and manager.provider_of(spec["job"]) is None:
+        return []
+    return [p for p in manager.doing(spec["job"]) if not safe or manager.is_builtin(p.id)]
+
+
+def part_functions(spec, used: set) -> dict:
+    """The parts the page gives a view (e.g. settings_link()), each noting in `used` that it was drawn."""
+    macros = templates.get_template("ui/macros.html").module
+
+    def part(name):
+        def draw():
+            used.add(name)
+            return getattr(macros, f"{name}_markup")()
+        return draw
+    return {name: part(name) for name in spec.get("parts", {})}
+
+
+def draw_view(plugin, spec, context) -> tuple[Markup, set, set]:
+    """The view's markup from this plugin, and the slots and parts it drew. Raises what the template does."""
+    slots, parts = set(), set()
+    page_slot = context.get("slot")
+
+    def slot(name):  # the page's slots, noting which this view keeps
+        slots.add(name)
+        return page_slot(name)
+    markup = templates.get_template(f"@{plugin.id}/{spec['template']}").render(
+        {**context, "slot": slot, **part_functions(spec, parts)})
+    return Markup(markup), slots, parts
 
 
 @pass_context
 def view(ctx, name, **values):
     """{{ view("card", layout="library") }} in the page's templates: the view's markup from the plugin
     doing its job (its templates/views/<name>.html), rendered with the page's context and `values`. A
-    template that's missing or fails is logged and the built-in plugin's is used instead, so a broken
-    view never breaks the page."""
+    template that's missing or fails, or leaves out a part it must keep (the top bar's Settings button),
+    is logged and the built-in plugin's is used instead, so a broken view never breaks the page."""
     spec = VIEWS[name]
     tried = []
     for p in view_plugins(name, ctx.get("safe", False)):
         try:
-            return Markup(templates.get_template(f"@{p.id}/{spec['template']}").render(
-                {**ctx.get_all(), **values}))
+            markup, _, parts = draw_view(p, spec, {**ctx.get_all(), **values})
+            missing = set(spec.get("parts", {})) - parts
+            if missing:
+                raise ValueError(f"it leaves out {', '.join(sorted(missing))}, which it must keep")
+            return markup
         except Exception:  # a plugin's template: whatever it does wrong, the page still draws
             tried.append(p.id)
             log.error("Plugin %s: its %s view failed:\n%s", p.id, name, traceback.format_exc())
-    raise RuntimeError(f"No plugin could draw the {name} view (tried {', '.join(tried) or 'none'})")
+    if not tried:
+        return Markup("")  # an optional view nobody does
+    raise RuntimeError(f"No plugin could draw the {name} view (tried {', '.join(tried)})")
 
 
 def view_warnings(plugin) -> list[str]:
@@ -190,17 +258,22 @@ def view_warnings(plugin) -> list[str]:
     for name, spec in VIEWS.items():
         if spec["job"] not in jobs:
             continue
-        used = set()
+        used, parts = set(), set()
         try:
             for layout in spec.get("layouts", (None,)):
-                templates.get_template(f"@{plugin.id}/{spec['template']}").render(
-                    slot=slot_function([], used), safe=False, view=view, layout=layout)
+                _, slots, drawn = draw_view(plugin, spec, {"slot": slot_function([]), "safe": False, "view": view,
+                                                           "layout": layout, "settings_pages": []})
+                used |= slots
+                parts |= drawn
         except TemplateNotFound:
             out.append(f"Its {name} view has no templates/{spec['template']}: the built-in one is used")
             continue
         except Exception as e:
             out.append(f"Its {name} view fails ({type(e).__name__}: {e}): the built-in one is used")
             continue
+        for part, what in spec.get("parts", {}).items():
+            if part not in parts:
+                out.append(f"Its {name} view leaves out {part}() ({what}), which it must keep: the built-in one is used")
         for slot, what in spec["slots"].items():
             if slot not in used:
                 who = [p.name for p in manager.enabled() if slot in p.html]

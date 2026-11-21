@@ -1061,3 +1061,25 @@ Plugin API version, and the app works after every one.
 - **Checked in Firefox** (Playwright): all series load, the quick buttons, chips and Clear all, the list
   view, hold to select (without opening the series), tap and Select all, a bulk action, numbered pages,
   Libraries' Move dialog from the select menu, and Continue reading.
+
+### Dialogs, the top bar and Settings' sections (Plugin API 20, issue #208)
+
+- **The dialogs' logic stays in the core** as the components `editSeries()` and `fixMatch()`; the
+  markup is the plugins'. They're one-off forms nothing else reads, so a store (as for the pages) would add
+  nothing: a dialog of one's own uses the same component, and its saving and matching are the app's.
+- **The top bar must keep the Settings button**: a view can now have *parts*, markup the page gives and the
+  view must draw (`settings_link()`). Leaving one out isn't only a warning, the built-in view is drawn
+  instead: a top bar without Settings would leave the owner no way to Settings → Plugins (except safe mode).
+- **Settings' sections are optional views**: nothing is drawn while no plugin does the job, instead of
+  falling back to the built-in one, so switching a section off takes it away. Their menu entries come from
+  the server, the running plugins' `settings_pages` in the page (`MV_SETTINGS_PAGES`), not from the plugins'
+  scripts: a built-in section plugin's script would be loaded even while it's off (built-in view scripts
+  always are), and would add its entry back.
+- **One plugin per section**, five classes in one package: one plugin for all of them would be switched
+  off whole when someone replaces only Display.
+- **Settings -> Plugins, a plugin's page and Needs attention stay in the core.** Needs attention as a job
+  plugins can add lists to is #219.
+- **Switching a plugin for any job the page draws reloads it** (`page_jobs` in `GET /api/plugins`).
+- **Checked in Firefox** (Playwright): the menu in its order, every section, a setting saved, switching
+  Updates off in Settings -> Plugins (gone after the reload), the Edit dialog saving, Fix match with its
+  sources, and the search box.

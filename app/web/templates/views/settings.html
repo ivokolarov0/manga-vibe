@@ -27,17 +27,19 @@
         <!-- plugins' own Settings pages (MangaVibe.settingsPage), e.g. Libraries -->
         {{ slot("settings") }}
 
-{% include "settings/library.html" %}
+        <!-- Settings' sections: each a plugin's (settings:<section>, built in: Settings pages). A section whose
+             plugin is off isn't there, and isn't in the menu either -->
+        {{ view("settings-library") }}
+        {{ view("settings-display") }}
+        {{ view("settings-reader") }}
+        {{ view("settings-metadata") }}
 
-{% include "settings/display.html" %}
-
-{% include "settings/metadata.html" %}
-
+{# Plugins and a plugin's page are the core's: how a broken plugin is switched off #}
 {% include "settings/plugins.html" %}
 
 {% include "settings/plugin.html" %}
 
-{% include "settings/updates.html" %}
+        {{ view("settings-updates") }}
 
 {% include "settings/attention.html" %}
       </div>

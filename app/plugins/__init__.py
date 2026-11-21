@@ -51,7 +51,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 19
+API_VERSION = 20
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
@@ -219,6 +219,11 @@ class Plugin:
     provides: dict[str, int] = {}
     # jobs another switched-on plugin must do for this one to run, e.g. {"library-query": 1}
     requires: dict[str, int] = {}
+    # pages it adds to Settings' menu while it runs (Plugin API 20), each a dict: key (the section,
+    # #/settings/<key>), label, icon, order (Plugins is 50; lower comes first), personal (everyone sees it,
+    # not only admins), android (only on Android phones). The section's markup is the plugin's own: a
+    # settings:<section> view, or its html in the "settings" slot
+    settings_pages: list[dict] = []
 
     # --- assistants (MCP, Plugin API 13)---------------------------------------------
     def run_mcp_tool(self, ctx, name, args: dict):
