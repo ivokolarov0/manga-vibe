@@ -18,8 +18,9 @@ def test_slot_names_match():
         text = path.read_text(encoding="utf-8")
         found |= set(SLOT_CALL.findall(text))
         assert not SLOT_COMMENT.search(text), f"{path.name}: use slot() in templates"
-    for path in BUILTIN.rglob("*.html"):
-        found |= set(SLOT_COMMENT.findall(path.read_text(encoding="utf-8")))
+    for path in BUILTIN.rglob("*.html"):  # their markup (comments) and their views' templates (slot())
+        text = path.read_text(encoding="utf-8")
+        found |= set(SLOT_COMMENT.findall(text)) | set(SLOT_CALL.findall(text))
     assert found == set(web.SLOTS)
 
 

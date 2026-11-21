@@ -18,7 +18,7 @@ from app.db import get_db, get_setting, set_setting
 from app.models import Library, Series
 from app.plugins import (CATEGORIES, Context, OpenUrl, SwitchRefused, action_result, implements,
                          job_problem, manager as plugins, plugin_jobs)
-from app.plugins.web import ui_of, with_ui
+from app.plugins.web import ui_of, view_warnings, with_ui
 from app.scanner import walker
 from app.scanner.parser import natural_key
 
@@ -279,7 +279,9 @@ def _plugin_dict(p, db):
             "status": _plugin_status(p, db), "update": plugin_updates.info(db, p),
             # jobs (Plugin API 15): what it does and needs, and why it doesn't run although it's on
             "provides": plugin_jobs(p, "provides"), "requires": plugin_jobs(p, "requires"),
-            "blocked": plugins.blocked.get(p.id, "") if p.id not in plugins.disabled else job_problem(p)}
+            "blocked": plugins.blocked.get(p.id, "") if p.id not in plugins.disabled else job_problem(p),
+            # its views (Plugin API 17): a template that's missing or fails, or a slot it leaves out
+            "warnings": view_warnings(p)}
 
 
 @router.get("/plugins", dependencies=[manage])

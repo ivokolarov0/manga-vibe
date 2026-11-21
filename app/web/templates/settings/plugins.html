@@ -65,6 +65,7 @@
                           <!-- jobs (Plugin API 15): the part of the app it does, and why it doesn't run -->
                           <small class="plugin-jobs" x-show="jobsText(p)" x-text="`Does: ${jobsText(p)}`"></small>
                           <small class="plugin-blocked err" x-show="p.blocked" x-text="p.blocked"></small>
+                          <template x-for="w in p.warnings || []"><small class="plugin-blocked err" x-text="w"></small></template>
                         </span>
                         <span class="row-buttons">
                           <span class="chip warn" x-show="hasUpdate(p)" x-text="`Update ${p.update.latest}`"></span>

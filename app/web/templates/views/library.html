@@ -107,36 +107,9 @@
              @pointerdown="press($event, s)" @pointermove="pressMove($event)" @pointerup="pressEnd()"
              @pointercancel="pressCancel()" @pointerleave="pressCancel()"
              @contextmenu="pressMenu($event, s)" @click="cardClick($event, s)">
-            <div class="poster">
-              <img :src="s.poster" loading="lazy" alt="" draggable="false">
-              <span class="pick" x-show="selecting" aria-hidden="true"></span>
-              <span class="badge done" x-show="s.reading_status === 'completed'" title="Completed" aria-label="Completed">
-                <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
-              <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="Dropped" aria-label="Dropped">
-                <svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></span>
-              <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"
-                    :title="s.unread_count + ' unread'"></span>
-              <span class="badge status" x-show="s.favorite" title="Favorite" aria-label="Favorite">
-                <svg class="ic fill" aria-hidden="true"><use href="#i-star"/></svg></span>
-              <span class="badge missing" x-show="s.incomplete" title="Finished series with volumes or chapters missing">Incomplete</span>
-              {{ slot("card-badges") }}
-              <div class="bar" x-show="s.reading_status === 'reading'"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
-            </div>
-            <div class="card-text">
-              <div class="card-title" x-text="s.title"></div>
-              <div class="card-sub" :class="{ read: s.reading_status === 'completed', reading: s.reading_status === 'reading', dropped: s.reading_status === 'dropped' }"
-                   x-text="cardSub(s)"></div>
-            </div>
-            <!-- list view only (library.css): what the poster's badges say, and the details -->
-            <div class="card-meta">
-              <span class="flags" x-show="s.favorite || s.incomplete">
-                <svg class="ic fill fav" x-show="s.favorite" aria-label="Favorite"><use href="#i-star"/></svg>
-                <span class="missing" x-show="s.incomplete" title="Finished series with volumes or chapters missing">Incomplete</span>
-              </span>
-              <span class="unread" x-text="s.unread_count && s.unread_count < s.book_count ? `${s.unread_count} unread` : ''"></span>
-              <span class="latest" x-text="s.latest ? 'Latest: ' + s.latest : ''"></span>
-              <span class="updated" x-text="updatedText(s)"></span>
-            </div>
+            <!-- the card: the view:card plugin's (built in: Series cards). The link around it, which opens
+                 the series and does multi-select, is the page's -->
+            {{ view("card", layout="library") }}
           </a>
         </template>
       </div>

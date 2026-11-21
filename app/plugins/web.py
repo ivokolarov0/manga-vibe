@@ -16,25 +16,64 @@ switched-on plugins when it loads (issue #213). Switching one on or off later ad
 markup in place (app.js, from GET /api/plugins/<id>/ui); no reload.
 """
 import html as html_lib
+import logging
+import traceback
 from urllib.parse import quote
 
-from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
+from jinja2 import (BaseLoader, Environment, FileSystemLoader, StrictUndefined, TemplateNotFound, pass_context,
+                    select_autoescape)
 from markupsafe import Markup
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from app import config
-from app.plugins import Context, manager
+from app.plugins import Context, manager, plugin_jobs
+
+log = logging.getLogger("mangavibe.plugins")
 
 # the page's templates: page.html, and the shell, views, Settings sections, sheets and dialogs it includes
 TEMPLATES_DIR = config.WEB_DIR / "templates"
+
+
+def plugin_templates(plugin_id):
+    """A folder plugin's templates/ folder (next to its __init__.py), or None."""
+    path = manager.paths.get(plugin_id)
+    folder = path.parent / "templates" if path is not None and path.name == "__init__.py" else None
+    return folder if folder is not None and folder.is_dir() else None
+
+
+class PageLoader(BaseLoader):
+    """The page's templates (TEMPLATES_DIR), and plugins' own: "@<plugin id>/<path>" is <path> in that
+    plugin's templates/ folder (Plugin API 17), e.g. "@cards/views/card.html". A plugin's template can
+    extend another plugin's, e.g. the built-in card: {% extends "@cards/views/card.html" %}."""
+
+    def __init__(self, folder):
+        self.core = FileSystemLoader(folder)
+
+    def get_source(self, environment, name):
+        if not name.startswith("@"):
+            return self.core.get_source(environment, name)
+        plugin_id, _, rest = name[1:].partition("/")
+        folder = plugin_templates(plugin_id)
+        if folder is None or not rest:
+            raise TemplateNotFound(name)
+        return FileSystemLoader(folder).get_source(environment, rest)
+
+
 # Compiled once and kept; auto_reload looks at the files' times, so an edited template shows on the next
 # load (cheap, and what you want while working on the page). Autoescape: text a template puts in is
 # escaped unless marked safe (plugin markup is, by slot()). StrictUndefined: a misspelt name is an
 # error, not an empty place (a test renders the page)
-templates = Environment(loader=FileSystemLoader(TEMPLATES_DIR), autoescape=select_autoescape(["html"]),
+templates = Environment(loader=PageLoader(TEMPLATES_DIR), autoescape=select_autoescape(["html"]),
                         undefined=StrictUndefined, trim_blocks=True, lstrip_blocks=True,
                         keep_trailing_newline=True, auto_reload=True)
+
+# The views a plugin can replace (Plugin API 17): name -> the job, its template in the plugin's
+# templates/ folder, the slots it must keep (other plugins put things there) and what they're for.
+VIEWS = {
+    "card": {"job": "view:card", "template": "views/card.html", "layouts": ("library", "continue"),
+             "slots": {"card-badges": "badges on the cards"}},
+}
 
 # where plugin markup can go: slot name -> where it is in the page
 SLOTS = {
@@ -77,19 +116,74 @@ def render_index(safe: bool = False, template: str = "page.html") -> str:
     scripts. Safe mode: only the built-in plugins'."""
     plugins = page_plugins(safe)
     scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in plugins if p.js)
-    return templates.get_template(template).render(slot=slot_function(plugins), safe=safe,
+    return templates.get_template(template).render(slot=slot_function(plugins), safe=safe, view=view,
                                                    plugin_scripts=Markup(scripts))
 
 
-def slot_function(plugins):
+def slot_function(plugins, used=None):
     """slot("<name>") for the templates: the slot with these plugins' markup in it. A name that isn't
     in SLOTS is an error, so a typo in a template fails the page (and its test) instead of leaving a
-    slot nobody fills."""
+    slot nobody fills. `used` collects the names asked for (a view's missing slots)."""
     def slot(name):
         if name not in SLOTS:
             raise ValueError(f"No slot {name!r}: add it to SLOTS in app/plugins/web.py")
+        if used is not None:
+            used.add(name)
         return Markup(slot_markup(name, plugins))
     return slot
+
+
+# --- views a plugin can replace (Plugin API 17, issue #205) -------------------------------------
+
+def view_plugins(name, safe=False):
+    """Who draws view `name`, in order: the running plugin doing its job (not in safe mode, unless it's
+    built in), then the built-in one as the fallback."""
+    return [p for p in manager.doing(VIEWS[name]["job"]) if not safe or manager.is_builtin(p.id)]
+
+
+@pass_context
+def view(ctx, name, **values):
+    """{{ view("card", layout="library") }} in the page's templates: the view's markup from the plugin
+    doing its job (its templates/views/<name>.html), rendered with the page's context and `values`. A
+    template that's missing or fails is logged and the built-in plugin's is used instead, so a broken
+    view never breaks the page."""
+    spec = VIEWS[name]
+    tried = []
+    for p in view_plugins(name, ctx.get("safe", False)):
+        try:
+            return Markup(templates.get_template(f"@{p.id}/{spec['template']}").render(
+                {**ctx.get_all(), **values}))
+        except Exception:  # a plugin's template: whatever it does wrong, the page still draws
+            tried.append(p.id)
+            log.error("Plugin %s: its %s view failed:\n%s", p.id, name, traceback.format_exc())
+    raise RuntimeError(f"No plugin could draw the {name} view (tried {', '.join(tried) or 'none'})")
+
+
+def view_warnings(plugin) -> list[str]:
+    """What's wrong with the views this plugin draws, for Settings -> Plugins: a template that's
+    missing or doesn't render, or a slot it leaves out (other plugins' markup there won't show)."""
+    out = []
+    jobs = plugin_jobs(plugin, "provides")
+    for name, spec in VIEWS.items():
+        if spec["job"] not in jobs:
+            continue
+        used = set()
+        try:
+            for layout in spec.get("layouts", (None,)):
+                templates.get_template(f"@{plugin.id}/{spec['template']}").render(
+                    slot=slot_function([], used), safe=False, view=view, layout=layout)
+        except TemplateNotFound:
+            out.append(f"Its {name} view has no templates/{spec['template']}: the built-in one is used")
+            continue
+        except Exception as e:
+            out.append(f"Its {name} view fails ({type(e).__name__}: {e}): the built-in one is used")
+            continue
+        for slot, what in spec["slots"].items():
+            if slot not in used:
+                who = [p.name for p in manager.enabled() if slot in p.html]
+                out.append(f"Its {name} view leaves out the {slot} slot, so {what}"
+                           + (f" ({', '.join(who)})" if who else "") + " won't show")
+    return out
 
 
 def slot_markup(slot: str, plugins, nested: bool = True) -> str:

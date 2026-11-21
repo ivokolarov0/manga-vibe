@@ -1,0 +1,14 @@
+{#- Compact cards: the built-in card, without the line under the title and the list view's details. -#}
+{% extends "@cards/views/card.html" %}
+
+{% block text %}
+            <div class="card-text compact-title">
+              <div class="card-title" x-text="s.title"></div>
+            </div>
+{% endblock %}
+
+{% block details %}{% endblock %}
+
+{% block continue_text %}
+            <div class="card-title compact-title" x-text="s.title"></div>
+{% endblock %}

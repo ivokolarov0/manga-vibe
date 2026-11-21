@@ -15,6 +15,7 @@
                        x-text="`Needs: ${Object.keys(plugin.requires || {}).map((k) => jobLabel(k)).join(', ')}`"></small>
                 <small class="plugin-blocked err" x-show="plugin.blocked"
                        x-text="(plugin.enabled ? 'Not running: ' : 'Can\'t run: ') + plugin.blocked"></small>
+                <template x-for="w in plugin.warnings || []"><small class="plugin-blocked err" x-text="w"></small></template>
                 <span class="plugin-title">
                   <template x-for="c in plugin.categories" :key="c">
                     <a class="plugin-tag" href="#/settings/plugins" @click="setPluginFilter('cat', c)"
