@@ -1,18 +1,32 @@
-# Plugins
+<h1 align="center">🧩 Plugins</h1>
 
-[← Back to the README](../README.md)
+<p align="center">
+  <a href="../README.md">← README</a> ·
+  <a href="#available-plugins">Available</a> ·
+  <a href="#install-a-plugin">Install</a> ·
+  <a href="#find-a-plugin">Find</a> ·
+  <a href="#replace-a-part-of-the-app">Replace a part</a> ·
+  <a href="#update-a-plugin">Update</a> ·
+  <a href="#write-your-own">Write your own</a>
+</p>
 
 MangaVibe is meant to be customized as far as it can go, and plugins are how. A plugin is a single
-`.py` file, or a folder. It can do two things:
+`.py` file, or a folder, and it can do two things:
 
-- **Add something new**: tracker sync, translation, descriptions read aloud, a tool in the reader.
-- **Replace a part of the app you don't like.** Most of MangaVibe is made of built-in plugins:
-  the pages, the cards, the filters, the reader, the file name parser and more. Another plugin can
-  do any of those parts instead. See [Replace a part of the app](#replace-a-part-of-the-app).
+```mermaid
+flowchart LR
+    plugin(["🧩 A plugin"])
+    plugin --> add["➕ Add something new<br/>tracker sync, translation,<br/>read aloud, a reader tool"]
+    plugin --> replace["🔁 Replace a part you don't like<br/>a page, the cards, the filters,<br/>the reader, the parser…"]
+```
 
-Nothing you need is locked inside the app: the built-in plugins use the same plugin API as
-everyone else's, so a plugin of yours can do anything they do. If one is missing, you can
-[write it yourself](#write-your-own), or have an AI assistant write it for you.
+| | |
+|---|---|
+| ➕ **Add something new** | Tracker sync, translation, descriptions read aloud, a tool in the reader. |
+| 🔁 **Replace a part of the app** | Most of MangaVibe is made of built-in plugins: the pages, the cards, the filters, the reader, the file name parser and more. Another plugin can do any of those parts instead. See [Replace a part of the app](#replace-a-part-of-the-app). |
+| 🟰 **Nothing locked away** | The built-in plugins use the same plugin API as everyone else's, so a plugin of yours can do anything they do. If one is missing, [write it yourself](#write-your-own), or have an AI assistant write it for you. |
+
+---
 
 ## Available plugins
 
@@ -28,6 +42,8 @@ everyone else's, so a plugin of yours can do anything they do. If one is missing
 > **Only install plugins you trust.** A plugin is code that runs inside MangaVibe with full access
 > to its data, including the logins other plugins save. Install plugins from this list or ones whose
 > code you've read.
+
+---
 
 ## Optimize (built in)
 
@@ -62,7 +78,19 @@ What it does to keep your books safe:
 MangaVibe shows JPEG XL and AVIF in every browser. **Other comic apps may not open them**: pick WebP
 if you also read the files elsewhere.
 
+---
+
 ## Install a plugin
+
+```mermaid
+flowchart LR
+    get["Settings → Plugins<br/>→ Get plugins"] --> install["Install"]
+    install --> dl["Downloads its newest<br/>GitHub release"]
+    dl --> ask{"Shows what it uses:<br/>OK?"}
+    ask -- yes --> load["Checks that<br/>it loads"]
+    ask -- no --> stop(["Nothing runs"])
+    load --> on(["✅ Switched on"])
+```
 
 **Settings → Plugins → Get plugins** lists the plugins you can install with one button: MangaVibe's
 own (the ones above) and those of any other source you added. **Install** downloads the plugin's
@@ -96,6 +124,8 @@ minutes otherwise). MangaVibe's own source is always there.
    **Installed**.
    Tap it to open its page: what it does, what it uses, its settings, buttons and updates.
 
+---
+
 ## Find a plugin
 
 **Settings → Plugins** has three tabs: **Installed** (the plugins you have, built in ones included),
@@ -123,11 +153,23 @@ What you picked (tab, category, source, filter) is remembered in this browser.
 In the reader, everything a plugin adds is under **Plugins** at the bottom of the reading options:
 one row per plugin, which opens a panel with its switches and buttons.
 
+---
+
 ## Replace a part of the app
 
 Each part of MangaVibe that can be replaced is a **job**, and a plugin's page says which jobs it does
-(*Does: Series page*) and which ones it needs another plugin to do (*Needs: …*). These are the parts a
-plugin can do today, each done by a built-in plugin until you pick another:
+(*Does: Series page*) and which ones it needs another plugin to do (*Needs: …*).
+
+```mermaid
+flowchart LR
+    inst["Install the other plugin<br/>(it starts off)"] --> on["Switch it on"]
+    on --> confirm{"“X replaces Y<br/>(Series page)”"}
+    confirm -- OK --> swapped(["X does the job,<br/>Y is switched off"])
+    confirm -- Cancel --> same(["Nothing changes"])
+    swapped -. "X fails" .-> fallback(["The built-in plugin<br/>answers instead"])
+```
+
+These are the parts a plugin can do today, each done by a built-in plugin until you pick another:
 
 | Part | What it is |
 |---|---|
@@ -162,6 +204,8 @@ switches that one off when you confirm. To go back, switch the built-in one on a
 - **Changing the parser** reads every book's volume and chapter again on the next library scan. Only
   the numbers MangaVibe worked out change: your progress and the numbers you set by hand stay.
 
+---
+
 ## Update a plugin
 
 Plugins that publish releases on GitHub have an **Updates** part on their page (**Settings →
@@ -193,11 +237,15 @@ A plugin whose GitHub repo is private needs a token: create a
 repo and **Contents: Read-only**, then paste it under **Settings → Plugins → Sources & setup →
 GitHub token for private plugins**. It's only sent to GitHub, and isn't shown again.
 
+---
+
 ## Switch off or remove a plugin
 
 Switch a plugin off with its toggle in **Settings → Plugins** (a plugin marked **Required** can only
 be replaced, see above). To remove it, delete its file and press **Reload plugins** (under **Sources &
 setup**).
+
+---
 
 ## Write your own
 
