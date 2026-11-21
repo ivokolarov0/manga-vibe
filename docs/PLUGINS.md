@@ -10,6 +10,11 @@
   <a href="#the-sdk">The SDK</a>
 </p>
 
+> [!TIP]
+> **New to plugins? Start with the [plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/)**
+> ([also on GitHub](PLUGIN-REFERENCE.md)): every part of a plugin, each described in a few lines with a
+> minimal code sample. This page is the full guide: the long explanations and every job's contract.
+
 <details>
 <summary><b>📑 Contents</b></summary>
 

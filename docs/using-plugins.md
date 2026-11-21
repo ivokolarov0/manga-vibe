@@ -10,6 +10,11 @@
   <a href="#write-your-own">Write your own</a>
 </p>
 
+> [!TIP]
+> **Want to write one? Start with the [plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/)**
+> ([also on GitHub](PLUGIN-REFERENCE.md)): every part of a plugin, each described in a few lines with a
+> minimal code sample.
+
 MangaVibe is meant to be customized as far as it can go, and plugins are how. A plugin is a single
 `.py` file, or a folder, and it can do two things:
 
