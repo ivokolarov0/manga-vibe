@@ -59,12 +59,14 @@ own (the ones above) and those of any other source you added. **Install** downlo
 newest release from its GitHub repo into the `plugins` folder of your data folder, shows what it
 uses (its permissions) and asks you before any of it runs, checks that it loads, and switches it on
 (except plugins that start off, like Remote control: switch those on yourself). Plugins you have
-already are marked *Installed*. The list follows the search box and the category you picked.
+already are marked *Installed*. Search it, or pick a category above the list. The tab shows how
+many plugins you don't have yet.
 
 ### Plugin sources
 
 A source is a list of plugins someone publishes (a `plugins.json` file, see
-[PLUGINS.md](PLUGINS.md#publish-your-plugins-in-a-source)). Under **Plugin sources**, type its GitHub
+[PLUGINS.md](PLUGINS.md#publish-your-plugins-in-a-source)). Under **Settings → Plugins → Sources &
+setup**, type its GitHub
 repo (`owner/name`, or its github.com address) or the address of the file, and press **Add source**.
 Its plugins then show under **Get plugins**, tagged with the source's name. **Remove** stops listing
 it; plugins you installed from it stay. **Refresh** asks every source again (they're kept for ten
@@ -80,12 +82,18 @@ minutes otherwise). MangaVibe's own source is always there.
    take that folder.
 2. Put it in the `plugins` folder of your data folder: `docker/mangavibe/plugins` on a Synology, or
    `plugins` inside the folder you mounted as `/data` (create it if it isn't there).
-3. In MangaVibe: **Settings → Plugins → Reload plugins**. The plugin appears under **Installed**.
+3. In MangaVibe: **Settings → Plugins → Sources & setup → Reload plugins**. The plugin appears under
+   **Installed**.
    Tap it to open its page: what it does, what it uses, its settings, buttons and updates.
 
 ## Find a plugin
 
-**Settings → Plugins** groups plugins by what they change:
+**Settings → Plugins** has three tabs: **Installed** (the plugins you have, built in ones included),
+**Get plugins** (the ones you can install) and **Sources & setup** (plugin sources, **Reload
+plugins** and the GitHub token). A dot on **Installed** means an update is waiting or a plugin
+failed to load.
+
+**Installed** groups plugins by what they change:
 
 - **Categories** on the left (a row of chips on a phone): *Metadata*, *Reader*, *Library*,
   *System*, *Appearance* and *Other*, each with how many plugins it has. A plugin that changes more
@@ -97,7 +105,10 @@ minutes otherwise). MangaVibe's own source is always there.
   **Update**, or **Errors** (plugins that failed to load, with the reason).
 - Updates and plugins that failed to load are also counted at the top, so they aren't missed.
 
-What you picked (category, source, filter) is remembered in this browser.
+Each row is kept short (name, a line of description, its status); tap it for the rest: what it
+does, its settings, buttons and updates.
+
+What you picked (tab, category, source, filter) is remembered in this browser.
 
 In the reader, everything a plugin adds is under **Plugins** at the bottom of the reading options:
 one row per plugin, which opens a panel with its switches and buttons.
@@ -130,13 +141,13 @@ isn't offered again until a newer one is out.
 
 A plugin whose GitHub repo is private needs a token: create a
 [fine-grained token](https://github.com/settings/personal-access-tokens/new) with access to that
-repo and **Contents: Read-only**, then paste it under **Settings → Plugins → GitHub token for
-private plugins**. It's only sent to GitHub, and isn't shown again.
+repo and **Contents: Read-only**, then paste it under **Settings → Plugins → Sources & setup →
+GitHub token for private plugins**. It's only sent to GitHub, and isn't shown again.
 
 ## Switch off or remove a plugin
 
 Switch a plugin off with its toggle in **Settings → Plugins**. To remove it, delete its file and
-press **Reload plugins**.
+press **Reload plugins** (under **Sources & setup**).
 
 ## Write your own
 
