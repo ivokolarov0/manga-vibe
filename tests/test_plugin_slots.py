@@ -24,7 +24,7 @@ def test_slot_names_match():
     assert found == set(web.SLOTS)
 
 
-def test_repeated_slots_are_filled_everywhere(monkeypatch):
+def test_repeated_slots_are_filled_everywhere(client, monkeypatch):  # client: the plugins are loaded (views)
     """card-badges is in both card lists (library and Continue), book-row in each book's row."""
     plugin = SimpleNamespace(id="tags", js="", html={"card-badges": '<span class="badge">EN</span>',
                                                      "book-row": '<span class="book-badge" x-text="b.id"></span>',

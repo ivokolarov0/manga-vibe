@@ -1021,3 +1021,24 @@ Plugin API version, and the app works after every one.
   so switching a view plugin reloads the page instead of swapping markup in place.
 - **`MangaVibe.ui`**: the helpers the built-in card used from app.js (`cardSub`, the "Updated…" line)
   and the ones the next views will need, as public names. The built-in card uses only those.
+
+### The series page as a view (Plugin API 18, issue #206)
+
+- **The logic moved out first.** `seriesView()` mixed loading, actions and display. Now
+  `MangaVibe.series` (an Alpine store, `seriesController()` in app.js) has the data and every action, and
+  loads what the route shows by itself (an `Alpine.effect` on the route and `progressDirty`). A page of
+  one's own can't get marking read or deleting a folder wrong: it calls them.
+- **Actions return, they don't open things.** What's on screen (the ⋯ menu, dialogs, "show more", the
+  number form) is the view's: `deleteInfo()` then `delete()`, `numbersForm()` then `saveNumbers()` (true
+  when saved), so a view decides how to ask and show.
+- **The built-in page is a plugin with a script**: its markup and `seriesPage()`, which uses only
+  `window.MangaVibe`. Its names are the old component's, read through to `MangaVibe.series`, so the
+  markup barely changed.
+- **The built-in view plugins' scripts are always loaded**, on or off (and served): their view is the
+  fallback, and a page that extends theirs uses their component. Tracking which plugin drew a view and
+  loading only its script was tried first; it missed the extending case.
+- **Blocks** (`head`, `about`, `details`, `side`, `tags`, `books`) so a page can change one part. A block
+  left out with a slot in it (e.g. `books` holds `book-row`) is reported like any missing slot.
+- **Checked in Firefox** (Playwright): loading, favorite, read/unread, reading mode, the Files tab's
+  number form, the delete dialog and moving to another series, with the built-in page and with a page
+  that extends it while the built-in plugin is off.

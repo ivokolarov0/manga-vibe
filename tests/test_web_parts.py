@@ -20,7 +20,7 @@ def test_page_is_put_together(client):
     assert "{{" not in page and "{%" not in page and "<!-- part:" not in page
     assert page.count('class="meta-progress"') == 2  # Settings → Metadata and Needs attention
     assert page.count('<label class="setting-row" :class="{ sub: r.sub }" x-show="!r.show || r.show(st)">') == 3  # Display, Reader, app
-    for view in ("library()", "continueView()", "seriesView()", "settingsView()", "attentionView()",
+    for view in ("library()", "continueView()", "seriesPage()", "settingsView()", "attentionView()",
                  "fixMatch()", "editSeries()", "folderPicker()", "filterSheet()"):
         assert f'x-data="{view}"' in page, view
     assert page.rstrip().endswith("</html>")

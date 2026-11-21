@@ -73,6 +73,10 @@ templates = Environment(loader=PageLoader(TEMPLATES_DIR), autoescape=select_auto
 VIEWS = {
     "card": {"job": "view:card", "template": "views/card.html", "layouts": ("library", "continue"),
              "slots": {"card-badges": "badges on the cards"}},
+    "series": {"job": "view:series", "template": "views/series.html",
+               "slots": {"series-actions": "buttons next to Continue", "series-menu": "entries in the ⋯ menu",
+                         "series-panels": "panels on the series page", "series-end": "wide panels and dialogs",
+                         "book-row": "labels and buttons on the books"}},
 }
 
 # where plugin markup can go: slot name -> where it is in the page
@@ -115,7 +119,13 @@ def render_index(safe: bool = False, template: str = "page.html") -> str:
     """The app's page (templates/page.html) with the switched-on plugins' markup in its slots and their
     scripts. Safe mode: only the built-in plugins'."""
     plugins = page_plugins(safe)
-    scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in plugins if p.js)
+    # the built-in view plugins' scripts are always loaded, on or off: their view is the fallback, and a
+    # plugin's view may extend theirs and use their components (e.g. seriesPage())
+    found = list(plugins)
+    for base in base_views():
+        if not any(base is p for p in found):
+            found.append(base)
+    scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in found if p.js)
     return templates.get_template(template).render(slot=slot_function(plugins), safe=safe, view=view,
                                                    plugin_scripts=Markup(scripts))
 
@@ -134,6 +144,13 @@ def slot_function(plugins, used=None):
 
 
 # --- views a plugin can replace (Plugin API 17, issue #205) -------------------------------------
+
+def base_views():
+    """The built-in plugins that draw the views, on or off: the fallback, and what other views extend.
+    Their scripts are always in the page (and served: /plugins/<id>.js)."""
+    found = [manager.builtin_for(spec["job"]) for spec in VIEWS.values()]
+    return [p for i, p in enumerate(found) if p is not None and not any(p is q for q in found[:i])]
+
 
 def view_plugins(name, safe=False):
     """Who draws view `name`, in order: the running plugin doing its job (not in safe mode, unless it's
