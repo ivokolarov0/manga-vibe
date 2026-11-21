@@ -3,29 +3,38 @@
 - `Plugin.router` (a FastAPI APIRouter) answers /api/plugins/<id>/api/<its paths>. Only while the
   plugin is on; a switched-off plugin's API answers 404. Handlers get the plugin's `ctx` with
   `ctx: Context = Depends(plugin_ctx)` (its database session is `ctx.db`; commit what you change).
-- `Plugin.html` puts markup into the page's slots (SLOTS below), `<!-- slot:<name> -->` in index.html.
+- `Plugin.html` puts markup into the page's slots (SLOTS below): `{{ slot("<name>") }}` in the page's
+  templates, `<!-- slot:<name> -->` in a plugin's own markup (a slot it holds for others).
   It's Alpine.js markup like the rest of the page, so it can use `$store.app` and the helpers on
   `window.MangaVibe` (app.js).
 - `Plugin.js` is served at /plugins/<id>.js and runs after app.js. It registers its stores and
   components in `MangaVibe.onStart(fn)`. One file per plugin: a mistake in one doesn't stop the
   others or the app.
 
-The page is put together with the switched-on plugins when it loads. Switching one on or off later
-adds or takes out its markup in place (app.js, from GET /api/plugins/<id>/ui); no reload.
+The page is put together from Jinja templates (app/web/templates/, page.html first) with the
+switched-on plugins when it loads (issue #213). Switching one on or off later adds or takes out its
+markup in place (app.js, from GET /api/plugins/<id>/ui); no reload.
 """
 import html as html_lib
-import re
 from urllib.parse import quote
 
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
+from markupsafe import Markup
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from app import config
 from app.plugins import Context, manager
 
-# markup the page uses in more than one place: <!-- part:<name> --> is app/web/parts/<name>.html
-PARTS_DIR = config.WEB_DIR / "parts"
-PART = re.compile(r"<!-- part:([a-z0-9-]+) -->")
+# the page's templates: page.html, and the shell, views, Settings sections, sheets and dialogs it includes
+TEMPLATES_DIR = config.WEB_DIR / "templates"
+# Compiled once and kept; auto_reload looks at the files' times, so an edited template shows on the next
+# load (cheap, and what you want while working on the page). Autoescape: text a template puts in is
+# escaped unless marked safe (plugin markup is, by slot()). StrictUndefined: a misspelt name is an
+# error, not an empty place (a test renders the page)
+templates = Environment(loader=FileSystemLoader(TEMPLATES_DIR), autoescape=select_autoescape(["html"]),
+                        undefined=StrictUndefined, trim_blocks=True, lstrip_blocks=True,
+                        keep_trailing_newline=True, auto_reload=True)
 
 # where plugin markup can go: slot name -> where it is in the page
 SLOTS = {
@@ -63,39 +72,43 @@ def page_plugins(safe: bool = False):
     return [p for p in manager.enabled() if not safe or manager.is_builtin(p.id)]
 
 
-def render_index(page: str, safe: bool = False) -> str:
-    """index.html with the switched-on plugins' markup in its slots and their scripts."""
+def render_index(safe: bool = False, template: str = "page.html") -> str:
+    """The app's page (templates/page.html) with the switched-on plugins' markup in its slots and their
+    scripts. Safe mode: only the built-in plugins'."""
     plugins = page_plugins(safe)
-    page = fill_slots(fill_parts(page), plugins)
     scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in plugins if p.js)
-    return page.replace("<!-- slot:scripts -->", scripts)
+    return templates.get_template(template).render(slot=slot_function(plugins), safe=safe,
+                                                   plugin_scripts=Markup(scripts))
 
 
-def fill_parts(markup: str, depth: int = 0) -> str:
-    """The page with each <!-- part:<name> --> replaced by app/web/parts/<name>.html (which can hold
-    parts and slots of its own). Put together on each request like the slots: no build step. A part
-    that isn't there is an error, not an empty place (a test loads the page)."""
-    def part(m):
-        path = PARTS_DIR / f"{m.group(1)}.html"
-        if not path.is_file():
-            raise ValueError(f"No part {m.group(1)!r} in {PARTS_DIR}")
-        if depth >= 4:
-            raise ValueError(f"Part {m.group(1)!r} is nested too deep (does it include itself?)")
-        return fill_parts(path.read_text(encoding="utf-8").strip(), depth + 1)
-    return PART.sub(part, markup)
+def slot_function(plugins):
+    """slot("<name>") for the templates: the slot with these plugins' markup in it. A name that isn't
+    in SLOTS is an error, so a typo in a template fails the page (and its test) instead of leaving a
+    slot nobody fills."""
+    def slot(name):
+        if name not in SLOTS:
+            raise ValueError(f"No slot {name!r}: add it to SLOTS in app/plugins/web.py")
+        return Markup(slot_markup(name, plugins))
+    return slot
+
+
+def slot_markup(slot: str, plugins, nested: bool = True) -> str:
+    """One slot with the plugins' markup in it, each in a box of its own so it can be taken out
+    (app.js), in their order. The slot stays in the page (display: contents), so a plugin switched on
+    later can be added to it. A plugin's markup can hold slots for others (e.g. account-row): with
+    `nested`, those are filled too (one level)."""
+    entries = [(p.id, *slot_entry(p.html[slot])) for p in plugins if slot in p.html]
+    parts = [ui_box(pid, fill_slots(m, plugins) if nested else m, order)
+             for pid, m, order in sorted(entries, key=lambda e: e[2]) if m]
+    return f'<div class="plugin-slot" data-slot="{slot}">{"".join(parts)}</div>'
 
 
 def fill_slots(markup: str, plugins) -> str:
-    """Put the plugins' markup into the slots of this markup, and into slots in what was put in (a
-    plugin's markup can hold a slot for others, e.g. account-row). Each slot stays in the page
-    (display: contents), so a plugin switched on later can be added to it, and each plugin's markup is in
-    a box of its own, so it can be taken out (app.js). In each slot the boxes go by their order."""
-    for _ in range(2):  # the page's slots, then slots in plugin markup
-        for slot in SLOTS:
-            entries = [(p.id, *slot_entry(p.html[slot])) for p in plugins if slot in p.html]
-            parts = [ui_box(pid, m, order) for pid, m, order in sorted(entries, key=lambda e: e[2]) if m]
-            markup = markup.replace(f"<!-- slot:{slot} -->",
-                                    f'<div class="plugin-slot" data-slot="{slot}">{"".join(parts)}</div>')
+    """Put the plugins' markup into the slots of a plugin's own markup: `<!-- slot:<name> -->` there
+    (the page's templates use slot() instead). The markup put in isn't searched again."""
+    for slot in SLOTS:
+        if f"<!-- slot:{slot} -->" in markup:
+            markup = markup.replace(f"<!-- slot:{slot} -->", slot_markup(slot, plugins, nested=False))
     return markup
 
 

@@ -1,0 +1,66 @@
+        <!-- updates -->
+        <section x-show="section === 'updates'">
+          <h2>Updates</h2>
+          <template x-if="upd && !upd.supported">
+            <p class="muted">Updates work only in the MangaVibe Docker image. Here, update with git.</p>
+          </template>
+          <div class="setting-row">
+            <div class="label"><span>Running version</span><small x-text="versionText(upd?.current)"></small></div>
+          </div>
+          <label class="setting-row"><span class="label">Check for updates every day<small x-text="`Asks GitHub (${upd?.repo || ''}) for its newest release and shows a message when one is out`"></small></span>
+            <select x-model="st.auto_update" @change="save('auto_update')"><option value="true">On</option><option value="false">Off</option></select></label>
+          <div class="setting-row">
+            <div class="label">
+              <span x-text="upd?.available ? 'New version: ' + upd.available.short : 'You have the newest version'"></span>
+              <small x-show="upd?.available" x-text="versionText(upd?.available)"></small>
+              <small x-show="upd?.available?.notes" x-text="upd?.available?.notes"></small>
+              <ul class="release-changes" x-show="upd?.available?.changes?.length">
+                <template x-for="c in upd?.available?.changes || []"><li x-text="c"></li></template>
+              </ul>
+              <small x-show="upd?.available?.url"><a :href="upd?.available?.url" target="_blank" rel="noopener">Full release notes<svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a></small>
+              <small x-text="checkedText"></small>
+            </div>
+            <button class="btn small" :disabled="checking || !upd?.supported" @click="checkUpdate()"
+                    x-text="checking ? 'Checking…' : 'Check now'"></button>
+          </div>
+          <template x-if="upd?.available">
+            <div class="setting-row">
+              <div class="label">
+                <span x-show="upd.available.needs_image">This version needs a new Docker image</span>
+                <span x-show="!upd.available.needs_image && upd.available.failed">This version did not start, so MangaVibe went back</span>
+                <span x-show="!upd.available.needs_image && !upd.available.failed && upd.available.skipped">You skipped this version</span>
+                <span x-show="!upd.available.needs_image && !upd.available.failed && !upd.available.skipped">Ready to install</span>
+                <small x-show="upd.available.needs_image">Files alone are not enough for it. See github.com/ivokolarov0/manga-vibe#updating</small>
+                <small x-show="!upd.available.needs_image">Your library, progress and settings are kept. The app restarts by itself.</small>
+              </div>
+              <div class="btn-row">
+                <button class="btn small" x-show="upd.available.skipped" @click="unskipUpdate()">Don't skip</button>
+                <button class="btn small" x-show="!upd.available.skipped" @click="skipUpdate()">Skip this version</button>
+                <button class="btn small primary" x-show="!upd.available.needs_image" :disabled="!!$store.app.updating"
+                        @click="installUpdate()" x-text="upd.available.failed ? 'Try again' : 'Update now'"></button>
+              </div>
+            </div>
+          </template>
+          <!-- going back (GET /api/update/versions asks GitHub, so only on a press) -->
+          <div class="setting-row" x-show="upd?.supported">
+            <div class="label">
+              <span>Go back to an earlier version</span>
+              <small>If a new version has a problem. The version you leave isn't offered again until a newer one is out.</small>
+              <small x-show="olderError" x-text="olderError"></small>
+            </div>
+            <button class="btn small" :disabled="loadingOlder" @click="loadOlder()"
+                    x-text="loadingOlder ? 'Loading…' : older ? 'Look again' : 'Show versions'"></button>
+          </div>
+          <template x-if="older && !older.length">
+            <p class="muted">No earlier version found.</p>
+          </template>
+          <template x-for="v in older || []" :key="v.sha">
+            <div class="setting-row">
+              <div class="label"><span x-text="v.short"></span><small x-text="olderText(v)"></small></div>
+              <div class="btn-row">
+                <a class="btn small" x-show="v.url" :href="v.url" target="_blank" rel="noopener">Notes<svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
+                <button class="btn small" :disabled="!!$store.app.updating" @click="goBack(v)">Go back</button>
+              </div>
+            </div>
+          </template>
+        </section>

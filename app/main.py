@@ -190,8 +190,7 @@ def index(request: Request, safe: str = ""):
     /?safe=1: safe mode, without the owner's own plugins in the page (only the built-in ones), so a
     plugin that breaks the page can still be switched off in Settings -> Plugins."""
     on = safe not in ("", "0", "false")
-    page = (config.WEB_DIR / "index.html").read_text(encoding="utf-8")
-    response = HTMLResponse(plugin_web.render_index(page, safe=on), headers={"Cache-Control": "no-cache"})
+    response = HTMLResponse(plugin_web.render_index(safe=on), headers={"Cache-Control": "no-cache"})
     if on:
         response.set_cookie(SAFE_COOKIE, "1", httponly=True, samesite="strict")  # for /custom.css
     elif SAFE_COOKIE in request.cookies:  # out of safe mode

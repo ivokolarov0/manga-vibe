@@ -1,0 +1,105 @@
+        <!-- one plugin's page (#/settings/plugin-<id>) -->
+        <section class="plugin-page" x-show="section === 'plugin'">
+          <a class="back-link" href="#/settings/plugins"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg>Plugins</a>
+          <template x-if="!plugin">
+            <p class="muted" x-text="plugins.length ? 'This plugin is not installed.' : 'Loading…'"></p>
+          </template>
+          <template x-if="plugin">
+            <div>
+              <h2 x-text="plugin.name"></h2>
+              <div class="plugin-about">
+                <small x-text="`v${plugin.version}` + (plugin.description ? ' · ' + plugin.description : '')"></small>
+                <small class="plugin-status" x-show="plugin.enabled && plugin.status" x-text="plugin.status"></small>
+                <small class="plugin-jobs" x-show="jobsText(plugin)" x-text="`Does: ${jobsText(plugin)}`"></small>
+                <small class="plugin-jobs" x-show="Object.keys(plugin.requires || {}).length"
+                       x-text="`Needs: ${Object.keys(plugin.requires || {}).map((k) => jobLabel(k)).join(', ')}`"></small>
+                <small class="plugin-blocked err" x-show="plugin.blocked"
+                       x-text="(plugin.enabled ? 'Not running: ' : 'Can\'t run: ') + plugin.blocked"></small>
+                <span class="plugin-title">
+                  <template x-for="c in plugin.categories" :key="c">
+                    <a class="plugin-tag" href="#/settings/plugins" @click="setPluginFilter('cat', c)"
+                       :title="`Show the ${catLabel(c)} plugins`" x-html="navIcon(catIcon(c)) + ' ' + esc(catLabel(c))"></a></template>
+                  <span class="plugin-tag" x-text="plugin.builtin ? 'Built in' : 'Installed'"></span>
+                </span>
+              </div>
+              <template x-if="plugin.permissions.length">
+                <div class="plugin-uses"><small>Uses:</small>
+                  <ul><template x-for="x in plugin.permissions"><li x-text="x"></li></template></ul></div>
+              </template>
+              <label class="setting-row">
+                <span class="label"><span>On</span></span>
+                <input type="checkbox" x-model="plugin.enabled" @change="togglePlugin(plugin)">
+              </label>
+              <p class="muted" x-show="!plugin.enabled && (plugin.settings.length || plugin.global_actions.length)">
+                Switch the plugin on to change its settings.</p>
+              <template x-if="plugin.enabled">
+                <div>
+                  <template x-for="f in plugin.settings" :key="f.key">
+                    <label class="setting-row">
+                      <span class="label"><span x-text="f.label"></span><small x-show="f.help" x-text="f.help"></small></span>
+                      <template x-if="f.options.length">
+                        <select x-model="f.value" @change="savePluginSetting(plugin, f)">
+                          <template x-for="[v, label] in f.options" :key="v">
+                            <option :value="v" :selected="f.value === v" x-text="label"></option></template>
+                        </select>
+                      </template>
+                      <template x-if="!f.options.length">
+                        <input :type="f.secret ? 'password' : 'text'" x-model="f.value" autocomplete="off"
+                               :placeholder="f.secret && f.saved ? 'Saved (type to replace)' : ''"
+                               @change="savePluginSetting(plugin, f)">
+                      </template>
+                    </label>
+                  </template>
+                  <div class="btn-row plugin-actions" x-show="plugin.global_actions.length">
+                    <template x-for="a in plugin.global_actions" :key="a.key">
+                      <button class="btn small" :class="{ busy: busyAction === plugin.id + a.key }"
+                              :disabled="busyAction === plugin.id + a.key"
+                              @click="runGlobalAction(plugin, a)" x-text="a.label"></button>
+                    </template>
+                  </div>
+                </div>
+              </template>
+              <!-- updates from the plugin's GitHub releases -->
+              <template x-if="plugin.update.supported">
+                <div>
+                  <h3>Updates</h3>
+                  <p class="muted" x-text="pluginUpdateText(plugin)"></p>
+                  <div class="btn-row plugin-actions">
+                    <button class="btn small" :disabled="busyAction === plugin.id + ':update'"
+                            @click="checkPluginUpdate(plugin)">Check for updates</button>
+                    <button class="btn small primary" x-show="plugin.update.available && !plugin.update.skipped"
+                            :disabled="busyAction === plugin.id + ':update'"
+                            @click="installPluginUpdate(plugin)" x-text="`Update to ${plugin.update.latest}`"></button>
+                    <button class="btn small" x-show="plugin.update.available && !plugin.update.skipped"
+                            @click="skipPluginUpdate(plugin, true)">Skip this version</button>
+                    <button class="btn small" x-show="plugin.update.skipped" @click="skipPluginUpdate(plugin, false)">Show it again</button>
+                    <a class="btn small" x-show="plugin.update.available && plugin.update.url" :href="plugin.update.url"
+                       target="_blank" rel="noopener noreferrer">What's new<svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
+                  </div>
+                  <!-- going back: the copies kept by updates, or any release -->
+                  <h3>Earlier versions</h3>
+                  <p class="muted">If a new version has a problem. The version you leave isn't offered again until a newer one is out.</p>
+                  <div class="btn-row plugin-actions">
+                    <template x-for="v in plugin.update.backups.slice(0, 3)" :key="v">
+                      <button class="btn small" :disabled="busyAction === plugin.id + ':update'"
+                              @click="restorePluginVersion(plugin, v)" x-text="`Go back to ${v}`"></button>
+                    </template>
+                    <button class="btn small" x-show="!pluginReleases[plugin.id]" :disabled="busyAction === plugin.id + ':update'"
+                            @click="loadPluginReleases(plugin)">Other versions…</button>
+                  </div>
+                  <template x-if="pluginReleases[plugin.id]?.length">
+                    <div class="btn-row plugin-actions">
+                      <select x-model="pluginPick[plugin.id]" aria-label="Release to install">
+                        <template x-for="r in pluginReleases[plugin.id]" :key="r.version">
+                          <option :value="r.version" x-text="r.version + (r.date ? ' · ' + new Date(r.date).toLocaleDateString() : '')"></option>
+                        </template>
+                      </select>
+                      <button class="btn small" :disabled="busyAction === plugin.id + ':update'"
+                              @click="installPluginRelease(plugin)">Install</button>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </template>
+        </section>
