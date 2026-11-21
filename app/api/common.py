@@ -190,21 +190,15 @@ def series_card(series, counts, lang):
 
 
 def book_label(b: Book):
-    if b.eff_extra and b.eff_chapter is None and b.eff_volume is None:
-        return "Extra" + ("" if b.extra_index is None else f" {_fmt(b.extra_index)}")
-    parts = []
-    if b.eff_volume is not None:
-        parts.append(f"Vol {_fmt(b.eff_volume)}")
-    if b.eff_chapter is not None:
-        end = b.eff_chapter_end
-        parts.append(f"Ch {_fmt(b.eff_chapter)}" + (f"-{_fmt(end)}" if end is not None else ""))
-    if b.eff_extra:
-        parts.append("extra")
-    return " ".join(parts) or Path(b.file_name).stem
+    """What the lists, the reader and Continue call a book ("Vol 3", "Ch 12-14"): the `book:label` job
+    (#210), built in app/plugins/builtin/book_labels/. With that job off, the file's name."""
+    from app.plugins import ask_job
+    label = ask_job("book:label", "book_label", b, fallback=_file_label)
+    return label if isinstance(label, str) and label else _file_label(b)
 
 
-def _fmt(n):
-    return str(int(n)) if float(n).is_integer() else f"{n:g}"
+def _file_label(b: Book):
+    return Path(b.file_name).stem
 
 
 def book_dict(b: Book, progress: Progress | None = None):

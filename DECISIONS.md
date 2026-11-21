@@ -1122,3 +1122,23 @@ Plugin API version, and the app works after every one.
   there by migration 18 for the owner and every account, so a replacement plugin sees everyone's lists.
   Libraries' assignments stay the libraries plugin's: libraries aren't a replaceable job yet.
 - **Deprecation rule**: a name leaves the SDK only after one minor version of warning.
+
+### The parser, the matcher and book labels as server jobs (Plugin API 23, issue #210)
+
+- **Three jobs, each a built-in plugin with the code that was in the core**: `scanner:parser`
+  ("File name parser"), `metadata:matcher` ("Title matcher") and `book:label` ("Book labels"). The core's
+  `parse()`, `matcher.clean_query/score/pick` and `book_label()` keep their names and ask the plugin
+  doing the job (`ask_job()` in `app/plugins`), so the scanner, the metadata service and the lists didn't
+  change, and every existing test passes as it was.
+- **Plain functions, not `ctx` hooks**: they're asked per book and per result (a scan parses thousands of
+  names, a list labels every book). Going through the plugin costs about 13 µs a call.
+- **A broken replacement falls back to the built-in one** (logged once per plugin and hook), even when
+  the built-in plugin is off, as for the views. Only `book:label` can be left with nobody doing it: then
+  books are called by their file names.
+- **The order of a series' books stays the core's** (`Parsed.sort_key`, revisions, duplicates): it's
+  what the owner's own numbers and hiding work on. A parser only gives the numbers.
+- **Switching the parser reads the numbers again** at the next library scan: the scan remembers which
+  plugin and version read each library (`jobs:scanner:parser-used`). Only the names are read again, not
+  the files, and the book rows stay, so progress and page data are kept. The first scan after this update
+  only remembers the parser.
+- **Reading status stays in the core**: it's worked out both in SQL and in Python, and they must agree.

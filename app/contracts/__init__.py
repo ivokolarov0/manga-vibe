@@ -85,6 +85,18 @@ register(Job("attention:list", "Needs attention lists", exclusive=False,
 register(Job("saved-searches", "Saved searches", exclusive=False,
              description="Named library filters and sort, kept in the jobs:saved-searches setting"))
 
+# Plugin API 23 (#210): server logic people may want done differently. Contracts in docs/PLUGINS.md.
+# parse_name(filename, series_title) -> Parsed. A rescan after switching re-reads every book's numbers.
+register(Job("scanner:parser", "File name parser", required=True,
+             description="Volume, chapter and revision from a book's file name"))
+# match_query(folder_name) -> (query, year); match_score(query, titles, year, cand_year, cand_format,
+# novel) -> 0-100; match_pick([(score, candidate)...], threshold, lead) -> the candidate or None
+register(Job("metadata:matcher", "Metadata matcher", required=True,
+             description="Which provider result is the series, from its folder name"))
+# book_label(book) -> str. Off: books are called by their file names.
+register(Job("book:label", "Book labels",
+             description="What a book is called in the lists, the reader and Continue (Vol 3, Ch 12-14)"))
+
 
 def job_label(key: str) -> str:
     job = JOBS.get(key)

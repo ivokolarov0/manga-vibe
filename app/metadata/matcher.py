@@ -1,58 +1,29 @@
-"""Turn a folder name into a search query and score provider results (spec 6.2)."""
-import re
+"""Turn a folder name into a search query and score provider results (spec 6.2): the `metadata:matcher`
+job (#210). These ask the plugin doing it, built in app/plugins/builtin/title_matcher/."""
 
-from rapidfuzz import fuzz
 
-from app.metadata.text import normalize_title
-
-BRACKETS = re.compile(r"\[[^\]]*\]|\{[^}]*\}")
-YEAR = re.compile(r"\((\d{4})\)")
-NOISE = re.compile(r"\((?:digital|official|complete|[^)]*scan[^)]*|[^)]*rip[^)]*)\)", re.I)
-PARENS = re.compile(r"\([^)]*\)")
+def _builtin():
+    from app.plugins.builtin import title_matcher
+    return title_matcher
 
 
 def clean_query(folder_name):
     """'[Group] Berserk (1989) (Digital)' -> ('Berserk', 1989)"""
-    m = YEAR.search(folder_name)
-    year = int(m.group(1)) if m else None
-    s = BRACKETS.sub(" ", folder_name)
-    s = YEAR.sub(" ", s)
-    s = NOISE.sub(" ", s)
-    s = s.replace("_", " ")
-    s = re.sub(r"\s+", " ", s).strip(" -")
-    stripped = PARENS.sub(" ", s).strip()  # drop any other (...) if something is left
-    return (re.sub(r"\s+", " ", stripped) if stripped else s), year
-
-
-def title_similarity(query, titles):
-    q = normalize_title(query)
-    best = 0
-    for t in titles:
-        n = normalize_title(t)
-        if not n:
-            continue
-        best = max(best, fuzz.ratio(q, n), fuzz.token_sort_ratio(q, n) - 2)
-    return best
+    from app.plugins import ask_job
+    return ask_job("metadata:matcher", "match_query", folder_name,
+                   fallback=lambda *a: _builtin().clean_query(*a))
 
 
 def score(query, titles, year=None, cand_year=None, cand_format=None, novel=False):
-    """novel: the series' books are light novels (text EPUBs), so the novel is the right match."""
-    s = title_similarity(query, titles)
-    if year and cand_year:
-        s += 5 if abs(year - cand_year) <= 1 else -10
-    is_novel = cand_format in ("NOVEL", "Novel")
-    if novel:
-        if cand_format and not is_novel:
-            s -= 15  # the books are the light novel; its manga adaptation is the wrong match
-    elif is_novel and "novel" not in query.lower():
-        s -= 15  # the library is manga; a light novel with the same name is the wrong match
-    return max(0, min(100, round(s)))
+    """0-100: how well a candidate with these titles (and year, format) fits the query. novel: the
+    series' books are light novels (text EPUBs), so the novel is the right match."""
+    from app.plugins import ask_job
+    return ask_job("metadata:matcher", "match_score", query, titles, year, cand_year, cand_format, novel,
+                   fallback=lambda *a: _builtin().score(*a))
 
 
 def pick(scored, threshold=90, lead=10):
     """scored: list of (score, item), best first. The best item if confident, else None."""
-    if not scored or scored[0][0] < threshold:
-        return None
-    if len(scored) > 1 and scored[0][0] - scored[1][0] < lead:
-        return None
-    return scored[0][1]
+    from app.plugins import ask_job
+    return ask_job("metadata:matcher", "match_pick", scored, threshold, lead,
+                   fallback=lambda *a: _builtin().pick(*a))
