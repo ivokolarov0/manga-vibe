@@ -73,6 +73,12 @@ templates = Environment(loader=PageLoader(TEMPLATES_DIR), autoescape=select_auto
 VIEWS = {
     "card": {"job": "view:card", "template": "views/card.html", "layouts": ("library", "continue"),
              "slots": {"card-badges": "badges on the cards"}},
+    "library": {"job": "view:library", "template": "views/library.html",
+                "slots": {"library-tools": "buttons next to Filter and Sort", "library-filters": "buttons with the filters on",
+                          "select-menu": "entries in multi-select's ⋯ menu", "library-end": "the library's dialogs",
+                          "card-badges": "badges on the cards"}},
+    "continue": {"job": "view:continue", "template": "views/continue.html",
+                 "slots": {"continue-top": "what goes above Continue reading", "card-badges": "badges on the cards"}},
     "series": {"job": "view:series", "template": "views/series.html",
                "slots": {"series-actions": "buttons next to Continue", "series-menu": "entries in the ⋯ menu",
                          "series-panels": "panels on the series page", "series-end": "wide panels and dialogs",

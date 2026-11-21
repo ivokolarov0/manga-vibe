@@ -463,6 +463,8 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `reloadSettings()` | load the settings again and show them, after they changed elsewhere. Plugin API 13 |
 | `ui.*` | to show things as the app does, in your markup or a view: `ui.cardSub(s)` ("Reading · 3/10"), `ui.updated(s)`, `ui.ago(ms)`, `ui.status(st)`, `ui.publication(p)`, `ui.kind(s)` ("Manhwa"), `ui.scoreCls(n)`, `ui.haveText(c)`, `ui.editionText(c)`, `ui.icon(name)`, `ui.libraryUrl(params)`. Plugin API 17. And `ui.fileSize(bytes)`, `ui.number(v)` ("–" for none), `ui.text(description)` (as HTML, escaped). Plugin API 18 |
 | `series` | the series page's data and actions: see [The view:series job](#the-viewseries-job). Plugin API 18 |
+| `library`, `continue` | the library page's and Continue reading's: see [The view:library and view:continue jobs](#the-viewlibrary-and-viewcontinue-jobs). Plugin API 19 |
+| `bind(store, own)` | a component whose names are a store's, to read, set and call from markup: `Alpine.data("myLibrary", () => MangaVibe.bind(MangaVibe.library, { extra: 1 }))`, then `items`, `bulk(…)`. Plugin API 19 |
 
 **Events** (`MangaVibe.on(pluginId, event, fn)`). `fn` may be async unless it says otherwise.
 
@@ -843,6 +845,38 @@ The page **must keep the slots** `series-actions`, `series-menu`, `series-panels
 `book-row` (`b` is the book there), and should show the plugins' `s.choices`, `s.actions`, the `details`
 rows and the books' `badges`, or say in its description that it leaves some out. Hide what only admins may
 do unless `$store.app.admin`. It may lay the page out any way it likes.
+
+#### The view:library and view:continue jobs
+
+Plugin API 19. The library page and Continue reading. Built in: "Library page"
+(`app/plugins/builtin/library_page/`: blocks `head`, `filters`, `grid`; its component `libraryPage()` is
+`MangaVibe.bind(MangaVibe.library)`) and "Continue reading page" (`app/plugins/builtin/continue_page/`,
+no script). The page keeps the `<section>` around each, `home-top` above both, and the Android banner.
+
+**The cards are the card view, in the page's links**: draw each series with the macros from
+`ui/macros.html`, `{% from "ui/macros.html" import library_card, continue_card with context %}`, then
+`{{ library_card() }}` / `{{ continue_card() }}` inside an `x-for` over the series (`s`). The library's link
+does multi-select (hold a card) through `MangaVibe.library`. A page that wants other cards uses another
+card plugin.
+
+| `MangaVibe.library.` | |
+|---|---|
+| `items`, `total`, `loading`, `done`, `failed`, `retry()` | the cards loaded so far (as `GET /api/series` gives them), how many match, a load on its way, all loaded, why the last load failed and try again |
+| `watchEnd(el)` | **call it once** with an element after the last card: more are loaded as it comes near the screen (`x-init="watchEnd($el)"`) |
+| `paged`, `page`, `pages()`, `pageNums`, `pageInfo`, `goPage(n)`, `pageSize`, `pageSizes`, `setPageSize(n)` | numbered pages (Settings → Display → Library listing) |
+| `layout`, `setLayout(v)` | `"grid"` or `"list"` |
+| `params`, `filters`, `chips`, `removeChip(c)`, `clearAll()`, `filterCount`, `filtersOn`, `customSort`, `letter`, `quick`, `quickOn(v)`, `setQuick(v)`, `lib` | the filters on (the address's query), as chips, and the quick buttons; `lib` is the [library-query](#the-library-query-job) plugin's filters and sorts |
+| `openSheet(kind)` | the filter, sort or letter sheet: `"filter"`, `"sort"`, `"letter"`. The sheets are the page's, built from the library-query plugin |
+| `emptyText` | what to say when nothing shows (a plugin may say why, e.g. a locked library) |
+| `selecting`, `selCount`, `isSel(s)`, `selTitles`, `selectAll()`, `endSelect()`, `selMenu`, `delOpen`, `working` | multi-select, started by holding a card |
+| `bulk(action, msg, extra, url)`, `deleteSelected()` | an action for the selected series (`read`, `unread`, `favorite`, `unfavorite`, `refresh`, or a plugin's at its `url`); delete them and their folders |
+
+`MangaVibe.continue.items` is what's in progress (`null` until loaded), each with `continue`: the book and
+page to go on with.
+
+The library page **must keep** the slots `library-tools`, `library-filters`, `select-menu` and
+`library-end`, which can use `selCount`, `selMenu` and `bulk()` as names (bind gives them), and the cards'
+`card-badges`. Continue reading keeps `continue-top`.
 
 ## Styling: plugins and your own custom.css
 

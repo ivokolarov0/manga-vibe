@@ -36,9 +36,19 @@
     <!-- ============ above the library grid and Continue: what plugins add, e.g. the library tabs ============ -->
     {{ slot("home-top") }}
 
-{% block library %}{% include "views/library.html" %}{% endblock %}
+{% block library %}
+    <!-- ============ library: the view:library plugin's (built in: Library page), from MangaVibe.library ============ -->
+    <section id="library-view" class="view" x-show="$store.app.view === 'library'">
+      {{ view("library") }}
+    </section>
+{% endblock %}
 
-{% block continue %}{% include "views/continue.html" %}{% endblock %}
+{% block continue %}
+    <!-- ============ continue reading: the view:continue plugin's (built in: Continue reading page) ============ -->
+    <section class="view" x-show="$store.app.view === 'continue'" x-cloak>
+      {{ view("continue") }}
+    </section>
+{% endblock %}
 
 {% block series %}
     <!-- ============ series page: the view:series plugin's (built in: Series page), from MangaVibe.series ============ -->

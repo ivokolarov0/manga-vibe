@@ -44,7 +44,7 @@ def doing(request, client):
 def cards(page):
     """The library's and Continue's card markup in the page."""
     lib = page.split('x-for="s in items" :key="s.id"', 1)[1].split("</template>", 1)[0]
-    cont = page.split('x-for="s in items || []" :key="s.id"', 1)[1].split("</template>", 1)[0]
+    cont = page.split('x-for="s in $store.continue.items || []" :key="s.id"', 1)[1].split("</template>", 1)[0]
     return lib, cont
 
 
@@ -55,7 +55,7 @@ def test_the_card_is_in_the_page(doing, client):
         assert 'class="poster"' in markup and 's.poster' in markup and 's.title' in markup
         assert 'data-slot="card-badges"' in markup  # other plugins' badges
     # the link around it is the page's: it opens the series, and does multi-select in the library
-    assert "@pointerdown=\"press($event, s)\"" in page and ":href=\"'#/series/' + s.id\"" in page
+    assert "@pointerdown=\"$store.library.press($event, s)\"" in page and ":href=\"'#/series/' + s.id\"" in page
     info = next(p for p in client.get("/api/plugins").json()["plugins"] if p["id"] == doing)
     assert info["warnings"] == [] and info["blocked"] == ""
 

@@ -1042,3 +1042,22 @@ Plugin API version, and the app works after every one.
 - **Checked in Firefox** (Playwright): loading, favorite, read/unread, reading mode, the Files tab's
   number form, the delete dialog and moving to another series, with the built-in page and with a page
   that extends it while the built-in plugin is off.
+
+### The library page and Continue reading as views (Plugin API 19, issue #207)
+
+- **`MangaVibe.library` and `MangaVibe.continue`**: `library()` and `continueView()` became stores, as the
+  series page did. Watching outside a component needed a small `watchValue()` (an `Alpine.effect` that
+  only calls back on a change); the sentinel the endless scroll watches is the view's element, handed over
+  with `watchEnd(el)`, and the scroll after a page change uses the page's own section.
+- **Two plugins, not one**: one plugin doing both jobs would be switched off whole when someone replaces
+  only Continue, leaving the library page's job to the fallback.
+- **The card links are macros the page gives** (`library_card()`, `continue_card()`): a library page can
+  lay the grid out its own way but can't break multi-select (hold, shift-click, the click after a hold),
+  and the card is always the card view's.
+- **`MangaVibe.bind(store)`**: the built-in library page's component is just the store's names. Plugins'
+  markup in `select-menu` and `library-end` was written against those names (`bulk()`, `selCount`,
+  `selMenu`), so a page that binds the store keeps them working. Functions are bound to the store, so
+  `this` is right whoever calls them.
+- **Checked in Firefox** (Playwright): all series load, the quick buttons, chips and Clear all, the list
+  view, hold to select (without opening the series), tap and Select all, a bulk action, numbered pages,
+  Libraries' Move dialog from the select menu, and Continue reading.

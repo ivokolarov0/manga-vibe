@@ -1,5 +1,12 @@
-    <!-- ============ library ============ -->
-    <section class="view" x-data="library()" x-show="$store.app.view === 'library'">
+{#- The library page: what's inside the page's <section id="library-view" class="view">. Contract
+    view:library@1 (docs/PLUGINS.md, "The view:library job"): everything is MangaVibe.library
+    ($store.library); libraryPage() (library_page.js) gives its names to this markup. The cards are
+    {{ library_card() }} (the card view inside the page's link, which does multi-select). Keep the slots
+    library-tools, library-filters, select-menu and library-end. A plugin's page can
+    {% extends "@library-page/views/library.html" %} and change a block. -#}
+{% from "ui/macros.html" import library_card with context %}
+    <div class="library-page-view" x-data="libraryPage()">
+      {% block head %}
       <div class="lib-head">
         <div class="lib-tools">
           <button class="tool" :class="{ on: filterCount }" @click="openSheet('filter')">
@@ -22,6 +29,8 @@
           </template>
         </div>
       </div>
+      {% endblock %}
+      {% block filters %}
       <!-- the filters on (tap one to drop it), then Clear all and what plugins add (e.g. Save search) -->
       <div class="active-filters" x-show="chips.length || (filtersOn && $store.app.pluginSlots.includes('library-filters'))" x-cloak>
         <template x-for="c in chips" :key="c.k + c.v">
@@ -48,7 +57,8 @@
           </div>
         </div>
       </div>
-      <!-- multi-select: hold a card to start (see library() in app.js) -->
+      {% endblock %}
+      <!-- multi-select: hold a card to start (MangaVibe.library) -->
       <div class="select-bar" x-show="selecting" x-cloak role="toolbar" aria-label="Selected series"
            @keydown.escape.window="if (!delOpen) endSelect()">
         <button class="icon-btn" aria-label="Stop selecting" title="Stop selecting" :disabled="!!working"
@@ -100,20 +110,14 @@
         </div>
       </div>
 
+      {% block grid %}
       <div class="grid" :class="{ loading: paged && loading, selecting, list: layout === 'list' }">
         <template x-for="s in items" :key="s.id">
-          <a class="card" :class="{ done: s.reading_status === 'completed', dropped: s.reading_status === 'dropped', picked: isSel(s) }"
-             :href="'#/series/' + s.id" :aria-pressed="selecting ? String(isSel(s)) : null"
-             @pointerdown="press($event, s)" @pointermove="pressMove($event)" @pointerup="pressEnd()"
-             @pointercancel="pressCancel()" @pointerleave="pressCancel()"
-             @contextmenu="pressMenu($event, s)" @click="cardClick($event, s)">
-            <!-- the card: the view:card plugin's (built in: Series cards). The link around it, which opens
-                 the series and does multi-select, is the page's -->
-            {{ view("card", layout="library") }}
-          </a>
+          {{ library_card() }}
         </template>
       </div>
-      <div x-ref="sentinel"></div>
+      <!-- more cards are loaded as this comes near the screen (MangaVibe.library.watchEnd) -->
+      <div x-init="watchEnd($el)"></div>
       <!-- the first cards, or more at the bottom, are on their way (a new page keeps the old cards, dimmed) -->
       <p class="muted loading-line lib-loading" x-show="loading && !failed && (!items.length || !paged && !done)" x-cloak>Loading…</p>
       <div class="empty" x-show="failed" x-cloak>
@@ -137,4 +141,5 @@
         <span x-text="emptyText"></span>
         <button class="btn small" x-show="chips.length" @click="clearAll()">Clear the filters</button>
       </div>
-    </section>
+      {% endblock %}
+    </div>

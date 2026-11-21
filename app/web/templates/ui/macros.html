@@ -9,6 +9,27 @@
   <template x-if="!r.check"><select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in r.options" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></template></label></template>
 {%- endmacro %}
 
+{#- A series card in the library, inside an x-for over the series (`s`): the page's link, which opens the
+    series and does multi-select (MangaVibe.library), with the card view (view:card) in it. Import it
+    `with context` (it draws a view). -#}
+{% macro library_card() -%}
+<a class="card" :class="{ done: s.reading_status === 'completed', dropped: s.reading_status === 'dropped', picked: $store.library.isSel(s) }"
+   :href="'#/series/' + s.id" :aria-pressed="$store.library.selecting ? String($store.library.isSel(s)) : null"
+   @pointerdown="$store.library.press($event, s)" @pointermove="$store.library.pressMove($event)"
+   @pointerup="$store.library.pressEnd()" @pointercancel="$store.library.pressCancel()"
+   @pointerleave="$store.library.pressCancel()" @contextmenu="$store.library.pressMenu($event, s)"
+   @click="$store.library.cardClick($event, s)">
+  {{ view("card", layout="library") }}
+</a>
+{%- endmacro %}
+
+{#- A series card on Continue reading (`s` from MangaVibe.continue.items): its link and the card view. -#}
+{% macro continue_card() -%}
+<a class="card" :href="'#/series/' + s.id">
+  {{ view("card", layout="continue") }}
+</a>
+{%- endmacro %}
+
 {#- Metadata matching in progress (Settings → Metadata and the Needs attention lists). -#}
 {% macro meta_progress() -%}
 <template x-if="$store.app.metaProgress">
