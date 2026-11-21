@@ -336,6 +336,10 @@ def main():
     shutil.copytree(ROOT / "app" / "web" / "static", out / "rec" / "static")
     for name in ("index.html", "sw.js", "demo.js", "demo.css"):
         shutil.copy2(HERE / name, out / name)
+    # the plugin reference (docs/PLUGIN-REFERENCE.md), shown by plugins/index.html at <site>/plugins/
+    (out / "plugins").mkdir()
+    shutil.copy2(HERE / "plugins" / "index.html", out / "plugins" / "index.html")
+    shutil.copy2(ROOT / "docs" / "PLUGIN-REFERENCE.md", out / "plugins" / "reference.md")
     (out / ".nojekyll").write_text("")
     check_private(out)
     size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())

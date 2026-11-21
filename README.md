@@ -232,7 +232,8 @@ flowchart TB
 | 🟰 **Same rules for everyone** | The built-in plugins use only the public plugin API, so a plugin you write can do anything they do. |
 | 🧑‍💻 **Write your own** | Python, with HTML, CSS and JavaScript for the page. Vibe coding one with an AI assistant works well: the [plugin guide](docs/PLUGINS.md) describes every job's contract. |
 
-👉 [Plugins](docs/using-plugins.md) to install, swap and update them · [Writing plugins](docs/PLUGINS.md) to make one
+👉 [Plugins](docs/using-plugins.md) to install, swap and update them · [Writing plugins](docs/PLUGINS.md) to make one ·
+[Plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/): every part with a minimal sample ([also on GitHub](docs/PLUGIN-REFERENCE.md))
 
 ---
 
