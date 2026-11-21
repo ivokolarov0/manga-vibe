@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>MangaVibe docs</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<!-- Every docs page of the Pages site is this file (demo/docs.html), written by demo/build.py next to
+     the page's Markdown (page.md, a copy of the repo's file) with MV_DOC filled in: which file it is,
+     the way back to the site's root, and the list of pages (demo/pages.py). -->
+<style>
+  :root {
+    color-scheme: light dark;
+    /* MangaVibe's own colours (app/web/static/css/tokens.css) */
+    --bg: #f3f4f7; --surface: #fff; --surface2: #eef0f4; --text: #15181e; --muted: #5d6573;
+    --border: #dcdfe6; --accent: #e5532d; --accent-text: #fff;
+    --note: #2f6fdb; --tip: #1f8a4c; --important: #8250df; --warning: #b26b00; --caution: #cf222e;
+    @media (prefers-color-scheme: dark) {
+      --bg: #0f1115; --surface: #181b22; --surface2: #22262f; --text: #eceef2; --muted: #979eab;
+      --border: #2b303b; --accent: #ff7a59; --accent-text: #1d0d07;
+      --note: #6ea4ff; --tip: #4cc38a; --important: #b48bff; --warning: #e0a03a; --caution: #ff6b6b;
+    }
+    --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+    accent-color: var(--accent);
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent); }
+  img { max-width: 100%; height: auto; }
+
+  /* ---- top bar ---- */
+  .bar { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center;
+         gap: 8px 16px; padding: 10px max(16px, env(safe-area-inset-left)) 10px max(16px, env(safe-area-inset-right));
+         background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px);
+         border-bottom: 1px solid var(--border); }
+  .bar .home { margin: 0; font-size: 1.05rem; font-weight: 700; white-space: nowrap; color: inherit; text-decoration: none; }
+  .bar .links { display: flex; gap: 14px; font-size: 0.9rem; }
+  .bar .links a { color: var(--muted); text-decoration: none; }
+  .bar .links a:hover { color: var(--text); }
+  .mode { margin: 0 0 0 auto; display: inline-flex; border: 1px solid var(--border); border-radius: 999px;
+          padding: 3px; background: var(--surface); }
+  .mode legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .mode label { position: relative; padding: 4px 12px; border-radius: 999px; font-size: 0.85rem;
+                cursor: pointer; color: var(--muted); white-space: nowrap; }
+  .mode input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .mode label:has(input:checked) { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .mode label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---- the sidebar on the left, the page on the right ---- */
+  .layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 36px; max-width: 1280px;
+            margin: 0 auto; padding: 24px 16px 80px; }
+  .side { position: sticky; top: 72px; align-self: start; max-height: calc(100vh - 90px); overflow: auto;
+          font-size: 0.88rem; padding-right: 4px; }
+  .side summary { display: none; }
+  .side .group { margin: 18px 0 4px 8px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+                 text-transform: uppercase; color: var(--muted); }
+  .side .group:first-child { margin-top: 0; }
+  .side ol { list-style: none; margin: 0; padding: 0; }
+  .side a { display: block; padding: 3px 8px; border-radius: 6px; color: var(--text); text-decoration: none; }
+  .side a:hover { background: var(--accent-soft); }
+  .side a[aria-current="page"] { color: var(--accent); font-weight: 700; }
+  /* this page's sections, under its name */
+  .here { scroll-target-group: auto; margin: 2px 0 8px 10px !important; padding-left: 8px !important;
+          border-left: 1px solid var(--border); }
+  .here .here-sub { margin: 0 0 4px 10px; }
+  .here a { color: var(--muted); padding: 2px 8px; }
+  .here a:is(:target-current, .target-current) { color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+
+  @media (max-width: 900px) {
+    html { scroll-padding-top: 12px; }
+    .bar { position: static; }
+    .mode { margin-left: 0; }
+    .layout { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-top: 12px; }
+    .side { position: static; max-height: none; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 10px; padding: 4px 10px 8px; }
+    .side summary { display: block; cursor: pointer; padding: 8px 2px; font-weight: 600; }
+  }
+
+  /* ---- the page ---- */
+  .doc { min-width: 0; max-width: 860px; }
+  .doc h1 { font-size: 2rem; line-height: 1.25; margin: 0 0 10px; }
+  .doc h2 { font-size: 1.45rem; margin: 44px 0 8px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .doc h3 { font-size: 1.08rem; margin: 28px 0 6px; }
+  .doc h4 { font-size: 1rem; margin: 22px 0 4px; }
+  .doc section:focus { outline: none; }
+  .doc p, .doc li { color: color-mix(in srgb, var(--text) 88%, var(--muted)); }
+  .doc [align="center"] { text-align: center; }
+  .doc hr { border: 0; border-top: 1px solid var(--border); margin: 28px 0; }
+  .doc code { font: 0.88em/1.5 ui-monospace, "Cascadia Code", Consolas, monospace; }
+  .doc :not(pre) > code { background: var(--surface2); padding: 1px 5px; border-radius: 5px; }
+  .doc .table { overflow-x: auto; }
+  .doc table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 10px 0; }
+  .doc th, .doc td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  .doc th { color: var(--muted); font-weight: 600; }
+  .doc details { background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+                 padding: 8px 14px; margin: 8px 0; }
+  .doc details summary { cursor: pointer; }
+  .doc blockquote { margin: 12px 0; padding: 2px 16px; border-left: 4px solid var(--border); color: var(--muted); }
+  /* GitHub's > [!TIP] boxes */
+  .doc .alert { --c: var(--note); border-left-color: var(--c); background: color-mix(in srgb, var(--c) 8%, transparent);
+                border-radius: 0 8px 8px 0; padding: 8px 16px; }
+  .doc .alert-title { margin: 4px 0 2px; font-weight: 700; color: var(--c); }
+  .doc .alert-tip { --c: var(--tip); } .doc .alert-important { --c: var(--important); }
+  .doc .alert-warning { --c: var(--warning); } .doc .alert-caution { --c: var(--caution); }
+  .doc .mermaid { margin: 14px 0; padding: 12px; overflow-x: auto; text-align: center; background: var(--surface);
+                  border: 1px solid var(--border); border-radius: 10px; }
+  .doc .edit { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.85rem; }
+
+  .copyable { position: relative; margin: 10px 0 16px; }
+  .copyable pre { margin: 0; padding: 14px 16px; overflow-x: auto; border-radius: 10px;
+                  background: var(--surface); border: 1px solid var(--border); }
+  .copyable pre code.hljs { background: none; padding: 0; }
+  .copy { position: absolute; inset-block-start: 8px; inset-inline-end: 8px; display: flex; align-items: center; gap: 6px; }
+  .copy-button { min-inline-size: 28px; min-block-size: 28px; padding: 2px 10px; border-radius: 6px; cursor: pointer;
+                 font: 600 0.75rem system-ui, sans-serif; color: var(--muted);
+                 background: color-mix(in srgb, var(--surface2) 92%, transparent); border: 1px solid var(--border); }
+  .copy-button:hover { color: var(--text); }
+  .copy-button[data-copied] { color: var(--accent); }
+  .tip { font-size: 0.75rem; color: var(--muted); opacity: 0; transition: opacity 0.15s; order: -1; }
+  .tip:not(:empty) { opacity: 1; }
+  @media (hover: hover) {
+    .copy-button { opacity: 0; transition: opacity 0.15s; }
+    .copyable:hover .copy-button, .copyable:focus-within .copy-button,
+    .copy-button[data-copied], .copy-button[data-failed] { opacity: 1; }
+  }
+
+  /* ---- how to read it: text and code, only the code, or only the text (pages that are mostly code) ---- */
+  .page:has(#mode-code:checked) .doc .prose { display: none; }
+  .page:has(#mode-text:checked) .doc .copyable { display: none; }
+  .page:has(#mode-code:checked) .doc h3 { margin-top: 22px; }
+
+  .loading, .failed { color: var(--muted); }
+</style>
+</head>
+<body class="page">
+<header class="bar">
+  <a class="home" id="home" href="./">📖 MangaVibe docs</a>
+  <nav class="links" aria-label="MangaVibe">
+    <a id="demo-link" href="./">Demo</a>
+    <a href="https://github.com/ivokolarov0/manga-vibe">GitHub</a>
+  </nav>
+  <fieldset class="mode" id="mode" hidden>
+    <legend>Show</legend>
+    <label><input type="radio" name="mode" id="mode-both" value="both" checked>Text + code</label>
+    <label><input type="radio" name="mode" id="mode-code" value="code">Code only</label>
+    <label><input type="radio" name="mode" id="mode-text" value="text">Text only</label>
+  </fieldset>
+</header>
+
+<div class="layout">
+  <aside class="side">
+    <details id="side-box">
+      <summary>Menu</summary>
+      <nav aria-label="Docs" id="side"></nav>
+    </details>
+  </aside>
+  <main class="doc" id="doc"><p class="loading">Loading…</p></main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>
+"use strict";
+const CFG = /*MV_DOC*/{ src: "docs/PLUGIN-REFERENCE.md", base: "../", pages: [] };
+const REPO = "https://github.com/ivokolarov0/manga-vibe/blob/main/";
+const RAW = "https://raw.githubusercontent.com/ivokolarov0/manga-vibe/main/";
+const PAGE = CFG.pages.find((p) => p.src === CFG.src) || { title: "MangaVibe", path: "" };
+
+document.title = `${PAGE.title} · MangaVibe docs`;
+document.getElementById("home").href = `${CFG.base}docs/`;
+document.getElementById("demo-link").href = CFG.base;
+
+/* GitHub's anchor for a heading, so the pages' own #links work here as on GitHub */
+const slug = (text) => text.trim().toLowerCase().replace(/[^\w\- ]/g, "").replace(/ /g, "-");
+
+/* A link in the Markdown is relative to its file in the repo: another docs page stays on the site,
+   the README's pictures are on the site too, anything else of the repo opens on GitHub. */
+function where(href, image) {
+  if (!href || href.startsWith("#") || /^[a-z][a-z0-9+.-]*:|^\/\//i.test(href)) return null;
+  const u = new URL(href, `https://repo.invalid/${CFG.src}`);
+  const path = decodeURIComponent(u.pathname.slice(1));
+  const page = CFG.pages.find((p) => p.src === path);
+  if (page) return CFG.base + page.path + u.hash;
+  if (path.startsWith("docs/media/")) return `${CFG.base}media/${path.slice("docs/media/".length)}`;
+  return (image ? RAW : REPO) + path + u.hash;
+}
+function fixLinks(root) {
+  for (const a of root.querySelectorAll("a[href]")) {
+    const to = where(a.getAttribute("href"), false);
+    if (to) a.href = to;
+  }
+  for (const img of root.querySelectorAll("img[src]")) {
+    const to = where(img.getAttribute("src"), true);
+    if (to) img.src = to;
+  }
+}
+
+/* > [!TIP] and friends, as on GitHub */
+function alerts(root) {
+  for (const bq of root.querySelectorAll("blockquote")) {
+    const p = bq.firstElementChild;
+    const m = p?.tagName === "P" && p.innerHTML.match(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(<br>)?/i);
+    if (!m) continue;
+    const kind = m[1].toLowerCase();
+    p.innerHTML = p.innerHTML.slice(m[0].length);
+    if (!p.textContent.trim()) p.remove();
+    bq.classList.add("alert", `alert-${kind}`);
+    bq.insertAdjacentHTML("afterbegin", `<p class="alert-title">${kind[0].toUpperCase() + kind.slice(1)}</p>`);
+  }
+}
+
+/* What the Markdown has for GitHub that the sidebar does here: the "← Back to the README" lines and the
+   folded Contents box at the top of a page. */
+function dropGithubNav(root) {
+  for (const el of [...root.children]) {
+    if (/^H2$/.test(el.tagName)) break;
+    if (el.tagName === "P" && el.textContent.includes("←")) el.remove();
+    else if (el.tagName === "DETAILS" && /contents/i.test(el.querySelector("summary")?.textContent || "")) el.remove();
+  }
+}
+
+/* Each h2/h3 starts a <section> with its id (the sidebar's targets); code gets a Copy button; Mermaid
+   blocks become diagrams; the rest is "prose", which Code only hides. */
+function build(html) {
+  const doc = document.getElementById("doc");
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  dropGithubNav(tmp);
+  fixLinks(tmp);
+  alerts(tmp);
+  // every code block, also one inside a list's step: a diagram, or highlighted code with a Copy button
+  let n = 0;
+  for (const pre of [...tmp.querySelectorAll("pre")]) {
+    const block = pre.querySelector("code");
+    if (!block) continue;
+    if (block.classList.contains("language-mermaid")) {
+      const fig = document.createElement("div");
+      fig.className = "mermaid";
+      fig.textContent = block.textContent;
+      pre.replaceWith(fig);
+      continue;
+    }
+    block.id = `code-${++n}`;
+    const lang = (block.className.match(/language-(\w+)/) || [])[1];
+    if (lang && window.hljs?.getLanguage(lang)) hljs.highlightElement(block);
+    const box = document.createElement("div");
+    box.className = "copyable";
+    box.innerHTML = `<span class="copy"><button type="button" class="copy-button" command="--copy"
+      commandfor="${block.id}" aria-label="Copy this code">Copy</button><span class="tip" role="status"></span></span>`;
+    pre.replaceWith(box);
+    box.prepend(pre);
+  }
+  doc.replaceChildren();
+  let section = doc;
+  for (const el of [...tmp.children]) {
+    if (/^H[23]$/.test(el.tagName)) {
+      section = document.createElement("section");
+      section.id = slug(el.textContent);
+      section.tabIndex = -1;
+      section.dataset.level = el.tagName[1];
+      doc.append(section);
+    }
+    if (el.classList.contains("copyable") || el.classList.contains("mermaid")) {
+      section.append(el);
+      continue;
+    }
+    if (el.tagName === "TABLE") {
+      const wrap = document.createElement("div");
+      wrap.className = "table prose";
+      wrap.append(el);
+      section.append(wrap);
+      continue;
+    }
+    if (!/^H[1-4]$/.test(el.tagName)) el.classList.add("prose");
+    section.append(el);
+  }
+  const edit = document.createElement("p");
+  edit.className = "edit prose";
+  edit.innerHTML = `<a href="${REPO}${CFG.src}">View or edit this page on GitHub</a>`;
+  doc.append(edit);
+  document.getElementById("mode").hidden = n < 10;  // the switch is for pages that are mostly code
+  buildSide(doc);
+  spy(doc);
+  drawDiagrams(doc);
+  if (location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();
+}
+
+/* The sidebar: every page in its group; under this one, its sections */
+function buildSide(doc) {
+  const side = document.getElementById("side");
+  const groups = [...new Set(CFG.pages.map((p) => p.group))];
+  for (const g of groups) {
+    side.insertAdjacentHTML("beforeend", `<p class="group"></p><ol></ol>`);
+    side.lastElementChild.previousElementSibling.textContent = g;
+    const list = side.lastElementChild;
+    for (const p of CFG.pages.filter((x) => x.group === g)) {
+      const li = document.createElement("li");
+      const a = document.createElement("a");
+      a.href = CFG.base + p.path;
+      a.textContent = p.title;
+      li.append(a);
+      if (p.src === CFG.src) {
+        a.setAttribute("aria-current", "page");
+        li.append(sections(doc));
+      }
+      list.append(li);
+    }
+  }
+  // wide screens: the menu is always open; narrow ones: a "Menu" box that closes after a pick
+  const box = document.getElementById("side-box");
+  const wide = matchMedia("(min-width: 901px)");
+  const place = () => { box.open = wide.matches; };
+  wide.addEventListener("change", place);
+  place();
+  side.addEventListener("click", (e) => { if (e.target.closest(".here a") && !wide.matches) box.open = false; });
+}
+
+function sections(doc) {
+  const here = document.createElement("ol");
+  here.className = "here";
+  let sub = null;
+  for (const s of doc.querySelectorAll("section")) {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = `#${s.id}`;
+    a.textContent = s.querySelector("h2, h3").textContent;
+    li.append(a);
+    if (s.dataset.level === "2") {
+      here.append(li);
+      sub = document.createElement("ol");
+      sub.className = "here-sub";
+      li.append(sub);
+    } else (sub || here).append(li);
+  }
+  for (const ol of here.querySelectorAll("ol:empty")) ol.remove();
+  return here;
+}
+
+/* The section on screen is marked under the page's name: :target-current where the browser tracks it
+   (scroll-target-group), an IntersectionObserver elsewhere. aria-current follows either way. */
+function spy(doc) {
+  const links = [...document.querySelectorAll(".here a")];
+  const mark = (current) => links.forEach((a) => a.setAttribute("aria-current", a === current ? "true" : "false"));
+  if (CSS.supports("scroll-target-group: auto")) {
+    const sync = () => mark(document.querySelector(".here a:target-current"));
+    sync();
+    document.addEventListener("scrollend", sync);
+    return;
+  }
+  const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const link = byId.get(entry.target.id);
+      links.forEach((a) => a.classList.toggle("target-current", a === link));
+      mark(link);
+      link?.scrollIntoView({ block: "nearest" });
+    }
+  }, { rootMargin: "-80px 0px -70% 0px", threshold: 0 });
+  doc.querySelectorAll("section").forEach((s) => observer.observe(s));
+}
+
+/* Mermaid diagrams, loaded only on pages that have them */
+function drawDiagrams(doc) {
+  const nodes = doc.querySelectorAll(".mermaid");
+  if (!nodes.length) return;
+  const script = document.createElement("script");
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js";
+  script.onload = () => {
+    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+    mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "default" });
+    // at their own size: a wide diagram scrolls sideways instead of shrinking until it can't be read
+    mermaid.run({ nodes }).then(() => {
+      for (const svg of doc.querySelectorAll(".mermaid svg")) {
+        const w = svg.viewBox?.baseVal?.width;
+        if (w) Object.assign(svg.style, { maxWidth: "none", width: `${Math.ceil(w)}px` });
+      }
+    });
+  };
+  document.head.append(script);
+}
+
+/* ---- Copy: Invoker Commands where the browser has them, a click listener elsewhere ---- */
+const timers = new WeakMap();
+function report(button, ok) {
+  const tip = button.nextElementSibling;
+  clearTimeout(timers.get(button));
+  button.removeAttribute("data-copied");
+  button.removeAttribute("data-failed");
+  tip.textContent = "";
+  button.setAttribute(ok ? "data-copied" : "data-failed", "");
+  requestAnimationFrame(() => { tip.textContent = ok ? "Copied" : "Copy failed"; });
+  timers.set(button, setTimeout(() => {
+    button.removeAttribute("data-copied");
+    button.removeAttribute("data-failed");
+    tip.textContent = "";
+  }, 2000));
+}
+async function copy(button, target) {
+  const text = target.innerText.trim();
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+    report(button, true);
+  } catch {
+    report(button, false);
+  }
+}
+if ("CommandEvent" in window) {
+  document.addEventListener("command", (e) => { if (e.command === "--copy") copy(e.source, e.target); }, true);
+} else {
+  document.addEventListener("click", (e) => {
+    const button = e.target.closest('button[command="--copy"]');
+    const target = button && document.getElementById(button.getAttribute("commandfor"));
+    if (target) copy(button, target);
+  });
+}
+
+/* ---- how to read it, remembered in this browser ---- */
+try {
+  const saved = localStorage.getItem("mv-ref-mode");
+  if (saved) document.getElementById(`mode-${saved}`).checked = true;
+} catch {}
+document.getElementById("mode").addEventListener("change", (e) => {
+  try { localStorage.setItem("mv-ref-mode", e.target.value); } catch {}
+});
+
+fetch("page.md", { cache: "no-cache" })
+  .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then((md) => build(marked.parse(md)))
+  .catch((e) => {
+    document.getElementById("doc").innerHTML = `<p class="failed">This page didn't load (${e.message}).
+      Read it <a href="${REPO}${CFG.src}">on GitHub</a>.</p>`;
+  });
+</script>
+</body>
+</html>

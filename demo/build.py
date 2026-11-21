@@ -315,6 +315,28 @@ def record(rec: Recorder):
             rec.get(f"/plugins/{p.id}.css")
 
 
+DOC_CONFIG = '/*MV_DOC*/{ src: "docs/PLUGIN-REFERENCE.md", base: "../", pages: [] }'  # in demo/docs.html
+
+
+def write_docs(out: Path):
+    """The docs pages (demo/pages.py): demo/docs.html at each page's path, told which Markdown file it
+    shows and where the site's root is, with that file next to it as page.md. The README's pictures go
+    to media/."""
+    from pages import PAGES
+    viewer = (HERE / "docs.html").read_text(encoding="utf-8")
+    if DOC_CONFIG not in viewer:
+        raise SystemExit("demo/docs.html no longer has the MV_DOC line build.py fills in")
+    pages = [{"src": src, "path": path, "title": title, "group": group} for src, path, title, group in PAGES]
+    for page in pages:
+        folder = out / page["path"]
+        folder.mkdir(parents=True, exist_ok=True)
+        base = "../" * page["path"].count("/")
+        config = json.dumps({"src": page["src"], "base": base, "pages": pages}, ensure_ascii=False)
+        (folder / "index.html").write_text(viewer.replace(DOC_CONFIG, config), encoding="utf-8")
+        shutil.copy2(ROOT / page["src"], folder / "page.md")
+    shutil.copytree(ROOT / "docs" / "media", out / "media")
+
+
 def main():
     out = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else HERE / "site"
     if out.exists():
@@ -336,10 +358,7 @@ def main():
     shutil.copytree(ROOT / "app" / "web" / "static", out / "rec" / "static")
     for name in ("index.html", "sw.js", "demo.js", "demo.css"):
         shutil.copy2(HERE / name, out / name)
-    # the plugin reference (docs/PLUGIN-REFERENCE.md), shown by plugins/index.html at <site>/plugins/
-    (out / "plugins").mkdir()
-    shutil.copy2(HERE / "plugins" / "index.html", out / "plugins" / "index.html")
-    shutil.copy2(ROOT / "docs" / "PLUGIN-REFERENCE.md", out / "plugins" / "reference.md")
+    write_docs(out)
     (out / ".nojekyll").write_text("")
     check_private(out)
     size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())

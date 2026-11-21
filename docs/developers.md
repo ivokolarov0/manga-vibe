@@ -141,7 +141,7 @@ flowchart LR
 | `demo/sw.js` | The service worker: answers from the recording; keeps plugin switches, settings and progress in memory for the visit; refuses deleting, editing, installing and uploading with a message. |
 | `demo/index.html` | Installs the worker, then loads the app. |
 | `demo/demo.js`, `demo.css` | The *Demo* badge on the app's page. |
-| `demo/plugins/index.html` | The [plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/) page: shows `docs/PLUGIN-REFERENCE.md` (copied next to it), with contents and Text + code / Code only / Text only. `tests/test_plugin_reference.py` runs every Python sample in it, so keep them working when the plugin API changes. |
+| `demo/docs.html`, `demo/pages.py` | The [docs site](https://ivokolarov0.github.io/manga-vibe/docs/): every Markdown page in `pages.py` (the README, the install guides, the user docs, the [plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/) and the full guide) shown by `docs.html` with a sidebar of all pages and this page's sections. The Markdown is copied next to it, so the repo's file stays the only source. Add a new doc to `pages.py` to put it on the site; `tests/test_docs_site.py` checks the list and the links between docs. `tests/test_plugin_reference.py` runs every Python sample of the reference, so keep them working when the plugin API changes. |
 
 Build and try it locally: `python demo/build.py` writes `demo/site/` (git-ignored). Serve its parent
 under a path like Pages does (the worker reads its base from its scope), e.g. copy `demo/site` to
