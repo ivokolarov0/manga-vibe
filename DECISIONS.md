@@ -66,7 +66,9 @@ Choices made where the spec was open. Newest at the bottom.
 ## Archive fixes (from the owner's real errors)
 
 - **Format from the first bytes, not the extension.** ZIPs named `.rar` and RARs/7z named `.cbz` are common.
-- **7-Zip as backup reader** (`7zip` + `7zip-rar` in the image): Python's zipfile can't decompress
+- **7-Zip as backup reader** (`7zz`, the 7-Zip project's static Linux build, checksum pinned in the
+  Dockerfile; it was Debian's `7zip` + `7zip-rar` until Debian stable fell behind on 7-Zip fixes
+  and scanners kept flagging it): Python's zipfile can't decompress
   Deflate64/PPMd (Windows/WinZip use them for big files) and gives "compression method is not supported".
   7-Zip also gives `.7z/.cb7` support and a second RAR reader.
 - **Archives inside archives** (volume zip holding chapter zips) are read one level deep; pages are named
