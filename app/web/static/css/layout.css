@@ -537,4 +537,15 @@
       cursor: pointer;
     }
   }
+
+  /* safe mode (/?safe=1): on every page, so it's never forgotten */
+  .safe-banner {
+    border-color: var(--warn);
+    & > .ic {
+      flex: none;
+      margin-left: 4px;
+      color: var(--warn);
+      font-size: 22px;
+    }
+  }
 }

@@ -28,6 +28,8 @@ What a plugin can do:
                       find_user() says who a user id is, for a request that comes with a key (Plugin API 13)
 - other books:        `reads` names book formats it has a reader for (e.g. "epub-text", light novels);
                       ctx.text_sections() lists a text book's sections (Plugin API 14)
+- jobs:               `provides` names the parts of the app it does (and replaces), `requires` the ones
+                      it needs another plugin to do (app/contracts, Plugin API 15)
 
 Some of the app's own features are built-in plugins (app/plugins/builtin/), e.g. saved searches and
 libraries, so the owner can switch them off and anyone can write a replacement.
@@ -49,7 +51,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 14
+API_VERSION = 15
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
@@ -210,8 +212,15 @@ class Plugin:
     # book formats this plugin has a reader for, e.g. ["epub-text"] (light novels): such a book opens in
     # the reader its `js` gives MangaVibe.registerReader() instead of the page reader (Plugin API 14)
     reads: list[str] = []
+    # --- jobs (Plugin API 15, app/contracts): the parts of the app this plugin does, and replaces ---
+    # job -> contract version, e.g. {"library-query": 1}. One plugin at a time does an exclusive job:
+    # switching this one on switches the other off. A job or version this MangaVibe doesn't have stops
+    # the plugin from running (Settings says why)
+    provides: dict[str, int] = {}
+    # jobs another switched-on plugin must do for this one to run, e.g. {"library-query": 1}
+    requires: dict[str, int] = {}
 
-    # --- assistants (MCP, Plugin API 13) ---------------------------------------------
+    # --- assistants (MCP, Plugin API 13)---------------------------------------------
     def run_mcp_tool(self, ctx, name, args: dict):
         """Run one of `mcp_tools` for an assistant, as the person whose key it uses (users.current()).
         Return text, or anything JSON can hold; raise (e.g. HTTPException or ValueError) to report an
@@ -352,7 +361,8 @@ def implements(plugin, hook):
 
 # what a plugin can set besides css; a plugin with css and none of these is a theme
 _FEATURES = ("fields", "actions", "choices", "settings_fields", "global_actions", "book_actions",
-             "overlay_label", "router", "js", "html", "middleware", "is_provider", "mcp_tools", "reads")
+             "overlay_label", "router", "js", "html", "middleware", "is_provider", "mcp_tools", "reads",
+             "provides")
 # the hooks that do something, so a theme overriding one isn't only a theme. status() only shows a line,
 # and search()/fetch() count only for providers (is_provider is in _FEATURES)
 _HOOKS = tuple(k for k, v in vars(Plugin).items()
@@ -629,6 +639,9 @@ class PluginManager:
         self.categories: dict[str, list[str]] = {}  # plugin id -> categories_of(), worked out at load
         self.disabled: set[str] = set()
         self.moved: dict[str, dict] = {}  # built-in plugins someone used that moved to a repo of their own
+        # exclusive job -> the plugin the owner switched on for it last (jobs_chosen): it wins if two are on
+        self.chosen: dict[str, str] = {}
+        self._blocked_key, self._blocked = None, {}
         self.base_url = "http://localhost:8080"  # updated from each request (see main.py)
         self._queue = queue.Queue()
         self._worker = None
@@ -733,7 +746,128 @@ class PluginManager:
         return self.categories.get(plugin.id) or categories_of(plugin)
 
     def enabled(self):
+        """The plugins that run: switched on, and not blocked (see blocked)."""
+        blocked = self.blocked
+        return [p for pid, p in self.plugins.items() if pid not in self.disabled and pid not in blocked]
+
+    def switched_on(self):
+        """The plugins switched on, including blocked ones."""
         return [p for pid, p in self.plugins.items() if pid not in self.disabled]
+
+    # --- jobs (Plugin API 15, app/contracts) ---------------------------------
+    @property
+    def blocked(self) -> dict[str, str]:
+        """id -> why a switched-on plugin doesn't run: a job or contract version this MangaVibe doesn't
+        have, a need no running plugin meets, or another plugin doing its exclusive job. Worked out
+        again whenever the plugins, the switches or the jobs change (tests change `disabled` directly)."""
+        from app.contracts import JOBS
+        key = (tuple((pid, id(p)) for pid, p in self.plugins.items()), frozenset(self.disabled),
+               tuple(self.chosen.items()), tuple((k, j.versions) for k, j in JOBS.items()))
+        if key != self._blocked_key:
+            self._blocked, self._blocked_key = self._work_out_blocked(), key
+        return self._blocked
+
+    def _work_out_blocked(self) -> dict[str, str]:
+        from app.contracts import job_label
+        on = self.switched_on()
+        if not any(p.provides or p.requires for p in on):
+            return {}  # no plugin uses jobs: nothing to do (the usual case before #204)
+        blocked = {p.id: why for p in on if (why := job_problem(p))}
+        # two plugins on for one exclusive job (Settings switches the other off, so only after a manual
+        # change): the one the owner picked last, else one of the owner's own, else the first
+        for job in {j for p in on for j in exclusive_jobs(p)}:
+            doing = [p for p in on if p.id not in blocked and job in exclusive_jobs(p)]
+            if len(doing) > 1:
+                keep = self._winner(job, doing)
+                for p in doing:
+                    if p is not keep:
+                        blocked[p.id] = f"{keep.name} does {job_label(job)} now"
+        # needs: blocking one plugin can leave another without what it needs, so until nothing changes
+        changed = True
+        while changed:
+            changed = False
+            running = [p for p in on if p.id not in blocked]
+            for p in running:
+                for job, v in plugin_jobs(p, "requires").items():
+                    if not any(q is not p and q.id not in blocked and plugin_jobs(q, "provides").get(job) == v
+                               for q in running):
+                        blocked[p.id] = f"Needs a plugin that does {job_label(job)} (v{v}): switch one on"
+                        changed = True
+                        break
+        return blocked
+
+    def _winner(self, job, doing):
+        chosen = next((p for p in doing if p.id == self.chosen.get(job)), None)
+        return chosen or next((p for p in doing if not self.is_builtin(p.id)), doing[0])
+
+    def provider_of(self, job):
+        """The running plugin doing this job, or None. For a shared job, the first of them."""
+        return next((p for p in self.enabled() if job in plugin_jobs(p, "provides")), None)
+
+    def providers_of(self, job):
+        """Every running plugin doing this job."""
+        return [p for p in self.enabled() if job in plugin_jobs(p, "provides")]
+
+    def jobs_info(self) -> list[dict]:
+        """The jobs, for Settings -> Plugins: which plugins can do each one and which do it now."""
+        from app.contracts import JOBS
+        running = {p.id for p in self.enabled()}
+        out = []
+        for key, job in JOBS.items():
+            can = [pid for pid, p in self.plugins.items() if key in plugin_jobs(p, "provides")]
+            out.append({"key": key, "label": job.label, "description": job.description,
+                        "exclusive": job.exclusive, "required": job.required,
+                        "versions": list(job.versions), "plugins": can,
+                        "doing": [pid for pid in can if pid in running]})
+        return out
+
+    def switch(self, db, plugin_id, on: bool) -> dict:
+        """Switch a plugin on or off, as Settings does, and save it. On: the other plugins doing one of
+        its exclusive jobs are switched off (after their can_switch_off agrees). Off: refused while
+        the plugin says so (can_switch_off), or while it's the only one doing a job the app needs.
+        Raises SwitchRefused. Returns {"started": [...], "stopped": [...]}: the plugins that run, or
+        stopped running, because of it (a plugin whose need is met now starts too), each started once."""
+        from app.contracts import JOBS, job_label
+        from app.db import set_setting
+        p = self.plugins.get(plugin_id)
+        if p is None:
+            raise KeyError(plugin_id)
+        before = {q.id for q in self.enabled()}
+        off = set()
+        if on:
+            for job in exclusive_jobs(p):
+                for q in self.switched_on():
+                    if q is not p and job in exclusive_jobs(q):
+                        self._check_can_switch_off(db, q, f"{p.name} can't replace {q.name}")
+                        off.add(q.id)
+                self.chosen[job] = p.id
+        elif plugin_id not in self.disabled:
+            self._check_can_switch_off(db, p, None)
+            for job in plugin_jobs(p, "provides"):
+                if job in JOBS and JOBS[job].required and plugin_id in before \
+                        and not any(q.id != plugin_id for q in self.providers_of(job)):
+                    raise SwitchRefused(f"{p.name} does {job_label(job)}, which MangaVibe needs. "
+                                        "Switch on another plugin that does it instead")
+        for qid in off:
+            self.set_enabled(qid, False)
+        self.set_enabled(plugin_id, on)
+        set_setting(db, "plugins_disabled", sorted(self.disabled))
+        set_setting(db, "jobs_chosen", self.chosen)
+        db.commit()
+        after = {q.id for q in self.enabled()}
+        for qid in before - after:
+            self.stop_threads(self.plugins[qid])
+        started = [q for q in self.enabled() if q.id in after - before]
+        for q in started:
+            self.start(db, q)
+        return {"started": [q.id for q in started], "stopped": sorted(before - after)}
+
+    def _check_can_switch_off(self, db, p, prefix):
+        if p.id in self.disabled or not implements(p, "can_switch_off"):
+            return
+        reason = p.can_switch_off(Context(p, db))
+        if reason:
+            raise SwitchRefused(f"{prefix}: {reason}" if prefix else reason)
 
     def providers(self):
         return [p for p in self.enabled() if p.is_provider]
@@ -745,21 +879,54 @@ class PluginManager:
     def get(self, plugin_id):
         """An enabled plugin by id, or None."""
         p = self.plugins.get(plugin_id)
-        return p if p is not None and plugin_id not in self.disabled else None
+        return p if p is not None and plugin_id not in self.disabled and plugin_id not in self.blocked else None
 
     def load_switches(self, db):
         """Which plugins are switched off (plugins_disabled). A plugin seen for the first time that
         isn't enabled_by_default starts off (plugins_known remembers which were seen)."""
         from app.db import get_setting, set_setting
         self.disabled = set(get_setting(db, "plugins_disabled", []) or [])
+        chosen = get_setting(db, "jobs_chosen", {}) or {}
+        self.chosen = {k: v for k, v in chosen.items() if isinstance(k, str) and isinstance(v, str)} \
+            if isinstance(chosen, dict) else {}
         known = set(get_setting(db, "plugins_known", []) or [])
         self._forget_moved(db, known)
         new = [pid for pid in self.plugins if pid not in known]
+        changed = False
         if new:
             self.disabled |= {pid for pid in new if not self.plugins[pid].enabled_by_default}
-            set_setting(db, "plugins_disabled", sorted(self.disabled))
+            # a new plugin for an exclusive job someone already does starts off: installing a replacement
+            # never takes over by itself, the owner picks it. The known ones first, then the new built-in
+            # ones (a fresh install gets the app's own), then the others
+            taken = {j for p in self.switched_on() if p.id not in new for j in exclusive_jobs(p)}
+            for pid in sorted(new, key=lambda i: not self.is_builtin(i)):
+                if pid in self.disabled:
+                    continue
+                jobs = exclusive_jobs(self.plugins[pid])
+                if any(j in taken for j in jobs):
+                    self.disabled.add(pid)
+                taken |= set(jobs)
             set_setting(db, "plugins_known", sorted(known | set(new)))
+            changed = True
+        changed |= self._settle_jobs()
+        if changed:
+            set_setting(db, "plugins_disabled", sorted(self.disabled))
             db.commit()
+
+    def _settle_jobs(self) -> bool:
+        """Two plugins switched on for one exclusive job (e.g. both on before they did that job): the
+        other one is switched off, like Settings does. True if something changed."""
+        changed = False
+        for job in {j for p in self.switched_on() for j in exclusive_jobs(p)}:
+            doing = [p for p in self.switched_on() if job in exclusive_jobs(p) and not job_problem(p)]
+            if len(doing) > 1:
+                keep = self._winner(job, doing)
+                for p in doing:
+                    if p is not keep:
+                        log.info("Plugin %s switched off: %s does the job %s", p.id, keep.id, job)
+                        self.disabled.add(p.id)
+                        changed = True
+        return changed
 
     def _forget_moved(self, db, known: set):
         """A built-in plugin that moved to its own repo (MOVED) is gone after the update. Forget it was
@@ -900,6 +1067,46 @@ class PluginManager:
             except Exception:
                 db.rollback()
                 log.error("Plugin %s failed in a background job:\n%s", plugin.id, traceback.format_exc())
+
+
+class SwitchRefused(Exception):
+    """A plugin can't be switched on or off now; the message says why (shown to the owner)."""
+
+
+def plugin_jobs(plugin, attr) -> dict[str, int]:
+    """The plugin's provides or requires as {job: version}, {} when they're set up wrong (it's
+    blocked for that, see PluginManager.blocked)."""
+    from app.contracts import jobs_of
+    try:
+        return jobs_of(getattr(plugin, attr, None))
+    except ValueError:
+        return {}
+
+
+def exclusive_jobs(plugin) -> list[str]:
+    """The exclusive jobs this plugin does (app/contracts)."""
+    from app.contracts import JOBS
+    return [k for k in plugin_jobs(plugin, "provides") if k in JOBS and JOBS[k].exclusive]
+
+
+def job_problem(plugin) -> str:
+    """Why this plugin can't run in this MangaVibe, whatever else is on: a job or contract version it
+    doesn't have. "" when there's none."""
+    from app.contracts import JOBS, job_label, jobs_of
+    try:
+        provides, requires = jobs_of(plugin.provides), jobs_of(plugin.requires)
+    except ValueError as e:
+        return f"Its jobs are set up wrong: {e}"
+    for what, jobs in (("does", provides), ("needs", requires)):
+        for key, v in jobs.items():
+            job = JOBS.get(key)
+            if job is None:
+                return f"Made for another MangaVibe: it {what} “{key}”, which this version doesn't have"
+            if v not in job.versions:
+                newer = "a newer" if v > max(job.versions) else "an older"
+                have = ", ".join(f"v{x}" for x in job.versions)
+                return f"Made for {newer} MangaVibe: it {what} {job_label(key)} v{v}; this version has {have}"
+    return ""
 
 
 def action_result(result):

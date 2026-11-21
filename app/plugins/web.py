@@ -56,9 +56,16 @@ def with_ui(plugin) -> bool:
     return bool(plugin.js or plugin.html)
 
 
-def render_index(page: str) -> str:
+def page_plugins(safe: bool = False):
+    """The plugins whose markup, scripts and styles the page gets. Safe mode (/?safe=1, Plugin API 15):
+    only the built-in ones, so a broken plugin of the owner's own can be switched off. On the server
+    every plugin keeps running."""
+    return [p for p in manager.enabled() if not safe or manager.is_builtin(p.id)]
+
+
+def render_index(page: str, safe: bool = False) -> str:
     """index.html with the switched-on plugins' markup in its slots and their scripts."""
-    plugins = manager.enabled()
+    plugins = page_plugins(safe)
     page = fill_slots(fill_parts(page), plugins)
     scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in plugins if p.js)
     return page.replace("<!-- slot:scripts -->", scripts)

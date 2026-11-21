@@ -897,3 +897,51 @@ So an assistant, and later a voice through the Manga Accessibility plugin, can u
 - **Not done here**: Claude's website and phone app connect from Anthropic's servers, which can't reach
   a server at home, so they need a public HTTPS address and OAuth; MangaVibe stays off the internet.
   The voice part is the accessibility plugin's (a follow-up there).
+
+## The app as a hub (issue #202)
+
+The owner shouldn't be stuck with a part of the app they don't like: the library page, the series
+page, the cards, the filters, a Settings section. So MangaVibe becomes a **hub**: a small core, and
+plugins that together make the app, each of which can be switched off and replaced. Until now plugins
+could only *add* (slots, hooks, events); this adds *replacing*. It's done in steps (#203–#211), each a
+Plugin API version, and the app works after every one.
+
+- **The core keeps** only what no plugin can safely do, or what every plugin shares: the plugin
+  manager, **Settings → Plugins and safe mode** (so a broken plugin can never lock the owner out), the
+  data (series, books, progress, users, plugin storage), file access, the HTTP server and events, the
+  page shell (routing, slots, `window.MangaVibe`), and the jobs with their contracts and tests.
+- **Built-in plugins aren't special** (#209): they'll use only the public SDK, so a replacement can
+  always do what they do. **Views own markup, not logic** (#205–#207): loading, saving progress,
+  marking read, deleting are SDK calls, so a replacement can look different but can't lose data.
+- **Reading status stays in the core** (#210): it's worked out in SQL and in Python, which must agree.
+
+### Jobs (Plugin API 15, issue #203)
+
+- **A job is a part of the app** a plugin does: `provides = {"library-query": 1}`, the number being
+  the version of the job's contract. `requires` names the jobs it needs another plugin to do. The jobs
+  are listed in `app/contracts/` and added there as parts of the app become plugins (none in this step:
+  it only adds the framework).
+- **Exclusive jobs, one plugin at a time.** Switching one on switches the other off, after the other's
+  `can_switch_off()` agrees (libraries with a password can't be replaced silently). Settings asks
+  first ("This replaces …"). Two on anyway (switched by hand in an older version): the one the owner
+  picked last wins (`jobs_chosen`), else one of the owner's own over a built-in, and the other is
+  switched off when the plugins load.
+- **A new plugin for a job already done starts off**, so installing a replacement never takes over by
+  itself; the owner picks it. A fresh install gets the built-in one (new built-ins are settled first).
+- **Required jobs** can't be left undone: switching off the only plugin doing one is refused (409),
+  so the way to change it is to switch on the replacement.
+- **Blocked, not switched off.** A plugin that can't run (a job or contract version this MangaVibe
+  doesn't have, a need no running plugin meets) stays switched on but is left out of `enabled()`, like
+  a switched-off one, with the reason in Settings. It starts by itself once the reason is gone (e.g.
+  the plugin it needs is switched on). Blocking is worked out again whenever the plugins, switches or
+  jobs change, from a cheap key, so code that changes `disabled` directly (tests) stays right. A need
+  is met only by the same contract version: v2 of a job may give something else than v1.
+- **Switching returns what started and stopped** (the plugin, the one it replaced, the ones whose
+  need is met now), so the page adds and takes out their markup without reloading, and each newly
+  running plugin gets `on_start`.
+- **Safe mode is `/?safe=1`**: the page is put together with the built-in plugins only (markup,
+  scripts and styles), with a bar on every page. The server keeps running every plugin: what breaks
+  the app in practice is a page that won't draw, and this is enough to reach Settings → Plugins and
+  switch the culprit off. `main.css` imports `/custom.css`, so the page can't leave plugin CSS out by
+  itself: the safe page sets a session cookie that `/custom.css` reads (and leaves out custom.css too),
+  and the normal page clears it.

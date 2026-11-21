@@ -161,14 +161,20 @@ class StaticNoCache(StaticFiles):
 app.mount("/static", StaticNoCache(directory=config.STATIC_DIR), name="static")
 
 
+SAFE_COOKIE = "mv_safe"  # set by /?safe=1: the page's styles leave out the owner's plugins and custom.css
+
+
 @app.get("/custom.css")
-def custom_css():
-    """Plugin CSS, then the owner's /data/custom.css. Served unlayered so it overrides built-in styles."""
+def custom_css(request: Request):
+    """Plugin CSS, then the owner's /data/custom.css. Served unlayered so it overrides built-in styles.
+    In safe mode only the built-in plugins' CSS (main.css imports this file, so the page can't leave
+    it out: the cookie the safe page set says so)."""
+    safe = request.cookies.get(SAFE_COOKIE) == "1"
     parts = []
-    for p in plugins.enabled():
+    for p in plugin_web.page_plugins(safe):
         if p.css:
             parts.append(f"/* plugin: {p.id} */\n{p.css.strip()}")
-    if config.CUSTOM_CSS.exists():
+    if config.CUSTOM_CSS.exists() and not safe:
         parts.append("/* custom.css */\n" + config.CUSTOM_CSS.read_text(encoding="utf-8", errors="replace"))
     return Response("\n\n".join(parts), media_type="text/css", headers={"Cache-Control": "no-cache"})
 
@@ -179,10 +185,18 @@ def manifest():
 
 
 @app.get("/")
-def index():
-    """The app's page, with the switched-on plugins' markup and scripts (app/plugins/web.py)."""
+def index(request: Request, safe: str = ""):
+    """The app's page, with the switched-on plugins' markup and scripts (app/plugins/web.py).
+    /?safe=1: safe mode, without the owner's own plugins in the page (only the built-in ones), so a
+    plugin that breaks the page can still be switched off in Settings -> Plugins."""
+    on = safe not in ("", "0", "false")
     page = (config.WEB_DIR / "index.html").read_text(encoding="utf-8")
-    return HTMLResponse(plugin_web.render_index(page), headers={"Cache-Control": "no-cache"})
+    response = HTMLResponse(plugin_web.render_index(page, safe=on), headers={"Cache-Control": "no-cache"})
+    if on:
+        response.set_cookie(SAFE_COOKIE, "1", httponly=True, samesite="strict")  # for /custom.css
+    elif SAFE_COOKIE in request.cookies:  # out of safe mode
+        response.delete_cookie(SAFE_COOKIE)
+    return response
 
 
 @app.get("/plugins/{plugin_id}.js")

@@ -731,6 +731,11 @@
       & .plugin-status {
         color: var(--accent);
       }
+
+      /* a plugin that's on but doesn't run (Plugin API 15: a job it can't do, a need nobody meets) */
+      & .plugin-blocked {
+        color: var(--danger);
+      }
     }
 
     & .plugin-title a {
@@ -930,6 +935,10 @@
 
       & .plugin-status {
         color: var(--accent);
+      }
+
+      & .plugin-blocked {
+        color: var(--danger);
       }
     }
 
