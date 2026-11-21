@@ -63,6 +63,7 @@ class Hello(Plugin):
 | **Be listed under the right category** in Settings → Plugins | `category = "reader"`, or several: `category = ["reader", "library"]` (see [Categories](#categories)). Plugin API 10 |
 | **Tools for assistants and voice control** (MCP) | `mcp_tools = [McpTool(...)]` and `run_mcp_tool(ctx, name, args)` on the server, `MangaVibe.screenCommand()` in the page (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
 | **A reader of its own** for books the page reader can't show (light novels) | `reads = ["epub-text"]`, `ctx.text_sections(book)` on the server, `MangaVibe.registerReader()` in the page (see [A reader of its own](#a-reader-of-its-own)). Plugin API 14 |
+| **Do a part of the app, replacing the built-in one** (e.g. the filters, a page) | `provides = {"<job>": 1}`, and `requires` for what it needs another plugin to do (see [Jobs](#jobs-replacing-a-part-of-the-app)). Plugin API 15 |
 
 ## Categories
 
@@ -644,6 +645,47 @@ inside a section the reader is (a scroll position) is the plugin's own to keep, 
 `ctx.set_series_data()` from its API.
 
 A MangaVibe from before Plugin API 14 lists these books under Not supported and never calls the reader.
+
+## Jobs: replacing a part of the app
+
+Plugin API 15. MangaVibe is a hub: the parts of the app are plugins, and the owner can switch one off
+and use another one instead (issue #202). Each such part is a **job**, listed in `app/contracts/`
+with the **contract** a plugin doing it must follow: what it gets, what it must support (for example the
+slots other plugins use), what it may leave out and what it gives back. Jobs are added as parts of the
+app become plugins; each one's contract is described here when it's added.
+
+```python
+class MyFilters(Plugin):
+    id = "my-filters"
+    provides = {"library-query": 1}   # the job, and the version of its contract it follows
+    requires = {"view:card": 1}       # jobs another switched-on plugin must do for this one to run
+```
+
+- **Exclusive jobs** (a page, the filters) are done by one plugin at a time. Switching yours on switches
+  the one doing it now off (Settings asks first), unless that one's `can_switch_off()` refuses. Any
+  number of plugins can do a **shared** job.
+- **A new plugin for a job that's already done starts off.** Installing yours doesn't replace anything;
+  the owner switches it on when they want it.
+- **Required jobs** are ones the app needs. The only plugin doing one can't be switched off, only
+  replaced.
+- **A plugin that can't run doesn't.** A job or contract version this MangaVibe doesn't have, or a need
+  no switched-on plugin meets, keeps the plugin from running (no hooks, API, markup or scripts), and
+  Settings → Plugins says why. It stays switched on and starts once the reason is gone. A need is met
+  only by the same contract version.
+- Write `provides` and `requires` as plain values: `{"job": version}` (a list of names means version 1).
+  Anything else keeps the plugin from running.
+
+`GET /api/plugins` sends each plugin's `provides`, `requires` and `blocked` (why it doesn't run, or
+`""`), and `jobs`: each job's `key`, `label`, `exclusive`, `required`, `versions`, the `plugins` that
+can do it and the ones `doing` it now. `PUT /api/plugins/<id>` answers which plugins `started` and
+`stopped` running because of the switch.
+
+**Safe mode.** `/?safe=1` loads the page with only the built-in plugins' markup, scripts and styles (and
+without custom.css), so a plugin that breaks the page can be switched off in Settings → Plugins. The
+server keeps running every plugin. Leave it from the bar at the top, or by loading `/` again.
+
+A MangaVibe from before Plugin API 15 ignores `provides` and `requires`: the plugin runs next to the
+built-in part instead of replacing it.
 
 ## Styling: plugins and your own custom.css
 

@@ -16,7 +16,8 @@ from app.users import manage
 from app.api.filters import visible_series
 from app.db import get_db, get_setting, set_setting
 from app.models import Library, Series
-from app.plugins import CATEGORIES, Context, OpenUrl, action_result, implements, manager as plugins
+from app.plugins import (CATEGORIES, Context, OpenUrl, SwitchRefused, action_result, implements,
+                         job_problem, manager as plugins, plugin_jobs)
 from app.plugins.web import ui_of, with_ui
 from app.scanner import walker
 from app.scanner.parser import natural_key
@@ -248,7 +249,7 @@ def put_settings(body: dict, db=Depends(get_db)):
 
 
 def _plugin_status(p, db):
-    if p.id in plugins.disabled or not implements(p, "status"):
+    if plugins.get(p.id) is None or not implements(p, "status"):
         return ""
     try:
         return str(p.status(Context(p, db)) or "")
@@ -275,13 +276,17 @@ def _plugin_dict(p, db):
             "global_actions": [{"key": a.key, "label": a.label, "confirm": a.confirm}
                                for a in p.global_actions],
             "permissions": plugin_updates.permissions_of(p),
-            "status": _plugin_status(p, db), "update": plugin_updates.info(db, p)}
+            "status": _plugin_status(p, db), "update": plugin_updates.info(db, p),
+            # jobs (Plugin API 15): what it does and needs, and why it doesn't run although it's on
+            "provides": plugin_jobs(p, "provides"), "requires": plugin_jobs(p, "requires"),
+            "blocked": plugins.blocked.get(p.id, "") if p.id not in plugins.disabled else job_problem(p)}
 
 
 @router.get("/plugins", dependencies=[manage])
 def list_plugins(db=Depends(get_db)):
     return {"plugins": [_plugin_dict(p, db) for p in plugins.plugins.values()],
             "errors": plugins.errors, "categories": CATEGORIES,
+            "jobs": plugins.jobs_info(),  # the parts of the app plugins do, and which do them now
             # built-in plugins someone used that are now installed from their own repo
             "moved": [{"id": pid, **m} for pid, m in plugins.moved.items()],
             # where the token for private plugin repos comes from: "settings", "env" or "" (never the token)
@@ -383,20 +388,17 @@ class PluginToggle(BaseModel):
 def toggle_plugin(plugin_id: str, body: PluginToggle, db=Depends(get_db)):
     """Switch a plugin on or off. Off is refused while the plugin says it can't be (e.g. libraries
     while one has a password: its series would show to everyone)."""
-    p = plugins.plugins.get(plugin_id)
-    if p is None:
+    if plugin_id not in plugins.plugins:
         raise HTTPException(404, "Plugin not found")
-    was_on = plugin_id not in plugins.disabled
-    if was_on and not body.enabled and implements(p, "can_switch_off"):
-        reason = p.can_switch_off(Context(p, db))
-        if reason:
-            raise HTTPException(409, reason)
-    plugins.set_enabled(plugin_id, body.enabled)
-    set_setting(db, "plugins_disabled", sorted(plugins.disabled))
-    db.commit()
-    if body.enabled and not was_on:
-        plugins.start(db, p)
-    return {"ok": True}
+    try:
+        done = plugins.switch(db, plugin_id, body.enabled)
+    except SwitchRefused as e:
+        raise HTTPException(409, str(e))
+    # what the page adds or takes out without reloading: this plugin, the one it replaced, and the
+    # ones whose need is met now or no longer (app.js)
+    ui = lambda ids: [i for i in ids if with_ui(plugins.plugins[i])]  # noqa: E731
+    return {"ok": True, "started": done["started"], "stopped": done["stopped"],
+            "ui_started": ui(done["started"]), "ui_stopped": ui(done["stopped"])}
 
 
 def _installed_plugin(plugin_id):

@@ -102,6 +102,15 @@
   <!-- home: the Library and Continue grids, which Settings → Display → Page width may let fill the screen
        (series-page: so may the series page, when that's ticked too) -->
   <main x-data :class="{ home: ['library', 'continue'].includes($store.app.view), 'series-page': $store.app.view === 'series' }">
+    <!-- ============ safe mode (/?safe=1): the page without the owner's own plugins ============ -->
+    <div class="app-banner safe-banner" x-data x-show="$store.app.safe && $store.app.view !== 'read'" x-cloak role="status">
+      <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
+      <div class="label"><b>Safe mode</b>
+        <small>Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble.</small></div>
+      <a class="btn small" href="?safe=1#/settings/plugins" x-show="$store.app.view !== 'settings'">Plugins</a>
+      <a class="btn small primary" href="/#/settings/plugins">Leave</a>
+    </div>
+
     <!-- ============ Android browser: offer the app (android/) ============ -->
     <div class="app-banner" x-data x-show="$store.app.appBanner && $store.app.view === 'library'" x-cloak>
       <img src="/static/icons/icon-192.png" alt="">
@@ -816,6 +825,9 @@
                           </span>
                           <small class="plugin-desc" x-show="p.description" x-text="p.description"></small>
                           <small class="plugin-status" x-show="p.enabled && p.status" x-text="p.status"></small>
+                          <!-- jobs (Plugin API 15): the part of the app it does, and why it doesn't run -->
+                          <small class="plugin-jobs" x-show="jobsText(p)" x-text="`Does: ${jobsText(p)}`"></small>
+                          <small class="plugin-blocked err" x-show="p.blocked" x-text="p.blocked"></small>
                         </span>
                         <span class="row-buttons">
                           <span class="chip warn" x-show="hasUpdate(p)" x-text="`Update ${p.update.latest}`"></span>
@@ -936,6 +948,11 @@
               <div class="plugin-about">
                 <small x-text="`v${plugin.version}` + (plugin.description ? ' · ' + plugin.description : '')"></small>
                 <small class="plugin-status" x-show="plugin.enabled && plugin.status" x-text="plugin.status"></small>
+                <small class="plugin-jobs" x-show="jobsText(plugin)" x-text="`Does: ${jobsText(plugin)}`"></small>
+                <small class="plugin-jobs" x-show="Object.keys(plugin.requires || {}).length"
+                       x-text="`Needs: ${Object.keys(plugin.requires || {}).map((k) => jobLabel(k)).join(', ')}`"></small>
+                <small class="plugin-blocked err" x-show="plugin.blocked"
+                       x-text="(plugin.enabled ? 'Not running: ' : 'Can\'t run: ') + plugin.blocked"></small>
                 <span class="plugin-title">
                   <template x-for="c in plugin.categories" :key="c">
                     <a class="plugin-tag" href="#/settings/plugins" @click="setPluginFilter('cat', c)"

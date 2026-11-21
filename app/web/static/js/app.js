@@ -186,6 +186,9 @@ document.addEventListener("alpine:init", () => {
     updatingBack: false, // ...that goes back to an earlier version
     theme: document.documentElement.dataset.theme,  // "dark" | "light", as shown now (applyTheme)
     inApp: !!androidApp, // running inside the Android app (android/)
+    // /?safe=1: the page has no markup, scripts or styles of the owner's own plugins (app/main.py), only
+    // the built-in ones, so a plugin that breaks the page can be switched off (Plugin API 15)
+    safe: !["", "0", "false"].includes(new URLSearchParams(location.search).get("safe") ?? ""),
     appBanner: ANDROID && !androidApp && !appBannerDismissed(),  // "Read in the app" on the library
     openFix(seriesId, onDone) { this.fix = { open: true, seriesId, onDone }; },
     openEdit(seriesId, onDone, tab = "info") { this.edit = { open: true, seriesId, onDone, tab }; },
@@ -1828,7 +1831,9 @@ function settingsView() {
     openAndroidApp,
     changeServer() { androidApp?.changeServer(); },
     attCount(k) { return this.$store.app.att?.[k]?.filter((x) => !x.ignored).length || 0; },
-    st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, pluginsMoved: [], scan: {}, scanText: "", metaText: "", timers: [],
+    st: {}, libs: [], plugins: [], providers: [], pluginErrors: {}, pluginsMoved: [], pluginJobs: [],
+    get safe() { return Alpine.store("app").safe; },
+    scan: {}, scanText: "", metaText: "", timers: [],
     init() {
       this.$watch("$store.app.view", (v) => (v === "settings" ? this.load() : this.stop()));
       // phone: the navigation is a scrolling strip; keep the open section's button in view
@@ -1968,20 +1973,43 @@ Your files are not touched. `
       installUpdate(v.sha, { rollback: true, label: v.short });
     },
     async loadProviders() { this.providers = await api("/api/metadata/providers").catch(() => this.providers); },
+    // the plugins doing one of p's exclusive jobs now, which switching p on replaces (Plugin API 15)
+    replacedBy(p) {
+      const out = [];
+      for (const job of this.pluginJobs) {
+        if (!job.exclusive || !(job.key in (p.provides || {}))) continue;
+        for (const id of job.doing) {
+          const q = this.plugins.find((x) => x.id === id);
+          if (q && q.id !== p.id) out.push([q, job]);
+        }
+      }
+      return out;
+    },
+    jobLabel(key) { return this.pluginJobs.find((j) => j.key === key)?.label || key; },
+    jobsText(p) { return Object.keys(p.provides || {}).map((k) => this.jobLabel(k)).join(", "); },
     async togglePlugin(p) {
-      try { await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } }); }
-      catch (e) {  // e.g. Libraries while one has a password
+      const replaced = p.enabled ? this.replacedBy(p) : [];
+      if (replaced.length && !confirm(replaced.map(([q, job]) => `${p.name} replaces ${q.name} (${job.label}).`)
+          .join("\n") + " Switch it on?")) return (p.enabled = false);
+      let r;
+      try { r = await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } }); }
+      catch (e) {  // e.g. Libraries while one has a password, or the only plugin doing a job the app needs
         p.enabled = !p.enabled;
         return toast(e.message, 8000, "error");
       }
-      if (p.ui) {  // it adds to the page (e.g. Saved searches): show that, or take it away
-        try { await (p.enabled ? addPluginUi(p.id) : removePluginUi(p.id)); }
-        catch (e) {
-          if (e.status === 401) return location.reload();  // e.g. Accounts: from now on, logging in first
-          toast(`Reload the page to see the change (${e.message})`, 6000, "error");
-        }
+      // what it adds to the page (e.g. Saved searches), and the plugins it replaced or that start or stop
+      // with it: show that, or take it away. Safe mode leaves out the owner's own plugins
+      const shown = (id) => !this.safe || this.plugins.find((x) => x.id === id)?.builtin;
+      try {
+        for (const id of r.ui_stopped || []) await removePluginUi(id);
+        for (const id of r.ui_started || []) if (shown(id)) await addPluginUi(id);
+      } catch (e) {
+        if (e.status === 401) return location.reload();  // e.g. Accounts: from now on, logging in first
+        toast(`Reload the page to see the change (${e.message})`, 6000, "error");
       }
-      if (p.provider) this.loadProviders();
+      if ([...(r.started || []), ...(r.stopped || [])].some((id) => this.plugins.find((x) => x.id === id)?.provider)) {
+        this.loadProviders();
+      }
       this.refreshPlugins();  // a switched-on plugin shows its settings and status
     },
     async refreshPlugins() {
@@ -1993,6 +2021,7 @@ Your files are not touched. `
       this.plugins = r.plugins;
       this.pluginErrors = r.errors;
       this.pluginsMoved = r.moved || [];
+      if (r.jobs) this.pluginJobs = r.jobs;
       if ("github_token" in r) this.ghTokenFrom = r.github_token;
       if (r.categories) {
         this.pluginCats = r.categories;
