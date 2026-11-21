@@ -2,7 +2,17 @@
 
 [← Back to the README](../README.md)
 
-Plugins add features without changing the app. A plugin is a single `.py` file, or a folder.
+MangaVibe is meant to be customized as far as it can go, and plugins are how. A plugin is a single
+`.py` file, or a folder. It can do two things:
+
+- **Add something new**: tracker sync, translation, descriptions read aloud, a tool in the reader.
+- **Replace a part of the app you don't like.** Most of MangaVibe is made of built-in plugins:
+  the pages, the cards, the filters, the reader, the file name parser and more. Another plugin can
+  do any of those parts instead. See [Replace a part of the app](#replace-a-part-of-the-app).
+
+Nothing you need is locked inside the app: the built-in plugins use the same plugin API as
+everyone else's, so a plugin of yours can do anything they do. If one is missing, you can
+[write it yourself](#write-your-own), or have an AI assistant write it for you.
 
 ## Available plugins
 
@@ -113,6 +123,45 @@ What you picked (tab, category, source, filter) is remembered in this browser.
 In the reader, everything a plugin adds is under **Plugins** at the bottom of the reading options:
 one row per plugin, which opens a panel with its switches and buttons.
 
+## Replace a part of the app
+
+Each part of MangaVibe that can be replaced is a **job**, and a plugin's page says which jobs it does
+(*Does: Series page*) and which ones it needs another plugin to do (*Needs: …*). These are the parts a
+plugin can do today, each done by a built-in plugin until you pick another:
+
+| Part | What it is |
+|---|---|
+| Library page, Continue reading page, Series page | the pages themselves |
+| Series cards | how a series looks in the grid, the list and Continue reading |
+| Top bar | the bar at the top and the Library / Continue bar |
+| Edit dialog, Fix match dialog | editing a series' details and poster; picking the right metadata |
+| Settings: Library folders, Display, Reader, Metadata, Updates | Settings' pages (these can also just be switched off) |
+| Library filters and sorting | what the library can be filtered and sorted by |
+| Image reader | how pages are drawn while reading: paged or vertical, zoom, swipes, the fit |
+| File name parser | the volume and chapter read from a file's name |
+| Metadata matcher | which AniList / MangaUpdates result a folder is |
+| Book labels | what a book is called (*Vol 3*, *Ch 12-14*); switched off, books show their file names |
+| Needs attention lists, Saved searches | shared: every plugin doing one adds to it |
+
+More parts become replaceable over time.
+
+**To swap one:** install the other plugin (it starts off, so nothing changes yet), then switch it on in
+**Settings → Plugins**. MangaVibe tells you which plugin it replaces (*X replaces Y (Series page)*) and
+switches that one off when you confirm. To go back, switch the built-in one on again.
+
+- **Required.** Some parts the app can't do without (the reader, the parser, the pages…). The plugin
+  doing one is marked **Required** and its switch can't be used: switch on another plugin for that
+  part first, and the old one is switched off for you.
+- **A plugin that can't run doesn't.** If it needs a part no switched-on plugin does, or was made for
+  another version of MangaVibe, its page says why (*Not running: …*). It starts once the reason is gone.
+- **If a replacement fails**, the built-in plugin for that part steps in, so the app keeps working.
+- **Safe mode:** if a plugin breaks the page so you can't reach Settings, open MangaVibe with `/?safe=1`
+  at the end of its address (e.g. `http://192.168.1.5:8080/?safe=1`). The page loads with only the
+  built-in plugins; switch the broken one off in **Settings → Plugins**, then leave safe mode from
+  the bar at the top.
+- **Changing the parser** reads every book's volume and chapter again on the next library scan. Only
+  the numbers MangaVibe worked out change: your progress and the numbers you set by hand stay.
+
 ## Update a plugin
 
 Plugins that publish releases on GitHub have an **Updates** part on their page (**Settings →
@@ -146,10 +195,18 @@ GitHub token for private plugins**. It's only sent to GitHub, and isn't shown ag
 
 ## Switch off or remove a plugin
 
-Switch a plugin off with its toggle in **Settings → Plugins**. To remove it, delete its file and
-press **Reload plugins** (under **Sources & setup**).
+Switch a plugin off with its toggle in **Settings → Plugins** (a plugin marked **Required** can only
+be replaced, see above). To remove it, delete its file and press **Reload plugins** (under **Sources &
+setup**).
 
 ## Write your own
 
-See [PLUGINS.md](PLUGINS.md) for how plugins work, the events they can react to, and the examples in
-[examples/plugins](../examples/plugins).
+This is what MangaVibe is built for: if something works in a way you don't like, change it with a
+plugin instead of waiting for the app. Start small (a theme, an extra field on the series page, a
+button), or take over a whole part, like the series page or the reader, starting from the built-in
+plugin in `app/plugins/builtin/`. Plugins are Python, with HTML, CSS and JavaScript for what they add
+to the page, and an AI assistant can write one for you from a description.
+
+See [PLUGINS.md](PLUGINS.md) for how plugins work, the events they can react to, each part's
+contract (what a replacement must do), and the examples in [examples/plugins](../examples/plugins).
+For only the looks, `custom.css` in the data folder is enough.

@@ -1,8 +1,25 @@
 # Writing MangaVibe plugins
 
+**MangaVibe is built so that people can change it with plugins, as far as that can go.** The app is a
+small core (scanning, the database, the reader host, the plugin manager) and plugins that together
+make the app: the pages, the cards, the top bar, the dialogs, Settings' sections, the filters, the
+image reader, the file name parser, the metadata matcher, book labels, even accounts and libraries.
+So a plugin can do two things:
+
+- **Add** something: a field, a button, a page overlay, a tracker sync, a reader for another kind of book.
+- **Replace** a part the owner doesn't like: provide the same [job](#jobs-replacing-a-part-of-the-app)
+  as a built-in plugin, and the owner switches yours on instead of it.
+
+The built-in plugins are held to the same rules as yours: they use only [the SDK](#the-sdk) (a test
+checks it), so whatever they do, your plugin can do too, and each one is a working starting point to
+copy. If something can't be done with a plugin yet, that's a gap in the plugin API, not the intended
+design.
+
 A plugin is a Python file (or a folder with `__init__.py`) in the `plugins` folder inside
 your data folder (`docker/mangavibe/plugins` on the NAS). After copying it there, press
-**Settings → Reload plugins** (or restart the container). Each plugin can be switched off in Settings.
+**Settings → Plugins → Sources & setup → Reload plugins** (or restart the container). Each plugin can
+be switched off in Settings → Plugins, except the only one doing a required job (it's marked
+**Required**: it can only be replaced).
 
 A plugin that fails to load, or crashes in a hook, is logged and skipped. It never stops the app.
 
@@ -697,6 +714,29 @@ server keeps running every plugin. Leave it from the bar at the top, or by loadi
 A MangaVibe from before Plugin API 15 ignores `provides` and `requires`: the plugin runs next to the
 built-in part instead of replacing it.
 
+**The jobs there are now** (`app/contracts/__init__.py`), each with the built-in plugin doing it, which
+is the place to start when you write a replacement:
+
+| Job | Part of the app | Kind | Built in (`app/plugins/builtin/`) | Contract |
+|---|---|---|---|---|
+| `library-query` | Library filters and sorting | exclusive, required | `library_query/` | [library-query](#the-library-query-job) |
+| `view:card` | Series cards | exclusive, required | `cards/` | [view:card](#the-viewcard-job) |
+| `view:library` | Library page | exclusive, required | `library_page/` | [view:library](#the-viewlibrary-and-viewcontinue-jobs) |
+| `view:continue` | Continue reading page | exclusive, required | `continue_page/` | [view:continue](#the-viewlibrary-and-viewcontinue-jobs) |
+| `view:series` | Series page | exclusive, required | `series_page/` | [view:series](#the-viewseries-job) |
+| `view:nav` | Top bar | exclusive, required | `nav/` | [view:nav](#the-viewnav-job) |
+| `dialog:edit`, `dialog:fix-match` | Edit and Fix match dialogs | exclusive, required | `dialogs/` | [The dialogs](#the-dialogs) |
+| `settings:library`, `:display`, `:reader`, `:metadata`, `:updates` | Settings' sections | exclusive | `settings_pages/` | [Settings' sections](#settings-sections) |
+| `attention:list` | Needs attention lists | shared | `attention_lists/` | [attention:list](#the-attentionlist-job) |
+| `saved-searches` | Saved searches | shared | `saved_searches/` | [saved-searches](#the-saved-searches-job) |
+| `scanner:parser` | File name parser | exclusive, required | `filename_parser/` | [Server jobs](#server-jobs-the-parser-the-matcher-and-book-labels) |
+| `metadata:matcher` | Metadata matcher | exclusive, required | `title_matcher/` | [Server jobs](#server-jobs-the-parser-the-matcher-and-book-labels) |
+| `book:label` | Book labels | exclusive | `book_labels/` | [Server jobs](#server-jobs-the-parser-the-matcher-and-book-labels) |
+| `reader:images` | Image reader | exclusive, required | `image_reader/` | [reader:images](#the-readerimages-job) |
+
+Accounts, Libraries, Optimize, AniList and MangaUpdates are built-in plugins too, but not jobs: switch
+them off, or add plugins next to them (another metadata provider, say).
+
 **If your plugin fails** while doing a job (an error that isn't an `HTTPException`, which is an
 answer), the error is logged and the built-in plugin for that job is asked instead, so a broken
 replacement never leaves that part of the app empty.
@@ -1079,7 +1119,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 22 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 24 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

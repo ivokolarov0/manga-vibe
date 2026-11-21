@@ -5,6 +5,14 @@
 [SPEC.md](../SPEC.md) is the full plan and [DECISIONS.md](../DECISIONS.md) explains the choices made.
 Plugins: [PLUGINS.md](PLUGINS.md).
 
+**The rule behind the code:** MangaVibe is a hub. The core stays small (scanning, the database, the
+reader host, the plugin manager), and the parts people may want done differently are built-in
+plugins doing a *job* (`app/contracts/`) that another plugin can take over. Built-in plugins import
+only the public SDK (`app/plugins/sdk.py`, checked by `tests/contracts/test_sdk.py`), so they can't do
+anything a plugin of the owner's can't. When adding a feature, ask first whether it belongs in a
+plugin, and when it's a part someone could want to replace, make it a job with a contract in
+docs/PLUGINS.md.
+
 ## Run on your PC
 
 ```bash
@@ -48,9 +56,14 @@ app/direction.py        how a series reads, paged or vertical (its own, a plugin
 app/scanner/            parser.py (file names), archives.py (reading), walker.py (scanning)
 app/api/                series.py, books.py, system.py, filters.py (what a list shows, with the plugins' say)
 app/plugins/            plugin system; web.py: plugins' own API, UI (page slots, scripts) and middleware
-app/plugins/builtin/    plugins that come with the app: AniList, MangaUpdates, saved_searches/, libraries/
-                        (libraries: Manga, Comics...; "shelves" in the code, passwords, LockGuard),
+app/plugins/builtin/    plugins that come with the app, each doing a job another plugin can take over:
+                        the views (cards, library_page, continue_page, series_page, nav, dialogs,
+                        settings_pages), library_query, saved_searches, attention_lists, filename_parser,
+                        title_matcher, book_labels, image_reader; plus AniList, MangaUpdates, optimize/,
+                        libraries/ (Manga, Comics...; "shelves" in the code, passwords, LockGuard),
                         accounts/ (logins, AccountsGuard; off until switched on)
+app/plugins/sdk.py      the public SDK: all a plugin (built in or not) may import from the app
+app/contracts/          the jobs a plugin can do, and replace
 app/updater.py          auto-update from the newest GitHub release
 app/images.py           thumbnails, resized page cache
 app/web/templates/      the page, as Jinja templates of Alpine markup (see "The page" below): page.html
@@ -77,7 +90,8 @@ Jinja only joins the files; everything that moves is Alpine. The two don't clash
 
 - **`page.html`** is the page. It includes the rest: `shell/` (icons, top bar, banners, toasts),
   `views/` (one file per view), `settings/` (one per Settings section), `sheets/` and `dialogs/`. Its
-  `{% block %}`s (library, series, settings, sheets…) are where a plugin will replace a part (#205).
+  views are drawn with `view()` from the templates of the plugin doing that view's job, so another plugin
+  can replace any of them (docs/PLUGINS.md, "Replacing a view").
 - **Markup used in more than one place is a macro** in `ui/macros.html` (`setting_rows(rows)`,
   `meta_progress()`): `{% from "ui/macros.html" import setting_rows %}`, then `{{ setting_rows("rows.reader") }}`.
 - **Plugins' slots are `{{ slot("series-panels") }}`.** The name must be in `SLOTS`

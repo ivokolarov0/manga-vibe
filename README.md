@@ -21,6 +21,14 @@ MangaVibe is a self-hosted manga server that runs anywhere Docker does: a NAS, a
 PC. Point it at your manga folder, and read on your phone, tablet or computer. Nothing is uploaded
 anywhere, and your files are never renamed or changed unless you ask (Delete series, Optimize).
 
+**Built to be changed.** The main idea of MangaVibe is that you can make it your own. The app is
+a small core plus plugins, and most of what you see is a plugin: the library page, the series page,
+the cards, the top bar, the filters, the page reader, the file name parser, the metadata matcher,
+the Settings pages and more. Don't like one? Switch on a plugin that does it differently, or write
+your own (an AI assistant can do it for you) and replace just that part, without forking the app
+or waiting for an update. Plugins can also add things that aren't there at all. See
+[Make it yours](#make-it-yours-plugins).
+
 ## Install
 
 > [!CAUTION]
@@ -107,12 +115,27 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
   [Phone and Android app](docs/phone.md).
 - **Make books smaller** (Optimize, in Settings → Plugins): converts PNG and JPEG pages to JPEG XL (or
   AVIF, WebP), for one series or all of them. Often half the size or less. It replaces your files.
-- **Plugins** add features: tracker sync, translation, accessibility. See [Plugins](docs/using-plugins.md).
 - **Remote control** (MCP, a plugin): an assistant like Claude can search, read, turn pages, change
   settings and press any button for you, and say what is on the screen. The base for voice control.
   See [manga-vibe-mcp](https://github.com/ivokolarov0/manga-vibe-mcp).
 - **Your own styles** in `custom.css` in the data folder (created on first start, with examples).
 - **Updates itself** (see below).
+
+### Make it yours: plugins
+MangaVibe is made to be customized as far as it can go, and plugins are how.
+- **Add features:** tracker sync (MyAnimeList), translation over the speech bubbles, descriptions
+  read aloud for blind readers, official chapter counts, remote control. Install them with one
+  button in **Settings → Plugins → Get plugins**.
+- **Replace parts of the app:** each part (a page, the cards, the filters, the reader, the parser…)
+  is a *job* done by a built-in plugin. A plugin of yours can do the same job; switch it on and the
+  built-in one steps aside. If yours fails, the built-in one takes over, so the app never breaks.
+- **The built-in plugins follow the same rules as yours.** They use only the public plugin API, so a
+  plugin you write can do anything they do.
+- **Write your own** in Python, with HTML, CSS and JavaScript for the page. Vibe coding one with an
+  AI assistant works well: the [plugin guide](docs/PLUGINS.md) describes every job's contract.
+
+See [Plugins](docs/using-plugins.md) to install, swap and update them, and
+[Writing plugins](docs/PLUGINS.md) to make one.
 
 ## Organizing your manga
 
@@ -153,7 +176,8 @@ progress and settings are kept. The steps are at the end of each install guide:
 ## More
 
 - **[Reading away from home](docs/away-from-home.md)**: why not to open a port, and how to use a VPN instead
-- **[Plugins](docs/using-plugins.md)**: the available plugins, and how to install, update and remove them
+- **[Plugins](docs/using-plugins.md)**: the available plugins, how to install, update and remove them,
+  and how to replace a part of the app with another plugin
 - **[Troubleshooting](docs/troubleshooting.md)**: logs, permissions, more library folders
 - **[Q&A](docs/qa.md)**: why it's built the way it is, and the requests that are declined
 - **[For developers](docs/developers.md)**: running it from source, tests, releases, the code layout,
