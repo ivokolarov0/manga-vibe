@@ -122,11 +122,14 @@ def test_switching_on_a_replacement(jobs, db):
 def test_the_only_plugin_doing_a_required_job_stays_on(jobs, db):
     m = manager(make("builtin", builtin=True, provides={"page": 1}), make("mine", provides={"page": 1}),
                 off={"mine"})
+    # Settings shows it as Required: the only running plugin doing a job the app needs
+    assert m.required_by(m.plugins["builtin"]) == ["page"] and m.required_by(m.plugins["mine"]) == []
     with pytest.raises(SwitchRefused, match="which MangaVibe needs"):
         m.switch(db, "builtin", False)
     assert m.disabled == {"mine"}
     m.switch(db, "mine", True)       # replacing it is the way
     assert m.disabled == {"builtin"}
+    assert m.required_by(m.plugins["mine"]) == ["page"] and m.required_by(m.plugins["builtin"]) == []
     # a plugin for a job nobody needs switches off as usual
     m2 = manager(make("a", provides={"extra": 1}))
     assert m2.switch(db, "a", False) == {"started": [], "stopped": ["a"]}

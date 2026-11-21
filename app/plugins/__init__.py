@@ -838,6 +838,16 @@ class PluginManager:
                         "doing": [pid for pid in can if pid in running]})
         return out
 
+    def required_by(self, plugin) -> list[str]:
+        """The jobs the app needs that this running plugin is the only one doing: it can't be switched
+        off until another plugin does them (Settings shows it as Required)."""
+        from app.contracts import JOBS
+        if not any(q is plugin for q in self.enabled()):
+            return []
+        return [job for job in plugin_jobs(plugin, "provides")
+                if job in JOBS and JOBS[job].required
+                and not any(q is not plugin for q in self.providers_of(job))]
+
     def switch(self, db, plugin_id, on: bool) -> dict:
         """Switch a plugin on or off, as Settings does, and save it. On: the other plugins doing one of
         its exclusive jobs are switched off (after their can_switch_off agrees). Off: refused while
@@ -860,11 +870,9 @@ class PluginManager:
                 self.chosen[job] = p.id
         elif plugin_id not in self.disabled:
             self._check_can_switch_off(db, p, None)
-            for job in plugin_jobs(p, "provides"):
-                if job in JOBS and JOBS[job].required and plugin_id in before \
-                        and not any(q.id != plugin_id for q in self.providers_of(job)):
-                    raise SwitchRefused(f"{p.name} does {job_label(job)}, which MangaVibe needs. "
-                                        "Switch on another plugin that does it instead")
+            for job in self.required_by(p):
+                raise SwitchRefused(f"{p.name} does {job_label(job)}, which MangaVibe needs. "
+                                    "Switch on another plugin that does it instead")
         for qid in off:
             self.set_enabled(qid, False)
         self.set_enabled(plugin_id, on)

@@ -280,6 +280,8 @@ def _plugin_dict(p, db):
             # jobs (Plugin API 15): what it does and needs, and why it doesn't run although it's on
             "provides": plugin_jobs(p, "provides"), "requires": plugin_jobs(p, "requires"),
             "blocked": plugins.blocked.get(p.id, "") if p.id not in plugins.disabled else job_problem(p),
+            # the jobs MangaVibe needs that only this plugin does now: it can't be switched off (Required)
+            "required_for": plugins.required_by(p),
             # its views (Plugin API 17): a template that's missing or fails, or a slot it leaves out
             "warnings": view_warnings(p)}
 

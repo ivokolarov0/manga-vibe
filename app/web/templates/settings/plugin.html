@@ -28,8 +28,12 @@
                   <ul><template x-for="x in plugin.permissions"><li x-text="x"></li></template></ul></div>
               </template>
               <label class="setting-row">
-                <span class="label"><span>On</span></span>
-                <input type="checkbox" x-model="plugin.enabled" @change="togglePlugin(plugin)">
+                <span class="label"><span>On</span>
+                  <!-- the only plugin doing a job the app needs: it stays on until another one does it -->
+                  <small x-show="requiredText(plugin)" x-text="requiredText(plugin)"></small></span>
+                <span class="chip required" x-show="requiredText(plugin)">Required</span>
+                <input type="checkbox" x-model="plugin.enabled" @change="togglePlugin(plugin)"
+                       :disabled="!!requiredText(plugin)">
               </label>
               <p class="muted" x-show="!plugin.enabled && (plugin.settings.length || plugin.global_actions.length)">
                 Switch the plugin on to change its settings.</p>

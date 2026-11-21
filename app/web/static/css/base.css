@@ -330,6 +330,14 @@
       color: #000;
     }
 
+    /* a plugin that can't be switched off: the only one doing a job MangaVibe needs (Settings → Plugins) */
+    &.required {
+      background: transparent;
+      box-shadow: inset 0 0 0 1px var(--accent);
+      color: var(--accent);
+      cursor: help;
+    }
+
     &.tag {
       cursor: pointer;
     }
