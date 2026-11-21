@@ -1,4 +1,4 @@
-/* The demo's badge (demo.js). Uses the app's own colours, so it follows the theme. */
+/* The demo's badge (demo.js). Uses the app's own colours (tokens.css), so it follows the theme. */
 .mv-demo {
   position: fixed;
   z-index: 95;
@@ -6,17 +6,12 @@
   bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-/* phones: above the bottom bar (Library / Continue) instead of on it */
-@media (max-width: 720px) {
-  .mv-demo { left: auto; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
-  .mv-demo-card { left: auto; right: 0; }
-}
 .mv-demo-pill {
   border: 0;
   border-radius: 999px;
   padding: 5px 12px;
-  background: var(--accent, #ff6fa8);
-  color: #fff;
+  background: var(--accent, #ff7a59);
+  color: var(--accent-text, #1d0d07);
   font: inherit;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -29,11 +24,21 @@
   left: 0;
   bottom: calc(100% + 8px);
   width: min(320px, calc(100vw - 24px));
+  max-height: calc(100dvh - 180px);
+  overflow-y: auto;
   padding: 14px 16px;
   border-radius: 12px;
-  background: var(--card, #1a1d23);
-  color: var(--text, #e8e8ec);
+  border: 1px solid var(--border, #2b303b);
+  background: var(--surface, #181b22);  /* not --card: in the app that's the cards' width */
+  color: var(--text, #eceef2);
   box-shadow: 0 8px 30px rgb(0 0 0 / 0.45);
 }
 .mv-demo-card p { margin: 6px 0; opacity: 0.85; }
-.mv-demo-card a { color: var(--accent, #ff6fa8); font-weight: 600; }
+.mv-demo-card a { color: var(--accent, #ff7a59); font-weight: 600; }
+
+/* Phones: on the right, above the bottom bar (Library / Continue), and the card opens leftwards from
+   there so it stays on the screen. Last in the file, so it wins over the rules above. */
+@media (max-width: 720px) {
+  .mv-demo { left: auto; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .mv-demo-card { left: auto; right: 0; }
+}
