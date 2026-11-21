@@ -25,6 +25,9 @@
       <p>A made-up library: every series, cover and page was drawn for it. Look around, read, switch
         plugins and settings. Nothing is saved: it starts again when you come back.</p>
       <p>Deleting, editing, installing and uploading need a MangaVibe of your own.</p>
+      <p><b>Not a real install:</b> there is no server here. Some of what you see is only acted out for the
+        demo (plugin switches, settings, progress), so it can behave a little differently from MangaVibe
+        on your own server.</p>
       <a href="https://github.com/ivokolarov0/manga-vibe#-install" target="_blank" rel="noopener">Get MangaVibe →</a>
     </div>`;
   const pill = badge.querySelector(".mv-demo-pill"), card = badge.querySelector(".mv-demo-card");

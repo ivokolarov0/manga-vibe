@@ -38,7 +38,9 @@ Docker does: a NAS, a home server or your PC. Nothing is uploaded anywhere, and 
 renamed or changed unless you ask.
 
 **[▶ Try the demo](https://ivokolarov0.github.io/manga-vibe/)** in your browser: the real
-interface on a made-up library. Browse, read, switch plugins; nothing is saved.
+interface on a made-up library. Browse, read, switch plugins; nothing is saved. It's a presentation,
+not a real install: there's no server behind it, and some of what it does is only acted out for the
+demo, so it can behave a little differently from MangaVibe on your own server.
 
 > [!TIP]
 > **Built to be changed.** Most of MangaVibe is plugins: the pages, the cards, the filters, the
