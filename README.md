@@ -18,13 +18,14 @@
 
 <p align="center">
   <a href="https://ivokolarov0.github.io/manga-vibe/"><b>▶ Try the demo</b></a> ·
+  <a href="https://ivokolarov0.github.io/manga-vibe/docs/"><b>📚 Docs</b></a> ·
   <a href="https://ivokolarov0.github.io/manga-vibe/plugins/"><b>🧩 Plugin reference</b></a> ·
   <a href="#-install">Install</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-make-it-yours-plugins">Plugins</a> ·
   <a href="#-organizing-your-manga">Organizing</a> ·
   <a href="#-updating">Updating</a> ·
-  <a href="#-more">Docs</a>
+  <a href="#-more">More</a>
 </p>
 
 <p align="center">
@@ -284,6 +285,9 @@ flowchart LR
 ---
 
 ## 📚 More
+
+All of these are also on the **[docs site](https://ivokolarov0.github.io/manga-vibe/docs/)**, with a
+sidebar to find your way around.
 
 | | |
 |---|---|
