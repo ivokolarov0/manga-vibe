@@ -153,6 +153,16 @@ async function handle(request, url) {
     if (path === "/api/settings") return json(S.settings);
     if ((m = path.match(/^\/api\/plugins\/([^/]+)\/ui$/)) && S.switches[m[1]]?.ui) return json(S.switches[m[1]].ui);
     if ((m = path.match(/^\/api\/books\/(\d+)\/progress$/)) && S.progress[m[1]]) return json(S.progress[m[1]]);
+    // a book as the reader opens it: with the reading mode picked for its series in the reader's
+    // options (Pages / Vertical) and the progress of this visit
+    if ((m = path.match(/^\/api\/books\/(\d+)$/))) {
+      const book = await recordedJson(keyOf("GET", url));
+      if (!book) return refuse("This isn't part of the demo.", 404);
+      const own = S.series[book.series_id];
+      if (own && "reader_mode" in own) book.reader_mode = own.reader_mode || S.settings.reader_mode || "paged";
+      if (S.progress[m[1]]) Object.assign(book, S.progress[m[1]]);
+      return json(book);
+    }
     if ((m = path.match(/^\/api\/series\/(\d+)$/)) && S.series[m[1]]) {
       const r = await recordedJson(keyOf("GET", url));
       return json({ ...r, ...S.series[m[1]] });
