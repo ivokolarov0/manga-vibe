@@ -1,245 +1,131 @@
-"""Needs Attention: unreadable files, unsupported formats, duplicates, chapter gaps, failed matches,
-and series matched to the same metadata entry.
+"""Needs attention: lists of things in the library worth a look, each a plugin's (the shared
+`attention:list` job, Plugin API 21, issue #219). The app's own (unreadable files, missing metadata,
+duplicates...) are the built-in "Needs attention" plugin's (app/plugins/builtin/attention_lists).
 
-Every row has a `key`. A row the owner marks as "ignore" (a false alarm) is hidden from the
-lists and the badge; the keys are kept in the `attention_ignored` setting and can be restored.
-Keys: err:<book id>, dup:<series id>:<chapter or volume>, gap:<series id>, same:<series ids>.
+A plugin doing the job gives:
+- `attention_lists`: [{key, label, help, alert, view}]. alert: its rows count towards the badge on Settings.
+  view: its template, templates/attention/<view>.html in the plugin (else a plain list).
+- `attention_rows(ctx, key, request)`: the rows of one list, of the series the request may see. Each row a
+  dict; `key` (a string like "err:12") lets the owner ignore it, `series` sorts it.
+- optionally `attention_count(ctx, key, request, ignored)`: the badge's share, cheaper than the rows.
+
+The core keeps what's the same for every list: ignoring a row (a false alarm) and "Show ignored" (the
+row keys in the `attention_ignored` setting), the count, and the frame in Settings.
 """
-import hashlib
+import logging
 import re
+import traceback
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
-from sqlalchemy import func
 
-from app.api.common import book_label, chapter_gaps, display_title, numberings, poster_version, title_lang
-from app.api.filters import hidden_from, visible_series
 from app.db import get_db, get_setting, set_setting
-from app.metadata.service import ID_FIELDS
-from app.models import Book, Library, Series
-from app.plugins import manager as plugins
-from app.scanner.archives import SUPPORTED, TEXT_BOOK, TEXT_EPUB
+from app.plugins import Context, manager as plugins
 from app.users import manage
 
 router = APIRouter(prefix="/api")
-KEY_RE = re.compile(r"^(err|dup|gap|same):[0-9a-z:._-]{1,80}$")
+log = logging.getLogger("mangavibe.plugins")
+JOB = "attention:list"
+KEY_RE = re.compile(r"^[a-z0-9-]{1,30}:[0-9a-z:._-]{1,80}$")
+LIST_KEY_RE = re.compile(r"^[a-z0-9_-]{1,40}$")
+RESERVED = {"count", "lists", "ignored_counts"}  # names in GET /api/attention's answer
 MAX_IGNORED = 5000
 
 
-def same_match_groups(rows):
-    """Series that share a metadata ID (AniList, MAL, MangaUpdates or MangaDex).
-    rows: [(series id, {id field: value})]. Returns [(key, [series ids], [(id field, value)])],
-    where series linked through different IDs (A~B by AniList, B~C by MAL) end up in one group."""
-    parent = {}
-
-    def find(x):
-        while parent.setdefault(x, x) != x:
-            parent[x] = parent[parent[x]]
-            x = parent[x]
-        return x
-
-    by_id = {}
-    for sid, ids in rows:
-        for f in ID_FIELDS:
-            if ids.get(f) is not None:
-                by_id.setdefault((f, str(ids[f])), []).append(sid)
-    for sids in by_id.values():
-        for other in sids[1:]:
-            parent[find(other)] = find(sids[0])
-    groups = {}
-    for (f, v), sids in by_id.items():
-        if len(sids) > 1:
-            g = groups.setdefault(find(sids[0]), [set(), []])
-            g[0].update(sids)
-            g[1].append((f, v))
-    out = []
-    for members, shared in groups.values():
-        ids = sorted(members)
-        part = "-".join(map(str, ids))
-        if len(part) > 80:  # a big group: keep the key short (the ignore list checks the length)
-            part = hashlib.sha1(part.encode()).hexdigest()
-        out.append((f"same:{part}", ids, sorted(shared, key=lambda x: ID_FIELDS.index(x[0]))))
+def attention_lists(running=None):
+    """[(plugin, list)] of the plugins doing the job, in their order. A list key another plugin has
+    already, or that isn't a plain name, is left out (and logged)."""
+    out, seen = [], set()
+    for p in (running if running is not None else plugins.providers_of(JOB)):
+        for spec in getattr(p, "attention_lists", None) or []:
+            key = spec.get("key", "")
+            if not LIST_KEY_RE.match(key) or key in RESERVED or key in seen:
+                log.warning("Plugin %s: attention list %r left out (not a plain name, or taken)", p.id, key)
+                continue
+            seen.add(key)
+            out.append((p, {"label": key, "help": "", "alert": False, "view": "", **spec, "plugin": p.id}))
     return out
 
 
-def _series_ids(db, shown):
-    cols = [getattr(Series, f) for f in ID_FIELDS]
-    q = db.query(Series.id, *cols).filter(Series.missing_since.is_(None), *shown)
-    return [(sid, dict(zip(ID_FIELDS, vals))) for sid, *vals in q]
+def _rows(p, spec, db, request):
+    """One list's rows, or [] when the plugin fails (logged): one broken list doesn't take the others."""
+    try:
+        return list(p.attention_rows(Context(p, db), spec["key"], request) or [])
+    except HTTPException:
+        raise
+    except Exception:
+        log.error("Plugin %s failed in its %s list:\n%s", p.id, spec["key"], traceback.format_exc())
+        return []
 
 
-def _num(v):
-    return "" if v is None else (str(int(v)) if float(v).is_integer() else str(v))
-
-
-def duplicate_groups(books):
-    """Books with the same number, grouped: [(key part, [books])]."""
-    groups = {}
-    for b in sorted((b for b in books if b.duplicate_flag), key=lambda b: b.sort_index):
-        if b.eff_chapter is not None:
-            part = f"c{_num(b.eff_chapter)}-{_num(b.eff_chapter_end)}"
-        else:
-            part = f"v{_num(b.eff_volume)}"
-        groups.setdefault(part, []).append(b)
-    return list(groups.items())
-
-
-def _book_info(b):
-    return {"book_id": b.id, "file": b.file_name, "path": b.path, "label": book_label(b),
-            "page_count": b.page_count, "file_size": b.file_size, "revision": b.revision,
-            "thumbnail": f"/api/books/{b.id}/thumbnail?v={int(b.mtime)}", "hidden": b.hidden_by_owner}
-
-
-def _book_counts(db, series_ids):
-    """{series id: books not hidden by the owner}"""
-    if not series_ids:
-        return {}
-    q = (db.query(Book.series_id, func.count(Book.id))
-         .filter(Book.series_id.in_(series_ids), Book.missing_since.is_(None),
-                 Book.hidden_by_owner.is_not(True))
-         .group_by(Book.series_id))
-    return dict(q.all())
+def _ignored(db):
+    return set(get_setting(db, "attention_ignored", []) or [])
 
 
 @router.get("/attention")
 def attention(request: Request, ignored: bool = False, db=Depends(get_db)):
-    """The lists, of the series the request may see (e.g. one library, never a locked one).
-    With ignored=true, ignored rows are included (marked "ignored": true)."""
-    shown = visible_series(db, request)
-    lang = title_lang(db)
-    skip = set(get_setting(db, "attention_ignored", []) or [])
-    lists = {k: [] for k in ("matches", "same", "unreadable", "unsupported", "duplicates", "gaps")}
-    hidden = {k: 0 for k in lists}
-
-    def add(kind, item):
-        item["ignored"] = item.get("key") in skip
-        if item["ignored"]:
-            hidden[kind] += 1
-            if not ignored:
-                return
-        lists[kind].append(item)
-
-    # Only flagged rows are loaded in full; on a big library almost every series and book is fine,
-    # and loading them all as objects made this list take seconds.
-    live = {sid for (sid,) in db.query(Series.id).filter(Series.missing_since.is_(None), *shown)}
-    errors = [b for b in db.query(Book).filter(Book.error.is_not(None), Book.missing_since.is_(None))
-              if b.series_id in live]
-    # light novels open only with a plugin's reader for text books: without one they can't be read
-    unread_text = [] if plugins.reader_for(TEXT_BOOK) else [
-        b for b in db.query(Book).filter(Book.format == TEXT_BOOK, Book.missing_since.is_(None))
-        if b.series_id in live]
-    flagged = {}
-    for b in db.query(Book).filter(Book.duplicate_flag.is_(True), Book.missing_since.is_(None)):
-        if b.series_id in live:
-            flagged.setdefault(b.series_id, []).append(b)
-    # a series marked complete by hand (omnibus editions) has no missing chapters to report
-    rows = db.query(Series.id, Series.numbering).filter(Series.missing_since.is_(None), *shown,
-                                                        Series.collection_complete.is_not(True)).all()
-    gaps = {sid: g for sid, num in numberings(db, rows).items() if (g := chapter_gaps(num))}
-    failed = [sid for (sid,) in db.query(Series.id).filter(Series.match_status == "failed",
-                                                           Series.missing_since.is_(None), *shown)]
-    same = same_match_groups(_series_ids(db, shown))
-    needed = {b.series_id for b in errors + unread_text} | set(flagged) | set(gaps) | set(failed) \
-        | {sid for _, sids, _ in same for sid in sids}
-    series = {s.id: s for s in db.query(Series).filter(Series.id.in_(needed))} if needed else {}
-    name = lambda sid: display_title(series[sid], lang)
-
-    for b in errors:
-        not_yet = b.format not in SUPPORTED or b.error.startswith(TEXT_EPUB)
-        add("unsupported" if not_yet else "unreadable", {
-            "key": f"err:{b.id}", "series_id": b.series_id, "series": name(b.series_id), "book_id": b.id,
-            "file": b.file_name, "path": b.path, "error": b.error, "format": b.format})
-    for b in unread_text:
-        add("unsupported", {
-            "key": f"err:{b.id}", "series_id": b.series_id, "series": name(b.series_id), "book_id": b.id,
-            "file": b.file_name, "path": b.path, "format": b.format,
-            "error": "A text book (a light novel). Add a reader for text books in Settings → Plugins "
-                     "to read it (e.g. Light novel reader)."})
-    for sid, books in flagged.items():
-        for part, group in duplicate_groups(books):
-            add("duplicates", {"key": f"dup:{sid}:{part}", "series_id": sid, "series": name(sid),
-                               "cover": f"/api/series/{sid}/poster?size=sm&v={poster_version(series[sid])}",
-                               "label": book_label(group[0]), "files": [_book_info(b) for b in group]})
-    for sid, g in gaps.items():
-        add("gaps", {"key": f"gap:{sid}", "series_id": sid, "series": name(sid),
-                     "gaps": [str(a + 1) if b - a == 2 else f"{a + 1}–{b - 1}" for a, b in g]})
-    for sid in failed:
-        s = series[sid]
-        add("matches", {"series_id": sid, "series": name(sid), "folder": s.folder_name,
-                        "cover": f"/api/series/{sid}/poster?size=sm&v={poster_version(s)}",
-                        "candidates": (s.match_candidates or [])[:3]})
-
-    libraries = {l.id: l.name for l in db.query(Library)}
-    book_counts = _book_counts(db, {sid for _, sids, _ in same for sid in sids})
-    for key, sids, shared in same:
-        members = sorted((series[sid] for sid in sids), key=lambda s: name(s.id).lower())
-        add("same", {"key": key, "series": name(members[0].id), "shared": [{"field": f, "id": v} for f, v in shared],
-                     "members": [{"series_id": s.id, "series": name(s.id), "folder": s.folder_path,
-                                  "library": libraries.get(s.library_id, ""), "match_status": s.match_status,
-                                  "books": book_counts.get(s.id, 0)}
-                                 for s in members]})
-
-    order = lambda x: (x["series"].lower(), x.get("key", ""))
-    out = {k: sorted(v, key=order) for k, v in lists.items()}
-    count = lambda k: sum(1 for x in out[k] if not x["ignored"])
-    out["count"] = count("matches") + count("same") + count("unreadable") + count("duplicates")
+    """Every list's rows, of the series the request may see (e.g. one library, never a locked one): the
+    list key -> its rows. With ignored=true, ignored rows are included (marked "ignored": true).
+    `lists` describes them, `count` is the badge, `ignored_counts` how many each list hides."""
+    skip = _ignored(db)
+    out, hidden, lists = {}, {}, []
+    for p, spec in attention_lists():
+        key = spec["key"]
+        rows = _rows(p, spec, db, request)
+        for row in rows:
+            row["ignored"] = row.get("key") in skip
+        hidden[key] = sum(1 for r in rows if r["ignored"])
+        shown = rows if ignored else [r for r in rows if not r["ignored"]]
+        out[key] = sorted(shown, key=lambda x: (str(x.get("series", "")).lower(), str(x.get("key", ""))))
+        lists.append({k: spec[k] for k in ("key", "label", "help", "alert", "plugin")})
+    out["count"] = sum(sum(1 for r in out[x["key"]] if not r["ignored"]) for x in lists if x["alert"])
     out["ignored_counts"] = hidden
+    out["lists"] = lists
     return out
 
 
 @router.get("/attention/count")
 def attention_count(request: Request, db=Depends(get_db)):
-    """Just the badge number (same rules as attention()["count"]), loading only flagged rows,
-    so polling it every minute stays cheap on a big library."""
-    shown = visible_series(db, request)
-    skip = set(get_setting(db, "attention_ignored", []) or [])
-    live = {sid for (sid,) in db.query(Series.id).filter(Series.missing_since.is_(None), *shown)}
-    errors = sum(
-        1 for bid, fmt, err, sid in db.query(Book.id, Book.format, Book.error, Book.series_id)
-        .filter(Book.error.is_not(None), Book.missing_since.is_(None))
-        if sid in live and fmt in SUPPORTED and not err.startswith(TEXT_EPUB) and f"err:{bid}" not in skip)
-    flagged = {}
-    for b in db.query(Book).filter(Book.duplicate_flag.is_(True), Book.missing_since.is_(None)):
-        if b.series_id in live:
-            flagged.setdefault(b.series_id, []).append(b)
-    dups = sum(1 for sid, books in flagged.items() for part, _ in duplicate_groups(books)
-               if f"dup:{sid}:{part}" not in skip)
-    matches = (db.query(Series).filter(Series.match_status == "failed", Series.missing_since.is_(None), *shown)
-               .count())
-    same = sum(1 for key, _, _ in same_match_groups(_series_ids(db, shown)) if key not in skip)
-    return {"count": errors + dups + matches + same}
+    """Just the badge number (the alert lists' rows not ignored), from each plugin's attention_count()
+    when it has one, so polling it every minute stays cheap on a big library."""
+    skip, total = _ignored(db), 0
+    for p, spec in attention_lists():
+        if not spec["alert"]:
+            continue
+        if hasattr(p, "attention_count"):
+            try:
+                total += int(p.attention_count(Context(p, db), spec["key"], request, skip))
+                continue
+            except HTTPException:
+                raise
+            except Exception:
+                log.error("Plugin %s failed counting its %s list:\n%s", p.id, spec["key"], traceback.format_exc())
+        total += sum(1 for r in _rows(p, spec, db, request) if r.get("key") not in skip)
+    return {"count": total}
 
 
 class IgnoreBody(BaseModel):
-    key: str = Field(max_length=100)
+    key: str = Field(max_length=120)
     ignore: bool = True
-
-
-def _key_series(db, key):
-    """The series a row's key is about (see the module docstring); [] when it can't be told."""
-    kind, _, rest = key.partition(":")
-    try:
-        if kind == "err":
-            sid = db.query(Book.series_id).filter(Book.id == int(rest)).scalar()
-            return [sid] if sid is not None else []
-        if kind in ("dup", "gap"):
-            return [int(rest.split(":")[0])]
-        if kind == "same":
-            return [int(p) for p in rest.split("-")]
-    except ValueError:  # a big "same" group's key is a hash
-        pass
-    return []
+    list: str = Field("", max_length=40)  # the list it's in: only that one is looked at (else all)
 
 
 @router.post("/attention/ignore", dependencies=[manage])
 def ignore_row(body: IgnoreBody, request: Request, db=Depends(get_db)):
-    """Hide one row as a false alarm (or bring it back with ignore=false). Not for a row about series
-    the request may not see (e.g. in a locked library)."""
+    """Hide one row as a false alarm (or bring it back with ignore=false). Only a row this request can see
+    in a list (so not one about a series in a locked library): the row is looked up, not guessed from its key."""
     if not KEY_RE.match(body.key):
         raise HTTPException(400, "Unknown row")
-    if hidden_from(db, request, _key_series(db, body.key)):
-        raise HTTPException(403, "This library is locked")
-    keys = set(get_setting(db, "attention_ignored", []) or [])
+    found = False
+    for p, spec in attention_lists():
+        if body.list and spec["key"] != body.list:
+            continue
+        if any(r.get("key") == body.key for r in _rows(p, spec, db, request)):
+            found = True
+            break
+    if not found:  # restoring too: it's done from "Show ignored", where the row shows
+        raise HTTPException(403, "Not a row you can see")
+    keys = _ignored(db)
     (keys.add if body.ignore else keys.discard)(body.key)
     if len(keys) > MAX_IGNORED:
         raise HTTPException(400, "Too many ignored rows")

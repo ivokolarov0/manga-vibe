@@ -14,7 +14,7 @@ PLUGINS_DIR = TMP / "data" / "plugins"
 
 
 def settings_menu(page):
-    return [p["key"] for p in json.loads(re.search(r"window\.MV_SETTINGS_PAGES = (.*?);</script>", page).group(1))]
+    return [p["key"] for p in json.loads(re.search(r"window\.MV_SETTINGS_PAGES = (.*?);\s", page).group(1))]
 
 
 def info(client, pid):

@@ -65,14 +65,9 @@ const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Completed"],
   ["plan_to_read", "Plan to read"], ["fav", "Favorites"]];  // Favorites gets a star icon (templates/views/library.html)
 const quickButtons = () => QUICK.filter(([v]) => v === "" || (v === "fav" ? lib().fav : lib().readValues.includes(v)));
-const ATT_TABS = [
-  ["unreadable", "Errors", "These files could not be opened. The message says why."],
-  ["matches", "Missing metadata", "No confident match was found online. Pick the right one, or open Fix match."],
-  ["same", "Same match", "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."],
-  ["duplicates", "Duplicates", "Two or more files with the same chapter number. Both are kept."],
-  ["gaps", "Missing chapters", "Gaps in the chapter numbers. Often fine (volumes may cover them)."],
-  ["unsupported", "Not supported", "Light novels (text EPUBs) are listed here until a reader for text books is added in Plugins."],
-];
+// the Needs attention lists: [key, label, help, alert], the plugins' (attention:list, Plugin API 21: the page
+// gets them as MV_ATTENTION_LISTS). alert: its rows count towards the red numbers
+const ATT_TABS = (window.MV_ATTENTION_LISTS || []).map((l) => [l.key, l.label, l.help, !!l.alert]);
 
 const ID_NAMES = { anilist_id: "AniList", mal_id: "MyAnimeList", mangaupdates_id: "MangaUpdates", mangadex_id: "MangaDex" };
 
@@ -1656,13 +1651,13 @@ function attentionView() {
       }));
     },
     async ignore(key, on = true) {
-      await api("/api/attention/ignore", { method: "POST", body: { key, ignore: on } });
+      await api("/api/attention/ignore", { method: "POST", body: { key, ignore: on, list: this.kind } });
       toast(on ? "Hidden from this list. “Show ignored” brings it back." : "Restored");
       refreshAttentionCount();
     },
     async ignoreAll(g) {
       for (const f of g.files) {
-        if (!f.ignored) await api("/api/attention/ignore", { method: "POST", body: { key: f.key, ignore: true } });
+        if (!f.ignored) await api("/api/attention/ignore", { method: "POST", body: { key: f.key, ignore: true, list: this.kind } });
       }
       toast(`${g.files.length} files hidden from this list`);
       refreshAttentionCount();
@@ -1901,8 +1896,9 @@ function settingsView() {
     },
     // problems worth a look (the red counts), shown on the closed menu button
     get attAlerts() {
-      return ["unreadable", "matches", "same", "duplicates"].reduce((n, k) => n + this.attCount(k), 0);
+      return ATT_TABS.filter((t) => t[3]).reduce((n, [k]) => n + this.attCount(k), 0);
     },
+    attAlert(k) { return !!ATT_TABS.find((t) => t[0] === k)?.[3]; },
     // Settings → Android app
     appServer: androidApp?.server() || "",
     appVersion: androidApp?.version() || "",

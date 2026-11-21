@@ -76,7 +76,8 @@
   {{ slot("sheets") }}
 
   <!-- Settings' menu: the running plugins' settings_pages and the core's (app/plugins/web.py settings_pages) -->
-  <script>window.MV_SETTINGS_PAGES = {{ settings_pages | tojson }};</script>
+  <script>window.MV_SETTINGS_PAGES = {{ settings_pages | tojson }};
+    window.MV_ATTENTION_LISTS = {{ attention_lists | tojson }};  // the Needs attention lists (#219)</script>
   <script src="/static/js/common.js"></script>
   <script src="/static/js/reader.js"></script>
   <script src="/static/js/app.js"></script>

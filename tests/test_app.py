@@ -509,7 +509,7 @@ def test_attention_count_matches_full_lists(client):
 
 
 def test_same_match_groups_link_through_any_id():
-    from app.api.attention import same_match_groups
+    from app.plugins.builtin.attention_lists import same_match_groups
     rows = [(1, {"anilist_id": 5}), (2, {"anilist_id": 5, "mal_id": 9}), (3, {"mal_id": 9}),
             (4, {"anilist_id": 6}), (5, {"mangadex_id": "x"})]
     [(key, ids, shared)] = same_match_groups(rows)

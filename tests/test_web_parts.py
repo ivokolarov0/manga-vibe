@@ -32,8 +32,11 @@ def test_every_template_is_used():
     for path in templates():
         used |= set(re.findall(r"""\{%-?\s*(?:include|import|from|extends)\s+["']([^"']+)["']""",
                                path.read_text(encoding="utf-8")))
+    # and the ones the page's code draws by name (e.g. the plain Needs attention list)
+    used |= set(re.findall(r'"((?:settings|ui|shell|views|sheets|dialogs)/[a-z-]+\.html)"',
+                           (web.TEMPLATES_DIR.parent.parent / "plugins" / "web.py").read_text(encoding="utf-8")))
     names = {p.relative_to(web.TEMPLATES_DIR).as_posix() for p in templates()}
-    assert names == used
+    assert names <= used, names - used  # (used also names plugins' view templates, which live in the plugins)
 
 
 def test_unknown_slot_name_fails(monkeypatch, tmp_path):

@@ -150,9 +150,38 @@ def render_index(safe: bool = False, template: str = "page.html") -> str:
         if not any(base is p for p in found):
             found.append(base)
     scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in found if p.js)
-    return templates.get_template(template).render(slot=slot_function(plugins), safe=safe, view=view,
-                                                   plugin_scripts=Markup(scripts),
-                                                   settings_pages=settings_pages(plugins))
+    lists = attention_lists_of(plugins)
+    return templates.get_template(template).render(
+        slot=slot_function(plugins), safe=safe, view=view, plugin_scripts=Markup(scripts),
+        settings_pages=settings_pages(plugins), attention_views=attention_views(lists),
+        attention_lists=[{k: spec[k] for k in ("key", "label", "help", "alert")} for _, spec in lists])
+
+
+def attention_lists_of(plugins):
+    """[(plugin, list)]: the Needs attention lists of these plugins (the attention:list job, #219)."""
+    from app.api.attention import JOB, attention_lists
+    return attention_lists([p for p in plugins if JOB in plugin_jobs(p, "provides")])
+
+
+def attention_views(lists):
+    """attention_views() for Settings' attention frame: each list's rows, drawn by its plugin's template
+    (templates/attention/<view>.html) or the plain one, shown while that list is open. A template that
+    fails is logged and the plain one is drawn."""
+    @pass_context
+    def draw(ctx):
+        out = []
+        for p, spec in lists:
+            plain = "settings/attention-plain.html"
+            name = f"@{p.id}/attention/{spec['view']}.html" if spec.get("view") else plain
+            try:
+                markup = templates.get_template(name).render(ctx.get_all())
+            except Exception:
+                log.error("Plugin %s: its %s list's template failed:\n%s", p.id, spec["key"], traceback.format_exc())
+                markup = templates.get_template(plain).render(ctx.get_all())
+            # the key is a plain name (app/api/attention.py LIST_KEY_RE): safe in the attribute
+            out.append(f'<template x-if="a && kind === \'{spec["key"]}\'">\n{markup}</template>')
+        return Markup("\n".join(out))
+    return draw
 
 
 # Settings' own page, the core's: Plugins (how a broken plugin is switched off), in the middle of the menu
