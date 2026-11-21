@@ -1001,6 +1001,62 @@ Which provider result is the series. The providers stay plugins of their own (`i
 (theirs where they changed one, else the parser's), and `book.extra_index`, `book.file_name`. With
 the job off, books are called by their file names.
 
+### The reader:images job
+
+Plugin API 24. **Drawing the pages in the reader** (exclusive, required; built in: "Image reader",
+`app/plugins/builtin/image_reader/`): paged and vertical, zoom and pan, taps and swipes, the wheel and
+keys, the fit and the page look. The **reader host** (`reader.js`) keeps what other plugins depend on,
+whoever draws the pages: opening and leaving a book, the bars and the reading options, saving progress,
+the next and previous book, the end card, plugin overlays (`page_overlay`, hiding boxes), plugin buttons
+(`book_actions`) and their panels, read aloud, fullscreen, the wake lock, the Android keys and
+`MangaVibe.reader.*` (so the MCP plugin's reader tools work with any reader).
+
+A plugin doing it registers its reader in its script, like [a reader of its own](#a-reader-of-its-own)
+but for the format `"images"`:
+
+```js
+MangaVibe.registerReader("my-reader", "images", {
+  modes: ["paged", "vertical"],  // the ones it draws; with one, the host hides the mode switch
+  open(el, book, ctl) {},        // draw into el (the pages' area, empty), starting at ctl.page, in ctl.mode
+  close() {},                    // leaving or another book: stop timers, remove listeners outside el
+  step(forward, how) {},         // a page on or back (buttons, voice control); how "volume": the Android keys
+  goTo(page) {},                 // the slider, the page list, MangaVibe.reader.goTo()
+  pageBox(page) {},              // the element showing that page now (an <img>), or null if it isn't on screen
+  key(e) { return false; },      // optional: arrows, Page Up/Down, Space, Home, End; true if it used the key
+  wheel(e) {},                   // optional: the wheel over the host's bottom strip
+  drawer() { return { rows: "", panels: [] }; },  // optional: its options in the reading options (HTML)
+  bindDrawer(root) {},           // optional: wire them up (root: the whole reader)
+  state() { return {}; },        // optional: e.g. { fit } for MangaVibe.reader.state()
+});
+```
+
+`ctl` is what the host does for it:
+
+| | |
+|---|---|
+| `ctl.page`, `ctl.mode` | where to start (from 0) and how: `paged` or `vertical` (the series' mode) |
+| `ctl.shown(page)` | **call it whenever the page shown changes**: the numbers, saving progress and the overlays follow |
+| `ctl.end()` | forward from the last page: the host shows the end card (and the next book, the second time) |
+| `ctl.start()` | back from the first page: it says which book comes before |
+| `ctl.tap(e)` | **call it first on a tap**: `true` when the host took it (it closed the reading options) |
+| `ctl.menu()` | a tap that doesn't turn the page: the bars and the reading options |
+| `ctl.reading()` | the page was turned: the bars go away |
+| `ctl.keepControls()` | one of its options was used: the bars stay a while longer |
+| `ctl.settings` / `ctl.saveSettings(change)` | the reader settings (`reader_fit`, `preload`, `reader_tap_layout`, `reader_brightness`…), and changing them for all devices |
+| `ctl.reopen()` | draw the book again (e.g. after a change of fit) |
+| `ctl.openBook(which, page)` | another book: `"next"`, `"previous"` or an id |
+
+**Overlays follow the page.** The host asks `pageBox(page)` for the pages around the one being read and
+puts its layer right after that element, at the same place, size and transform (`style.transform`,
+`transition`, `opacity`), watching it as it zooms, pans, slides and scrolls. So the element's parent should
+be positioned and the element should move by its own `style.transform` or by scrolling. Call `ctl.shown()`
+when another page shows, so the layer gets its boxes.
+
+The pages' area (`#r-pages`) takes the classes the reader gives it; the built-in one's styles are in
+`reader.css` (`.img-reader`, `.fit-*`, `.stage`, `.vertical`). Bring your own with the plugin's `css`.
+If the reader fails to open, the host opens the book in the built-in one, whose script is always in the
+page.
+
 ## The SDK
 
 Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only this (a test checks it,

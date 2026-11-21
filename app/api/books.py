@@ -44,6 +44,8 @@ def get_book(book_id: int, db=Depends(get_db)):
             "hidden_boxes": db.query(OverlayHidden).filter_by(book_id=b.id).count(),
             # the plugin whose reader shows this book (e.g. a light novel), or None: the page reader
             "reader": (r.id if (r := plugins.reader_for(b.format)) else None),
+            # who draws its pages (the reader:images job, #211): the plugin doing it, then the built-in one
+            "image_readers": [p.id for p in plugins.doing("reader:images")] or ["image-reader"],
             "actions": [{"plugin": p.id, "name": p.name or p.id, "key": a.key, "label": a.label, "confirm": a.confirm}
                         for p in plugins.enabled() for a in p.book_actions]}
 

@@ -74,17 +74,54 @@ def _page_globals():
     """The top-level functions and variables of the app's own scripts (common.js, app.js, reader.js)."""
     names = set()
     for f in (ROOT / "app" / "web" / "static" / "js").glob("*.js"):
-        t = f.read_text(encoding="utf-8")
+        # const Reader = (() => { ... })(); keeps its insides to itself, unindented
+        t = re.sub(r"(?ms)^(const \w+ = \(\(\) => \{).*?^\}\)\(\);", r"\1", f.read_text(encoding="utf-8"))
         names |= set(re.findall(r"^(?:async\s+)?function\*?\s+([A-Za-z_$][\w$]*)", t, re.M))
         names |= set(re.findall(r"^(?:const|let|var|class)\s+([A-Za-z_$][\w$]*)", t, re.M))
     return names - {"MangaVibe"}
 
 
 def _code_only(js):
-    """The script without comments and strings, so a word in a URL or a message doesn't count."""
-    js = re.sub(r"/\*.*?\*/", " ", js, flags=re.S)
-    js = re.sub(r"`(?:\\.|[^`\\])*`|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'", '""', js)
-    return re.sub(r"(?m)//.*$", " ", js)
+    """The script without comments and strings, so a word in a URL or a message doesn't count. The code in
+    a template literal's ${...} stays (it can hold templates of its own). Not a full parser: a regex
+    literal with a quote in it would confuse it."""
+    out, i, n = [], 0, len(js)
+    braces = []  # per open ${: how many { are open inside it
+    while i < n:
+        c, two = js[i], js[i:i + 2]
+        if two == "/*":
+            j = js.find("*/", i + 2)
+            i = n if j < 0 else j + 2
+            out.append(" ")
+        elif two == "//":
+            j = js.find("\n", i)
+            i = n if j < 0 else j
+        elif c in "\"'":
+            j = i + 1
+            while j < n and js[j] not in (c, "\n"):
+                j += 2 if js[j] == "\\" else 1
+            out.append('""')
+            i = j + 1
+        elif c == "`" or (c == "}" and braces and braces[-1] == 0):
+            if c == "}":
+                braces.pop()  # the end of a ${...}: the template's text goes on
+            j = i + 1
+            while j < n and js[j] != "`" and js[j:j + 2] != "${":
+                j += 2 if js[j] == "\\" else 1
+            out.append('""')
+            if js[j:j + 2] == "${":
+                braces.append(0)
+                i = j + 2
+            else:
+                i = j + 1
+        else:
+            if braces and c == "{":
+                braces[-1] += 1
+            elif braces and c == "}":
+                braces[-1] -= 1
+            out.append(c)
+            i += 1
+    return "".join(out)
 
 
 def test_built_in_scripts_use_only_window_mangavibe():

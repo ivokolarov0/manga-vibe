@@ -999,9 +999,10 @@ const pluginHandlers = [];         // [plugin id, event, fn] (MangaVibe.on)
 const stoppedPlugins = new Set();  // switched off since the page loaded: their handlers don't run
 const screenCommands = new Map();  // "<plugin id>\n<name>" -> { plugin, name, spec, fn } (MangaVibe.screenCommand)
 const bookReaders = new Map();     // "<plugin id>\n<format>" -> reader (MangaVibe.registerReader)
-// the reader.js side: the reader a switched-on plugin registered for this format, or undefined
-window.pluginReader = (pluginId, format) =>
-  stoppedPlugins.has(pluginId) ? undefined : bookReaders.get(`${pluginId}\n${format}`);
+// the reader.js side: the reader a switched-on plugin registered for this format ("images": the
+// reader:images job), or undefined. evenOff: the built-in fallback, switched off or not
+window.pluginReader = (pluginId, format, evenOff = false) =>
+  stoppedPlugins.has(pluginId) && !evenOff ? undefined : bookReaders.get(`${pluginId}\n${format}`);
 
 window.MangaVibe = {
   // run fn when Alpine starts (Alpine.store, Alpine.data), or now if it already has

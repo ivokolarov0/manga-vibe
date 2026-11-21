@@ -93,6 +93,10 @@ register(Job("scanner:parser", "File name parser", required=True,
 # novel) -> 0-100; match_pick([(score, candidate)...], threshold, lead) -> the candidate or None
 register(Job("metadata:matcher", "Metadata matcher", required=True,
              description="Which provider result is the series, from its folder name"))
+# Plugin API 24 (#211): the page reader, a script: MangaVibe.registerReader(<id>, "images", {...}). The
+# reader host (reader.js) keeps the bars, progress, overlays, read aloud and the Android keys.
+register(Job("reader:images", "Image reader", required=True,
+             description="Draws the pages in the reader: paged or vertical, zoom, swipes, the fit"))
 # book_label(book) -> str. Off: books are called by their file names.
 register(Job("book:label", "Book labels",
              description="What a book is called in the lists, the reader and Continue (Vol 3, Ch 12-14)"))
