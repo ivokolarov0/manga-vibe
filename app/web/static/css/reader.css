@@ -14,9 +14,13 @@
        --ov-bg (and --ov-outline) instead of background keeps these working. */
     --ov-bg-opacity: 1;      /* box background: 0 = see-through, 1 = solid */
     --ov-text-stroke: 0px;   /* width of the outline around the letters */
-    --page-filter: none;     /* brightness, contrast and colours of the page images (reader.js) */
+    --page-filter: none;     /* brightness, contrast and colours of the page images (the image reader) */
 
-    /* paged mode: zoom/pan/swipe are handled in reader.js with a transform on the image */
+    /* The pages, drawn by the built-in image reader (app/plugins/builtin/image_reader/, the reader:images
+       job) into #r-pages, which takes its classes: img-reader and fit-<fit>. A reader
+       of another plugin brings its own styles. */
+
+    /* paged mode: zoom/pan/swipe are handled in image_reader.js with a transform on the image */
     & .stage {
       position: absolute;
       inset: 0;
@@ -61,17 +65,17 @@
       }
     }
 
-    &.fit-screen .stage img {
+    & .fit-screen .stage img {
       max-width: 100vw;
       max-height: 100dvh;
     }
 
-    &.fit-width .stage img {
+    & .fit-width .stage img {
       width: 100vw;
       height: auto;
     }
 
-    &.fit-height .stage img {
+    & .fit-height .stage img {
       width: auto;
       height: 100dvh;
     }

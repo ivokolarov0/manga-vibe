@@ -1142,3 +1142,28 @@ Plugin API version, and the app works after every one.
   the files, and the book rows stay, so progress and page data are kept. The first scan after this update
   only remembers the parser.
 - **Reading status stays in the core**: it's worked out both in SQL and in Python, and they must agree.
+
+### The image reader as a plugin (Plugin API 24, issue #211)
+
+- **`reader.js` is the reader host now; the built-in "Image reader" plugin draws the pages.** The split
+  follows what other plugins depend on: the host keeps the bars and the reading options, progress, the end
+  card, overlays, plugin buttons, read aloud, fullscreen and the Android keys, so a translator or read
+  aloud works whoever draws the pages. The plugin has the paged and vertical drawing, zoom and pan,
+  gestures, the wheel and keys, the fit, the zoom lock and the page look, moved over unchanged.
+- **Registered like a reader of its own** (`registerReader(id, "images", …)`, Plugin API 14), with what
+  the host needs on top: `pageBox()` for overlays, `modes`, `key()`/`wheel()`, and its options in the drawer
+  (`drawer()`/`bindDrawer()`). `setMode` stays the host's (it sets the series' mode and opens the book
+  again), so the reader only says which modes it draws; with one, the mode switch is hidden.
+- **Overlays follow an element, not a mode.** Before, paged mode copied the image's transform and vertical
+  mode put a layer in each page box. Now the host does the first for any page element the reader names,
+  which covers both (and a replacement) without the reader knowing about overlays.
+- **The drawer's rows come after the reader opens**, so they show its settings; the reader's rows sit in a
+  `display: contents` wrapper, so the drawer's layout (and the phone order) is as before.
+- **The built-in reader's script is always in the page** (like the built-in views) and the book lists
+  who draws it (`image_readers`): when the plugin doing the job fails to open, the built-in one does,
+  even switched off.
+- **Its styles stay in reader.css**: plugin CSS is unlayered (it's for overriding), and the pages' rules
+  belong in the reader's layer. The fit classes moved from `#reader` to the pages' area.
+- **No browser tests in the suite** (it has no browser): the contract test checks the server side and the
+  script's registration; the reader was clicked through in Firefox with Playwright (paged, vertical, zoom
+  with an overlay, the drawer, the end card, `MangaVibe.reader.*`, a replacement reader and a broken one).

@@ -146,7 +146,7 @@ def render_index(safe: bool = False, template: str = "page.html") -> str:
     # the built-in view plugins' scripts are always loaded, on or off: their view is the fallback, and a
     # plugin's view may extend theirs and use their components (e.g. seriesPage())
     found = list(plugins)
-    for base in base_views():
+    for base in fallback_scripts():
         if not any(base is p for p in found):
             found.append(base)
     scripts = "\n".join(f'<script src="{script_url(p.id)}"></script>' for p in found if p.js)
@@ -219,6 +219,14 @@ def base_views():
     Their scripts are always in the page (and served: /plugins/<id>.js)."""
     found = [manager.builtin_for(spec["job"]) for spec in VIEWS.values()]
     return [p for i, p in enumerate(found) if p is not None and not any(p is q for q in found[:i])]
+
+
+def fallback_scripts():
+    """The built-in plugins whose scripts are in the page on or off: the view plugins (base_views) and the
+    image reader (#211), the fallback when the plugin doing reader:images fails."""
+    found = base_views()
+    reader = manager.builtin_for("reader:images")
+    return found + [reader] if reader is not None and not any(reader is p for p in found) else found
 
 
 def view_plugins(name, safe=False):

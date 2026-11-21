@@ -1,27 +1,26 @@
-/* The reader: plain JavaScript (touch, swipe, zoom, preloading and scroll tracking are
-   direct browser work, so it stays outside Alpine). The router calls Reader.open/close. */
+/* The reader host: plain JavaScript (touch, preloading and scroll tracking are direct browser work, so
+   it stays outside Alpine). The router calls Reader.open/close.
+
+   It keeps what every reader shares: opening and leaving a book, the bars and the reading options,
+   saving progress, the next and previous book, the end card, plugin overlays, plugin buttons, read
+   aloud, fullscreen, the wake lock and the Android keys. The pages are drawn by the plugin doing the
+   reader:images job (built in: app/plugins/builtin/image_reader/, Plugin API 24), and books the page
+   reader can't show (light novels) by a plugin's reader of their own (Plugin API 14). */
 "use strict";
 
 const Reader = (() => {
 
-const R = { book: null, page: 0, mode: "paged", ui: false, saveTimer: null, wake: null, firstTap: true,
-  preloaded: new Map(), cameFromApp: false, hideTimer: null, sliding: false, hovering: false, drawer: false,
-  ov: null,  // plugin overlays (see "plugin overlays" below)
+const R = { book: null, page: 0, mode: "paged", saveTimer: null, wake: null, firstTap: true,
+  cameFromApp: false, hideTimer: null, sliding: false, hovering: false, drawer: false,
+  ov: null,    // plugin overlays (see "plugin overlays" below)
+  img: null,   // the reader:images plugin showing the book (its registered reader)
+  own: null,   // a plugin's reader of its own (a light novel)
   opening: 0 };  // counts openReader() calls, so a slow answer for an earlier one is dropped
-const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
-const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left: back, right: forward); the middle toggles the controls
-const CLICK_SIDE = 0.4;  // the same with a mouse: a wide screen leaves only a narrow middle strip for the controls
-const TAP_EDGE = 0.2;   // one-handed layout: the narrow "previous" strip; the rest turns forward
 const MODES = { paged: "Pages", vertical: "Vertical" };
-const FITS = { screen: "Fit screen", width: "Fit width", height: "Fit height", original: "Original size" };
 // plugin overlay boxes: background opacity in % and the outline around the text (reader settings)
 const OV_OPACITY = { 100: "Solid", 75: "75%", 50: "50%", 25: "25%", 0: "See-through" };
 const OV_OUTLINE = { off: "Off", thin: "Thin", thick: "Thick" };
 const OV_STROKE = { off: "0px", thin: "0.12em", thick: "0.22em" };
-// how the page images look (reader settings): easier on the eyes, e.g. white pages at night
-const BRIGHTNESS = { 100: "Normal", 85: "85%", 70: "70%", 55: "55%", 40: "40%" };
-const CONTRAST = { 100: "Normal", 125: "More", 150: "Most", 75: "Less" };
-const COLORS = { normal: "Normal", dark: "Inverted", warm: "Warm", "dark-warm": "Inverted, warm" };
 
 /* the value after `cur` in a {value: label} list, wrapping around */
 function cycle(list, cur) {
@@ -32,7 +31,6 @@ function cycle(list, cur) {
 const svg = (body) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
   stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 const ICONS = {
-  menu: svg(`<path d="M4 6h16M4 12h16M4 18h16"/>`),
   // three lines that fold into an × (reader.css animates them when the drawer is open)
   burger: svg(`<path class="bl bl-1" d="M4 6h16"/><path class="bl bl-2" d="M4 12h16"/><path class="bl bl-3" d="M4 18h16"/>`),
   back: svg(`<path d="M19 12H5M11 6l-6 6 6 6"/>`),
@@ -40,18 +38,11 @@ const ICONS = {
   chNext: svg(`<path d="M6 6l7 6-7 6V6zM18 6v12"/>`),
   close: svg(`<path d="M6 6l12 12M18 6L6 18"/>`),
   mode: svg(`<path d="M4 7h13l-3-3M20 17H7l3 3"/>`),
-  fit: svg(`<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>`),
   fullscreen: svg(`<path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"/>`),
   fullscreenExit: svg(`<path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5"/>`),
   settings: svg(`<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>`),
-  // locked: closed shackle; unlocked: shackle swung open, so the two are easy to tell apart
-  lock: svg(`<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>`),
-  unlock: svg(`<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>`),
   overlay: svg(`<path d="M4 5h16v10H9l-5 4V5z"/><path d="M8 9h8M8 12h5"/>`),
   plugin: svg(`<path d="M9 3v4M15 3v4M7 7h10v5a5 5 0 0 1-10 0V7zM12 17v4"/>`),
-  sun: svg(`<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>`),
-  contrast: svg(`<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>`),
-  colors: svg(`<path d="M12 3a9 9 0 1 0 9 9c0-1.5-1.5-2-3-2h-2a2 2 0 0 1-2-2c0-1.5 1-2 1-3.5S13.5 3 12 3z"/><circle cx="8" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/>`),
   speak: svg(`<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>`),
   speed: svg(`<path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 14l4-5"/>`),
   autoTurn: svg(`<path d="M5 6l6 6-6 6M13 6l6 6-6 6"/>`),
@@ -89,7 +80,7 @@ function setDrawer(open) {
 }
 
 /* ---------------- drawer panels ----------------
-   The drawer keeps one row per thing (Page look, each plugin); a row opens a panel of its
+   The drawer keeps one row per thing (the reader's Page look, each plugin); a row opens a panel of its
    own that slides down over the drawer, with that thing's switches and buttons. Its × (or Escape, the
    Android back button, a tap on the drawer below) returns to the drawer. */
 
@@ -129,17 +120,6 @@ function openPanel(key) {
   restartHideTimer();
 }
 
-function pageWidth() {
-  if (settings.reader_fit === "original") return 0;
-  const want = Math.max(innerWidth, settings.reader_fit === "height" ? innerHeight * 0.75 : 0) * (devicePixelRatio || 1);
-  return WIDTHS.find((w) => w >= want) || WIDTHS[WIDTHS.length - 1];
-}
-
-function pageUrl(i) {
-  const w = pageWidth();
-  return `/api/books/${R.book.id}/pages/${i}?v=${R.book.version}${w ? "&w=" + w : ""}`;
-}
-
 /* ---------------- a plugin's reader (Plugin API 14) ----------------
    Books the page reader can't show (light novels: format "epub-text") open in the reader a plugin
    registered with MangaVibe.registerReader(). It gets the reader's element to fill and `ctl`; this file
@@ -158,7 +138,6 @@ function openPluginReader(el, book, startPage) {
   const page = startPage !== null ? +startPage : (book.completed ? 0 : book.page);
   Object.assign(R, { book, own, mode: "plugin", page: Math.max(0, Math.min(page, book.page_count - 1)) });
   ovReset(null);  // pictures' overlays don't apply to text
-  R.preloaded.clear();
   history.replaceState(history.state, "", `#/read/${book.id}`);
   document.title = `${book.label} · ${book.series_title}`;
   el.className = "plugin-reader";
@@ -198,9 +177,83 @@ function ownCall(name, ...args) {
   return undefined;
 }
 
+/* ---------------- the image reader (reader:images, Plugin API 24) ----------------
+   The plugin doing the job draws the pages into #r-pages; the server says who that is (book.image_readers:
+   the plugin doing it, then the built-in one as the fallback, whose script is always in the page). */
+
+/* the image reader's handler for something (step, goTo, key...), or undefined */
+function imgCall(name, ...args) {
+  const fn = R.img?.[name];
+  if (typeof fn !== "function") return undefined;
+  try { return fn.apply(R.img, args); } catch (e) { console.error(`The image reader failed in ${name}`, e); }
+  return undefined;
+}
+
+/* the modes the image reader draws (the mode button only switches between these) */
+function imgModes() {
+  const m = (R.img?.modes || ["paged", "vertical"]).filter((x) => x in MODES);
+  return m.length ? m : ["paged"];
+}
+
+/* what the image reader gets from the host */
+function imageCtl(book) {
+  const mine = () => R.book === book;
+  return {
+    page: R.page,          // where to start, from 0
+    mode: R.mode,          // "paged" or "vertical"
+    settings,              // the reader settings (Settings → Reader): reader_fit, preload, reader_tap_layout...
+    // the reader shows page i now: the numbers, progress (saved a moment later) and the overlays follow
+    shown(i) { if (mine()) pageShown(i); },
+    end() { if (mine()) showEndCard(); },  // forward from the last page: the end card (again: the next book)
+    start() { if (mine() && book.prev) toast(`Start of book. Previous: ${book.prev.label}`); },
+    // a tap on the page: true when the host took it (it closed the reading options); call it first
+    tap(e) {
+      if (!mine()) return true;
+      if (R.drawer) { setDrawer(false); return true; }
+      maybeAutoFullscreen(e);
+      return false;
+    },
+    menu() { if (mine()) toggleMenu(); },                          // the bars and the reading options
+    reading() { if (mine() && uiShown() && !controlsBusy()) hideUi(); },  // reading on: the bars go away
+    keepControls() { if (mine()) restartHideTimer(); },             // its option was used: the bars stay
+    // change reader settings: applied at once, saved for all devices (a promise)
+    async saveSettings(change) {
+      Object.assign(settings, change);
+      try { await api("/api/settings", { method: "PUT", body: change }); }
+      catch (e) { toast(e.message, 6000, "error"); }
+    },
+    reopen() { if (mine()) openReader(book.id, R.page); },  // draw the book again (e.g. another fit)
+    openBook: (which, page = null) => openBook(which, page),
+  };
+}
+
+/* open the book in the first image reader that opens; false if none did */
+function openImageReader(book) {
+  const ids = book.image_readers || ["image-reader"];
+  for (const [i, id] of ids.entries()) {
+    // the fallback (after the first) is the built-in reader, even switched off
+    const impl = window.pluginReader?.(id, "images", i > 0);
+    if (!impl) continue;
+    R.img = impl;
+    if (!imgModes().includes(R.mode)) R.mode = imgModes()[0];  // a mode it doesn't draw: its first
+    $("#reader").classList.remove("paged", "vertical");
+    $("#reader").classList.add(R.mode);
+    try {
+      impl.open($("#r-pages"), book, imageCtl(book));
+      return true;
+    } catch (e) {
+      console.error(`The image reader ${id} failed to open`, e);
+      try { impl.close?.(); } catch {}
+    }
+  }
+  R.img = null;
+  return false;
+}
+
 async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   R.cameFromApp = cameFromApp;
   if (R.own) { ownCall("close"); R.own = null; }  // another book after one a plugin's reader showed
+  if (R.img) { imgCall("close"); R.img = null; }
   const el = $("#reader");
   el.hidden = false;
   // a spinner, and a way out while it waits (the reader's own Back button comes with the book)
@@ -226,19 +279,16 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   Object.assign(R, { book, mode: book.reader_mode === "vertical" ? "vertical" : "paged",
     page: startPage !== null ? +startPage : (book.completed ? 0 : book.page) });
   R.page = Math.max(0, Math.min(R.page, book.page_count - 1));
-  R.preloaded.clear();
   // drop ?page= so a reload resumes from saved progress (replaceState fires no hashchange)
   history.replaceState(history.state, "", `#/read/${book.id}`);
   document.title = `${book.label} · ${book.series_title}`;
   clearTimeout(R.hideTimer);
-  el.className = `fit-${settings.reader_fit || "screen"} ui-hidden ${R.mode} drawer-${drawerSide()}`
-    + (R.drawer ? " drawer-open" : "");
-  const paged = R.mode !== "vertical";
+  el.className = `ui-hidden drawer-${drawerSide()}` + (R.drawer ? " drawer-open" : "");
   ovReset(book);
   R.panel = null;
   const plugins = drawerPlugins(book), canSay = book.overlays.length > 0 && canSpeak();
   el.innerHTML = `
-    ${paged ? `<div class="stage"><img alt=""><div class="ov-layer" id="r-ov"></div></div>` : `<div class="vertical"></div>`}
+    <div id="r-pages"></div>
     <div class="ov-status" id="r-ov-status" hidden></div>
     <!-- for screen readers (TalkBack, NVDA, VoiceOver): the plugin's text of the page being read -->
     <div class="sr-only" id="r-live" aria-live="polite"></div>
@@ -295,13 +345,10 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
         <button id="r-cnext" class="icon" aria-label="Next chapter" ${book.next ? `title="${esc(book.next.label)}"` : "disabled"}>›</button>
       </div>
       <hr>
-      <button class="d-opt" id="r-mode">${ICONS.mode}<span>${MODES[R.mode]}</span></button>
-      <div class="d-row d-fit">
-        <button class="d-opt" id="r-fit">${ICONS.fit}<span>${FITS[settings.reader_fit || "screen"]}</span></button>
-        ${paged ? `<button id="r-lock" class="icon"></button>` : ""}
-      </div>
-      <!-- a row with › opens a panel of its own over the drawer (see "drawer panels" below) -->
-      <button class="d-opt d-toggle d-more" data-panel="look">${ICONS.sun}<span>Page look</span><b id="r-look-state"></b></button>
+      <!-- the mode only when the image reader draws more than one -->
+      <button class="d-opt" id="r-mode" hidden>${ICONS.mode}<span></span></button>
+      <!-- the image reader's own options (built in: the fit, the zoom lock and Page look), once it's open -->
+      <div id="r-own" style="display: contents"></div>
       <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
       <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>Reader settings</span></a>
       <!-- last, after a line: everything a plugin adds, one row per plugin -->
@@ -309,10 +356,6 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
       ${plugins.map((p) => `<button class="d-opt d-toggle d-more" data-panel="plugin:${esc(p.id)}">${ICONS.plugin}
         <span>${esc(p.name)}</span><b data-ov-state="${p.overlay ? esc(p.id) : ""}"></b></button>`).join("")}
     </aside>
-    ${drawerPanel("look", "Page look", `
-      <button class="d-opt d-toggle" id="r-bright">${ICONS.sun}<span>Brightness</span><b></b></button>
-      <button class="d-opt d-toggle" id="r-contrast">${ICONS.contrast}<span>Contrast</span><b></b></button>
-      <button class="d-opt d-toggle" id="r-colors">${ICONS.colors}<span>Page colours</span><b></b></button>`)}
     ${plugins.map((p) => drawerPanel(`plugin:${p.id}`, p.name, `
       ${p.overlay ? `<button class="d-opt d-toggle" data-ov="${esc(p.id)}">${ICONS.overlay}<span>${esc(p.overlay.label)}</span><b></b></button>` : ""}
       ${p.actions.map((i) => `<button class="d-opt" data-act="${i}">${ICONS.plugin}<span>${esc(book.actions[i].label)}</span></button>`).join("")}
@@ -333,34 +376,36 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   $("#r-exit").onclick = () => leaveReader();
   $("#r-fs").onclick = $("#r-fs2").onclick = toggleFullscreen;
   updateFullscreenButtons();
-  if ($("#r-lock")) $("#r-lock").onclick = () => setLocked(!locked());
-  $("#r-slider").oninput = (e) => goTo(+e.target.value - 1);
-  $("#r-progress").onclick = (e) => { if (e.target.dataset.p) goTo(+e.target.dataset.p); };
+  $("#r-slider").oninput = (e) => imgCall("goTo", +e.target.value - 1);
+  $("#r-progress").onclick = (e) => { if (e.target.dataset.p) imgCall("goTo", +e.target.dataset.p); };
   // desktop: the mouse on the bottom edge brings up the full controls
   $("#r-progress").onpointerenter = (e) => { if (e.pointerType === "mouse" && !uiShown()) showUi(); };
   // the wheel over the bottom strip still scrolls the pages (and turns them, in paged mode)
   $("#r-progress").addEventListener("wheel", (e) => {
     e.preventDefault();
-    if (!paged) $("#reader .vertical")?.scrollBy(0, wheelDelta(e).y);
-    else if (!e.ctrlKey) wheelScroll(e);
+    imgCall("wheel", e);
   }, { passive: false });
-  $("#r-page").onchange = (e) => goTo(+e.target.value);
-  $("#r-pprev").onclick = () => (paged ? prev() : goTo(R.page - 1));
-  $("#r-pnext").onclick = () => (paged ? next() : goTo(R.page + 1));
-  $("#r-mode").onclick = async () => {
-    await api(`/api/series/${book.series_id}`, { method: "PATCH", body: { reader_mode: cycle(MODES, R.mode) } });
-    saveProgress(true);
-    openReader(book.id, R.page);
-  };
-  $("#r-fit").onclick = async () => {
-    await api("/api/settings", { method: "PUT", body: { reader_fit: cycle(FITS, settings.reader_fit || "screen") } });
-    await loadSettings();
-    openReader(book.id, R.page);
-  };
+  $("#r-page").onchange = (e) => imgCall("goTo", +e.target.value);
+  $("#r-pprev").onclick = () => imgCall("step", false);
+  $("#r-pnext").onclick = () => imgCall("step", true);
+  $("#r-mode").onclick = () => setMode(cycle(Object.fromEntries(imgModes().map((m) => [m, 1])), R.mode));
   const toPrev = () => location.replace(`#/read/${book.prev.id}`);
   const toNext = () => location.replace(`#/read/${book.next.id}?page=0`);
   if (book.prev) $("#r-prev").onclick = $("#r-cprev").onclick = toPrev;
   if (book.next) $("#r-next").onclick = $("#r-cnext").onclick = toNext;
+  // the pages, then the image reader's options in the drawer (they may show its settings)
+  const opened = openImageReader(book);
+  if (opened) {
+    const own = imgCall("drawer") || {};
+    $("#r-own").innerHTML = own.rows || "";
+    $("#r-drawer").insertAdjacentHTML("afterend",
+      (own.panels || []).map((p) => drawerPanel(p.key, p.title, p.body)).join(""));
+  } else {
+    $("#r-pages").innerHTML = `<div class="endcard"><p>No reader for pictures loaded. Reload the page, or check
+      Settings → Plugins.</p><a class="btn" href="#/series/${book.series_id}">Back</a></div>`;
+  }
+  $("#r-mode").hidden = !opened || imgModes().length < 2;
+  $("#r-mode span").textContent = MODES[R.mode];
   menuButton();
   el.querySelectorAll("[data-panel]").forEach((b) => (b.onclick = () => openPanel(b.dataset.panel)));
   el.querySelectorAll("[data-panel-close]").forEach((b) => (b.onclick = () => openPanel(null)));
@@ -376,400 +421,33 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
     : ovSetStyle({ overlay_outline: cycle(OV_OUTLINE, ovOutline()) }))));
   ovApplyStyle();
   ovUpdateButtons();
-  $("#r-bright").onclick = () => setLook({ reader_brightness: step([100, 85, 70, 55, 40], brightness()) });
-  $("#r-contrast").onclick = () => setLook({ reader_contrast: step([100, 125, 150, 75], contrast()) });
-  $("#r-colors").onclick = () => setLook({ reader_colors: cycle(COLORS, colors()) });
-  applyLook();
   saySetup();
-
-  if (R.mode === "vertical") setupVertical(); else setupPaged();
+  if (opened) imgCall("bindDrawer", el);
+  watchPointer();
   requestWakeLock();
   androidApp?.readerState(true, settings.reader_volume_keys !== false);  // keeps the screen on, takes the volume keys
 }
 
-/* ---------------- paged mode: zoom, pan, swipe, page animations ----------------
-   One <img> inside .stage. Zoom and pan are a CSS transform on the image:
-   translate(x, y) scale(s), origin at the centre. Pointer Events cover touch and mouse.
-   The lock (🔒) turns zoom/pan off and keeps the page fitted. */
-
-const Z = { s: 1, x: 0, y: 0, hiRes: false };
-const MAX_ZOOM = 5;
-const pointers = new Map();  // pointerId -> {x, y}
-let gesture = null;          // what the current touch is doing: pan | pinch | swipe | tap
-
-function locked() {
-  try { return localStorage.getItem("reader-lock") === "1"; } catch { return false; }
-}
-
-function setLocked(on) {
-  try { localStorage.setItem("reader-lock", on ? "1" : "0"); } catch {}
-  updateLockButton();
-  if (on) resetZoom(true);
-  $("#reader .vertical")?.classList.toggle("locked", on);
-}
-
-function updateLockButton() {
-  const b = $("#r-lock");
-  if (!b) return;
-  b.innerHTML = locked() ? ICONS.lock : ICONS.unlock;
-  b.classList.toggle("on", locked());
-  b.title = locked() ? "Zoom locked (tap to allow zoom and moving)" : "Zoom allowed (tap to lock)";
-  b.setAttribute("aria-label", b.title);
-}
-
-function img() { return $("#reader .stage img"); }
-
-/* `animate`: true for the usual .2s, or a length in seconds (a wheel or key step is quicker) */
-function applyZoom(animate = false) {
-  const el = img();
-  if (!el) return;
-  el.style.transition = animate ? `transform ${animate === true ? 0.2 : animate}s ease-out` : "none";
-  el.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(${Z.s})`;
-  $("#reader .stage").classList.toggle("zoomed", Z.s > 1.01);
-  $("#reader .stage").classList.toggle("can-pan", canPan());
-}
-
-/* keep the zoomed page covering the screen: no empty space at the edges */
-function clampPan() {
-  const el = img();
-  const w = el.offsetWidth * Z.s, h = el.offsetHeight * Z.s;
-  const maxX = Math.max(0, (w - innerWidth) / 2), maxY = Math.max(0, (h - innerHeight) / 2);
-  Z.x = Math.max(-maxX, Math.min(maxX, Z.x));
-  Z.y = Math.max(-maxY, Math.min(maxY, Z.y));
-}
-
-/* zoom to scale s keeping the screen point (px, py) under the finger/cursor still */
-function zoomAt(s, px, py, from = { s: Z.s, x: Z.x, y: Z.y }) {
-  s = Math.max(1, Math.min(MAX_ZOOM, s));
-  const cx = px - innerWidth / 2, cy = py - innerHeight / 2;
-  Z.x = cx - (cx - from.x) * (s / from.s);
-  Z.y = cy - (cy - from.y) * (s / from.s);
-  Z.s = s;
-  clampPan();  // back at 1×, a page that fits is centred again; a taller one keeps its place
-  maybeHiRes();
-}
-
-/* how far a page taller than the window can move up or down from the middle (0: it fits) */
-function roomY() {
-  const el = img();
-  return el ? Math.max(0, (el.offsetHeight * Z.s - innerHeight) / 2) : 0;
-}
-
-/* is the page bigger than the screen (zoomed in, or "fit width"/"original" pages)? */
-function canPan() {
-  const el = img();
-  return !locked() && (el.offsetWidth * Z.s > innerWidth + 1 || el.offsetHeight * Z.s > innerHeight + 1);
-}
-
-/* back to the fitted page. A page taller than the window ("fit width") stays about where it was
-   instead of jumping to its middle. */
-function resetZoom(animate = false) {
-  Object.assign(Z, { x: Z.x / Z.s, y: Z.y / Z.s, s: 1 });
-  if (img()) clampPan();
-  applyZoom(animate);
-}
-
-/* zoomed in a lot: swap to the full-resolution page so it stays sharp */
-function maybeHiRes() {
-  if (Z.s < 1.6 || Z.hiRes || settings.reader_fit === "original") return;
-  Z.hiRes = true;
-  const book = R.book.id, page = R.page;
-  const full = `/api/books/${book}/pages/${page}?v=${R.book.version}`;
-  const pre = new Image();
-  pre.onload = () => { if (Z.hiRes && R.book?.id === book && R.page === page && img()) img().src = full; };
-  pre.src = full;
-}
-
-function setupPaged() {
-  const stage = $("#reader .stage");
-  img().onerror = () => toast("Could not load page " + (R.page + 1), 3000, "error");
-  updateLockButton();
-  ovFollowImage();
-  showPage(0);
-
-  let start = null, lastTap = { t: 0, x: 0, y: 0 }, tapTimer = null;
-
-  // the browser's own "drag the picture" would cancel our pointer events (Firefox ignores the CSS rule)
-  img().draggable = false;
-  stage.addEventListener("dragstart", (e) => e.preventDefault());
-
-  stage.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse") {
-      if (e.button !== 0) return;  // only the left button; middle/right do nothing here
-      e.preventDefault();          // no text selection / native image drag
-    }
-    try { stage.setPointerCapture(e.pointerId); } catch {}  // keeps getting moves outside the image
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size === 2 && !locked()) {
-      const [a, b] = [...pointers.values()];
-      gesture = { type: "pinch", d0: Math.hypot(a.x - b.x, a.y - b.y), from: { ...Z } };
-    } else if (pointers.size === 1) {
-      start = { x: e.clientX, y: e.clientY, t: Date.now(), from: { ...Z }, mouse: e.pointerType === "mouse" };
-      gesture = { type: "tap" };
-    }
-  });
-
-  stage.addEventListener("pointermove", (e) => {
-    if (!pointers.has(e.pointerId)) return;
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (gesture?.type === "pinch" && pointers.size === 2) {
-      const [a, b] = [...pointers.values()];
-      const d = Math.hypot(a.x - b.x, a.y - b.y);
-      zoomAt(gesture.from.s * d / gesture.d0, (a.x + b.x) / 2, (a.y + b.y) / 2, gesture.from);
-      applyZoom();
-      return;
-    }
-    if (!start || pointers.size !== 1) return;
-    const dx = e.clientX - start.x, dy = e.clientY - start.y;
-    if (gesture.type === "tap" && Math.hypot(dx, dy) > 10) {
-      const wide = img().offsetWidth * Z.s > innerWidth + 1;
-      const sideways = Math.abs(dx) > Math.abs(dy);
-      if (start.mouse) {
-        // mouse: holding the left button always moves the page (if there is room); it never turns
-        // pages, and a drag is never counted as a click
-        gesture.type = canPan() ? "pan" : "none";
-      } else {
-        // touch: sideways on a page that fits the width turns pages; otherwise move the page around
-        gesture.type = sideways && !wide && Z.s <= 1.01 ? "swipe" : canPan() ? "pan" : sideways ? "swipe" : "none";
-      }
-      stage.classList.toggle("dragging", gesture.type === "pan");
-    }
-    if (gesture.type === "pan") {
-      Z.x = start.from.x + dx;
-      Z.y = start.from.y + dy;
-      clampPan();
-      applyZoom();
-    } else if (gesture.type === "swipe") {
-      img().style.transition = "none";
-      img().style.transform = `translate(${dx}px, ${Z.y}px)`;  // the page follows the finger
-    }
-  });
-
-  const end = (e) => {
-    if (!pointers.has(e.pointerId)) return;
-    pointers.delete(e.pointerId);
-    if (gesture?.type === "pinch") {
-      if (pointers.size === 0) {
-        if (Z.s < 1.05) resetZoom(true);
-        gesture = null;
-      } else {  // one finger left after a pinch: continue as a pan from here
-        const [p] = [...pointers.values()];
-        start = { x: p.x, y: p.y, t: Date.now(), from: { ...Z } };
-        gesture = { type: "pan" };
-      }
-      return;
-    }
-    if (pointers.size) return;
-    stage.classList.remove("dragging");
-    const dx = e.clientX - (start?.x ?? e.clientX), dt = Date.now() - (start?.t ?? 0);
-    const type = gesture?.type;
-    gesture = null;
-    if (type === "swipe") {
-      const fast = Math.abs(dx) > 30 && dt < 250;
-      if (Math.abs(dx) > innerWidth * 0.18 || fast) {
-        turn(dx < 0, Math.sign(dx));  // swipe to the left: the next page comes in from the right
-      } else {
-        resetZoom(true);  // not far enough: snap back
-      }
-      return;
-    }
-    if (type !== "tap") return;
-    if (R.drawer) return setDrawer(false);  // a tap beside the open drawer just closes it
-    // tap or double tap
-    maybeAutoFullscreen(e);
-    const now = Date.now();
-    if (now - lastTap.t < 300 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 40 && !locked()) {
-      clearTimeout(tapTimer);
-      lastTap = { t: 0, x: 0, y: 0 };
-      if (Z.s > 1.01) resetZoom(true);
-      else { zoomAt(2.5, e.clientX, e.clientY); applyZoom(true); }
-      return;
-    }
-    lastTap = { t: now, x: e.clientX, y: e.clientY };
-    const x = e.clientX / innerWidth, y = e.clientY / innerHeight, mouse = e.pointerType === "mouse";
-    tapTimer = setTimeout(() => {
-      if (Z.s > 1.01) return toggleMenu();  // zoomed: taps don't turn pages, they only show or hide the menu
-      const act = tapAction(x, y, mouse);
-      if (act === "next") next();
-      else if (act === "prev") prev();
-      else toggleMenu();
-    }, 230);
-  };
-  stage.addEventListener("pointerup", end);
-  stage.addEventListener("pointercancel", end);
-
-  // desktop: the wheel scrolls a page taller than the window, and turns pages at its ends;
-  // Ctrl + wheel (and a touchpad pinch, which browsers send as one) zooms around the cursor
-  stage.addEventListener("wheel", (e) => {
-    e.preventDefault();
-    if (e.ctrlKey) {
-      if (locked()) return;
-      zoomAt(Z.s * Math.exp(-wheelDelta(e).y / 300), e.clientX, e.clientY);
-      return applyZoom();
-    }
-    wheelScroll(e);
-  }, { passive: false });
-
-  // a mouse that rests over the page hides its pointer while the controls are away; the top edge
-  // brings the controls up, like the bottom edge does (back and fullscreen are up there on a computer)
-  let idle = null;
-  stage.addEventListener("pointermove", (e) => {
-    if (e.pointerType !== "mouse") return;
-    if (e.clientY < 36 && !pointers.size && !uiShown()) showUi();
-    $("#reader").classList.remove("cursor-idle");
-    clearTimeout(idle);
-    idle = setTimeout(() => $("#reader")?.classList.add("cursor-idle"), 2000);
-  });
-}
-
-/* a wheel event's movement in pixels (Firefox counts a mouse wheel in lines) */
-function wheelDelta(e) {
-  const unit = e.deltaMode === 1 ? 40 : e.deltaMode === 2 ? innerHeight : 1;
-  let x = e.deltaX * unit, y = e.deltaY * unit;
-  if (e.shiftKey && !x) [x, y] = [y, 0];  // Shift + wheel: sideways
-  return { x, y };
-}
-
-/* One spin of the wheel, or one touchpad swipe with its momentum, is a run of events close
-   together. A run either scrolls the page or turns it, never both: the page stops at its end,
-   and the next run turns it. So a fast spin can't fly through several pages. */
-const W = { t: 0, acc: 0, done: false };
-const WHEEL_GAP = 250;   // ms between events that still belong to the same run
-const WHEEL_TURN = 50;   // px of wheel past the end of the page that turn it
-
-function wheelScroll(e) {
-  const d = wheelDelta(e);
-  if (e.timeStamp - W.t > WHEEL_GAP) Object.assign(W, { acc: 0, done: false });
-  W.t = e.timeStamp;
-  const el = img();
-  if (!el) return;
-  const sideways = Math.abs(d.x) > Math.abs(d.y), delta = sideways ? d.x : d.y;
-  if (!delta) return;
-  const room = sideways ? Math.max(0, (el.offsetWidth * Z.s - innerWidth) / 2) : roomY();
-  const pos = sideways ? Z.x : Z.y;
-  // down (or right) moves the page up (or left): towards -room
-  const to = Math.max(-room, Math.min(room, pos - delta));
-  if (to !== pos) {
-    Z[sideways ? "x" : "y"] = to;
-    applyZoom(Math.abs(delta) >= 30 ? 0.12 : false);  // a mouse notch glides, a touchpad follows the fingers
-    W.done = true;
-    return;
-  }
-  if (W.done || Z.s > 1.01) return;  // zoomed in: the wheel only moves the page, like taps don't turn it
-  W.acc += Math.abs(delta);
-  if (W.acc < WHEEL_TURN) return;
-  W.done = true;
-  if (delta > 0) next(); else prev(!sideways);  // scrolling back up shows the end of the page before
-}
-
-/* ↓, Page Down and Space: down the page by a step, then on to the next page (↑, Page Up, Shift +
-   Space the other way). A key held down stops at the end of a page instead of racing through the book. */
-function keyScroll(down, step, repeat) {
-  const room = roomY(), to = Math.max(-room, Math.min(room, Z.y + (down ? -step : step)));
-  if (to !== Z.y) {
-    Z.y = to;
-    return applyZoom(0.15);
-  }
-  if (repeat || Z.s > 1.01) return;
-  if (down) next(); else prev(true);
-}
-
-/* what a tap at (x, y) (fractions of the screen) does: "next", "prev" or "ui" (open the menu).
-   Forward is always on the right, like every digital reader (Settings → Reader → Tap zones). */
-function tapAction(x, y, mouse = false) {
-  const layout = settings.reader_tap_layout || "default";
-  if (layout === "off") return "ui";
-  const d = 1 - x;  // 0 at the "next" (right) edge, 1 at the "previous" (left) edge
-  if (layout === "one-handed") {
-    if (d > 1 - TAP_EDGE) return "prev";
-    if (Math.abs(x - 0.5) < 0.2 && Math.abs(y - 0.5) < 0.2) return "ui";  // a box in the middle
-    return "next";
-  }
-  const side = mouse ? CLICK_SIDE : TAP_SIDE;
-  return d < side ? "next" : d > 1 - side ? "prev" : "ui";
-}
-
-addEventListener("resize", () => { if (R.book && img()) { clampPan(); applyZoom(); } });
-
-/* swipe/tap/key page turn with a slide: out towards `outDir` (-1 left, 1 right), new page in from
-   the other side. `atEnd`: a page taller than the window comes in showing its bottom (scrolling back). */
-function turn(forward, outDir, atEnd = false) {
-  // turning the page is reading on: the controls go away (not while they're being used, e.g. the drawer)
-  if (uiShown() && !controlsBusy()) hideUi();
-  const canGo = forward ? R.page < R.book.page_count - 1 : R.page > 0;
-  if (!canGo) {
-    resetZoom(true);
-    return forward ? showEndCard() : (R.book.prev && toast(`Start of book. Previous: ${R.book.prev.label}`));
-  }
-  const el = img();
-  el.style.transition = "transform .16s ease-in, opacity .16s";
-  el.style.transform = `translate(${Z.x + outDir * innerWidth}px, ${Z.y}px) scale(${Z.s})`;
-  el.style.opacity = "0";
-  setTimeout(() => {
-    R.page += forward ? 1 : -1;
-    showPage(-outDir, atEnd);
-  }, 160);
-}
-
-/* show R.page; `fromDir` is the side the new page slides in from (-1 left, 1 right, 0 none).
-   The browser keeps painting the old picture in the <img> until the new one is decoded, so a
-   sliding page stays hidden until then; only then does it slide in. A page taller than the window
-   starts at its top, like a page of a book (with `atEnd`, at its bottom). */
-let showToken = 0;
-function showPage(fromDir = 0, atEnd = false) {
-  const el = img();
-  if (!el) return;
-  const stage = $("#reader .stage");
+/* the image reader shows page i: the numbers, progress and overlays follow */
+function pageShown(i) {
+  R.page = Math.max(0, Math.min(+i, R.book.page_count - 1));
   $("#reader .endcard")?.remove();
-  Object.assign(Z, { s: 1, x: 0, y: 0, hiRes: false });
-  stage.classList.remove("zoomed");
-  el.style.transition = "none";
-  el.style.transform = fromDir ? `translateX(${fromDir * 30}%)` : "none";
-  el.style.opacity = fromDir ? "0" : "1";
-  const token = ++showToken;  // a newer turn makes this one stale
-  clearTimeout(stage._spin);
-  stage._spin = setTimeout(() => stage.classList.add("waiting"), 150);  // slow page: show a spinner
-  el.src = pageUrl(R.page);
-  // Firefox resolves decode() at once for the old picture while the new one is still loading
-  // (Chrome waits), so wait for the load first: else the old page slides in, then blinks to the new one
-  const loaded = el.complete ? Promise.resolve() : new Promise((done) => {
-    el.addEventListener("load", done, { once: true });
-    el.addEventListener("error", done, { once: true });
-  });
-  // decode() fails on a broken page (onerror shows a toast) or when src changes again; show the page anyway
-  loaded.then(() => el.decode()).catch(() => {}).then(() => {
-    if (token !== showToken || img() !== el) return;
-    clearTimeout(stage._spin);
-    stage.classList.remove("waiting");
-    stage.classList.toggle("can-pan", canPan());  // e.g. "fit width" pages taller than the screen
-    if (Z.s > 1.01) { el.style.opacity = "1"; return; }  // zoomed in meanwhile: keep the zoom, don't slide
-    if (Z.x === 0 && Z.y === 0) Z.y = atEnd ? -roomY() : roomY();  // not moved meanwhile: top (or bottom)
-    if (!fromDir) return applyZoom();
-    // the start position, at the page's height, so it only slides sideways
-    el.style.transform = `translate(${fromDir * 30}%, ${Z.y}px)`;
-    void el.offsetWidth;  // apply the start position first, so the slide below animates from it
-    el.style.transition = "transform .2s ease-out, opacity .2s";
-    el.style.transform = `translate(${Z.x}px, ${Z.y}px) scale(1)`;
-    el.style.opacity = "1";
-  });
   updatePageUi();
-  preload();
   saveProgress();
   ovShow();
 }
 
-function preload() {
-  const n = +settings.preload || 4;
-  // let go of pages far behind or ahead, so a long book doesn't pile up in the phone's memory
-  // (going back is still quick: the browser's HTTP cache has them)
-  for (const i of R.preloaded.keys()) if (i < R.page - 2 || i > R.page + n) R.preloaded.delete(i);
-  for (let i = R.page + 1; i <= R.page + n && i < R.book.page_count; i++) {
-    if (!R.preloaded.has(i)) {
-      const im = new Image();
-      im.src = pageUrl(i);
-      R.preloaded.set(i, im);
-    }
-  }
+/* a mouse that rests over the pages hides its pointer while the controls are away; the top edge
+   brings the controls up, like the bottom edge does (back and fullscreen are up there on a computer) */
+function watchPointer() {
+  let idle = null;
+  $("#r-pages").addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
+    if (e.clientY < 36 && !e.buttons && !uiShown()) showUi();
+    $("#reader").classList.remove("cursor-idle");
+    clearTimeout(idle);
+    idle = setTimeout(() => $("#reader")?.classList.add("cursor-idle"), 2000);
+  });
 }
 
 function updatePageUi() {
@@ -785,23 +463,7 @@ function updatePageUi() {
     seg.className = i < R.page ? "read" : i === R.page ? "read cur" : "";
   }
   $("#rp-cur").textContent = R.page + 1;
-  const im = img();
-  if (im) im.alt = `Page ${R.page + 1} of ${R.book.page_count}`;
 }
-
-function goTo(i) {
-  R.page = Math.max(0, Math.min(i, R.book.page_count - 1));
-  if (R.mode === "vertical") {
-    $("#reader .vertical").children[R.page]?.scrollIntoView();
-    updatePageUi();
-    saveProgress();
-    ovShow();
-  } else showPage();
-}
-
-/* the old page slides out to the left going forward, to the right going back */
-function next() { turn(true, -1); }
-function prev(atEnd = false) { turn(false, 1, atEnd); }
 
 function showEndCard() {
   saveProgress(true);
@@ -824,57 +486,13 @@ function showEndCard() {
   });
 }
 
-function setupVertical() {
-  const box = $("#reader .vertical");
-  // each page in a box of its own, so a plugin overlay can sit on top of it
-  box.innerHTML = Array.from({ length: R.book.page_count }, (_, i) =>
-    `<div class="vpage" data-p="${i}"><img data-i="${i}" loading="lazy" src="${pageUrl(i)}" alt="Page ${i + 1}">`
-    + `<div class="ov-layer"></div></div>`).join("") +
-    `<div style="padding:40px 20px;text-align:center">
-      ${R.book.next ? `<button class="btn primary" id="v-next">Next: ${esc(R.book.next.label)}</button>`
-        : `<p class="muted">End of the series.</p>`}</div>`;
-  box.querySelectorAll("img").forEach((im) => {
-    im.onload = () => {
-      im.classList.add("loaded");
-      ovFit(im.nextElementSibling);  // overlay boxes drawn before the image had a size
-    };
-    im.addEventListener("error", () => im.classList.add("failed"));  // no spinner forever on a broken page
-  });
-  $("#v-next")?.addEventListener("click", () => location.replace(`#/read/${R.book.next.id}?page=0`));
-  // current page = the image in the middle of the screen (robust to images loading late)
-  let ticking = false;
-  box.addEventListener("scroll", () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      ticking = false;
-      // the middle of the screen may be over an overlay box: its page box says which page it is
-      const p = document.elementFromPoint(innerWidth / 2, innerHeight / 2)?.closest?.(".vpage")?.dataset.p;
-      if (p !== undefined && +p !== R.page) {
-        R.page = +p;
-        updatePageUi();
-        saveProgress();
-        ovShow();
-      }
-    });
-  }, { passive: true });
-  box.children[R.page]?.scrollIntoView();
-  updatePageUi();
-  ovShow();
-  box.addEventListener("click", (e) => {
-    if (e.target.closest("button")) return;
-    if (R.drawer) return setDrawer(false);
-    maybeAutoFullscreen(e);
-    toggleMenu();
-  });
-}
-
 /* ---------------- plugin overlays ----------------
    A plugin with an overlay (e.g. a translator) draws boxes over pages. Each one is a toggle in the
    drawer, remembered per series on this device. The server answers per page with layers of boxes
    whose positions are fractions of the page; a layer still `pending` is asked for again a little
-   later, while that page is still being read. In paged mode the layer copies the image's size and
-   transform (zoom, pan, swipe, slide), so it moves with the page without touching that code. */
+   later, while that page is still being read. The image reader says which element shows a page
+   (pageBox); a layer next to it copies its box and transform (zoom, pan, swipe, slide), so it moves
+   with the page without the reader knowing about overlays. */
 
 const OV_RETRY_MS = 2500;
 
@@ -887,6 +505,7 @@ function ovReset(book) {
     on: book.overlays.map((o) => o.plugin).filter((p) => ovSaved(book, p)),
     pages: new Map(),     // page -> {layers, done}
     loading: new Set(), timers: new Map(), observers: [],
+    layers: new WeakMap(),  // the reader's page element -> the layer that follows it
   };
 }
 
@@ -987,7 +606,8 @@ function state() {
   if (!R.book) return null;
   const b = R.book, on = R.ov?.on || [];
   return { ...where(), label: b.label, series_title: b.series_title, mode: R.mode,
-    fit: settings.reader_fit || "screen", options_open: R.drawer, panel: R.panel,
+    fit: (R.img && imgCall("state")?.fit) || settings.reader_fit || "screen",
+    modes: R.own ? [] : imgModes(), options_open: R.drawer, panel: R.panel,
     at_end: !!$("#reader .endcard"), fullscreen: !!document.fullscreenElement,
     previous: b.prev ? { book: b.prev.id, label: b.prev.label } : null,
     next: b.next ? { book: b.next.id, label: b.next.label } : null,
@@ -1002,9 +622,7 @@ function state() {
 function step(forward) {
   if (!R.book) return false;
   if (R.own) return ownCall("step", forward) !== false;
-  if (R.mode === "vertical") goTo(R.page + (forward ? 1 : -1));
-  else if (forward) next(); else prev();
-  return true;
+  return imgCall("step", forward) !== false;
 }
 
 /* another book of the series: "next", "previous" or a book id; page from 0 (default: the start, or the
@@ -1018,9 +636,10 @@ function openBook(which, page = null) {
   return true;
 }
 
-/* paged or vertical: the series' own mode, as the drawer's mode button sets it (admins) */
+/* paged or vertical: the series' own mode, as the drawer's mode button sets it (admins). The image
+   reader's setMode() switches without opening the book again, if it has one. */
 async function setMode(mode) {
-  if (!R.book || R.own || !(mode in MODES)) return false;
+  if (!R.book || R.own || !imgModes().includes(mode)) return false;
   if (mode !== R.mode) {
     await api(`/api/series/${R.book.series_id}`, { method: "PATCH", body: { reader_mode: mode } });
     saveProgress(true);
@@ -1083,7 +702,7 @@ function ovShow() {
   for (let i = R.page - 1; i <= R.page + 1; i++) {
     if (i >= 0 && i < R.book.page_count && ovWanted(i)) ovLoad(i);
   }
-  if (R.mode !== "vertical") ovDraw(R.page);  // the layer may still show the previous page
+  ovDraw(R.page);  // the layer may still show the previous page (one picture that changes its page)
 }
 
 async function ovLoad(i) {
@@ -1110,15 +729,26 @@ async function ovLoad(i) {
   }
 }
 
+/* the layer over the element that shows page i (made the first time), or null: not on screen */
 function ovLayer(i) {
-  if (R.mode === "vertical") return $(`#reader .vpage[data-p="${i}"] .ov-layer`);
-  return i === R.page ? $("#r-ov") : null;
+  const el = imgCall("pageBox", i);
+  if (!el || !el.isConnected) return null;
+  let layer = R.ov.layers.get(el);
+  if (!layer || !layer.isConnected) {
+    layer = document.createElement("div");
+    layer.className = "ov-layer";
+    el.after(layer);
+    R.ov.layers.set(el, layer);
+    ovFollow(el, layer);
+  }
+  return layer;
 }
 
 function ovDraw(i) {
+  if (!R.ov) return;
   const layer = ovLayer(i);
   if (!layer) return;
-  const layers = R.ov?.pages.get(i)?.layers || [];
+  const layers = R.ov.pages.get(i)?.layers || [];
   const pct = (v) => `${(v * 100).toFixed(3)}%`;
   // only plain class names from plugins: letters, digits, - and _
   const cls = (s) => s.split(/\s+/).filter((c) => /^[\w-]+$/.test(c)).join(" ");
@@ -1132,7 +762,7 @@ function ovDraw(i) {
     + `aria-label="Hide this box" title="Hide this box">×</button></div>`)).join("");
   // the × must not count as a tap on the page (turning it or toggling the controls)
   layer.querySelectorAll(".ov-hide").forEach((btn) => {
-    for (const type of ["pointerdown", "pointerup"]) btn.addEventListener(type, (e) => e.stopPropagation());
+    for (const type of ["pointerdown", "pointerup", "click"]) btn.addEventListener(type, (e) => e.stopPropagation());
     btn.onclick = (e) => { e.stopPropagation(); ovHide(i, btn.dataset.plugin, btn.dataset.box); };
   });
   ovFit(layer);
@@ -1182,10 +812,8 @@ function ovFit(layer) {
   }
 }
 
-/* paged mode: keep the layer exactly over the image: same box, same transform, same fade */
-function ovFollowImage() {
-  const el = img(), layer = $("#r-ov");
-  if (!el || !layer) return;
+/* keep the layer exactly over the page's element: same box, same transform, same fade */
+function ovFollow(el, layer) {
   const follow = () => {
     Object.assign(layer.style, { left: `${el.offsetLeft}px`, top: `${el.offsetTop}px`,
       width: `${el.offsetWidth}px`, height: `${el.offsetHeight}px`,
@@ -1222,55 +850,8 @@ function ovStatus() {
 }
 
 addEventListener("resize", () => {
-  if (R.ov && R.mode === "vertical") $("#reader").querySelectorAll(".ov-layer").forEach(ovFit);
+  if (R.ov) $("#reader").querySelectorAll(".ov-layer").forEach(ovFit);
 });
-
-/* ---------------- page look: brightness, contrast, colours ----------------
-   A CSS filter on the page images only (overlay boxes and the controls stay as they are). Reader
-   settings like the fit: changed from the drawer or Settings → Reader. */
-
-function brightness() { const v = +settings.reader_brightness; return v in BRIGHTNESS ? v : 100; }
-function contrast() { const v = +settings.reader_contrast; return v in CONTRAST ? v : 100; }
-function colors() { return settings.reader_colors in COLORS ? settings.reader_colors : "normal"; }
-
-/* "Inverted" turns white pages black; the hue turn undoes what inverting does to colours, so a red
-   stays red. It goes first, so lowering the brightness dims the (now white) letters, not a black page. */
-function pageFilter() {
-  const c = colors(), f = [];
-  if (c.startsWith("dark")) f.push("invert(1) hue-rotate(180deg)");
-  if (c.endsWith("warm")) f.push("sepia(0.45)");
-  if (contrast() !== 100) f.push(`contrast(${contrast() / 100})`);
-  if (brightness() !== 100) f.push(`brightness(${brightness() / 100})`);
-  return f.join(" ") || "none";
-}
-
-function applyLook() {
-  $("#reader").style.setProperty("--page-filter", pageFilter());
-  for (const [id, text, changed] of [["#r-bright", BRIGHTNESS[brightness()], brightness() !== 100],
-    ["#r-contrast", CONTRAST[contrast()], contrast() !== 100], ["#r-colors", COLORS[colors()], colors() !== "normal"]]) {
-    const b = $(id);
-    if (!b) continue;
-    b.querySelector("b").textContent = text;
-    b.classList.toggle("on", changed);
-  }
-  // the drawer's row: what isn't normal, e.g. "Inverted · 70%"
-  const state = $("#r-look-state");
-  if (state) {
-    const parts = [colors() !== "normal" && COLORS[colors()], brightness() !== 100 && BRIGHTNESS[brightness()],
-      contrast() !== 100 && `${CONTRAST[contrast()]} contrast`].filter(Boolean);
-    state.textContent = parts.join(" · ") || "Normal";
-    state.parentElement.classList.toggle("on", parts.length > 0);
-  }
-}
-
-/* the drawer changed the look: applied at once, saved as a reader setting */
-async function setLook(change) {
-  Object.assign(settings, change);
-  applyLook();
-  restartHideTimer();
-  try { await api("/api/settings", { method: "PUT", body: change }); }
-  catch (e) { toast(e.message, 6000, "error"); }
-}
 
 /* ---------------- read aloud ----------------
    Reads the text a plugin gives for the page (its `speech`, or else the text of its boxes) with the
@@ -1474,7 +1055,7 @@ function sayDone(key) {
   clearTimeout(S.turnTimer);
   S.turnTimer = setTimeout(() => {
     if (!S.on || !S.turn || S.key !== key || !R.book) return;
-    if (R.page < R.book.page_count - 1) R.mode === "vertical" ? goTo(R.page + 1) : next();
+    if (R.page < R.book.page_count - 1) imgCall("step", true);
     else if (R.book.next) location.replace(`#/read/${R.book.next.id}?page=0`);
   }, 900);
 }
@@ -1650,6 +1231,7 @@ function closeReader() {
   sayStop();
   S.key = null;
   if (R.own) { ownCall("close"); R.own = null; }
+  if (R.img) { imgCall("close"); R.img = null; }
   ovReset(null);
   R.book = null;
   R.firstTap = true;
@@ -1674,24 +1256,8 @@ document.addEventListener("keydown", (e) => {
     if (!$("#r-fs").hidden) toggleFullscreen();
     return;
   }
-  if (R.mode === "vertical") {
-    const step = { ArrowDown: 0.2, ArrowUp: -0.2, PageDown: 0.85, PageUp: -0.85, " ": e.shiftKey ? -0.85 : 0.85 }[e.key];
-    if (!step) return;
-    e.preventDefault();  // else a browser that put the scroll box in focus scrolls it a second time
-    return $("#reader .vertical")?.scrollBy({ top: step * innerHeight, behavior: "smooth" });
-  }
-  const keys = {
-    ArrowRight: () => next(), ArrowLeft: () => prev(),
-    ArrowDown: () => keyScroll(true, innerHeight * 0.2, e.repeat),
-    ArrowUp: () => keyScroll(false, innerHeight * 0.2, e.repeat),
-    PageDown: () => keyScroll(true, innerHeight * 0.85, e.repeat),
-    PageUp: () => keyScroll(false, innerHeight * 0.85, e.repeat),
-    " ": () => keyScroll(!e.shiftKey, innerHeight * 0.85, e.repeat),
-    Home: () => goTo(0), End: () => goTo(R.book.page_count - 1),
-  };
-  if (!keys[e.key]) return;
-  e.preventDefault();
-  keys[e.key]();
+  // the rest (arrows, Page Up/Down, Space, Home, End) is the image reader's
+  if (imgCall("key", e) === true) e.preventDefault();  // else a focused scroll box would scroll a second time
 });
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") saveProgress(true);
@@ -1707,10 +1273,7 @@ function volumeKey(dir) {
   if ($("#reader").hidden || !R.book) return;
   const forward = dir === "next";
   if (R.own) return void ownCall("step", forward);
-  if (R.mode === "vertical") {
-    $("#reader .vertical")?.scrollBy({ top: (forward ? 1 : -1) * innerHeight * 0.85, behavior: "smooth" });
-  } else if (forward) next();
-  else prev();
+  imgCall("step", forward, "volume");
 }
 
 /* the Android back button: closes a drawer panel, then the options drawer, then leaves the reader */
@@ -1733,7 +1296,7 @@ return {
   where,
   redraw,
   state, step, openBook, setMode, options, overlay, press,
-  goTo: (i) => (!R.book ? false : R.own ? ownCall("goTo", +i) !== false : (goTo(+i), true)),
+  goTo: (i) => (!R.book ? false : R.own ? ownCall("goTo", +i) !== false : imgCall("goTo", +i) !== false),
   refresh, leave: () => (R.book ? (leaveReader(), true) : false),
   get isOpen() { return !$("#reader").hidden; },
 };
