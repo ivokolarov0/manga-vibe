@@ -3,7 +3,7 @@ import logging
 import traceback
 from datetime import timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from sqlalchemy import and_, func
@@ -12,7 +12,7 @@ from app.api import filters
 from app.api.common import (READING_STATUSES, book_dict, continue_target, emit_reading_events, get_or_404, now,
                             latest_labels, series_card, series_counts, status_of, title_lang,
                             visible_books_query)
-from app.api.common import load_states, my_progress, my_state, retry_on_conflict
+from app.api.common import load_states, my_progress, retry_on_conflict
 from app.api.filters import visible_series
 from app import config, users
 from app.users import manage
@@ -22,6 +22,7 @@ from app.metadata import service as metadata, worker as metadata_worker
 from app.metadata.http import ProviderError
 from app.models import Book, Library, Link, PluginField, Progress, Series, SeriesState, SeriesTag, Tag
 from app.plugins import Context, action_result, implements, manager as plugins
+from app.plugins.query import ListQuery, schema_params
 
 router = APIRouter(prefix="/api")
 log = logging.getLogger("mangavibe.plugins")
@@ -31,52 +32,66 @@ BLANK_PNG = bytes.fromhex("89504e470d0a1a0a0000000d49484452000000010000000108060
                           "1f15c4890000000d49444154789c6360000002000154a24f5d0000000049454e44ae426082")
 
 
+JOB = "library-query"
+
+
+def _ask_query_plugin(db, what, run):
+    """run(plugin, ctx) with the plugin doing the library-query job (#204). One of the owner's own that
+    fails (not an HTTPException: that's its answer) is logged and the built-in one is asked instead,
+    so a broken replacement never leaves the library empty. None when no plugin does it."""
+    found = plugins.doing(JOB)
+    for i, p in enumerate(found):
+        try:
+            return run(p, Context(p, db))
+        except HTTPException:
+            raise
+        except Exception:
+            if i == len(found) - 1:
+                raise
+            log.error("Plugin %s failed in %s, using %s instead:\n%s", p.id, what, found[i + 1].id,
+                      traceback.format_exc())
+    return None
+
+
+@router.get("/library/schema")
+def library_schema(db=Depends(get_db)):
+    """What the library can be filtered and sorted by: the library-query plugin's query_schema(), and
+    `params`, every query parameter its filters read (what saved searches keep, with sort and order).
+    The page's filter, sort and letter sheets, its chips and saved searches are built from it."""
+    schema = _ask_query_plugin(db, "query_schema", lambda p, ctx: (p.id, p.query_schema(ctx)))
+    if schema is None:
+        return {"plugin": None, "filters": [], "sorts": [], "default_sort": "", "params": []}
+    pid, found = schema
+    return {"plugin": pid, "filters": found.get("filters") or [], "sorts": found.get("sorts") or [],
+            "default_sort": found.get("default_sort") or "", "params": schema_params(found)}
+
+
 @router.get("/series")
-def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "", library: int | None = None,
-                sort: str = "title", order: str = "", genre: list[str] = Query(default=[]),
-                exclude: list[str] = Query(default=[]),
-                pub: str = "", read: str = "", match: str = "", format: str = "", have: str = "",
-                fav: bool = False, year_min: int | None = None, year_max: int | None = None,
-                score_min: int | None = None, chapters_min: int | None = None, chapters_max: int | None = None,
-                volumes_min: int | None = None, volumes_max: int | None = None, length_unknown: bool = False,
-                letter: str = "", ids_only: bool = False, db=Depends(get_db)):
-    """Library grid. Multi-value filters are comma-separated (genre=Romance,Comedy).
+def list_series(request: Request, cursor: int = 0, limit: int = 60, library: int | None = None,
+                ids_only: bool = False, db=Depends(get_db)):
+    """Library grid. What it can be filtered and sorted by is the library-query plugin's (#204; the
+    built-in one: q, genre, exclude, read, pub, match, format, have, fav, letter, chapters_min/max,
+    volumes_min/max, length_unknown, year_min/max, score_min, sort, order; GET /api/library/schema).
     Plugins narrow it further (filters.visible_series), e.g. the libraries plugin's shelf=<id>.
     library=<id>: one library folder.
-    letter=a..z keeps titles starting with that letter, letter=# the rest (numbers, symbols, other scripts).
-    have=complete,incomplete,unknown: finished series with every volume/chapter here, or something missing.
-    chapters_min/max, volumes_min/max: the published total (metadata) in that range; series with no
-    known total are left out unless length_unknown=true.
     ids_only=true: just {"ids": [...]} of every match, in order (multi-select's "Select all")."""
     limit = max(1, min(limit, 200))
-    shown = visible_series(db, request)
-    lang = title_lang(db)
-    agg = filters.reading_aggregates()
-    total_c, done_c = func.coalesce(agg.c.total, 0), func.coalesce(agg.c.done, 0)
-    title = filters.title_expr(lang)
-
-    # Adding up every series' books is the expensive part, so it is joined only when the reading
-    # status filter or the unread sort needs it. The cards' numbers come from series_counts()
-    # for just the page's series.
-    query = db.query(Series)
-    if filters.split(read) or sort == "unread":
-        query = query.outerjoin(agg, agg.c.sid == Series.id)
-    query = query.filter(Series.missing_since.is_(None), *shown)
+    # what may be seen at all: the core's, never the filter plugin's (e.g. a locked library)
+    core = [Series.missing_since.is_(None), *visible_series(db, request)]
     if library:
-        query = query.filter(Series.library_id == library)
-    f = {"q": q, "genre": genre, "exclude": exclude, "pub": pub, "read": read, "match": match,
-         "format": format, "have": have, "fav": fav, "year_min": year_min, "year_max": year_max,
-         "score_min": score_min, "chapters_min": chapters_min, "chapters_max": chapters_max,
-         "volumes_min": volumes_min, "volumes_max": volumes_max, "length_unknown": length_unknown,
-         "letter": letter}
-    query = filters.filter_query(db, query, f, title, agg)
+        core.append(Series.library_id == library)
+    base = db.query(Series).filter(*core)
+    lq = ListQuery(db, base, title_lang(db))
 
-    sorts = {"title": title, "added": Series.added_at, "updated": Series.updated_at,
-             "read": my_state("last_read_at"), "score": Series.average_score, "year": Series.start_year,
-             "unread": total_c - done_c}
-    col = sorts.get(sort, title)
-    desc = order == "desc" or (order == "" and sort not in ("title",))
-    query = query.order_by(col.desc().nulls_last() if desc else col.asc().nulls_last(), title, Series.id)
+    def run(plugin, ctx):
+        lq.query, lq._reading = base, None  # from the start again if the one before failed
+        plugin.filter_query(ctx, lq, request.query_params)
+        return list(plugin.sort_order(ctx, lq, request.query_params) or [])
+
+    order = _ask_query_plugin(db, "filter_query", run) or []
+    # the core's conditions again, in case the plugin built a new query; the last sorts keep the order
+    # stable for paging
+    query = lq.result().filter(*core).order_by(*order, lq.title, Series.id)
     if ids_only:
         return {"ids": [sid for (sid,) in query.with_entities(Series.id)]}
     # Only ids are sorted (sorting whole rows, descriptions and all, was most of the time), and the
@@ -93,7 +108,7 @@ def list_series(request: Request, cursor: int = 0, limit: int = 60, q: str = "",
     latest_of = latest_labels(db, ids)  # for the list view
     items = []
     for s, counts in page:
-        card = series_card(s, counts, lang)
+        card = series_card(s, counts, lq.lang)
         card["incomplete"] = have_of.get(s.id, {}).get("state") == "incomplete"
         card["latest"] = latest_of.get(s.id)
         card["updated_at"] = _utc_seconds(s.updated_at)

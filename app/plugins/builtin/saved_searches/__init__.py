@@ -18,15 +18,14 @@ from pydantic import BaseModel, Field
 from app import users
 from app.db import get_setting, set_setting
 from app.plugins import Context, McpTool, Plugin
+from app.plugins.query import search_params
 from app.plugins.web import plugin_ctx
 
 HERE = Path(__file__).parent
 KEY = "saved_searches"
 MAX = 200
-# what a saved search keeps: the library page's filters and sort, not the page number
-PARAMS = {"q", "genre", "exclude", "pub", "read", "match", "format", "have", "fav", "letter",
-          "year_min", "year_max", "score_min", "chapters_min", "chapters_max", "volumes_min", "volumes_max",
-          "length_unknown", "sort", "order"}
+# never kept: where the list was, not what it shows
+NOT_KEPT = {"page", "cursor", "limit"}
 
 router = APIRouter(prefix="/searches")
 
@@ -40,8 +39,12 @@ def _all(db):
     return list(get_setting(db, _key(), []) or [])
 
 
-def _clean(query: str) -> str:
-    return urlencode([(k, v) for k, v in parse_qsl(query.lstrip("?")) if k in PARAMS and v])
+def _clean(db, query: str) -> str:
+    """What a saved search keeps: the library's filters and sort, the parameters the library-query
+    plugin names (#204), so a replacement's own filters are kept too. Not the page."""
+    keep = search_params(db)
+    return urlencode([(k, v) for k, v in parse_qsl(query.lstrip("?"))
+                      if v and (k in keep if keep is not None else k not in NOT_KEPT)])
 
 
 @router.get("")
@@ -57,7 +60,7 @@ class SavedBody(BaseModel):
 @router.post("")
 def add_saved(body: SavedBody, ctx: Context = Depends(plugin_ctx)):
     """Save a search. The same name again replaces that one's filters."""
-    name, query = body.name.strip(), _clean(body.query)
+    name, query = body.name.strip(), _clean(ctx.db, body.query)
     if not name:
         raise HTTPException(400, "Give the search a name")
     if not query:
@@ -100,6 +103,8 @@ class SavedSearches(Plugin):
     permissions = ["Adds the Saved and Save search buttons to the library page",
                    "Keeps its searches in MangaVibe's database; connects to nothing"]
     router = router
+    # it keeps the library's filters, which are that job's (#204): without a plugin doing it, it doesn't run
+    requires = {"library-query": 1}
     # for assistants (the Remote control plugin); "show" is a screen command in saved_searches.js
     mcp_tools = [McpTool("list", "Your saved searches: each one's name, its filters as words, and its query")]
 

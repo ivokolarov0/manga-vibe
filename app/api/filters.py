@@ -1,25 +1,12 @@
-"""What decides which series a list shows: the library filters (search, tags, status...), and what
-plugins allow (e.g. the libraries plugin: one library, never a locked one)."""
-from sqlalchemy import String, and_, case, cast, exists, func, or_, select
+"""What decides which series a list shows: what plugins allow (e.g. the libraries plugin: one library,
+never a locked one), and the SQL pieces the library filters use. The filters themselves are the
+`library-query` job's (issue #204): app/plugins/builtin/library_query/, reached through
+app/plugins/query.py."""
+from sqlalchemy import and_, case, func, or_, select
 
 from app.api.common import TITLE_FIELDS, collection_of, my_progress_join, my_state, numberings
-from app.models import Book, Progress, Series, SeriesTag, Tag
+from app.models import Book, Progress, Series
 from app.plugins import manager as plugins
-
-FORMATS = {  # filter value -> SQL condition (AniList format + country of origin)
-    "manga": lambda: and_(or_(Series.format.is_(None), Series.format == "MANGA"),
-                          or_(Series.country_of_origin.is_(None), Series.country_of_origin == "JP")),
-    "manhwa": lambda: Series.country_of_origin == "KR",
-    "manhua": lambda: Series.country_of_origin.in_(["CN", "TW", "HK"]),
-    "one_shot": lambda: Series.format == "ONE_SHOT",
-    "novel": lambda: Series.format == "NOVEL",
-}
-MATCH = {"matched": ["auto", "manual"], "attention": ["failed"], "unmatched": ["unmatched", "ignored"]}
-HAVE = ("complete", "incomplete", "unknown")
-
-
-def split(v):
-    return [x for x in (v or "").split(",") if x]
 
 
 def collections(db, series):
@@ -27,25 +14,6 @@ def collections(db, series):
     status), from the numbering stored on each series."""
     nums = numberings(db, series)
     return {s.id: collection_of(s, nums[s.id]) for s in series}
-
-
-def _have_filter(db, wanted):
-    """SQL condition for the Collection filter. Only finished series (and ones the owner marked
-    complete) can be complete or incomplete, so those are worked out (in Python, like the
-    chapter-gap check) and everything else is unknown."""
-    cond = (or_(Series.publication_status == "FINISHED", Series.collection_complete.is_(True)),
-            Series.missing_since.is_(None))
-    finished = db.query(Series.id, Series.numbering, Series.chapters_total, Series.volumes_total,
-                        Series.publication_status, Series.collection_complete, Series.editions,
-                        Series.edition_volumes).filter(*cond).all()
-    by_state = {k: set() for k in HAVE}
-    for sid, c in collections(db, finished).items():
-        by_state[c["state"]].add(sid)
-    known = by_state["complete"] | by_state["incomplete"]
-    conds = [Series.id.in_(by_state[k]) for k in ("complete", "incomplete") if k in wanted]
-    if "unknown" in wanted:
-        conds.append(~Series.id.in_(known))
-    return or_(*conds)
 
 
 def reading_aggregates():
@@ -77,59 +45,6 @@ def status_expr(agg):
         (and_(total_c > 0, agg.c.total_main > 0, agg.c.done_main == agg.c.total_main), "completed"),
         (or_(done_c > 0, func.coalesce(agg.c.started, 0) > 0), "reading"),
         else_="unread")
-
-
-def filter_query(db, query, f, title, agg):
-    """The query with the filters in f added: the GET /api/series filters (q, genre, exclude, pub, read,
-    match, format, have, fav, year_min, year_max, score_min, chapters_min/max, volumes_min/max,
-    length_unknown, letter). The read filter needs agg joined.
-    The chapter/volume ranges are on the published totals (metadata), not the books here; a series
-    with no known total (ongoing, no metadata) only matches them with length_unknown on."""
-    if f.get("q"):
-        like = f"%{f['q']}%"
-        query = query.filter(or_(Series.folder_name.ilike(like), Series.title_english.ilike(like),
-                                 Series.title_romaji.ilike(like), Series.title_native.ilike(like),
-                                 cast(Series.synonyms, String).ilike(like),
-                                 cast(Series.authors, String).ilike(like)))
-    for name in f.get("genre") or []:
-        query = query.filter(exists().where(SeriesTag.series_id == Series.id, SeriesTag.tag_id == Tag.id,
-                                            Tag.name == name))
-    for name in f.get("exclude") or []:
-        query = query.filter(~exists().where(SeriesTag.series_id == Series.id, SeriesTag.tag_id == Tag.id,
-                                             Tag.name == name))
-    if split(f.get("pub")):
-        query = query.filter(Series.publication_status.in_(split(f["pub"])))
-    if split(f.get("read")):
-        query = query.filter(status_expr(agg).in_(split(f["read"])))
-    if split(f.get("match")):
-        query = query.filter(Series.match_status.in_([m for k in split(f["match"]) for m in MATCH.get(k, [])]))
-    if split(f.get("format")):
-        query = query.filter(or_(*[FORMATS[x]() for x in split(f["format"]) if x in FORMATS]))
-    wanted = [h for h in split(f.get("have")) if h in HAVE]
-    if wanted:
-        query = query.filter(_have_filter(db, wanted))
-    if f.get("fav"):
-        query = query.filter(my_state("favorite").is_(True))
-    if f.get("year_min"):
-        query = query.filter(Series.start_year >= f["year_min"])
-    if f.get("year_max"):
-        query = query.filter(Series.start_year <= f["year_max"])
-    if f.get("score_min"):
-        query = query.filter(Series.average_score >= f["score_min"])
-    for unit, col in (("chapters", Series.chapters_total), ("volumes", Series.volumes_total)):
-        lo, hi = f.get(f"{unit}_min"), f.get(f"{unit}_max")
-        if lo is None and hi is None:
-            continue
-        cond = and_(col.is_not(None), *([col >= lo] if lo is not None else []),
-                    *([col <= hi] if hi is not None else []))
-        query = query.filter(or_(col.is_(None), cond) if f.get("length_unknown") else cond)
-    letter = (f.get("letter") or "").strip().lower()
-    first = func.substr(func.ltrim(title), 1, 1)
-    if len(letter) == 1 and "a" <= letter <= "z":
-        query = query.filter(first == letter)
-    elif letter == "#":
-        query = query.filter(~first.between("a", "z"))
-    return query
 
 
 def visible_series(db, request) -> list:
