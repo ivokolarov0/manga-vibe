@@ -2,9 +2,9 @@
 genre=Isekai), picked from the Saved button next to Filter / Sort / Letter. Only the query string is
 kept, the same one the page's URL has; it applies to whichever library is shown.
 
-Kept in the saved_searches setting, as before it was a plugin:
-[{"id": 1, "name": "Isekai", "query": "genre=Isekai&sort=year"}]. With accounts, each person has their
-own list (user:<id>:saved_searches, app/users.py).
+The list is the saved-searches job's, not this plugin's (Plugin API 22, #209), so a replacement finds it:
+the jobs:saved-searches setting, [{"id": 1, "name": "Isekai", "query": "genre=Isekai&sort=year"}]. With
+accounts, each person has their own list (user:<id>:jobs:saved-searches, app/users.py).
 
 The UI is saved_searches.js, the markup in *.html (one file per slot of the page) and the styles in
 saved_searches.css. Switch it off in Settings -> Plugins, or replace it with a plugin of your own.
@@ -16,13 +16,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 from app import users
-from app.db import get_setting, set_setting
 from app.plugins import Context, McpTool, Plugin
 from app.plugins.query import search_params
+from app.plugins.sdk import get_setting, set_setting
 from app.plugins.web import plugin_ctx
 
 HERE = Path(__file__).parent
-KEY = "saved_searches"
+KEY = "jobs:saved-searches"  # the job's data, its format in app/contracts (the saved-searches job)
 MAX = 200
 # never kept: where the list was, not what it shows
 NOT_KEPT = {"page", "cursor", "limit"}
@@ -31,7 +31,7 @@ router = APIRouter(prefix="/searches")
 
 
 def _key():
-    """Each user's own list (app/users.py); the owner's is the saved_searches setting, as before."""
+    """Each user's own list (app/users.py); the owner's is jobs:saved-searches itself."""
     return users.personal_key(KEY)
 
 
@@ -105,6 +105,8 @@ class SavedSearches(Plugin):
     router = router
     # it keeps the library's filters, which are that job's (#204): without a plugin doing it, it doesn't run
     requires = {"library-query": 1}
+    # the job whose data it keeps (#209): a replacement doing it reads and writes the same list
+    provides = {"saved-searches": 1}
     # for assistants (the Remote control plugin); "show" is a screen command in saved_searches.js
     mcp_tools = [McpTool("list", "Your saved searches: each one's name, its filters as words, and its query")]
 

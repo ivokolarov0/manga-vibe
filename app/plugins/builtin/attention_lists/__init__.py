@@ -13,11 +13,10 @@ import hashlib
 
 from sqlalchemy import func
 
-from app.api.common import book_label, chapter_gaps, display_title, numberings, poster_version, title_lang
-from app.metadata.service import ID_FIELDS
-from app.models import Book, Library, Series
 from app.plugins import Plugin
-from app.scanner.archives import SUPPORTED, TEXT_BOOK, TEXT_EPUB
+from app.plugins.sdk import (BOOK_FORMATS as SUPPORTED, ID_FIELDS, TEXT_BOOK, TEXT_EPUB, Book, Library,
+                             Series, book_label, chapter_gaps, display_title, numberings, poster_version,
+                             title_lang, visible_series)
 
 
 def same_match_groups(rows):
@@ -220,7 +219,6 @@ class AttentionLists(Plugin):
     ]
 
     def attention_rows(self, ctx, key, request):
-        from app.api.filters import visible_series
         rows = Rows(ctx.db, visible_series(ctx.db, request))
         if key in ("unreadable", "unsupported"):
             return rows.files(key)
@@ -228,7 +226,6 @@ class AttentionLists(Plugin):
 
     def attention_count(self, ctx, key, request, ignored):
         """The badge's share, cheaper than the rows: only ids and keys are loaded."""
-        from app.api.filters import visible_series
         db, shown = ctx.db, visible_series(ctx.db, request)
         if key == "unreadable":
             live = _live(db, shown)

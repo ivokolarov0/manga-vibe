@@ -6,10 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func
 
 from app import users
-from app.api.common import get_or_404
-from app.db import get_db
-from app.direction import MODES
-from app.models import Library, Series, Shelf
+from app.plugins.sdk import READING_MODES as MODES, Library, Series, Shelf, get_db, get_or_404
 from app.users import manage
 
 from . import core as shelves

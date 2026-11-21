@@ -101,6 +101,13 @@ MIGRATIONS = [
     # 17: text EPUBs (light novels) are books now, read by a plugin's reader (Plugin API 14): the next
     # scan reads the ones that were listed under "Not supported" again
     lambda conn: conn.execute(text("UPDATE book SET mtime = -1 WHERE error LIKE 'Text EPUB%'")),
+    # 18: saved searches belong to the saved-searches job, not to the plugin (Plugin API 22, #209): the
+    # owner's saved_searches and each account's user:<id>:saved_searches move to ...jobs:saved-searches
+    lambda conn: conn.execute(text(
+        "UPDATE setting SET key = substr(key, 1, length(key) - length(:old)) || :new "
+        "WHERE key = :old OR (key LIKE :each AND key NOT LIKE :done)"),
+        {"old": "saved_searches", "new": "jobs:saved-searches", "each": "user:%:saved_searches",
+         "done": "%jobs:%"}),
 ]
 
 

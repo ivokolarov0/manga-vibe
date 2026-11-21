@@ -95,7 +95,7 @@ class Optimize(Plugin):
     @staticmethod
     def _writable(ctx, ids):
         """The series whose library folder can be written, and why the others can't (or "")."""
-        from app.models import Library, Series
+        from app.plugins.sdk import Library, Series
         roots = dict(ctx.db.query(Series.id, Library.root_path)
                      .join(Library, Series.library_id == Library.id).filter(Series.id.in_(ids)))
         why = {}

@@ -2,8 +2,7 @@
 fallback for titles not on AniList (or while AniList is down)."""
 import re
 
-from app.metadata import editions, http
-from app.metadata.text import clean_html, has_script
+from app.plugins.sdk import clean_html, editions, has_script, http
 from app.plugins import Candidate, Plugin
 
 API = "https://api.mangaupdates.com/v1"

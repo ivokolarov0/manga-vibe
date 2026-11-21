@@ -20,8 +20,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from app import users
-from app.db import SessionLocal, get_setting, set_setting
-from app.passwords import Throttle, hash_password
+from app.plugins.sdk import SessionLocal, Throttle, get_setting, hash_password, set_setting
 
 KEY = "accounts"
 COOKIE = "mv_session"
