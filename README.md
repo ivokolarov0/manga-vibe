@@ -17,6 +17,7 @@
 </p>
 
 <p align="center">
+  <a href="https://ivokolarov0.github.io/manga-vibe.github.io/"><b>▶ Try the demo</b></a> ·
   <a href="#-install">Install</a> ·
   <a href="#-features">Features</a> ·
   <a href="#-make-it-yours-plugins">Plugins</a> ·
@@ -35,6 +36,9 @@
 Point MangaVibe at your manga folder and read on your phone, tablet or computer. It runs anywhere
 Docker does: a NAS, a home server or your PC. Nothing is uploaded anywhere, and your files are never
 renamed or changed unless you ask.
+
+**[▶ Try the demo](https://ivokolarov0.github.io/manga-vibe.github.io/)** in your browser: the real
+interface on a made-up library. Browse, read, switch plugins; nothing is saved.
 
 > [!TIP]
 > **Built to be changed.** Most of MangaVibe is plugins: the pages, the cards, the filters, the

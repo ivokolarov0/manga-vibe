@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MangaVibe demo</title>
+<meta name="description" content="Try MangaVibe, the self-hosted manga server, in your browser: a made-up library, nothing saved.">
+<style>
+  :root { color-scheme: dark; --bg: #101216; --card: #1a1d23; --text: #e8e8ec; --muted: #9a9caa; --accent: #ff6fa8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+         background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 460px; width: 100%; background: var(--card); border-radius: 16px; padding: 32px 28px; text-align: center; }
+  h1 { margin: 0 0 6px; font-size: 1.6rem; }
+  p { color: var(--muted); margin: 8px 0; }
+  .spin { width: 36px; height: 36px; margin: 22px auto 8px; border-radius: 50%;
+          border: 3px solid #333; border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  a { color: var(--accent); }
+  .err { color: #ffb4b4; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>📖 MangaVibe</h1>
+  <p>The self-hosted manga server, running in your browser on a made-up library.</p>
+  <div id="loading"><div class="spin"></div><p>Starting the demo…</p></div>
+  <div id="failed" hidden>
+    <p class="err" id="why">This browser can't run the demo.</p>
+    <p>The demo needs service workers, which private windows and some privacy settings turn off.
+      Try a normal window, or see the screenshots in the
+      <a href="https://github.com/ivokolarov0/manga-vibe#readme">README</a>.</p>
+  </div>
+</main>
+<script>
+  /* Installs the demo's service worker (sw.js: it answers the app's requests from the recording), then
+     loads this address again, which the worker answers with the app itself. */
+  (async () => {
+    const fail = (why) => {
+      document.getElementById("loading").hidden = true;
+      document.getElementById("failed").hidden = false;
+      if (why) document.getElementById("why").textContent = why;
+    };
+    if (!("serviceWorker" in navigator)) return fail();
+    let tries = 0;
+    try { tries = +sessionStorage.getItem("mv-demo-tries") || 0; sessionStorage.setItem("mv-demo-tries", tries + 1); } catch {}
+    if (tries > 2) return fail("The demo didn't start. Reload the page to try again.");
+    try {
+      await navigator.serviceWorker.register("sw.js", { scope: "./" });
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller) {
+        await new Promise((done) => {
+          navigator.serviceWorker.addEventListener("controllerchange", done, { once: true });
+          setTimeout(done, 3000);
+        });
+      }
+      location.replace(location.pathname + location.hash);
+    } catch (e) {
+      fail(`The demo couldn't start: ${e.message}`);
+    }
+  })();
+</script>
+</body>
+</html>

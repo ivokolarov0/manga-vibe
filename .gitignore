@@ -8,3 +8,6 @@ docker-data/
 
 # exported Docker images (docker save) for the NAS: big, not source
 *.tar
+
+# the online demo, built by demo/build.py (published from its own repo)
+demo/site/

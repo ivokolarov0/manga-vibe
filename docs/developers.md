@@ -120,3 +120,32 @@ itself; what needs care when adding a feature:
   manga-vibe-mcp's `tools.py`, or in a plugin `mcp_tools` / `MangaVibe.screenCommand()` (docs/PLUGINS.md,
   Plugin API 13).
 - **The reader**: new buttons go into `MangaVibe.reader` (reader.js `state()` and friends) as well.
+
+## The online demo
+
+[The demo](https://ivokolarov0.github.io/manga-vibe.github.io/) is static files on GitHub Pages, with no
+server behind it, made by the app itself so it never has to be kept in step by hand:
+
+```mermaid
+flowchart LR
+    lib["demo/library.py<br/>draws a made-up library"] --> app["the real app<br/>(TestClient, no network)"]
+    app --> rec["demo/build.py records the page,<br/>static files and GET answers"]
+    rec --> site[("site/rec/")]
+    site --> sw["demo/sw.js in the visitor's browser<br/>answers the app from the recording"]
+```
+
+| File | What it does |
+|---|---|
+| `demo/library.py` | The series, covers and pages, drawn with Pillow (nobody's manga), and their details. |
+| `demo/build.py` | Runs the app on that library, sets it up through its own API (details, posters, progress), and records every GET the page makes into `site/rec/` (`manifest.json`). The library's filters and sorts are recorded as ids per filter value (`list.json`); each plugin is switched once and back (`switches.json`). It stops if the builder's home folder or login name ends up in the output. |
+| `demo/sw.js` | The service worker: answers from the recording; keeps plugin switches, settings and progress in memory for the visit; refuses deleting, editing, installing and uploading with a message. |
+| `demo/index.html` | Installs the worker, then loads the app. |
+| `demo/demo.js`, `demo.css` | The *Demo* badge on the app's page. |
+
+Build and try it locally: `python demo/build.py` writes `demo/site/` (git-ignored). Serve its parent
+under a path like Pages does (the worker reads its base from its scope), e.g. copy `demo/site` to
+`srv/demo/`, run `python -m http.server -d srv` and open `http://localhost:8000/demo/`.
+
+It's published from [manga-vibe.github.io](https://github.com/ivokolarov0/manga-vibe.github.io): its
+workflow builds the latest release every 6 hours when there's a new one (or by hand, from any branch or
+tag). If a change makes the build fail (an API the build uses changed), fix `demo/build.py` with it.
