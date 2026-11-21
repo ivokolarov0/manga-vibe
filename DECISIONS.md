@@ -1105,3 +1105,20 @@ Plugin API version, and the app works after every one.
   (it replaces the built-in plugin by switching it off, then its key is free).
 - **Checked in Firefox** (Playwright): every list in the menu with the right red counts, each list's rows,
   a plugin's list in the plain template, and ignoring and restoring a row.
+
+### Built-in plugins use only the public SDK; saved searches are the job's (Plugin API 22, issue #209)
+
+- **The SDK is a module of names, `app.plugins.sdk`**, re-exporting the rows, settings, password hashing,
+  the parser's sort, the reading modes, title display and the metadata helpers from where they live. The
+  built-ins import those from it, so the app can move its insides while the names stay. Not wrappers on
+  `ctx` for everything: `get_setting(db, key)` etc. are already plain functions, and a second way to do
+  the same would only be more to keep.
+- **A test walks `app/plugins/builtin/`** (AST imports) and fails on anything outside the SDK and the
+  plugin's own package. What remains is listed with its reason and the list must stay exact, so it only
+  shrinks: the Optimize plugin rewrites library files (scanner lock, archives, cached pages), and the
+  libraries plugin's env setting and command line. Their scripts are checked for the app's page globals
+  (`api`, `toast`...): none, they already used `window.MangaVibe`.
+- **Saved searches are the `saved-searches` job's data** (shared job), in `jobs:saved-searches`, moved
+  there by migration 18 for the owner and every account, so a replacement plugin sees everyone's lists.
+  Libraries' assignments stay the libraries plugin's: libraries aren't a replaceable job yet.
+- **Deprecation rule**: a name leaves the SDK only after one minor version of warning.

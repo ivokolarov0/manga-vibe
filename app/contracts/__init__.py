@@ -79,6 +79,12 @@ for _key, _label in (("library", "Settings: Library folders"), ("display", "Sett
 register(Job("attention:list", "Needs attention lists", exclusive=False,
              description="Lists of things in the library worth a look, in Settings → Needs attention"))
 
+# Plugin API 22 (#209): saved searches. The data is the job's, not the plugin's, so a replacement finds
+# every list: setting `jobs:saved-searches` (each account's own under user:<id>:jobs:saved-searches),
+# [{"id": int, "name": str, "query": "genre=Isekai&sort=year"}]. Shared: every plugin doing it sees it.
+register(Job("saved-searches", "Saved searches", exclusive=False,
+             description="Named library filters and sort, kept in the jobs:saved-searches setting"))
+
 
 def job_label(key: str) -> str:
     job = JOBS.get(key)

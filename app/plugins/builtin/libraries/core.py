@@ -34,9 +34,8 @@ from starlette.concurrency import run_in_threadpool
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from app.db import SessionLocal, get_setting, set_setting
-from app.models import Book, Library, Link, Series, Shelf
-from app.passwords import MAX_TRIES, Throttle, TooManyTries, check_password, hash_password
+from app.plugins.sdk import (MAX_TRIES, Book, Library, Link, Series, SessionLocal, Shelf, Throttle,
+                             TooManyTries, check_password, get_setting, hash_password, set_setting)
 
 log = logging.getLogger("mangavibe")
 

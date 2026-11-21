@@ -10,7 +10,7 @@ links store them), and see docs/PLUGINS.md, "The library-query job".
 """
 from sqlalchemy import String, and_, cast, exists, func, or_
 
-from app.models import Series, SeriesTag, Tag
+from app.plugins.sdk import Series, SeriesTag, Tag
 from app.plugins import Plugin
 from app.plugins.query import flag, number, values
 

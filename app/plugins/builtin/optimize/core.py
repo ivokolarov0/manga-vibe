@@ -25,11 +25,9 @@ from pathlib import Path, PurePosixPath
 from PIL import Image, ImageChops, ImageCms, ImageOps
 
 from app import config
-from app.db import SessionLocal, get_setting, set_setting
-from app.models import Book, Series
+from app.plugins.sdk import Book, Series, SessionLocal, get_setting, natural_key, set_setting
 from app.scanner import archives, walker
 from app.scanner.deleting import _read_only_mount
-from app.scanner.parser import natural_key
 
 log = logging.getLogger("mangavibe.plugin.optimize")
 
@@ -405,7 +403,7 @@ def totals(db):
 def series_to_optimize(db):
     """Ids of series with books that may still be optimized (not done at their current file), in
     title order. Two queries, however big the library."""
-    from app.models import PluginSeriesData
+    from app.plugins.sdk import PluginSeriesData
     recs = dict(db.query(PluginSeriesData.series_id, PluginSeriesData.value)
                 .filter(PluginSeriesData.plugin == "optimize", PluginSeriesData.key == "books"))
     rows = (db.query(Book.id, Book.series_id, Book.format, Book.error, Book.missing_since, Book.file_size,

@@ -17,8 +17,8 @@ from fastapi import HTTPException
 from sqlalchemy import func
 
 from app import config
-from app.models import Library, Series, Shelf
 from app.plugins import Plugin
+from app.plugins.sdk import Library, Series, Shelf
 
 from . import api, core
 

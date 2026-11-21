@@ -936,7 +936,7 @@ class NoCover(Plugin):
 - **`attention_lists`**: `key` (a plain name; one another plugin has already is left out), `label`, `help`
   (under the title), `alert` (its rows count towards the red numbers and the badge on Settings), `view`.
 - **`attention_rows(ctx, key, request)`** gives one list's rows, of the series the request may see (use
-  `visible_series(ctx.db, request)` from `app.api.filters`, as the built-in lists do). A row is a dict;
+  `visible_series(ctx.db, request)` from `app.plugins.sdk`, as the built-in lists do). A row is a dict;
   **`key`** (`<something>:<id>`, e.g. `nocover:12`) lets the owner ignore it, and keep it the same for the
   same problem, since ignored keys are saved. `series` sorts the list.
 - **Optionally `attention_count(ctx, key, request, ignored)`**: the badge's share (rows not in `ignored`),
@@ -948,6 +948,40 @@ class NoCover(Plugin):
 
 The core keeps the rest: ignoring and "Show ignored", the counts, the frame and the `attention-note` slot.
 The owner can only ignore a row they can see (`POST /api/attention/ignore` looks it up: `{key, ignore, list}`).
+
+### The saved-searches job
+
+Plugin API 22. **Saved searches** (the Saved button on the library page), a shared job. The list is the
+job's, not the plugin's, so a replacement finds everyone's searches: the setting **`jobs:saved-searches`**
+(each account's own under `user:<id>:jobs:saved-searches`; `users.personal_key("jobs:saved-searches")`
+gives the current person's), as `[{"id": 1, "name": "Isekai", "query": "genre=Isekai&sort=year"}]`. The
+`query` is the library page's query string without the page. Read and write it with `get_setting` /
+`set_setting` from the SDK. The built-in plugin is `app/plugins/builtin/saved_searches/`.
+
+## The SDK
+
+Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only this (a test checks it,
+`tests/contracts/test_sdk.py`), so a plugin of yours can do anything a built-in one does.
+
+- **Server**: `app.plugins` (`Plugin`, `Context`/`ctx` and the classes on this page), `app.plugins.web`,
+  `app.plugins.query`, `app.users` and **`app.plugins.sdk`**, which collects the rest:
+
+  | | |
+  |---|---|
+  | rows to read | `Series`, `Book`, `Library`, `Shelf`, `Tag`, `SeriesTag`, `Link`, `PluginSeriesData` |
+  | the database | `SessionLocal()`, `get_db` (a FastAPI dependency), `get_setting(db, key)`, `set_setting(db, key, value)` |
+  | passwords | `hash_password`, `check_password`, `Throttle`, `TooManyTries`, `MAX_TRIES` |
+  | reading | `READING_MODES` (`paged`, `vertical`), `natural_key` (the parser's sort: Vol 2 before Vol 10), `BOOK_FORMATS`, `TEXT_BOOK`, `TEXT_EPUB` |
+  | titles and numbers | `display_title(series, lang)`, `title_lang(db)`, `book_label(book)`, `numberings(db, series)`, `chapter_gaps`, `poster_version(series)` |
+  | your own API | `get_or_404(db, Model, id)`, `visible_series(db, request)` (the series the person asking may see) |
+  | metadata | `http` (also `ctx.http`), `clean_html`, `has_script`, `editions`, `ID_FIELDS` |
+
+  Anything else in `app` is the app's inside and may change in any version.
+- **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
+  (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 22 now). **The deprecation rule**: something taken
+  out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
+  use instead.
 
 ## Styling: plugins and your own custom.css
 

@@ -1,9 +1,7 @@
 """AniList metadata provider (primary). GraphQL, no API key."""
 import re
 
-from app.db import get_setting
-from app.metadata import http
-from app.metadata.text import clean_html
+from app.plugins.sdk import clean_html, get_setting, http
 from app.plugins import Candidate, Plugin
 
 URL = "https://graphql.anilist.co"

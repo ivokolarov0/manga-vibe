@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from app import users
-from app.passwords import TooManyTries, check_password, hash_password
 from app.plugins import Context
+from app.plugins.sdk import TooManyTries, check_password, hash_password
 from app.plugins.web import plugin_ctx
 from app.users import manage
 
