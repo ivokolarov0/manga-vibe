@@ -1,14 +1,29 @@
-# MangaVibe
+<h1 align="center">📖 MangaVibe</h1>
 
-> [!WARNING]
-> **This app is fully vibe coded.** Every line was written by an AI assistant (Claude), guided by
-> conversation rather than written or reviewed line by line by a human developer. It has automated
-> tests and has been checked in a browser, but it has not had a professional security audit.
-> Use it at your own risk, keep it on your home network (see [Reading away from home](docs/away-from-home.md)),
-> and keep backups of anything you care about. The app changes your manga files in two ways only, both
-> when you ask it to: **Delete series** removes a series' folder, and the **Optimize** plugin (off until
-> you switch it on) replaces books with smaller versions. Mount the manga folder read-only (`:ro`) if you
-> never want either.
+<p align="center">
+  <b>Your manga, on your own server, read anywhere at home.</b><br>
+  <sub>Self-hosted · runs in Docker · built to be changed with plugins</sub>
+</p>
+
+<p align="center">
+  <a href="https://github.com/ivokolarov0/manga-vibe/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ivokolarov0/manga-vibe?label=release&color=2563eb"></a>
+  <a href="LICENSE"><img alt="License: AGPL-3.0" src="https://img.shields.io/badge/license-AGPL--3.0-2563eb"></a>
+  <a href="https://github.com/ivokolarov0/manga-vibe/actions/workflows/image.yml"><img alt="Docker image" src="https://img.shields.io/github/actions/workflow/status/ivokolarov0/manga-vibe/image.yml?label=docker%20image&logo=docker&logoColor=white"></a>
+  <a href="https://github.com/ivokolarov0/manga-vibe/actions/workflows/android.yml"><img alt="Android app" src="https://img.shields.io/github/actions/workflow/status/ivokolarov0/manga-vibe/android.yml?label=android%20app&logo=android&logoColor=white"></a>
+  <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab?logo=python&logoColor=white">
+  <a href="docs/PLUGINS.md"><img alt="Plugin API 24" src="https://img.shields.io/badge/plugin%20API-24-8b5cf6"></a>
+  <a href="docs/PLUGINS.md"><img alt="Plugins welcome" src="https://img.shields.io/badge/plugins-welcome-22c55e"></a>
+  <img alt="100% vibe coded" src="https://img.shields.io/badge/vibe%20coded-100%25-f97316">
+</p>
+
+<p align="center">
+  <a href="#-install">Install</a> ·
+  <a href="#-features">Features</a> ·
+  <a href="#-make-it-yours-plugins">Plugins</a> ·
+  <a href="#-organizing-your-manga">Organizing</a> ·
+  <a href="#-updating">Updating</a> ·
+  <a href="#-more">Docs</a>
+</p>
 
 <p align="center">
   <img src="docs/media/desktop.webp" width="74%" alt="MangaVibe on a computer: the library grid and list view, a genre filter, a series page with its books in order and the files behind them, the Needs attention lists, and the light theme">
@@ -17,30 +32,40 @@
 </p>
 <p align="center"><sub>The series and art shown are made up for the demo.</sub></p>
 
-MangaVibe is a self-hosted manga server that runs anywhere Docker does: a NAS, a home server or your
-PC. Point it at your manga folder, and read on your phone, tablet or computer. Nothing is uploaded
-anywhere, and your files are never renamed or changed unless you ask (Delete series, Optimize).
+Point MangaVibe at your manga folder and read on your phone, tablet or computer. It runs anywhere
+Docker does: a NAS, a home server or your PC. Nothing is uploaded anywhere, and your files are never
+renamed or changed unless you ask.
 
-**Built to be changed.** The main idea of MangaVibe is that you can make it your own. The app is
-a small core plus plugins, and most of what you see is a plugin: the library page, the series page,
-the cards, the top bar, the filters, the page reader, the file name parser, the metadata matcher,
-the Settings pages and more. Don't like one? Switch on a plugin that does it differently, or write
-your own (an AI assistant can do it for you) and replace just that part, without forking the app
-or waiting for an update. Plugins can also add things that aren't there at all. See
-[Make it yours](#make-it-yours-plugins).
+> [!TIP]
+> **Built to be changed.** Most of MangaVibe is plugins: the pages, the cards, the filters, the
+> reader, the file name parser and more. Don't like one? Switch on another plugin, or write your own,
+> and replace just that part. See [Make it yours](#-make-it-yours-plugins).
 
-## Install
+> [!WARNING]
+> **This app is fully vibe coded.** Every line was written by an AI assistant (Claude), guided by
+> conversation rather than written or reviewed line by line by a human developer. It has automated
+> tests and has been checked in a browser, but it has not had a professional security audit.
+> Use it at your own risk, keep it on your home network, and keep backups of anything you care about.
+>
+> <details><summary>What can change my files?</summary>
+>
+> Only two things, both when you ask: **Delete series** removes a series' folder, and the
+> **Optimize** plugin (off until you switch it on) replaces books with smaller versions. Mount the
+> manga folder read-only (`:ro`) if you never want either.
+> </details>
+
+---
+
+## 🚀 Install
 
 > [!CAUTION]
 > **Never make MangaVibe reachable from the internet.** Its login is off unless you switch on
-> Accounts, and even then it isn't built to face the internet: anyone who gets in can read, download
-> and change everything in it. To read away from home, use a VPN:
+> Accounts, and even then it isn't built to face the internet. To read away from home, use a VPN:
 > see [Reading away from home](docs/away-from-home.md).
 
 MangaVibe runs in **Docker**. You set it up once (about 10 minutes); after that it updates itself.
-Pick your system:
 
-| | |
+| Your system | How |
 |---|---|
 | 🪟 **[Windows](docs/install/windows.md)** | Docker Desktop and one command in PowerShell |
 | 🍎 **[Mac](docs/install/mac.md)** | Docker Desktop and one command in Terminal |
@@ -48,11 +73,27 @@ Pick your system:
 | 🗄️ **[Synology NAS](docs/install/synology.md)** | Container Manager, step by step with clicks |
 | 🐳 **[Other servers](docs/install/docker.md)** | Unraid, Portainer, Docker Compose, environment variables |
 
-Then read on your phone: **[Phone and Android app](docs/phone.md)**.
+📱 Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 
-## Features
+---
 
-### Your library, sorted out
+## ✨ Features
+
+| | |
+|---|---|
+| 📚 **Your library, sorted out** | Folders become series, books in the right order even with messy names, covers and details found for you |
+| 🔍 **Finding something to read** | Search, filters, saved searches and Continue reading |
+| 📱 **A reader made for phones** | Pages or vertical, swipes and taps, zoom, progress saved on every page |
+| 👁️ **Easy on the eyes** | Page brightness and colours, read aloud, screen readers |
+| 🧰 **Looking after your collection** | Needs attention lists, fixing a book's place by hand |
+| 🎨 **Your way** | Themes, an Android app, smaller books, remote control, your own CSS |
+| 🧩 **Plugins all the way down** | Add features, or replace any part of the app you don't like |
+
+Tap a section for the details.
+
+<details>
+<summary><b>📚 Your library, sorted out</b></summary>
+
 - **Each folder is a series**, and the books in it are put in order even with messy file names:
   `Vol 3`, `ch03v2`, `c10-18`, `15a`, Japanese titles and duplicates. Extras
   aren't guessed from names; mark them yourself.
@@ -73,16 +114,26 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
 - **Edit anything by hand**, upload your own poster, and your edits are kept when the details are
   refreshed.
 
-### Finding something to read
+</details>
+
+<details>
+<summary><b>🔍 Finding something to read</b></summary>
+
 - **Search** titles, alternative names and authors.
 - **Filter** by genre and tag (include or exclude), reading status, format, favorites, first
-  letter, length (e.g. under 10 volumes, at least 100 chapters), and complete or incomplete collections (finished series with volumes missing); **sort** by title, date added, last updated, last read, score, year or unread count.
-  **Save a search** (e.g. only Isekai) and pick it again from the Saved button, in any library.
+  letter, length (e.g. under 10 volumes, at least 100 chapters), and complete or incomplete
+  collections (finished series with volumes missing); **sort** by title, date added, last updated,
+  last read, score, year or unread count.
+- **Save a search** (e.g. only Isekai) and pick it again from the Saved button, in any library.
 - **Continue**: everything you're in the middle of, to pick up where you left off.
 - **Reading status** worked out from your progress (reading, completed, …), or set by hand, plus
   favorites. Mark a book read or unread, or everything before it.
 
-### A reader made for phones
+</details>
+
+<details>
+<summary><b>📱 A reader made for phones</b></summary>
+
 - **Pages or vertical** (webtoons). Pages turn like every digital reader: the next one is on the
   right (→, a tap on the right, a swipe to the left). Set per series or per library.
 - **Swipe or tap** to turn pages (or the volume buttons, in the Android app). Tap zones can be
@@ -95,21 +146,33 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
   or use the arrow keys, Page Up/Down and Space; Ctrl + wheel zooms and F goes fullscreen. Move the
   mouse to the top or bottom edge for the controls.
 
-### Easy on the eyes, and for readers who can't see the page
+</details>
+
+<details>
+<summary><b>👁️ Easy on the eyes, and for readers who can't see the page</b></summary>
+
 - **Page look:** brightness, contrast, and inverted (white lines on black) or warm colours.
 - **Read aloud:** with a plugin that has text for the page (like Manga Accessibility or Manga
   Translate), MangaVibe reads it with your device's voice. Pick the speed and voice, and let it turn
   the pages by itself to listen to a whole chapter.
 - **Screen readers** (TalkBack, NVDA, VoiceOver) get the same text.
 
-### Looking after your collection
+</details>
+
+<details>
+<summary><b>🧰 Looking after your collection</b></summary>
+
 - **Needs attention** in Settings lists what to fix: series that couldn't be matched, series
   matched to the same entry, files that can't be read (with what's inside them), duplicates side
   by side, and missing chapters.
 - **Fix a book's place by hand** (Files tab): its volume, chapter, a chapter range, or mark it as an
   extra or hidden. Only MangaVibe's database changes, never the file.
 
-### Your way
+</details>
+
+<details>
+<summary><b>🎨 Your way</b></summary>
+
 - **Dark or light theme**, card size, endless scrolling or numbered pages, and the title language.
 - **An Android app**: fullscreen, the screen kept on, volume buttons and the phone's voice. See
   [Phone and Android app](docs/phone.md).
@@ -119,25 +182,55 @@ Then read on your phone: **[Phone and Android app](docs/phone.md)**.
   settings and press any button for you, and say what is on the screen. The base for voice control.
   See [manga-vibe-mcp](https://github.com/ivokolarov0/manga-vibe-mcp).
 - **Your own styles** in `custom.css` in the data folder (created on first start, with examples).
-- **Updates itself** (see below).
+- **Updates itself** (see [Updating](#-updating)).
 
-### Make it yours: plugins
-MangaVibe is made to be customized as far as it can go, and plugins are how.
-- **Add features:** tracker sync (MyAnimeList), translation over the speech bubbles, descriptions
-  read aloud for blind readers, official chapter counts, remote control. Install them with one
-  button in **Settings → Plugins → Get plugins**.
-- **Replace parts of the app:** each part (a page, the cards, the filters, the reader, the parser…)
-  is a *job* done by a built-in plugin. A plugin of yours can do the same job; switch it on and the
-  built-in one steps aside. If yours fails, the built-in one takes over, so the app never breaks.
-- **The built-in plugins follow the same rules as yours.** They use only the public plugin API, so a
-  plugin you write can do anything they do.
-- **Write your own** in Python, with HTML, CSS and JavaScript for the page. Vibe coding one with an
-  AI assistant works well: the [plugin guide](docs/PLUGINS.md) describes every job's contract.
+</details>
 
-See [Plugins](docs/using-plugins.md) to install, swap and update them, and
-[Writing plugins](docs/PLUGINS.md) to make one.
+---
 
-## Organizing your manga
+## 🧩 Make it yours: plugins
+
+MangaVibe is made to be customized as far as it can go, and plugins are how. The app is a small
+core, and almost everything around it is a plugin you can switch, swap or write yourself:
+
+```mermaid
+flowchart TB
+    core(["⚙️ MangaVibe core<br/>scanning · database · reader host · plugin manager"])
+
+    subgraph builtin["🧱 Built-in plugins: each does a job you can replace"]
+        pages["Pages<br/>Library · Continue · Series"]
+        look["Look<br/>Cards · Top bar · Dialogs · Settings"]
+        logic["Logic<br/>Filters · Parser · Matcher · Labels"]
+        reader["Image reader"]
+    end
+
+    subgraph added["➕ Plugins that add features"]
+        sync["MyAnimeList sync"]
+        tr["Manga Translate"]
+        a11y["Manga Accessibility"]
+        mcp["Remote control"]
+    end
+
+    yours(["🧑‍💻 Your plugin"])
+
+    core --- builtin
+    core --- added
+    yours -. "does the same job,<br/>the built-in one steps aside" .-> builtin
+    yours -. "or adds something new" .-> added
+```
+
+| | What it means |
+|---|---|
+| ➕ **Add features** | Tracker sync, translation over the speech bubbles, descriptions read aloud for blind readers, official chapter counts, remote control. One button in **Settings → Plugins → Get plugins**. |
+| 🔁 **Replace parts of the app** | Each part (a page, the cards, the filters, the reader, the parser…) is a *job* done by a built-in plugin. Switch on another plugin for that job and the built-in one steps aside. If yours fails, the built-in one takes over, so the app never breaks. |
+| 🟰 **Same rules for everyone** | The built-in plugins use only the public plugin API, so a plugin you write can do anything they do. |
+| 🧑‍💻 **Write your own** | Python, with HTML, CSS and JavaScript for the page. Vibe coding one with an AI assistant works well: the [plugin guide](docs/PLUGINS.md) describes every job's contract. |
+
+👉 [Plugins](docs/using-plugins.md) to install, swap and update them · [Writing plugins](docs/PLUGINS.md) to make one
+
+---
+
+## 📁 Organizing your manga
 
 Each folder directly inside your library is one series. Files inside it can be named almost any way
 you like:
@@ -154,36 +247,43 @@ you like:
     └── Solo Leveling c001.epub
 ```
 
-## Updating
+---
 
-MangaVibe checks for a new version once a day and shows a message. Tap **Update now**, and it
-installs the new version and restarts by itself. You don't have to touch Docker. If a new version
-doesn't start 3 times in a row, MangaVibe goes back to the previous one by itself.
+## 🔄 Updating
 
-If a new version starts but has a problem, go to **Settings → Updates → Go back to an earlier
-version** and pick one. The version you left isn't offered again until a newer one is out. When a
-newer version changed the database, MangaVibe asks first: put back the copy of the database it made
-before that update (changes since then are lost), or keep the newer one.
+MangaVibe updates itself, and goes back by itself when a new version won't start:
 
-Once in a while, a version needs a new Docker image, and the message tells you so. Your library,
-progress and settings are kept. The steps are at the end of each install guide:
-[Windows](docs/install/windows.md#when-a-version-needs-a-new-image) ·
-[Mac](docs/install/mac.md#when-a-version-needs-a-new-image) ·
-[Linux](docs/install/linux.md#when-a-version-needs-a-new-image) ·
-[Synology](docs/install/synology.md#when-a-version-needs-a-new-image) ·
-[Docker Compose and others](docs/install/docker.md#when-a-version-needs-a-new-image)
+```mermaid
+flowchart LR
+    check["🔔 Daily check<br/>finds a new version"] --> tap["Tap<br/>Update now"]
+    tap --> restart["Installs it<br/>and restarts"]
+    restart --> ok{"Starts?"}
+    ok -- yes --> done(["✅ Up to date"])
+    ok -- "no, 3 times<br/>in a row" --> back(["↩️ Back to the<br/>previous version"])
+```
 
-## More
+| If… | Then |
+|---|---|
+| A new version is out | A message shows once a day. Tap **Update now**; you don't have to touch Docker. |
+| It starts but has a problem | **Settings → Updates → Go back to an earlier version** and pick one. The version you left isn't offered again until a newer one is out. |
+| The newer version changed the database | MangaVibe asks first: put back the copy of the database it made before that update (changes since then are lost), or keep the newer one. |
+| A version needs a new Docker image | The message tells you so. Your library, progress and settings are kept. Steps: [Windows](docs/install/windows.md#when-a-version-needs-a-new-image) · [Mac](docs/install/mac.md#when-a-version-needs-a-new-image) · [Linux](docs/install/linux.md#when-a-version-needs-a-new-image) · [Synology](docs/install/synology.md#when-a-version-needs-a-new-image) · [Docker Compose and others](docs/install/docker.md#when-a-version-needs-a-new-image) |
 
-- **[Reading away from home](docs/away-from-home.md)**: why not to open a port, and how to use a VPN instead
-- **[Plugins](docs/using-plugins.md)**: the available plugins, how to install, update and remove them,
-  and how to replace a part of the app with another plugin
-- **[Troubleshooting](docs/troubleshooting.md)**: logs, permissions, more library folders
-- **[Q&A](docs/qa.md)**: why it's built the way it is, and the requests that are declined
-- **[For developers](docs/developers.md)**: running it from source, tests, releases, the code layout,
-  and [writing a plugin](docs/PLUGINS.md)
+---
 
-## Legal
+## 📚 More
+
+| | |
+|---|---|
+| 🌍 **[Reading away from home](docs/away-from-home.md)** | Why not to open a port, and how to use a VPN instead |
+| 🧩 **[Plugins](docs/using-plugins.md)** | The available plugins, installing, updating and removing them, and replacing a part of the app |
+| 🛠️ **[Troubleshooting](docs/troubleshooting.md)** | Logs, permissions, more library folders |
+| ❓ **[Q&A](docs/qa.md)** | Why it's built the way it is, and the requests that are declined |
+| 👩‍💻 **[For developers](docs/developers.md)** | Running it from source, tests, releases, the code layout, and [writing a plugin](docs/PLUGINS.md) |
+
+---
+
+## ⚖️ Legal
 
 MangaVibe is a reader for manga **you own**, on your own server. It doesn't include, download or
 share any manga: it only shows the files you put in your library, to you. Covers and details come

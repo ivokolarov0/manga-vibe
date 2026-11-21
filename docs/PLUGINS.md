@@ -1,9 +1,47 @@
-# Writing MangaVibe plugins
+<h1 align="center">🧑‍💻 Writing MangaVibe plugins</h1>
+
+<p align="center">
+  <a href="../README.md">← README</a> ·
+  <a href="using-plugins.md">Using plugins</a> ·
+  <a href="#minimal-plugin">Minimal plugin</a> ·
+  <a href="#what-a-plugin-can-do">What a plugin can do</a> ·
+  <a href="#jobs-replacing-a-part-of-the-app">Jobs</a> ·
+  <a href="#the-sdk">The SDK</a>
+</p>
+
+<details>
+<summary><b>📑 Contents</b></summary>
+
+| Start here | Add to the app | Replace a part |
+|---|---|---|
+| [Minimal plugin](#minimal-plugin) | [Drawing on pages](#drawing-on-pages) | [Jobs](#jobs-replacing-a-part-of-the-app) |
+| [What a plugin can do](#what-a-plugin-can-do) | [Dropdowns](#dropdowns) | [Library filters](#the-library-query-job) |
+| [Categories](#categories) | [Your own API and UI](#your-own-api-and-ui) | [Replacing a view](#replacing-a-view) |
+| [The `ctx` object](#the-ctx-object) | [Assistants and voice control](#assistants-and-voice-control) | [Needs attention lists](#the-attentionlist-job) |
+| [Reading events](#reading-events) | [A reader of its own](#a-reader-of-its-own) | [Saved searches](#the-saved-searches-job) |
+| [Updates](#updates) | [Styling](#styling-plugins-and-your-own-customcss) | [Parser, matcher, labels](#server-jobs-the-parser-the-matcher-and-book-labels) |
+| [Publish in a source](#publish-your-plugins-in-a-source) | [Example](#example) | [Image reader](#the-readerimages-job) |
+| [The SDK](#the-sdk) | | |
+
+</details>
 
 **MangaVibe is built so that people can change it with plugins, as far as that can go.** The app is a
 small core (scanning, the database, the reader host, the plugin manager) and plugins that together
 make the app: the pages, the cards, the top bar, the dialogs, Settings' sections, the filters, the
 image reader, the file name parser, the metadata matcher, book labels, even accounts and libraries.
+
+```mermaid
+flowchart TB
+    core(["⚙️ Core: scanning · database · reader host · plugin manager"])
+    core --> jobs["📋 Jobs (app/contracts/)<br/>each with a contract"]
+    jobs --> builtin["🧱 Built-in plugin<br/>does the job by default"]
+    jobs --> yours["🧑‍💻 Your plugin<br/>provides = {job: 1}"]
+    core --> extra["➕ Plugins that add things<br/>hooks · fields · overlays · API · UI"]
+    builtin -. "uses only" .-> sdk[["🧰 The SDK<br/>app.plugins.sdk · window.MangaVibe"]]
+    yours -. "uses only" .-> sdk
+    extra -. "uses only" .-> sdk
+```
+
 So a plugin can do two things:
 
 - **Add** something: a field, a button, a page overlay, a tracker sync, a reader for another kind of book.
@@ -685,6 +723,21 @@ class MyFilters(Plugin):
     id = "my-filters"
     provides = {"library-query": 1}   # the job, and the version of its contract it follows
     requires = {"view:card": 1}       # jobs another switched-on plugin must do for this one to run
+```
+
+What happens to a plugin that provides a job, from install to running:
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Off: installed, the job is already done
+    Off --> Running: owner switches it on (the one doing the job now is switched off)
+    Off --> Blocked: switched on, but a job it requires isn't done, or the contract version is unknown
+    Blocked --> Running: the reason is gone
+    Running --> Off: owner switches it off (not the only one doing a required job)
+    Running --> Fallback: it raises an error
+    Fallback --> Running: next call
+    note right of Fallback: the error is logged and the built-in plugin answers that call
 ```
 
 - **Exclusive jobs** (a page, the filters) are done by one plugin at a time. Switching yours on switches
