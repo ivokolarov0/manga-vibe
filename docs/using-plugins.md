@@ -255,6 +255,8 @@ button), or take over a whole part, like the series page or the reader, starting
 plugin in `app/plugins/builtin/`. Plugins are Python, with HTML, CSS and JavaScript for what they add
 to the page, and an AI assistant can write one for you from a description.
 
-See [PLUGINS.md](PLUGINS.md) for how plugins work, the events they can react to, each part's
-contract (what a replacement must do), and the examples in [examples/plugins](../examples/plugins).
+Start with the [plugin reference](https://ivokolarov0.github.io/manga-vibe/plugins/) (also
+[here](PLUGIN-REFERENCE.md)): every part of a plugin with a minimal sample. See [PLUGINS.md](PLUGINS.md)
+for how plugins work in depth, each part's contract (what a replacement must do), and the examples in
+[examples/plugins](../examples/plugins).
 For only the looks, `custom.css` in the data folder is enough.

@@ -3,6 +3,7 @@
 <p align="center">
   <a href="../README.md">← README</a> ·
   <a href="using-plugins.md">Using plugins</a> ·
+  <a href="https://ivokolarov0.github.io/manga-vibe/plugins/"><b>Plugin reference</b></a> ·
   <a href="#minimal-plugin">Minimal plugin</a> ·
   <a href="#what-a-plugin-can-do">What a plugin can do</a> ·
   <a href="#jobs-replacing-a-part-of-the-app">Jobs</a> ·
