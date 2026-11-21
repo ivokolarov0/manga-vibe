@@ -41,6 +41,14 @@ put them in a library of their own (Settings → Libraries, then point the comic
 single series there with Edit), with its own reading mode. If you want more comic-specific features,
 there's a plugin system, so you can vibe code a plugin for them.
 
+**I don't like how X works. Can I change it?**
+Yes, that's the whole idea. MangaVibe is built to be changed with plugins: most of it (the pages,
+the cards, the filters, the reader, the file name parser, the metadata matcher…) is built-in plugins
+that another plugin can replace. Write one for the part you want different (or have an AI assistant
+write it), switch it on, and the built-in one steps aside. See
+[Replace a part of the app](using-plugins.md#replace-a-part-of-the-app) and
+[Writing plugins](PLUGINS.md). Your plugin stays yours, so you don't have to wait for me or keep a fork.
+
 **Why is there no option to rename files?**
 Renaming, moving and tagging are how you organize your own folders, and I don't want to be
 responsible if something important disappears, so do them outside the app. Making books smaller is
