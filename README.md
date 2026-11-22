@@ -242,6 +242,14 @@ flowchart TB
 > every part of a plugin, each described in a few lines with a minimal code sample. Read the text, the
 > code, or both ([also on GitHub](docs/PLUGIN-REFERENCE.md)).
 
+> [!IMPORTANT]
+> **Free, all of it.** No part of MangaVibe may need a payment, and no paid plugins are allowed: no
+> subscriptions, no paywalled features, no paid service that works through it. Money brings
+> responsibilities: I'd have to keep the app compatible with paid plugins and stop making big changes
+> so they don't break for paying customers, and I don't want that. This is a personal project, made
+> for myself to see how much can be done with AI as hands-free as possible.
+> [Why, in full](docs/qa.md#no-payments-no-paid-plugins).
+
 👉 [Plugins](docs/using-plugins.md) to install, swap and update them · [The full guide](docs/PLUGINS.md) for every detail and job contract
 
 ---
