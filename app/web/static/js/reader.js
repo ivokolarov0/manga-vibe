@@ -533,7 +533,8 @@ function pageShown(i) {
   topBarUpdate();
 }
 
-/* Moving the mouse over the pages brings the controls up (without the drawer), and a mouse that
+/* Moving the mouse over the pages brings the controls up (without the drawer) and keeps them up while
+   it moves (each movement starts the "Hide controls after" countdown again), and a mouse that
    rests there hides its pointer while they're away. Only a real movement counts: the pointer has to
    get MOUSE_MOVE_PX away from where it last rested or the controls last hid, so a mouse that jitters
    by itself on its surface doesn't keep bringing them (or the pointer) back while you read. It's the
@@ -554,7 +555,9 @@ function watchPointer() {
     if (mouse.ax === null || e.buttons) return mouseAnchor();  // first sight, or dragging
     if (Math.hypot(mouse.x - mouse.ax, mouse.y - mouse.ay) < MOUSE_MOVE_PX) return;
     mouseAnchor();
-    if (!uiShown() && performance.now() - (R.hiddenAt || 0) > MOUSE_AFTER_HIDE_MS) showUi();
+    // up: the countdown starts again, so a mouse that keeps moving keeps them up (#257)
+    if (uiShown()) restartHideTimer();
+    else if (performance.now() - (R.hiddenAt || 0) > MOUSE_AFTER_HIDE_MS) showUi();
     $("#reader").classList.remove("cursor-idle");
     clearTimeout(mouse.idle);
     mouse.idle = setTimeout(() => {
