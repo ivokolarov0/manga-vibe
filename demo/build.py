@@ -260,13 +260,21 @@ def record_switches(rec: Recorder):
             key = f"PAGE {pid}"
             rec.save(key, 200, "text/html; charset=utf-8", page.encode())
             entry["page"] = rec.manifest.pop(key)["f"]
+        replaced = [other for other in r.json().get("stopped", []) if other != pid]
+        if not was and replaced:
+            # it took over a job from them, maybe one MangaVibe needs (the sidebar's Navigation), so it
+            # can't just be switched off again: switching them back on is what replaces it
+            for other in replaced:
+                ok(c.put(f"/api/plugins/{other}", json={"enabled": True}))
+            if any(q["id"] == pid and q["enabled"] for q in ok(c.get("/api/plugins")).json()["plugins"]):
+                ok(c.put(f"/api/plugins/{pid}", json={"enabled": False}))
+            continue
         r2 = c.put(f"/api/plugins/{pid}", json={"enabled": was})
         if r2.status_code != 200:
             raise SystemExit(f"Couldn't switch {pid} back: {r2.text}")
         # switching it back on doesn't bring back what it replaced: switch those on again
-        for other in r.json().get("stopped", []):
-            if other != pid:
-                ok(c.put(f"/api/plugins/{other}", json={"enabled": True}))
+        for other in replaced:
+            ok(c.put(f"/api/plugins/{other}", json={"enabled": True}))
     if c.get("/").text != default_page:
         raise SystemExit("The plugins aren't as they were after switching each one and back")
     (rec.out / "rec" / "switches.json").write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
