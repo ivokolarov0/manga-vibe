@@ -1160,7 +1160,7 @@ MangaVibe.registerReader("my-reader", "images", {
 | `ctl.page`, `ctl.mode` | where to start (from 0) and how: `paged` or `vertical` (the series' mode) |
 | `ctl.shown(page)` | **call it whenever the page shown changes**: the numbers, saving progress and the overlays follow |
 | `ctl.end()` | forward from the last page: the host shows the end card (and the next book, the second time) |
-| `ctl.start()` | back from the first page: it says which book comes before |
+| `ctl.start()` | back from the first page: it says which book comes before; back again while that shows opens it, on its last page |
 | `ctl.tap(e)` | **call it first on a tap**: `true` when the host took it (it closed the reading options) |
 | `ctl.menu()` | a tap that doesn't turn the page: the bars and the reading options |
 | `ctl.reading()` | the page was turned: the bars go away |
