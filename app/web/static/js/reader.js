@@ -437,16 +437,34 @@ function pageShown(i) {
   ovShow();
 }
 
-/* a mouse that rests over the pages hides its pointer while the controls are away; the top edge
-   brings the controls up, like the bottom edge does (back and fullscreen are up there on a computer) */
+/* Moving the mouse over the pages brings the controls up (without the drawer), and a mouse that
+   rests there hides its pointer while they're away. Only a real movement counts: the pointer has to
+   get MOUSE_MOVE_PX away from where it last rested or the controls last hid, so a mouse that jitters
+   by itself on its surface doesn't keep bringing them (or the pointer) back while you read. It's the
+   distance from that point, so jitter that wanders back and forth never adds up. Dragging doesn't
+   count, and neither does the moment just after the bars hid (a click that turned the page). */
+const MOUSE_MOVE_PX = 8;
+const MOUSE_AFTER_HIDE_MS = 600;
+const mouse = { x: null, y: null, ax: null, ay: null, idle: null };
+
+function mouseAnchor() { mouse.ax = mouse.x; mouse.ay = mouse.y; }
+
 function watchPointer() {
-  let idle = null;
+  mouse.ax = mouse.ay = null;
   $("#r-pages").addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse") return;
-    if (e.clientY < 36 && !e.buttons && !uiShown()) showUi();
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    if (mouse.ax === null || e.buttons) return mouseAnchor();  // first sight, or dragging
+    if (Math.hypot(mouse.x - mouse.ax, mouse.y - mouse.ay) < MOUSE_MOVE_PX) return;
+    mouseAnchor();
+    if (!uiShown() && performance.now() - (R.hiddenAt || 0) > MOUSE_AFTER_HIDE_MS) showUi();
     $("#reader").classList.remove("cursor-idle");
-    clearTimeout(idle);
-    idle = setTimeout(() => $("#reader")?.classList.add("cursor-idle"), 2000);
+    clearTimeout(mouse.idle);
+    mouse.idle = setTimeout(() => {
+      $("#reader")?.classList.add("cursor-idle");
+      mouseAnchor();  // it rests here now
+    }, 2000);
   });
 }
 
@@ -1113,6 +1131,8 @@ function showUi() {
 function hideUi() {
   clearTimeout(R.hideTimer);
   $("#reader").classList.add("ui-hidden");
+  R.hiddenAt = performance.now();
+  mouseAnchor();  // the mouse has to move away from here to bring them back (watchPointer)
   // hidden bars must not keep focus, or arrow keys would still change a dropdown/slider
   if (inChrome(document.activeElement)) document.activeElement.blur();
 }
