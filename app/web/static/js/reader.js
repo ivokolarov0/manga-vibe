@@ -60,27 +60,37 @@ async function saveSettings(change) {
    hide: it goes with the other controls. always: it stays up. room: it stays up while no page picture
    reaches under the title, e.g. a fitted page on a tall phone screen; in vertical mode that is the page at
    the top of the screen. While the controls are away it lets every tap through to the page (reader.css). */
-const TOP_BAR = { hide: "With controls", always: "Always", room: "When there's room" };
+// the same words as Settings → Reader (SETTING_ROWS.reader in app.js)
+const TOP_BAR = { hide: "Hide with the controls", always: "Always visible", room: "When there's room" };
 function topBarMode() { return settings.reader_top_bar in TOP_BAR ? settings.reader_top_bar : "hide"; }
 
 let topBarFrame = 0;
 function topBarUpdate() {
   cancelAnimationFrame(topBarFrame);
   topBarFrame = requestAnimationFrame(() => {
-    const title = $("#reader .chrome.top .title");
-    if (!title || !R.book) return;
+    const bar = $("#reader .chrome.top");
+    if (!bar || !R.book) return;
     const mode = topBarMode();
-    $("#reader").classList.toggle("top-stay", mode === "always" || (mode === "room" && pageLeavesRoom(title)));
+    $("#reader").classList.toggle("top-stay", mode === "always" || (mode === "room" && pageLeavesRoom(bar)));
   });
 }
 
-/* no page on screen reaches under the title (opacity doesn't move it, so this works while it's hidden) */
-function pageLeavesRoom(title) {
-  const limit = title.getBoundingClientRect().bottom + 8;
-  // paged: only the page shown has a box. vertical: the page in the middle and the ones above it
-  for (let i = Math.max(0, R.page - 3); i <= R.page + 1; i++) {
-    const r = imgCall("pageBox", i)?.getBoundingClientRect();
-    if (r && r.height > 0 && r.top < limit && r.bottom > 0 && r.right > 0 && r.left < innerWidth) return false;
+/* no page on screen reaches under the bar, its fade included (opacity doesn't move it, so this works
+   while it's hidden). A page still loading counts as reaching it, so the bar doesn't blink up first. */
+function pageLeavesRoom(bar) {
+  const limit = bar.getBoundingClientRect().bottom;
+  const covers = (r) => r.height > 0 && r.top < limit && r.bottom > 0 && r.right > 0 && r.left < innerWidth;
+  const cur = imgCall("pageBox", R.page);
+  if (cur instanceof HTMLImageElement && !(cur.complete && cur.naturalHeight)) return false;
+  if (cur && covers(cur.getBoundingClientRect())) return false;
+  // vertical: the pages above the middle one, back to the first that ends above the screen (short
+  // pages: many can be on screen). Paged mode has no box for them.
+  for (let i = R.page - 1; i >= 0; i--) {
+    const box = imgCall("pageBox", i);
+    if (!box) break;
+    const r = box.getBoundingClientRect();
+    if (covers(r)) return false;
+    if (r.height > 0 && r.bottom <= 0) break;
   }
   return true;
 }

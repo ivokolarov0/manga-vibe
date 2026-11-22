@@ -1796,7 +1796,7 @@ const SETTING_ROWS = {
     { key: "reader_autohide", label: "Hide controls after",
       hint: "When nothing is touched. Turning the page or a tap in the middle hides them at once",
       options: [["3", "3 seconds"], ["5", "5 seconds"], ["8", "8 seconds"], ["15", "15 seconds"], ["0", "Never"]] },
-    // reader.js: TOP_BAR, and the same choice in the reading options
+    // the same choice (and words) in the reading options: TOP_BAR in reader.js
     { key: "reader_top_bar", label: "Top bar",
       hint: "The series and chapter at the top. When there's room: it stays while the page leaves space " +
         "above it, so it covers none of the picture",
