@@ -1194,3 +1194,16 @@ Plugin API version, and the app works after every one.
   page and use their own poster, so a locked library's series never shows up.
 - **On by default**: the app already talks to AniList for metadata, and the panel only shows for series
   matched there.
+
+### Reader: moving the mouse brings up the controls (issue #254)
+
+- **Any real movement over the pages shows the bars** (not the drawer), like the top and bottom edges
+  did before; they hide again after `reader_autohide`. Touch and pen are unchanged.
+- **8 px from a resting point, not per event**: the pointer has to get 8 px away from where it was
+  when the bars last hid, when it last rested (the 2 s after which the pointer hides), or after the
+  last movement that counted. A mouse that jitters on its own surface wanders back and forth around
+  that point and never gets there, so it doesn't bring the bars or the pointer back while you read.
+- **Not while dragging, and not just after the bars hid**: a held button only moves the resting
+  point, and for 600 ms after the bars hide (a click that turned the page) a movement doesn't bring
+  them back.
+- **JS, not CSS**: `:hover` can't tell how far the pointer moved, and the bars are shown by `showUi()`.
