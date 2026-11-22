@@ -294,6 +294,13 @@ def test_settings(client):
     assert s["reader_autohide"] == 5
     client.put("/api/settings", json={"reader_autohide": 0})
     assert client.get("/api/settings").json()["reader_autohide"] == 0
+    # half seconds (#253): kept as they are, not rounded
+    client.put("/api/settings", json={"reader_autohide": 0.5})
+    assert client.get("/api/settings").json()["reader_autohide"] == 0.5
+    # too short, too long, not a number: refused, the saved time stays
+    for bad in (0.01, -1, 4000, "abc", True, None):
+        assert client.put("/api/settings", json={"reader_autohide": bad}).status_code == 400
+    assert client.get("/api/settings").json()["reader_autohide"] == 0.5
     assert s["reader_top_bar"] == "hide"
     client.put("/api/settings", json={"reader_top_bar": "room"})
     assert client.get("/api/settings").json()["reader_top_bar"] == "room"
@@ -307,6 +314,13 @@ def test_settings(client):
     assert s["reader_volume_keys"] is True
     client.put("/api/settings", json={"reader_volume_keys": False})
     assert client.get("/api/settings").json()["reader_volume_keys"] is False
+
+
+def test_settings_autohide_saved_before():
+    """Values saved before the check (#253) come back as the reader uses them: never, or in range."""
+    from app.api.system import _autohide
+    assert [_autohide(v) for v in (-1, "abc", None, True, 0.01, 4000, "3", 2.5, 8)] == \
+        [0, 0, 0, 0, 0.5, 3600, 3, 2.5, 8]
 
 
 def test_example_plugin(client):

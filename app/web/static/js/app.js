@@ -1749,7 +1749,8 @@ const SETTINGS_NAV = (window.MV_SETTINGS_PAGES || [{ key: "plugins", label: "Plu
   .map((p) => [p.key, p.label, p.icon, p.plugin || "", !!p.personal]);
 /* The plain settings of a page: a label, a hint and a dropdown, saved when changed. Each is
    { key, label, hint, options: [[value, text], ...], show(st) }; show (when there) decides whether
-   it's there at all. Values are strings, like st's; save() turns them into numbers or booleans. */
+   it's there at all. choices(value) (when there) gives the options for the saved value instead.
+   Values are strings, like st's; save() turns them into numbers or booleans. */
 const ON_OFF = [["true", "On"], ["false", "Off"]];
 const SETTING_ROWS = {
   display: [
@@ -1795,7 +1796,8 @@ const SETTING_ROWS = {
       options: ["2", "3", "4", "5", "8"].map((n) => [n, n]) },
     { key: "reader_autohide", label: "Hide controls after",
       hint: "When nothing is touched. Turning the page or a tap in the middle hides them at once",
-      options: [["3", "3 seconds"], ["5", "5 seconds"], ["8", "8 seconds"], ["15", "15 seconds"], ["0", "Never"]] },
+      // also in the reading options; choices(v): the options, with a saved time that isn't one of them
+      options: autohideOptions(), choices: autohideOptions },
     // the same choice (and words) in the reading options: TOP_BAR in reader.js
     { key: "reader_top_bar", label: "Top bar",
       hint: "The series and chapter at the top. When there's room: it stays while the page leaves space " +
@@ -2024,7 +2026,7 @@ function settingsView() {
     async save(key) {
       let v = this.st[key];
       if (v === "true" || v === "false") v = v === "true";
-      else if (typeof v === "string" && /^\d+$/.test(v)) v = +v;
+      else if (typeof v === "string" && /^\d+(\.\d+)?$/.test(v)) v = +v;  // e.g. 0.5 seconds
       await api("/api/settings", { method: "PUT", body: { [key]: v } });
       if (key === "theme") setTheme(v);
       await loadSettings();

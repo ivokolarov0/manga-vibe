@@ -138,6 +138,17 @@ const GRID_COLUMNS = [4, 5, 6, 8, 10, 12];
 // Settings → Display → Card width (with Auto columns): a card's minimum width in px on wide screens
 const CARD_WIDTHS = [120, 140, 160, 180, 200, 240, 280, 320];
 
+/* "Hide controls after" (reader_autohide): seconds until the reader's bars hide; 0 is Never. Settings →
+   Reader and the reading options both offer these. A saved time that isn't one of them (an older
+   version's, say) is put in among them, so it still shows. Values are text, as a select keeps them. */
+const AUTOHIDE_STEPS = [0.5, 1, 1.5, 2, 2.5, 3, 5, 8, 15];
+function autohideOptions(current) {
+  const cur = +current, steps = [...AUTOHIDE_STEPS];
+  if (cur > 0 && !steps.includes(cur)) steps.push(cur);
+  steps.sort((a, b) => a - b);
+  return [...steps.map((n) => [String(n), `${n} second${n === 1 ? "" : "s"}`]), ["0", "Never"]];
+}
+
 /* App settings (theme, reader defaults, ...). One shared object; reload with loadSettings(). */
 const settings = {};
 async function loadSettings() {

@@ -49,11 +49,17 @@ const ICONS = {
   topBar: svg(`<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/>`),
 };
 
-/* change reader settings: applied at once (the caller redraws what they change), saved for all devices */
+/* change reader settings: applied at once (the caller redraws what they change), saved for all devices
+   (a promise: true when saved) */
 async function saveSettings(change) {
   Object.assign(settings, change);
-  try { await api("/api/settings", { method: "PUT", body: change }); }
-  catch (e) { toast(e.message, 6000, "error"); }
+  try {
+    await api("/api/settings", { method: "PUT", body: change });
+    return true;
+  } catch (e) {
+    toast(e.message, 6000, "error");
+    return false;
+  }
 }
 
 /* ---------------- the top bar while reading (Settings → Reader → Top bar) ----------------
@@ -144,6 +150,7 @@ function setDrawer(open) {
   if (open) {
     R.hovering = false;
     clearTimeout(R.hideTimer);
+    autohidePicker();  // the settings may have been loaded again since (another account)
   } else {
     if (R.panel) openPanel(null);
     if (d.contains(document.activeElement)) document.activeElement.blur();
@@ -431,6 +438,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
       <div id="r-own" style="display: contents"></div>
       <button class="d-opt d-toggle" id="r-topbar">${ICONS.topBar}<span>Top bar</span><b></b></button>
       <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
+      <div class="d-row"><label class="d-field pick"><small>Hide controls after</small><span id="r-autohide-label"></span>
+        <select id="r-autohide" aria-label="Hide controls after"></select></label></div>
       <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>Reader settings</span></a>
       <!-- last, after a line: everything a plugin adds, one row per plugin -->
       ${plugins.length ? `<div class="d-head d-plugins">Plugins</div>` : ""}
@@ -471,6 +480,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   $("#r-page").onchange = (e) => imgCall("goTo", +e.target.value);
   $("#r-pprev").onclick = () => imgCall("step", false);
   $("#r-pnext").onclick = () => imgCall("step", true);
+  autohidePicker();
+  $("#r-autohide").onchange = (e) => pickAutohide(+e.target.value);
   $("#r-mode").onclick = () => setMode(cycle(Object.fromEntries(imgModes().map((m) => [m, 1])), R.mode));
   const toPrev = () => location.replace(`#/read/${book.prev.id}`);
   const toNext = () => location.replace(`#/read/${book.next.id}?page=0`);
@@ -1221,6 +1232,42 @@ function hideUi() {
 }
 
 function inChrome(el) { return !!el?.closest?.("#reader .chrome, #reader .drawer, #reader .d-panel"); }
+
+/* the reading options' "Hide controls after": the same choices as Settings → Reader. The options are
+   only written again when they change (a saved time not in the list comes or goes), so a select being
+   stepped through with the keyboard keeps its place. */
+function autohidePicker() {
+  const sel = $("#r-autohide");
+  if (!sel) return;
+  const secs = +settings.reader_autohide, cur = secs > 0 ? String(secs) : "0", options = autohideOptions(cur);
+  const values = options.map(([v]) => v).join(" ");
+  if (sel.dataset.values !== values) {
+    sel.innerHTML = options.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+    sel.dataset.values = values;
+  }
+  sel.value = cur;
+  $("#r-autohide-label").textContent = options.find(([v]) => v === cur)[1];
+}
+
+/* a time picked there: used at once, saved a moment later (only the last one, when it's stepped through
+   with the arrow keys). A save that fails puts back the time saved before. */
+const autohideSave = { timer: null, saved: null };
+function pickAutohide(secs) {
+  if (autohideSave.timer === null) autohideSave.saved = settings.reader_autohide;
+  settings.reader_autohide = secs;
+  autohidePicker();
+  clearTimeout(autohideSave.timer);
+  autohideSave.timer = setTimeout(async () => {
+    autohideSave.timer = null;
+    const before = autohideSave.saved;
+    if (await saveSettings({ reader_autohide: secs })) return;
+    if (settings.reader_autohide === secs && autohideSave.timer === null) {  // nothing picked since
+      settings.reader_autohide = before;
+      autohidePicker();
+      restartHideTimer();
+    }
+  }, 400);
+}
 
 function restartHideTimer() {
   clearTimeout(R.hideTimer);
