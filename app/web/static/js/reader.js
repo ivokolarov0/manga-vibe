@@ -72,6 +72,7 @@ function setDrawer(open) {
   if (open) {
     R.hovering = false;
     clearTimeout(R.hideTimer);
+    autohidePicker();  // the settings may have been loaded again since (another account)
   } else {
     if (R.panel) openPanel(null);
     if (d.contains(document.activeElement)) document.activeElement.blur();
@@ -387,10 +388,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   $("#r-pprev").onclick = () => imgCall("step", false);
   $("#r-pnext").onclick = () => imgCall("step", true);
   autohidePicker();
-  $("#r-autohide").onchange = (e) => {
-    saveReaderSettings({ reader_autohide: +e.target.value });
-    autohidePicker();
-  };
+  $("#r-autohide").onchange = (e) => pickAutohide(+e.target.value);
   $("#r-mode").onclick = () => setMode(cycle(Object.fromEntries(imgModes().map((m) => [m, 1])), R.mode));
   const toPrev = () => location.replace(`#/read/${book.prev.id}`);
   const toNext = () => location.replace(`#/read/${book.next.id}?page=0`);
@@ -1122,21 +1120,52 @@ function hideUi() {
 
 function inChrome(el) { return !!el?.closest?.("#reader .chrome, #reader .drawer, #reader .d-panel"); }
 
-/* change reader settings: applied at once, saved for all devices (a promise) */
+/* change reader settings: applied at once, saved for all devices (a promise: true when saved) */
 async function saveReaderSettings(change) {
   Object.assign(settings, change);
-  try { await api("/api/settings", { method: "PUT", body: change }); }
-  catch (e) { toast(e.message, 6000, "error"); }
+  try {
+    await api("/api/settings", { method: "PUT", body: change });
+    return true;
+  } catch (e) {
+    toast(e.message, 6000, "error");
+    return false;
+  }
 }
 
-/* the reading options' "Hide controls after": the same choices as Settings → Reader */
+/* the reading options' "Hide controls after": the same choices as Settings → Reader. The options are
+   only written again when they change (a saved time not in the list comes or goes), so a select being
+   stepped through with the keyboard keeps its place. */
 function autohidePicker() {
   const sel = $("#r-autohide");
   if (!sel) return;
   const secs = +settings.reader_autohide, cur = secs > 0 ? String(secs) : "0", options = autohideOptions(cur);
-  sel.innerHTML = options.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+  const values = options.map(([v]) => v).join(" ");
+  if (sel.dataset.values !== values) {
+    sel.innerHTML = options.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+    sel.dataset.values = values;
+  }
   sel.value = cur;
   $("#r-autohide-label").textContent = options.find(([v]) => v === cur)[1];
+}
+
+/* a time picked there: used at once, saved a moment later (only the last one, when it's stepped through
+   with the arrow keys). A save that fails puts back the time saved before. */
+const autohideSave = { timer: null, saved: null };
+function pickAutohide(secs) {
+  if (autohideSave.timer === null) autohideSave.saved = settings.reader_autohide;
+  settings.reader_autohide = secs;
+  autohidePicker();
+  clearTimeout(autohideSave.timer);
+  autohideSave.timer = setTimeout(async () => {
+    autohideSave.timer = null;
+    const before = autohideSave.saved;
+    if (await saveReaderSettings({ reader_autohide: secs })) return;
+    if (settings.reader_autohide === secs && autohideSave.timer === null) {  // nothing picked since
+      settings.reader_autohide = before;
+      autohidePicker();
+      restartHideTimer();
+    }
+  }, 400);
 }
 
 function restartHideTimer() {

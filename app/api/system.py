@@ -219,10 +219,39 @@ def _page_size(v):
     return v if v in PAGE_SIZES else next((n for n in PAGE_SIZES if n >= v), PAGE_SIZES[-1])
 
 
+# "Hide controls after" (reader_autohide): 0 is never, else at least half a second (shorter would hide the
+# bars before they can be used) and at most an hour
+AUTOHIDE_MIN, AUTOHIDE_MAX = 0.5, 3600
+
+
+def _autohide_number(v):
+    """reader_autohide as a number (int when whole), or None when it isn't one."""
+    if isinstance(v, bool):
+        return None
+    try:
+        n = float(v)
+    except (TypeError, ValueError):
+        return None
+    if n != n or n in (float("inf"), float("-inf")):
+        return None
+    return int(n) if n.is_integer() else n
+
+
+def _autohide(v):
+    """A saved reader_autohide as the reader uses it: anything not a positive number is never (0), and
+    a time too short or too long is brought into range."""
+    n = _autohide_number(v)
+    if n is None or n <= 0:
+        return 0
+    return min(max(n, AUTOHIDE_MIN), AUTOHIDE_MAX)
+
+
 def personal_setting(db, key):
     """A Settings → Reader value for the current user: their own, else the shared one, else the default."""
     shared = get_setting(db, key, DEFAULT_SETTINGS[key])
     v = get_setting(db, users.personal_key(key), shared)
+    if key == "reader_autohide":
+        return _autohide(v)
     return _page_size(v) if key == "library_page_size" else v
 
 
@@ -242,6 +271,11 @@ def put_settings(body: dict, db=Depends(get_db)):
     known = {k: v for k, v in body.items() if k in DEFAULT_SETTINGS}
     if any(k not in PERSONAL_SETTINGS for k in known) and not users.current().can_manage:
         raise HTTPException(403, "Only an admin can change these settings")
+    if "reader_autohide" in known:
+        n = _autohide_number(known["reader_autohide"])
+        if n is None or not (n == 0 or AUTOHIDE_MIN <= n <= AUTOHIDE_MAX):
+            raise HTTPException(400, f"Hide controls after: 0 (never) or {AUTOHIDE_MIN} to {AUTOHIDE_MAX} seconds")
+        known["reader_autohide"] = n
     for k, v in known.items():
         set_setting(db, users.personal_key(k) if k in PERSONAL_SETTINGS else k, v)
     db.commit()
