@@ -19,6 +19,8 @@ const COUNTRY = { JP: "Manga", KR: "Manhwa", CN: "Manhua", TW: "Manhua" };
    kept in $store.app.lib (so they redraw when another plugin takes over the job). By kind:
    - choice: a group of options in the filter sheet (comma-separated values: read=unread,reading)
    - tags: the Genres and Tags groups (include/exclude; one parameter per value: genre=A&genre=B)
+   - names: free-text names, one parameter per value (author=A&author=B), each a chip "Author: A";
+     the sheets have no picker for them, links set them (the series page's author names)
    - length: published totals within a range per unit (<unit>_min, <unit>_max, length_unknown)
    - toggle "fav" and the "read" choice also make the quick buttons; letter: the Letter sheet
    - text: the search box; anything "hidden" only comes through links and assistants */
@@ -27,6 +29,7 @@ function deriveLib(s = {}) {
   const choices = filters.filter((f) => f.kind === "choice" && !f.hidden && f.params?.length);
   const tags = filters.find((f) => f.kind === "tags");
   const length = filters.find((f) => f.kind === "length");
+  const names = filters.filter((f) => f.kind === "names" && f.params?.length);
   const read = choices.find((f) => f.params[0] === "read");
   return {
     plugin: s.plugin || null,
@@ -35,9 +38,10 @@ function deriveLib(s = {}) {
     sorts: sorts.map((x) => [x.key, x.label]),
     sortInfo: Object.fromEntries(sorts.map((x) => [x.key, x])),
     defaultSort: s.default_sort || sorts[0]?.key || "",
-    repeated: tags ? tags.params : [],         // one URL parameter per value
+    repeated: [...(tags ? tags.params : []), ...names.map((f) => f.params[0])],  // one URL parameter per value
     tags: !!tags,
-    listKeys: [...choices.map((f) => f.params[0]), ...(tags ? tags.params : [])],
+    names: names.map((f) => [f.params[0], f.label]),  // [param, label] of each names filter
+    listKeys: [...choices.map((f) => f.params[0]), ...(tags ? tags.params : []), ...names.map((f) => f.params[0])],
     lengthUnits: length ? length.units || [] : [],
     lengthKeys: length ? length.params || [] : [],
     letter: filters.some((f) => f.kind === "letter"),
@@ -709,6 +713,9 @@ function libraryController() {
         for (const v of getList(p, "genre")) out.push({ k: "genre", v, label: v });
         for (const v of getList(p, "exclude")) out.push({ k: "exclude", v, label: "not " + v, ex: true });
       }
+      for (const [k, title] of lib().names) {
+        for (const v of getList(p, k)) out.push({ k, v, label: `${title}: ${v}` });
+      }
       for (const [u] of lib().lengthUnits) {
         const label = lengthLabel(p, u);
         if (label) out.push({ k: "length", v: u, label: label + (p.get("length_unknown") ? " or unknown" : "") });
@@ -981,6 +988,7 @@ function searchParts(qs) {
   if (p.get("q")) out.push(`“${p.get("q")}”`);
   for (const v of getList(p, "genre")) out.push(v);
   for (const v of getList(p, "exclude")) out.push("not " + v);
+  for (const [k] of lib().names) for (const v of getList(p, k)) out.push(v);
   for (const [k, , labels] of lib().groups) for (const v of getList(p, k)) out.push(labels[v] || v);
   for (const [u] of lib().lengthUnits) if (lengthLabel(p, u)) out.push(lengthLabel(p, u));
   if (p.get("fav")) out.push("Favorites");

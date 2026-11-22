@@ -63,6 +63,40 @@ def test_edit_fields_are_locked_against_refresh(client, mock_http):
     client.put(f"/api/series/{sid}/metadata", json={"unlock": s["locked_fields"]})
 
 
+def test_filter_by_author(client):
+    """author=<name> (issue #243): an exact name from Series.authors; several authors on a series, spaces
+    and non-ASCII names; author=A&author=B is by both. The q search is not it: "Oto" doesn't match."""
+    from app.db import SessionLocal
+    from app.models import Series
+    ids = lambda *names: sorted(s["id"] for s in client.get(
+        "/api/series", params=[("author", n) for n in names]).json()["items"])
+    first, second = sorted(s["id"] for s in client.get("/api/series").json()["items"])[:2]
+    people = {first: [{"name": "Hisamu Oto", "role": "Story"}, {"name": "尾田 栄一郎", "role": "Art"}],
+              second: [{"name": "Hisamu Oto", "role": "Story & Art"}, {"name": "Zoë Ångström", "role": None}]}
+    with SessionLocal() as db:
+        before = {sid: db.get(Series, sid).authors for sid in people}
+        for sid, authors in people.items():
+            db.get(Series, sid).authors = authors
+        db.commit()
+    try:
+        assert ids("Hisamu Oto") == [first, second]
+        assert ids("尾田 栄一郎") == [first]
+        assert ids("Zoë Ångström") == [second]
+        assert ids(" Zoë Ångström ") == [second]           # spaces around it are dropped
+        assert ids("Hisamu Oto", "Zoë Ångström") == [second]  # by both
+        assert ids("Oto") == [] and ids("hisamu oto") == []  # the whole name, as written
+        assert ids("Story") == []                          # a role is not a name
+        assert len(ids("")) == client.get("/api/series").json()["total"]  # empty: no filter
+        schema = client.get("/api/library/schema").json()
+        assert {"key": "author", "label": "Author", "kind": "names", "params": ["author"]} in schema["filters"]
+        assert "author" in schema["params"]
+    finally:
+        with SessionLocal() as db:
+            for sid, authors in before.items():
+                db.get(Series, sid).authors = authors
+            db.commit()
+
+
 @pytest.mark.parametrize("body", [
     {"start_year": 1500}, {"publication_status": "SOMETIMES"}, {"average_score": 140},
     {"links": [{"site": "x", "url": "javascript:alert(1)"}]}, {"title_english": "x" * 301},
