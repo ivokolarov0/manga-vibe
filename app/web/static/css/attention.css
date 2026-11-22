@@ -10,11 +10,11 @@
 
     & .item {
       padding: 10px 0;
-      border-bottom: 1px solid var(--border);
       font-size: 14px;
 
-      &:last-child {
-        border-bottom: 0;
+      /* a line between items, never under the last one (#245) */
+      .item ~ & {
+        border-top: 1px solid var(--border);
       }
     }
 

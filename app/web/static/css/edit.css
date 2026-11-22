@@ -74,10 +74,10 @@
 
     & section {
       padding: 12px 0;
-      border-bottom: 1px solid var(--border);
 
-      &:last-child {
-        border-bottom: 0;
+      /* a line between the shown sections, never under the last one (#245) */
+      section:not([style*="display: none"]) ~ & {
+        border-top: 1px solid var(--border);
       }
     }
 

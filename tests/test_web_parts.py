@@ -14,6 +14,15 @@ def templates():
     return sorted(web.TEMPLATES_DIR.rglob("*.html"))
 
 
+def test_no_divider_removed_from_the_last_row():
+    """Dividers go between rows (a border-top on each later row), never as a border-bottom taken off
+    the last row with :last-child: that line came back whenever something followed the last row
+    (#126, #245)."""
+    last_row_reset = re.compile(r":last-(?:child|of-type)[^{};]*\{[^}]*border-bottom")
+    for path in (web.TEMPLATES_DIR.parent / "static" / "css").glob("*.css"):
+        assert not last_row_reset.search(path.read_text(encoding="utf-8")), path.name
+
+
 def test_page_is_put_together(client):
     page = client.get("/").text
     assert page.startswith("<!doctype html>")  # nothing before it, not even the templates' notes
