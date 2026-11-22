@@ -205,7 +205,18 @@ function imageCtl(book) {
     // the reader shows page i now: the numbers, progress (saved a moment later) and the overlays follow
     shown(i) { if (mine()) pageShown(i); },
     end() { if (mine()) showEndCard(); },  // forward from the last page: the end card (again: the next book)
-    start() { if (mine() && book.prev) toast(`Start of book. Previous: ${book.prev.label}`); },
+    // back from the first page: a toast naming the previous book; back again while it shows opens that
+    // book on its last page (the page number is clamped to the book's last)
+    start() {
+      if (!mine() || !book.prev) return;
+      if (R.startToast && R.startToast === toast.timer && $("#toast").classList.contains("show")) {
+        $("#toast").classList.remove("show");
+        openBook("previous", 1e9);
+        return;
+      }
+      toast(`Start of book. Previous: ${book.prev.label}`);
+      R.startToast = toast.timer;  // another toast (or the toast going away) ends it
+    },
     // a tap on the page: true when the host took it (it closed the reading options); call it first
     tap(e) {
       if (!mine()) return true;
