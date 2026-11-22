@@ -11,7 +11,7 @@
   <a href="https://github.com/ivokolarov0/manga-vibe/actions/workflows/image.yml"><img alt="Docker image" src="https://img.shields.io/github/actions/workflow/status/ivokolarov0/manga-vibe/image.yml?label=docker%20image&logo=docker&logoColor=white"></a>
   <a href="https://github.com/ivokolarov0/manga-vibe/actions/workflows/android.yml"><img alt="Android app" src="https://img.shields.io/github/actions/workflow/status/ivokolarov0/manga-vibe/android.yml?label=android%20app&logo=android&logoColor=white"></a>
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab?logo=python&logoColor=white">
-  <a href="https://ivokolarov0.github.io/manga-vibe/plugins/"><img alt="Plugin API 25" src="https://img.shields.io/badge/plugin%20API-25-8b5cf6"></a>
+  <a href="https://ivokolarov0.github.io/manga-vibe/plugins/"><img alt="Plugin API 26" src="https://img.shields.io/badge/plugin%20API-26-8b5cf6"></a>
   <a href="https://ivokolarov0.github.io/manga-vibe/plugins/"><img alt="Plugins welcome" src="https://img.shields.io/badge/plugins-welcome-22c55e"></a>
   <img alt="100% vibe coded" src="https://img.shields.io/badge/vibe%20coded-100%25-f97316">
 </p>

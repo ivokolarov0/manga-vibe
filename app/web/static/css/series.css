@@ -531,6 +531,21 @@
       color: var(--muted);
       font-weight: 500;
     }
+
+    /* the Author row: one name per line, each a link to the library filtered to it */
+    & .authors {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      & a {
+        color: var(--accent);
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
   }
 
   .links {

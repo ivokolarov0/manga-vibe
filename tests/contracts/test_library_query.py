@@ -47,6 +47,8 @@ def sample(f, client):
         tags = client.get("/api/tags").json()
         name = tags[0]["name"] if tags else "Nothing like this"
         return {p: name if i == 0 else f"Not {name}" for i, p in enumerate(params)}  # include, exclude
+    if kind == "names":
+        return {params[0]: "Nobody Like This"}
     if kind == "letter":
         return {params[0]: "h"}
     if kind == "text":

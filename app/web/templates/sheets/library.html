@@ -57,6 +57,28 @@
         </section>
       </template>
       <!-- the groups below are the library-query plugin's filters of those kinds (app.js deriveLib) -->
+      <template x-for="[k, title] in lib.names" :key="k">
+        <section class="fgroup" :class="{ open: open[k] }">
+          <button class="fgroup-head" :aria-expanded="!!open[k]" @click="toggleGroup(k)">
+            <span x-text="title"></span>
+            <span class="fcount" x-show="selected(k)" x-text="selected(k)"></span>
+            <span class="chev" aria-hidden="true"></span>
+          </button>
+          <div x-show="open[k]">
+            <input class="ffind" x-model="nameQuery[k]" :placeholder="'Find ' + title.toLowerCase()"
+                   :aria-label="'Find ' + title.toLowerCase()">
+            <div class="wrap">
+              <template x-for="n in shownNames(k)" :key="n.name">
+                <button class="chip-btn" :class="{ on: isOn(k, n.name) }" :aria-pressed="isOn(k, n.name)"
+                        @click="toggle(k, n.name)">
+                  <span x-text="n.name"></span> <span class="n" x-show="n.count" x-text="n.count"></span></button>
+              </template>
+              <span class="muted" x-show="!shownNames(k).length"
+                    x-text="nameQuery[k] ? 'No match.' : 'These appear once series have metadata.'"></span>
+            </div>
+          </div>
+        </section>
+      </template>
       <section class="fgroup" :class="{ open: open.length }" x-show="lengthUnits.length">
         <button class="fgroup-head" :aria-expanded="!!open.length" @click="toggleGroup('length')">
           <span>Length</span>

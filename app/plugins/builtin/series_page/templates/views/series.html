@@ -145,7 +145,18 @@
                 <h2>Details</h2>
                 <div class="meta-grid">
                   <template x-for="[k, v] in details" :key="k">
-                    <div style="display:contents"><b x-text="k"></b><span class="pre" :class="{ 'muted break': k === 'Folder' }" x-text="v"></span></div>
+                    <div style="display:contents"><b x-text="k"></b>
+                      <template x-if="k === 'Author' && authors.length">
+                        <span class="authors">
+                          <template x-for="a in authors" :key="a.name">
+                            <span><a :href="authorUrl(a.name)" x-text="a.name"></a><span class="muted" x-show="a.roles" x-text="` (${a.roles})`"></span></span>
+                          </template>
+                        </span>
+                      </template>
+                      <template x-if="k !== 'Author' || !authors.length">
+                        <span class="pre" :class="{ 'muted break': k === 'Folder' }" x-text="v"></span>
+                      </template>
+                    </div>
                   </template>
                 </div>
               </section>

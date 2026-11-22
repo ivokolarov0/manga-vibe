@@ -51,7 +51,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 25
+API_VERSION = 26
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}

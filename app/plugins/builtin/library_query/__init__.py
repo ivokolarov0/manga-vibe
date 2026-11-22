@@ -1,7 +1,7 @@
 """Library filters and sorting (built-in plugin, issue #204): the `library-query` job.
 
 What the library page can be filtered and sorted by, and how: the search box, reading status,
-publication, metadata, format, collection, genres and tags, length, favorites, the first letter, and the
+publication, metadata, format, collection, genres and tags, author, length, favorites, the first letter, and the
 sorts. The page's filter, sort and letter sheets, the filter chips and saved searches are built from
 query_schema(), so a plugin that replaces this one (provides = {"library-query": 1}) changes all of them.
 
@@ -61,6 +61,9 @@ SCHEMA = {
          "units": [[u, label] for u, label, _ in LENGTH_UNITS],
          "params": [p for u, _, _ in LENGTH_UNITS for p in (f"{u}_min", f"{u}_max")] + ["length_unknown"]},
         {"key": "genres", "label": "Genres & tags", "kind": "tags", "params": ["genre", "exclude"]},
+        # the series page links each author name here (author=A&author=B: by both); the filter sheet
+        # lists the names from `source`
+        {"key": "author", "label": "Author", "kind": "names", "params": ["author"], "source": "/api/authors"},
         {"key": "fav", "label": "Favorites", "kind": "toggle", "params": ["fav"]},
         {"key": "letter", "label": "Starts with", "kind": "letter", "params": ["letter"]},
         # only through links and assistants for now: the sheets don't show them
@@ -70,6 +73,13 @@ SCHEMA = {
     "sorts": [{"key": k, "label": label, "order": order, "order_labels": labels} for k, label, order, labels in SORTS],
     "default_sort": "title",
 }
+
+
+def by_author(name):
+    """SQL condition: one of the series' authors (Series.authors, a JSON list of {name, role}) is
+    called exactly `name`."""
+    people = func.json_each(Series.authors).table_valued("value").alias("people")
+    return exists().select_from(people).where(func.json_extract(people.c.value, "$.name") == name)
 
 
 def have_filter(lq, wanted):
@@ -97,7 +107,7 @@ class LibraryQuery(Plugin):
     category = "library"
     version = "1.0"
     description = ("What the library can be filtered and sorted by: reading status, publication, genres "
-                   "and tags, length, favorites, first letter and the sorts. Built in; replace it with a "
+                   "and tags, author, length, favorites, first letter and the sorts. Built in; replace it with a "
                    "plugin that does the same job.")
     permissions = ["Decides which series the library lists and in what order; connects to nothing"]
     provides = {"library-query": 1}
@@ -106,7 +116,7 @@ class LibraryQuery(Plugin):
         return SCHEMA
 
     def filter_query(self, ctx, lq, params):
-        """The GET /api/series filters (q, genre, exclude, pub, read, match, format, have, fav, year_min,
+        """The GET /api/series filters (q, genre, exclude, author, pub, read, match, format, have, fav, year_min,
         year_max, score_min, chapters_min/max, volumes_min/max, length_unknown, letter).
         The chapter/volume ranges are on the published totals (metadata), not the books here; a series
         with no known total (ongoing, no metadata) only matches them with length_unknown on."""
@@ -124,6 +134,9 @@ class LibraryQuery(Plugin):
             if name:
                 q = q.filter(~exists().where(SeriesTag.series_id == Series.id, SeriesTag.tag_id == Tag.id,
                                              Tag.name == name))
+        for name in params.getlist("author"):
+            if name.strip():
+                q = q.filter(by_author(name.strip()))
         if values(params, "pub"):
             q = q.filter(Series.publication_status.in_(values(params, "pub")))
         if values(params, "match"):

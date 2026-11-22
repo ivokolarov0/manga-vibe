@@ -6,7 +6,7 @@ from datetime import timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, true
 
 from app.api import filters
 from app.api.common import (READING_STATUSES, book_dict, continue_target, emit_reading_events, get_or_404, now,
@@ -134,6 +134,19 @@ def list_tags(request: Request, db=Depends(get_db)):
             .filter(Series.missing_since.is_(None), *visible_series(db, request))
             .group_by(Tag.id).order_by(Tag.name).all())
     return [{"name": n, "kind": k, "count": c} for n, k, c in rows]
+
+
+@router.get("/authors")
+def list_authors(request: Request, db=Depends(get_db)):
+    """Author names with the number of series by them (the filter panel's Author group), of the series
+    the request may see. A name listed twice on a series (Author and Artist) counts it once."""
+    people = func.json_each(Series.authors).table_valued("value").alias("people")
+    name = func.trim(func.json_extract(people.c.value, "$.name"))
+    rows = (db.query(name, func.count(Series.id.distinct()))
+            .select_from(Series).join(people, true())
+            .filter(Series.missing_since.is_(None), name != "", *visible_series(db, request))
+            .group_by(name).order_by(name).all())
+    return [{"name": n, "count": c} for n, c in rows if n]
 
 
 def host_path(lib, folder):
