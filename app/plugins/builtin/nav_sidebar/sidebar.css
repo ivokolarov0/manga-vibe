@@ -1,0 +1,225 @@
+/* The sidebar (nav-sidebar plugin, templates/views/nav.html). Loaded outside the layers, so it wins over
+   layout.css's #topbar and #bottomnav. Phones and narrow windows: the usual Library / Continue bar (at the
+   bottom, or under the top bar), Settings its third entry. From 900px: a column on the left. */
+
+:root:has(#bottomnav.sidebar) {
+  --sidebar-width: 220px;
+}
+
+/* Settings' Needs attention count: on the icon in the bar at the bottom, beside the label otherwise */
+#bottomnav.sidebar #settings-link {
+  position: relative;
+}
+
+#bottomnav.sidebar #att-count {
+  position: absolute;
+  top: 3px;
+  left: calc(50% + 10px);
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+[data-nav="top"] #bottomnav.sidebar #att-count {
+  position: static;
+  margin-left: 4px;
+}
+
+/* the nav-items slot: plugins' titled groups (.nav-section, e.g. the libraries) are only in the column;
+   in the bar on phones there's no room (the libraries keep their tabs there) */
+#bottomnav.sidebar .nav-section {
+  display: none;
+}
+
+/* an entry that's a button (it does something rather than open a page): looks like the links */
+#bottomnav.sidebar button.nav-entry {
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (min-width: 900px) {
+  /* nothing sits under the top bar now (the sticky things below it start right after it) */
+  :root:has(#bottomnav.sidebar) {
+    --top-nav-height: 0px;
+  }
+
+  /* the column starts under the top bar: the bar is exactly --topbar-height tall, whatever plugins put in it */
+  #topbar.with-sidebar {
+    box-sizing: border-box;
+    height: var(--topbar-height);
+  }
+
+  /* the logo as wide as the sidebar, so the search box starts where the page does */
+  #topbar.with-sidebar .brand {
+    flex: none;
+    width: calc(var(--sidebar-width) - 4px);
+  }
+
+  #bottomnav.sidebar {
+    position: fixed;
+    top: var(--topbar-height);
+    right: auto;
+    bottom: 0;
+    left: 0;
+    z-index: 9;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 2px;
+    width: var(--sidebar-width);
+    height: auto;
+    padding: 12px 10px calc(12px + var(--safe-bottom));
+    overflow-y: auto;
+    background: color-mix(in srgb, var(--surface) 55%, var(--bg));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 0;
+    border-right: 1px solid var(--border);
+
+    & :is(a, button.nav-entry) {
+      display: flex;
+      flex: none;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      max-width: none;
+      padding: 4px 12px 4px 6px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      border: 0;
+      border-radius: 10px;
+      transition: background-color var(--fast), color var(--fast);
+
+      &.active {
+        background: var(--accent-soft);
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      @media (hover: hover) {
+        &:not(.active):hover {
+          background: var(--hover);
+          color: var(--text);
+        }
+      }
+    }
+
+    & .nav-ic {
+      width: 32px;
+      height: 32px;
+      background: transparent;
+    }
+
+    & a.active .nav-ic {
+      background: transparent;
+      color: var(--accent);
+    }
+
+    & :is(a, button.nav-entry):not(.active):hover .nav-ic {
+      background: transparent;
+    }
+
+    /* the one picked in a group (e.g. the library shown): accent icon and bold, no fill (the page's entry
+       above has that) */
+    & .nav-entry.picked {
+      color: var(--text);
+      font-weight: 600;
+
+      & .nav-ic {
+        color: var(--accent);
+      }
+    }
+
+    /* a titled group from the nav-items slot (e.g. Libraries, with its + button) */
+    & .nav-section {
+      display: flex;
+      flex: none;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    & .nav-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 26px;
+      padding: 0 4px 4px 12px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+
+      & button {
+        display: grid;
+        place-items: center;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        background: none;
+        border: 0;
+        border-radius: 8px;
+        color: var(--muted);
+        cursor: pointer;
+
+        & .ic {
+          width: 16px;
+          height: 16px;
+        }
+
+        @media (hover: hover) {
+          &:hover {
+            background: var(--hover);
+            color: var(--text);
+          }
+        }
+      }
+    }
+
+    /* Settings at the end of the column, its count on the right */
+    & #settings-link {
+      margin-top: auto;
+
+      & .nav-ic .ic {
+        transition: transform 0.5s var(--ease);
+      }
+
+      @media (hover: hover) {
+        &:hover .nav-ic .ic {
+          transform: rotate(60deg);
+        }
+      }
+    }
+
+    & #att-count {
+      position: static;
+      margin-left: auto;
+    }
+  }
+
+  /* the page beside the column, and nothing at the bottom to stay clear of */
+  :root:has(#bottomnav.sidebar) main {
+    max-width: calc(var(--page-max) + var(--sidebar-width));
+    padding-bottom: calc(24px + var(--safe-bottom));
+    padding-left: calc(var(--sidebar-width) + 20px);
+  }
+
+  :root:has(#bottomnav.sidebar) #toast {
+    bottom: calc(24px + var(--safe-bottom));
+    left: calc(50% + var(--sidebar-width) / 2);
+  }
+}

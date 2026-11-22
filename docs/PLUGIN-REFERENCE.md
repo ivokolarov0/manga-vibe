@@ -1092,6 +1092,7 @@ the same as a string. The names are listed in [PLUGINS.md](PLUGINS.md#icons).
 | `folder-row` | each folder in Settings → Library folders |
 | `attention-note` | under a Needs attention list's explanation |
 | `topbar` | the top bar, before Settings |
+| `nav-items` | the Sidebar's column, after Library and Continue (give your markup `x-data`) |
 | `sheets` | the end of the page, for sheets and dialogs |
 
 ---

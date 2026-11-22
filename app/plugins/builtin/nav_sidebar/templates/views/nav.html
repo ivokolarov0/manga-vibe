@@ -1,0 +1,33 @@
+{#- The sidebar (view:nav). The same contract as the top bar's (docs/PLUGINS.md, "The view:nav job"): keep
+    {{ settings_link() }}, here as a nav entry (nav=True), and the topbar slot; hide while reading.
+
+    The top bar is the built-in one's (#topbar, so its styles and the sticky offsets under it still apply),
+    without Settings. The column is #bottomnav with .sidebar: the usual Library / Continue bar on phones
+    (layout.css, which follows Settings → Display → Navigation bar), a column on the left from 900px wide
+    (sidebar.css). -#}
+  <!-- ============ top bar: logo, search, plugins' buttons ============ -->
+  <header id="topbar" class="with-sidebar" x-data="topbar()" x-show="$store.app.view !== 'read'">
+    <a href="#/" class="brand" aria-label="MangaVibe: Library">
+      <svg class="logo" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" width="8" height="20" rx="2"/><rect x="11" width="8" height="20" rx="2"/></svg>
+      <span>MangaVibe</span></a>
+    <label class="search-box">
+      <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="search" x-ref="search" type="search" placeholder="Search your library" autocomplete="off" aria-label="Search"
+             x-model="q" @input="search()" @keydown.escape="if (q) { q = ''; search() }">
+      <button type="button" class="search-clear" x-show="q" x-cloak aria-label="Clear the search" title="Clear"
+              @click="q = ''; search(); $refs.search.focus()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </label>
+    {{ slot("topbar") }}
+  </header>
+
+  <!-- ============ the sidebar: Library, Continue, what plugins add and, at the end, Settings ============ -->
+  <nav id="bottomnav" class="sidebar" x-data x-show="$store.app.view !== 'read'" aria-label="Main">
+    <a href="#/" :class="{ active: $store.app.view === 'library' }" :aria-current="$store.app.view === 'library' ? 'page' : null">
+      <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></span><span class="nav-label">Library</span></a>
+    <a href="#/continue" :class="{ active: $store.app.view === 'continue' }" :aria-current="$store.app.view === 'continue' ? 'page' : null">
+      <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span><span class="nav-label">Continue</span></a>
+    {#- what plugins add (e.g. the libraries): entries (<a> or <button class="nav-entry">, with .nav-ic and
+        .nav-label) and titled groups (.nav-section, shown in the column only). See sidebar.css -#}
+    {{ slot("nav-items") }}
+    {{ settings_link(nav=True) }}
+  </nav>

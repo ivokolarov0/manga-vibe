@@ -64,8 +64,8 @@ register(Job("dialog:edit", "Edit dialog", required=True,
              description="The series' Edit dialog (info and poster), drawn with editSeries()"))
 register(Job("dialog:fix-match", "Fix match dialog", required=True,
              description="Picking the right metadata for a series, drawn with fixMatch()"))
-register(Job("view:nav", "Top bar", required=True,
-             description="The top bar and the Library / Continue bar; it must keep the Settings button"))
+register(Job("view:nav", "Navigation", required=True,
+             description="The top bar and Library / Continue (a bar, or a sidebar); it must keep the Settings button"))
 # A Settings section's contract is the setting keys it changes (GET / PUT /api/settings). Not required: with
 # its plugin off, the section and its menu entry are gone, and the keys keep their values.
 for _key, _label in (("library", "Settings: Library folders"), ("display", "Settings: Display"),

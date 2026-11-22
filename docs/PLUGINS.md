@@ -470,6 +470,7 @@ Settings. Plugin API 11.
 | Slot | Where |
 |---|---|
 | `home-top` | above the library grid and Continue reading (the library tabs). Not inside a component: give your markup `x-data` |
+| `nav-items` | the Sidebar's column, after Library and Continue (the libraries). Entries: `<a>` or `<button class="nav-entry">` with a `.nav-ic` and a `.nav-label`; a titled group: `.nav-section` with a `.nav-section-head`, shown in the column only. Give your markup `x-data`. A nav may leave this slot out (the top bar does). Plugin API 25 |
 | `library-tools` | the library page's buttons, after Filter / Sort / Letter |
 | `library-filters` | the row of filters on, after Clear all (the row shows while filters are on) |
 | `select-menu` | the ⋯ menu of the library's multi-select. `selCount`, `selMenu` and `bulk(action, msg, extra, url)` are there: `bulk` POSTs `{ ids, action, ...extra }` to your `url` and wants `{ done, skipped }` back |
@@ -783,7 +784,7 @@ is the place to start when you write a replacement:
 | `view:library` | Library page | exclusive, required | `library_page/` | [view:library](#the-viewlibrary-and-viewcontinue-jobs) |
 | `view:continue` | Continue reading page | exclusive, required | `continue_page/` | [view:continue](#the-viewlibrary-and-viewcontinue-jobs) |
 | `view:series` | Series page | exclusive, required | `series_page/` | [view:series](#the-viewseries-job) |
-| `view:nav` | Top bar | exclusive, required | `nav/` | [view:nav](#the-viewnav-job) |
+| `view:nav` | Navigation | exclusive, required | `nav/` (Top bar), `nav_sidebar/` (Sidebar) | [view:nav](#the-viewnav-job) |
 | `dialog:edit`, `dialog:fix-match` | Edit and Fix match dialogs | exclusive, required | `dialogs/` | [The dialogs](#the-dialogs) |
 | `settings:library`, `:display`, `:reader`, `:metadata`, `:updates` | Settings' sections | exclusive | `settings_pages/` | [Settings' sections](#settings-sections) |
 | `attention:list` | Needs attention lists | shared | `attention_lists/` | [attention:list](#the-attentionlist-job) |
@@ -995,6 +996,19 @@ Plugin API 20. The top bar and the Library / Continue bar (built in: "Top bar",
 keep `{{ settings_link() }}`**, the Settings button with the Needs attention count, which the page gives:
 a top bar without it isn't drawn, the built-in one is, so Settings → Plugins is always one tap away. It
 keeps the `topbar` slot (e.g. the account menu) and hides while reading (`$store.app.view === 'read'`).
+
+A second built-in plugin does this job too: "Sidebar" (`app/plugins/builtin/nav_sidebar/`), off until the
+owner picks it. It keeps the top bar (`#topbar`, logo, search and the `topbar` slot) and draws Library,
+Continue and Settings as `#bottomnav.sidebar`: the usual bar on phones, a column on the left from 900px.
+Between Continue and Settings is the `nav-items` slot, where the Libraries plugin lists the libraries (the
+tabs above the grid are hidden while the column shows them). A nav of your own may draw that slot or not.
+Plugin API 25: `{{ settings_link(nav=True) }}` draws the Settings button as an entry of that bar (icon in a
+`.nav-ic`, then "Settings"), not as an icon button. The plain top bar stays the fallback (`builtin_for`
+prefers the built-in plugin that's `enabled_by_default`).
+
+Settings → Plugins shows the plugins that do one exclusive job as one row, named after the job, once there
+are two or more of them: closed, it says which one is in use and how many there are; opened, each has a
+**Use** button (and **None** when the job isn't required).
 
 #### Settings' sections
 

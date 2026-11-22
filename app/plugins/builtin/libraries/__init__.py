@@ -5,8 +5,9 @@ one list of everything, or replace it with a plugin of your own.
 
 - core.py: libraries ("shelves" in the code), passwords, the unlock cookie and LockGuard
 - api.py: its API at /api/plugins/libraries/api/...
-- libraries.js, *.html, libraries.css: the tabs, the password dialog, Settings -> Libraries, the
-  library pickers (series Edit, multi-select, Settings -> Library folders)
+- libraries.js, *.html, libraries.css: the tabs (and the same in the Sidebar plugin's column,
+  nav_libraries.html), the password dialog, Settings -> Libraries, the library pickers (series Edit,
+  multi-select, Settings -> Library folders)
 
 The data stays in the core's tables (models.Shelf, Series.shelf_id, Library.shelf_id), unused while the
 plugin is off.
@@ -49,6 +50,7 @@ class Libraries(Plugin):
     js = _read("libraries.js")
     css = _read("libraries.css")
     html = {"home-top": _read("tabs.html"),
+            "nav-items": _read("nav_libraries.html"),  # with the Sidebar plugin
             "select-menu": _read("select_menu.html"),
             "library-end": _read("move_dialog.html"),
             "series-edit": _read("edit_field.html"),

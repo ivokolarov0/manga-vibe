@@ -51,7 +51,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 24
+API_VERSION = 25
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
@@ -811,9 +811,10 @@ class PluginManager:
 
     def builtin_for(self, job):
         """The built-in plugin for this job, on or off: what the app falls back to when the plugin doing
-        it fails (the hub's rule, issue #202). None if no built-in plugin does it."""
-        return next((p for pid, p in self.plugins.items()
-                     if self.is_builtin(pid) and job in plugin_jobs(p, "provides")), None)
+        it fails (the hub's rule, issue #202). None if no built-in plugin does it. Of several (the top bar and
+        the sidebar), the one on by default: the others are alternatives the owner picks."""
+        found = [p for pid, p in self.plugins.items() if self.is_builtin(pid) and job in plugin_jobs(p, "provides")]
+        return next((p for p in found if p.enabled_by_default), found[0] if found else None)
 
     def doing(self, job):
         """Who to ask for this job, in order: the running plugin doing it, then the built-in one as the

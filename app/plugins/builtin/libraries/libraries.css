@@ -30,6 +30,21 @@
   }
 }
 
+/* the libraries in the sidebar (nav_libraries.html, the Sidebar plugin's column from 900px wide): the tabs
+   would say the same, so they're hidden there */
+@media (min-width: 900px) {
+  :root:has(#bottomnav.sidebar .nav-libraries) .shelf-tabs {
+    display: none;
+  }
+}
+
+#bottomnav .nav-libraries .lock {
+  display: inline-flex;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* the password dialog of a locked library */
 .unlock-dialog form {
   display: grid;
