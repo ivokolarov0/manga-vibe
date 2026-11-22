@@ -294,6 +294,9 @@ def test_settings(client):
     assert s["reader_autohide"] == 5
     client.put("/api/settings", json={"reader_autohide": 0})
     assert client.get("/api/settings").json()["reader_autohide"] == 0
+    assert s["reader_top_bar"] == "hide"
+    client.put("/api/settings", json={"reader_top_bar": "room"})
+    assert client.get("/api/settings").json()["reader_top_bar"] == "room"
     assert s["reader_drawer_side"] == "right"
     client.put("/api/settings", json={"reader_drawer_side": "left"})
     assert client.get("/api/settings").json()["reader_drawer_side"] == "left"
