@@ -407,6 +407,12 @@
       }
     }
 
+    /* Settings → Reader → Top bar: the title stays up while reading (reader.js sets top-stay, always or
+       while the page leaves room above it). Still pointer-events: none, so taps reach the page. */
+    &.ui-hidden.top-stay .chrome.top {
+      opacity: 1;
+    }
+
     /* the options button: a big, clearly visible target at the thumb end of the card */
     & .chrome button.icon.b-menu {
       width: 48px;

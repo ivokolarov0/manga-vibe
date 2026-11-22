@@ -46,7 +46,69 @@ const ICONS = {
   speak: svg(`<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>`),
   speed: svg(`<path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 14l4-5"/>`),
   autoTurn: svg(`<path d="M5 6l6 6-6 6M13 6l6 6-6 6"/>`),
+  topBar: svg(`<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/>`),
 };
+
+/* change reader settings: applied at once (the caller redraws what they change), saved for all devices */
+async function saveSettings(change) {
+  Object.assign(settings, change);
+  try { await api("/api/settings", { method: "PUT", body: change }); }
+  catch (e) { toast(e.message, 6000, "error"); }
+}
+
+/* ---------------- the top bar while reading (Settings → Reader → Top bar) ----------------
+   hide: it goes with the other controls. always: it stays up. room: it stays up while no page picture
+   reaches under the title, e.g. a fitted page on a tall phone screen; in vertical mode that is the page at
+   the top of the screen. While the controls are away it lets every tap through to the page (reader.css). */
+const TOP_BAR = { hide: "With controls", always: "Always", room: "When there's room" };
+function topBarMode() { return settings.reader_top_bar in TOP_BAR ? settings.reader_top_bar : "hide"; }
+
+let topBarFrame = 0;
+function topBarUpdate() {
+  cancelAnimationFrame(topBarFrame);
+  topBarFrame = requestAnimationFrame(() => {
+    const title = $("#reader .chrome.top .title");
+    if (!title || !R.book) return;
+    const mode = topBarMode();
+    $("#reader").classList.toggle("top-stay", mode === "always" || (mode === "room" && pageLeavesRoom(title)));
+  });
+}
+
+/* no page on screen reaches under the title (opacity doesn't move it, so this works while it's hidden) */
+function pageLeavesRoom(title) {
+  const limit = title.getBoundingClientRect().bottom + 8;
+  // paged: only the page shown has a box. vertical: the page in the middle and the ones above it
+  for (let i = Math.max(0, R.page - 3); i <= R.page + 1; i++) {
+    const r = imgCall("pageBox", i)?.getBoundingClientRect();
+    if (r && r.height > 0 && r.top < limit && r.bottom > 0 && r.right > 0 && r.left < innerWidth) return false;
+  }
+  return true;
+}
+
+function topBarButton() {
+  const b = $("#r-topbar");
+  if (b) b.querySelector("b").textContent = TOP_BAR[topBarMode()];
+}
+
+function setTopBar(mode) {
+  saveSettings({ reader_top_bar: mode });
+  topBarButton();
+  topBarUpdate();
+  restartHideTimer();
+}
+
+// what moves or resizes the page: scrolling (vertical), a page loading, zoom and pan (their
+// transitions end, or the finger lets go), the wheel, keys and the window
+for (const type of ["scroll", "load", "transitionend", "pointerup", "pointermove", "wheel", "keydown"]) {
+  document.addEventListener(type, (e) => {
+    if (topBarMode() !== "room" || !R.book || R.own) return;
+    if (type === "pointermove" && !e.buttons) return;
+    // scrolls, loads and transitions elsewhere (the drawer, the bars) don't move the page
+    if (["scroll", "load", "transitionend"].includes(type) && !e.target?.closest?.("#r-pages")) return;
+    topBarUpdate();
+  }, { passive: true, capture: true });
+}
+addEventListener("resize", () => { if (R.book && !R.own) topBarUpdate(); });
 
 /* the hand the reader is held in (Settings → Reader): back, fullscreen and the options button sit on
    that side, and the options drawer slides in from it */
@@ -217,11 +279,7 @@ function imageCtl(book) {
     reading() { if (mine() && uiShown() && !controlsBusy()) hideUi(); },  // reading on: the bars go away
     keepControls() { if (mine()) restartHideTimer(); },             // its option was used: the bars stay
     // change reader settings: applied at once, saved for all devices (a promise)
-    async saveSettings(change) {
-      Object.assign(settings, change);
-      try { await api("/api/settings", { method: "PUT", body: change }); }
-      catch (e) { toast(e.message, 6000, "error"); }
-    },
+    saveSettings,
     reopen() { if (mine()) openReader(book.id, R.page); },  // draw the book again (e.g. another fit)
     openBook: (which, page = null) => openBook(which, page),
   };
@@ -283,7 +341,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   history.replaceState(history.state, "", `#/read/${book.id}`);
   document.title = `${book.label} · ${book.series_title}`;
   clearTimeout(R.hideTimer);
-  el.className = `ui-hidden drawer-${drawerSide()}` + (R.drawer ? " drawer-open" : "");
+  el.className = `ui-hidden drawer-${drawerSide()}` + (R.drawer ? " drawer-open" : "") +
+    (topBarMode() === "always" ? " top-stay" : "");  // "room" is measured once the page is there
   ovReset(book);
   R.panel = null;
   const plugins = drawerPlugins(book), canSay = book.overlays.length > 0 && canSpeak();
@@ -349,6 +408,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
       <button class="d-opt" id="r-mode" hidden>${ICONS.mode}<span></span></button>
       <!-- the image reader's own options (built in: the fit, the zoom lock and Page look), once it's open -->
       <div id="r-own" style="display: contents"></div>
+      <button class="d-opt d-toggle" id="r-topbar">${ICONS.topBar}<span>Top bar</span><b></b></button>
       <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
       <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>Reader settings</span></a>
       <!-- last, after a line: everything a plugin adds, one row per plugin -->
@@ -376,6 +436,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   $("#r-exit").onclick = () => leaveReader();
   $("#r-fs").onclick = $("#r-fs2").onclick = toggleFullscreen;
   updateFullscreenButtons();
+  $("#r-topbar").onclick = () => setTopBar(cycle(TOP_BAR, topBarMode()));
+  topBarButton();
   $("#r-slider").oninput = (e) => imgCall("goTo", +e.target.value - 1);
   $("#r-progress").onclick = (e) => { if (e.target.dataset.p) imgCall("goTo", +e.target.dataset.p); };
   // desktop: the mouse on the bottom edge brings up the full controls
@@ -423,6 +485,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   ovUpdateButtons();
   saySetup();
   if (opened) imgCall("bindDrawer", el);
+  topBarUpdate();
   watchPointer();
   requestWakeLock();
   androidApp?.readerState(true, settings.reader_volume_keys !== false);  // keeps the screen on, takes the volume keys
@@ -435,6 +498,7 @@ function pageShown(i) {
   updatePageUi();
   saveProgress();
   ovShow();
+  topBarUpdate();
 }
 
 /* a mouse that rests over the pages hides its pointer while the controls are away; the top edge
@@ -576,14 +640,12 @@ function ovApplyStyle() {
 
 /* the drawer changed the look: saved as a reader setting, applied at once (the outline changes
    how much text fits, so the boxes are fitted again) */
-async function ovSetStyle(change) {
-  Object.assign(settings, change);
+function ovSetStyle(change) {
+  saveSettings(change);
   ovApplyStyle();
   ovUpdateButtons();
   $("#reader").querySelectorAll(".ov-layer").forEach(ovFit);
   restartHideTimer();
-  try { await api("/api/settings", { method: "PUT", body: change }); }
-  catch (e) { toast(e.message, 6000, "error"); }
 }
 
 /* what is being read, for plugin scripts (MangaVibe.reader.where()); null while the reader is closed */
