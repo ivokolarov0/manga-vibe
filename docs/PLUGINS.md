@@ -399,6 +399,13 @@ class Tracker(Plugin):
 
 ## Publish your plugins in a source
 
+> [!IMPORTANT]
+> **Plugins must be free.** No part of MangaVibe may need a payment, so no paid plugins: no price, no
+> subscription, no paywalled features, and no paid service (an AI model, say) that a plugin sends
+> people to. Money brings responsibilities: I'd have to keep the app compatible with paid plugins and
+> stop making big changes so they don't break for paying customers, and I don't want that. This is a
+> personal project. [Why, in full](qa.md#no-payments-no-paid-plugins).
+
 A source lists plugins so owners can install them from **Settings → Plugins → Get plugins**. It's a
 JSON file anywhere on the web; on GitHub, put it at the top of a repo as `plugins.json` and owners add
 it as `owner/name`. MangaVibe's own is [plugins.json](../plugins.json) in this repo.

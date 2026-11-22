@@ -31,6 +31,13 @@ flowchart LR
 | 🔁 **Replace a part of the app** | Most of MangaVibe is made of built-in plugins: the pages, the cards, the filters, the reader, the file name parser and more. Another plugin can do any of those parts instead. See [Replace a part of the app](#replace-a-part-of-the-app). |
 | 🟰 **Nothing locked away** | The built-in plugins use the same plugin API as everyone else's, so a plugin of yours can do anything they do. If one is missing, [write it yourself](#write-your-own), or have an AI assistant write it for you. |
 
+> [!IMPORTANT]
+> **No paid plugins.** No part of MangaVibe may need a payment, plugins included: no paid plugins,
+> subscriptions, paywalled features, or paid services (an AI model, say) that work through it. Money
+> brings responsibilities: I'd have to keep the app compatible with paid plugins and stop making big
+> changes so they don't break for paying customers, and I don't want that. This is a personal project.
+> [Why, in full](qa.md#no-payments-no-paid-plugins).
+
 ---
 
 ## Available plugins

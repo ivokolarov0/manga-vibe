@@ -73,6 +73,9 @@ who hate everything AI... this is not the right place. Go to the art section. ;)
 Docker runs it anywhere, from a NAS to your desktop, packs everything it needs and keeps it away
 from your files. Making installers for every OS sounds like a job, and I already have one of those.
 
+**Can I sell a plugin, or a paid service that works through MangaVibe?**
+No, see [No payments, no paid plugins](#no-payments-no-paid-plugins) below.
+
 **If you don't plan to accept pull requests, why make it public?**
 It makes updating easier, and if someone wants a quick and dirty solution, here you go.
 
@@ -93,5 +96,21 @@ It makes updating easier, and if someone wants a quick and dirty solution, here 
   `.apk` is the one exception, and it only shows the server running in Docker.)
 - **A public access option**: opening it to the internet, share links, or anything else that makes it
   reachable from outside your home. See [Reading away from home](away-from-home.md).
+- **Anything that needs a payment**: paid plugins, subscriptions, paywalled features, or a paid
+  service that works through MangaVibe. See [No payments, no paid plugins](#no-payments-no-paid-plugins).
 - **Support for devices other than the ones in the install guides** (Windows, Mac, Linux, Synology
   NAS and other Docker servers). For example, no running the server on a phone.
+
+## No payments, no paid plugins
+
+No part of MangaVibe may need a payment, and that includes plugins: no paid plugins, no
+subscriptions, no features behind a paywall. If you'd like to build a paid service, for example an
+AI model that does something with your pages and has to go through you, this is not the place for
+it.
+
+Why? When money comes into a project, responsibilities come with it. I'd be forced to keep the app
+compatible with those paid plugins, and couldn't make big changes anymore, because they would break
+the plugin for paying customers. I don't want to deal with that.
+
+This is a personal project I made for myself, to experiment with how much can be done with AI as
+hands-free as possible, and to make something nice for myself.
