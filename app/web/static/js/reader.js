@@ -46,7 +46,85 @@ const ICONS = {
   speak: svg(`<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>`),
   speed: svg(`<path d="M5 18a8 8 0 1 1 14 0"/><path d="M12 14l4-5"/>`),
   autoTurn: svg(`<path d="M5 6l6 6-6 6M13 6l6 6-6 6"/>`),
+  topBar: svg(`<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/>`),
 };
+
+/* change reader settings: applied at once (the caller redraws what they change), saved for all devices
+   (a promise: true when saved) */
+async function saveSettings(change) {
+  Object.assign(settings, change);
+  try {
+    await api("/api/settings", { method: "PUT", body: change });
+    return true;
+  } catch (e) {
+    toast(e.message, 6000, "error");
+    return false;
+  }
+}
+
+/* ---------------- the top bar while reading (Settings → Reader → Top bar) ----------------
+   hide: it goes with the other controls. always: it stays up. room: it stays up while no page picture
+   reaches under the title, e.g. a fitted page on a tall phone screen; in vertical mode that is the page at
+   the top of the screen. While the controls are away it lets every tap through to the page (reader.css). */
+// the same words as Settings → Reader (SETTING_ROWS.reader in app.js)
+const TOP_BAR = { hide: "Hide with the controls", always: "Always visible", room: "When there's room" };
+function topBarMode() { return settings.reader_top_bar in TOP_BAR ? settings.reader_top_bar : "hide"; }
+
+let topBarFrame = 0;
+function topBarUpdate() {
+  cancelAnimationFrame(topBarFrame);
+  topBarFrame = requestAnimationFrame(() => {
+    const bar = $("#reader .chrome.top");
+    if (!bar || !R.book) return;
+    const mode = topBarMode();
+    $("#reader").classList.toggle("top-stay", mode === "always" || (mode === "room" && pageLeavesRoom(bar)));
+  });
+}
+
+/* no page on screen reaches under the bar, its fade included (opacity doesn't move it, so this works
+   while it's hidden). A page still loading counts as reaching it, so the bar doesn't blink up first. */
+function pageLeavesRoom(bar) {
+  const limit = bar.getBoundingClientRect().bottom;
+  const covers = (r) => r.height > 0 && r.top < limit && r.bottom > 0 && r.right > 0 && r.left < innerWidth;
+  const cur = imgCall("pageBox", R.page);
+  if (cur instanceof HTMLImageElement && !(cur.complete && cur.naturalHeight)) return false;
+  if (cur && covers(cur.getBoundingClientRect())) return false;
+  // vertical: the pages above the middle one, back to the first that ends above the screen (short
+  // pages: many can be on screen). Paged mode has no box for them.
+  for (let i = R.page - 1; i >= 0; i--) {
+    const box = imgCall("pageBox", i);
+    if (!box) break;
+    const r = box.getBoundingClientRect();
+    if (covers(r)) return false;
+    if (r.height > 0 && r.bottom <= 0) break;
+  }
+  return true;
+}
+
+function topBarButton() {
+  const b = $("#r-topbar");
+  if (b) b.querySelector("b").textContent = TOP_BAR[topBarMode()];
+}
+
+function setTopBar(mode) {
+  saveSettings({ reader_top_bar: mode });
+  topBarButton();
+  topBarUpdate();
+  restartHideTimer();
+}
+
+// what moves or resizes the page: scrolling (vertical), a page loading, zoom and pan (their
+// transitions end, or the finger lets go), the wheel, keys and the window
+for (const type of ["scroll", "load", "transitionend", "pointerup", "pointermove", "wheel", "keydown"]) {
+  document.addEventListener(type, (e) => {
+    if (topBarMode() !== "room" || !R.book || R.own) return;
+    if (type === "pointermove" && !e.buttons) return;
+    // scrolls, loads and transitions elsewhere (the drawer, the bars) don't move the page
+    if (["scroll", "load", "transitionend"].includes(type) && !e.target?.closest?.("#r-pages")) return;
+    topBarUpdate();
+  }, { passive: true, capture: true });
+}
+addEventListener("resize", () => { if (R.book && !R.own) topBarUpdate(); });
 
 /* the hand the reader is held in (Settings → Reader): back, fullscreen and the options button sit on
    that side, and the options drawer slides in from it */
@@ -206,7 +284,18 @@ function imageCtl(book) {
     // the reader shows page i now: the numbers, progress (saved a moment later) and the overlays follow
     shown(i) { if (mine()) pageShown(i); },
     end() { if (mine()) showEndCard(); },  // forward from the last page: the end card (again: the next book)
-    start() { if (mine() && book.prev) toast(`Start of book. Previous: ${book.prev.label}`); },
+    // back from the first page: a toast naming the previous book; back again while it shows opens that
+    // book on its last page (the page number is clamped to the book's last)
+    start() {
+      if (!mine() || !book.prev) return;
+      if (R.startToast && R.startToast === toast.timer && $("#toast").classList.contains("show")) {
+        $("#toast").classList.remove("show");
+        openBook("previous", 1e9);
+        return;
+      }
+      toast(`Start of book. Previous: ${book.prev.label}`);
+      R.startToast = toast.timer;  // another toast (or the toast going away) ends it
+    },
     // a tap on the page: true when the host took it (it closed the reading options); call it first
     tap(e) {
       if (!mine()) return true;
@@ -218,7 +307,7 @@ function imageCtl(book) {
     reading() { if (mine() && uiShown() && !controlsBusy()) hideUi(); },  // reading on: the bars go away
     keepControls() { if (mine()) restartHideTimer(); },             // its option was used: the bars stay
     // change reader settings: applied at once, saved for all devices (a promise)
-    saveSettings: saveReaderSettings,
+    saveSettings,
     reopen() { if (mine()) openReader(book.id, R.page); },  // draw the book again (e.g. another fit)
     openBook: (which, page = null) => openBook(which, page),
   };
@@ -280,7 +369,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   history.replaceState(history.state, "", `#/read/${book.id}`);
   document.title = `${book.label} · ${book.series_title}`;
   clearTimeout(R.hideTimer);
-  el.className = `ui-hidden drawer-${drawerSide()}` + (R.drawer ? " drawer-open" : "");
+  el.className = `ui-hidden drawer-${drawerSide()}` + (R.drawer ? " drawer-open" : "") +
+    (topBarMode() === "always" ? " top-stay" : "");  // "room" is measured once the page is there
   ovReset(book);
   R.panel = null;
   const plugins = drawerPlugins(book), canSay = book.overlays.length > 0 && canSpeak();
@@ -346,6 +436,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
       <button class="d-opt" id="r-mode" hidden>${ICONS.mode}<span></span></button>
       <!-- the image reader's own options (built in: the fit, the zoom lock and Page look), once it's open -->
       <div id="r-own" style="display: contents"></div>
+      <button class="d-opt d-toggle" id="r-topbar">${ICONS.topBar}<span>Top bar</span><b></b></button>
       <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
       <div class="d-row"><label class="d-field pick"><small>Hide controls after</small><span id="r-autohide-label"></span>
         <select id="r-autohide" aria-label="Hide controls after"></select></label></div>
@@ -375,6 +466,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   $("#r-exit").onclick = () => leaveReader();
   $("#r-fs").onclick = $("#r-fs2").onclick = toggleFullscreen;
   updateFullscreenButtons();
+  $("#r-topbar").onclick = () => setTopBar(cycle(TOP_BAR, topBarMode()));
+  topBarButton();
   $("#r-slider").oninput = (e) => imgCall("goTo", +e.target.value - 1);
   $("#r-progress").onclick = (e) => { if (e.target.dataset.p) imgCall("goTo", +e.target.dataset.p); };
   // desktop: the mouse on the bottom edge brings up the full controls
@@ -424,6 +517,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   ovUpdateButtons();
   saySetup();
   if (opened) imgCall("bindDrawer", el);
+  topBarUpdate();
   watchPointer();
   requestWakeLock();
   androidApp?.readerState(true, settings.reader_volume_keys !== false);  // keeps the screen on, takes the volume keys
@@ -436,18 +530,37 @@ function pageShown(i) {
   updatePageUi();
   saveProgress();
   ovShow();
+  topBarUpdate();
 }
 
-/* a mouse that rests over the pages hides its pointer while the controls are away; the top edge
-   brings the controls up, like the bottom edge does (back and fullscreen are up there on a computer) */
+/* Moving the mouse over the pages brings the controls up (without the drawer), and a mouse that
+   rests there hides its pointer while they're away. Only a real movement counts: the pointer has to
+   get MOUSE_MOVE_PX away from where it last rested or the controls last hid, so a mouse that jitters
+   by itself on its surface doesn't keep bringing them (or the pointer) back while you read. It's the
+   distance from that point, so jitter that wanders back and forth never adds up. Dragging doesn't
+   count, and neither does the moment just after the bars hid (a click that turned the page). */
+const MOUSE_MOVE_PX = 8;
+const MOUSE_AFTER_HIDE_MS = 600;
+const mouse = { x: null, y: null, ax: null, ay: null, idle: null };
+
+function mouseAnchor() { mouse.ax = mouse.x; mouse.ay = mouse.y; }
+
 function watchPointer() {
-  let idle = null;
+  mouse.ax = mouse.ay = null;
   $("#r-pages").addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse") return;
-    if (e.clientY < 36 && !e.buttons && !uiShown()) showUi();
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    if (mouse.ax === null || e.buttons) return mouseAnchor();  // first sight, or dragging
+    if (Math.hypot(mouse.x - mouse.ax, mouse.y - mouse.ay) < MOUSE_MOVE_PX) return;
+    mouseAnchor();
+    if (!uiShown() && performance.now() - (R.hiddenAt || 0) > MOUSE_AFTER_HIDE_MS) showUi();
     $("#reader").classList.remove("cursor-idle");
-    clearTimeout(idle);
-    idle = setTimeout(() => $("#reader")?.classList.add("cursor-idle"), 2000);
+    clearTimeout(mouse.idle);
+    mouse.idle = setTimeout(() => {
+      $("#reader")?.classList.add("cursor-idle");
+      mouseAnchor();  // it rests here now
+    }, 2000);
   });
 }
 
@@ -577,14 +690,12 @@ function ovApplyStyle() {
 
 /* the drawer changed the look: saved as a reader setting, applied at once (the outline changes
    how much text fits, so the boxes are fitted again) */
-async function ovSetStyle(change) {
-  Object.assign(settings, change);
+function ovSetStyle(change) {
+  saveSettings(change);
   ovApplyStyle();
   ovUpdateButtons();
   $("#reader").querySelectorAll(".ov-layer").forEach(ovFit);
   restartHideTimer();
-  try { await api("/api/settings", { method: "PUT", body: change }); }
-  catch (e) { toast(e.message, 6000, "error"); }
 }
 
 /* what is being read, for plugin scripts (MangaVibe.reader.where()); null while the reader is closed */
@@ -1114,23 +1225,13 @@ function showUi() {
 function hideUi() {
   clearTimeout(R.hideTimer);
   $("#reader").classList.add("ui-hidden");
+  R.hiddenAt = performance.now();
+  mouseAnchor();  // the mouse has to move away from here to bring them back (watchPointer)
   // hidden bars must not keep focus, or arrow keys would still change a dropdown/slider
   if (inChrome(document.activeElement)) document.activeElement.blur();
 }
 
 function inChrome(el) { return !!el?.closest?.("#reader .chrome, #reader .drawer, #reader .d-panel"); }
-
-/* change reader settings: applied at once, saved for all devices (a promise: true when saved) */
-async function saveReaderSettings(change) {
-  Object.assign(settings, change);
-  try {
-    await api("/api/settings", { method: "PUT", body: change });
-    return true;
-  } catch (e) {
-    toast(e.message, 6000, "error");
-    return false;
-  }
-}
 
 /* the reading options' "Hide controls after": the same choices as Settings → Reader. The options are
    only written again when they change (a saved time not in the list comes or goes), so a select being
@@ -1159,7 +1260,7 @@ function pickAutohide(secs) {
   autohideSave.timer = setTimeout(async () => {
     autohideSave.timer = null;
     const before = autohideSave.saved;
-    if (await saveReaderSettings({ reader_autohide: secs })) return;
+    if (await saveSettings({ reader_autohide: secs })) return;
     if (settings.reader_autohide === secs && autohideSave.timer === null) {  // nothing picked since
       settings.reader_autohide = before;
       autohidePicker();

@@ -156,7 +156,7 @@ Tap a section for the details.
 - **Progress saved on every page**, and the next book offered at the end.
 - **On a computer:** the wheel scrolls a tall page and turns the page at its end; click the sides
   or use the arrow keys, Page Up/Down and Space; Ctrl + wheel zooms and F goes fullscreen. Move the
-  mouse to the top or bottom edge for the controls.
+  mouse to bring up the controls.
 
 </details>
 

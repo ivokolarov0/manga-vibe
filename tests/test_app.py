@@ -301,6 +301,9 @@ def test_settings(client):
     for bad in (0.01, -1, 4000, "abc", True, None):
         assert client.put("/api/settings", json={"reader_autohide": bad}).status_code == 400
     assert client.get("/api/settings").json()["reader_autohide"] == 0.5
+    assert s["reader_top_bar"] == "hide"
+    client.put("/api/settings", json={"reader_top_bar": "room"})
+    assert client.get("/api/settings").json()["reader_top_bar"] == "room"
     assert s["reader_drawer_side"] == "right"
     client.put("/api/settings", json={"reader_drawer_side": "left"})
     assert client.get("/api/settings").json()["reader_drawer_side"] == "left"

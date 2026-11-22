@@ -41,6 +41,7 @@ DEFAULT_SETTINGS = {
     "auto_fullscreen": True,
     "preload": 4,
     "reader_autohide": 5,          # seconds until the reader controls hide; 0 = never
+    "reader_top_bar": "hide",      # hide (with the controls) | always | room (while the page leaves room above it)
     "reader_drawer_side": "right", # right | left: which side the reader options slide in from
     "reader_tap_layout": "default",  # default | one-handed | off: what tapping the page does
     "reader_volume_keys": True,    # Android app: the volume keys turn pages in the reader
@@ -199,7 +200,7 @@ def scan_status():
 # Settings → Reader, and the theme: each user's own (app/users.py), starting from the shared ones (the
 # owner's). The rest is the app's, changed by admins only.
 PERSONAL_SETTINGS = {"theme", "reader_mode", "reader_fit", "auto_fullscreen", "preload", "reader_autohide",
-                     "reader_drawer_side", "reader_tap_layout", "reader_volume_keys", "overlay_opacity",
+                     "reader_top_bar", "reader_drawer_side", "reader_tap_layout", "reader_volume_keys", "overlay_opacity",
                      "overlay_outline", "reader_brightness", "reader_contrast", "reader_colors",
                      # the library page's own "per page" picker and grid/list switch, there for everyone
                      "library_page_size", "library_view",
