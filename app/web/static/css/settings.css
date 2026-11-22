@@ -256,12 +256,14 @@
     min-height: 54px;
     margin: 0 -16px;
     padding: 8px 16px;
-    border-bottom: 1px solid var(--border);
 
-    /* also when only an empty Alpine <template> (an x-if that's off) comes after it */
-    &:last-child,
-    &:has(+ template:last-child) {
-      border-bottom: 0;
+    /* the divider goes *between* rows, as a line on top of every row that has a shown row (or a
+       .meta-sources list) before it; never border-bottom removed with :last-child, which came back
+       whenever a hidden row, an Alpine <template> or a wrapper followed the last row (#126, #245).
+       A row inside a wrapper (an x-if's <div>) that comes after a row gets one too. */
+    :is(.setting-row, .meta-sources):not([style*="display: none"], [hidden]) ~ &,
+    .setting-row:not([style*="display: none"], [hidden]) ~ div > & {
+      border-top: 1px solid var(--border);
     }
 
     transition: background-color var(--fast);
@@ -1104,15 +1106,10 @@
   .meta-sources {
     margin: 0 0 8px;
     padding-bottom: 4px;
-    border-bottom: 1px solid var(--border);
 
     & h3 {
       margin: 12px 0 2px;
       font-size: 15px;
-    }
-
-    & .setting-row:last-of-type {
-      border-bottom: 0;
     }
 
     & .setting-row.off {
@@ -1167,11 +1164,11 @@
       padding: 10px 12px;
       background: none;
       border: 0;
-      border-bottom: 1px solid var(--border);
       text-align: left;
 
-      &:last-child {
-        border-bottom: 0;
+      /* a line between buttons, never under the last one (#245) */
+      & ~ & {
+        border-top: 1px solid var(--border);
       }
 
       &:hover {
