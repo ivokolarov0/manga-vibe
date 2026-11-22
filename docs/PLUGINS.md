@@ -470,6 +470,7 @@ Settings. Plugin API 11.
 | Slot | Where |
 |---|---|
 | `home-top` | above the library grid and Continue reading (the library tabs). Not inside a component: give your markup `x-data` |
+| `nav-items` | the Sidebar's column, after Library and Continue (the libraries). Entries: `<a>` or `<button class="nav-entry">` with a `.nav-ic` and a `.nav-label`; a titled group: `.nav-section` with a `.nav-section-head`, shown in the column only. Give your markup `x-data`. A nav may leave this slot out (the top bar does). Plugin API 25 |
 | `library-tools` | the library page's buttons, after Filter / Sort / Letter |
 | `library-filters` | the row of filters on, after Clear all (the row shows while filters are on) |
 | `select-menu` | the ⋯ menu of the library's multi-select. `selCount`, `selMenu` and `bulk(action, msg, extra, url)` are there: `bulk` POSTs `{ ids, action, ...extra }` to your `url` and wants `{ done, skipped }` back |
@@ -999,6 +1000,8 @@ keeps the `topbar` slot (e.g. the account menu) and hides while reading (`$store
 A second built-in plugin does this job too: "Sidebar" (`app/plugins/builtin/nav_sidebar/`), off until the
 owner picks it. It keeps the top bar (`#topbar`, logo, search and the `topbar` slot) and draws Library,
 Continue and Settings as `#bottomnav.sidebar`: the usual bar on phones, a column on the left from 900px.
+Between Continue and Settings is the `nav-items` slot, where the Libraries plugin lists the libraries (the
+tabs above the grid are hidden while the column shows them). A nav of your own may draw that slot or not.
 Plugin API 25: `{{ settings_link(nav=True) }}` draws the Settings button as an entry of that bar (icon in a
 `.nav-ic`, then "Settings"), not as an icon button. The plain top bar stays the fallback (`builtin_for`
 prefers the built-in plugin that's `enabled_by_default`).

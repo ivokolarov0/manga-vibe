@@ -107,6 +107,7 @@ PAGE_JOBS = {spec["job"] for spec in VIEWS.values()}
 SLOTS = {
     "topbar": "the top bar, before the Settings button (e.g. the account menu)",
     "home-top": "above the library grid and Continue reading (e.g. the library tabs)",
+    "nav-items": "the sidebar, after Library and Continue (e.g. the libraries); a nav may leave it out",
     "library-tools": "the library page's buttons, after Filter / Sort / Letter",
     "library-filters": "the row of filters on, after Clear all (shown while filters are on)",
     "select-menu": "the ⋯ menu of the library's multi-select (can use bulk() and selCount)",

@@ -20,11 +20,14 @@
     {{ slot("topbar") }}
   </header>
 
-  <!-- ============ the sidebar: Library, Continue and, at the end, Settings ============ -->
+  <!-- ============ the sidebar: Library, Continue, what plugins add and, at the end, Settings ============ -->
   <nav id="bottomnav" class="sidebar" x-data x-show="$store.app.view !== 'read'" aria-label="Main">
     <a href="#/" :class="{ active: $store.app.view === 'library' }" :aria-current="$store.app.view === 'library' ? 'page' : null">
       <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></span><span class="nav-label">Library</span></a>
     <a href="#/continue" :class="{ active: $store.app.view === 'continue' }" :aria-current="$store.app.view === 'continue' ? 'page' : null">
       <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span><span class="nav-label">Continue</span></a>
+    {#- what plugins add (e.g. the libraries): entries (<a> or <button class="nav-entry">, with .nav-ic and
+        .nav-label) and titled groups (.nav-section, shown in the column only). See sidebar.css -#}
+    {{ slot("nav-items") }}
     {{ settings_link(nav=True) }}
   </nav>

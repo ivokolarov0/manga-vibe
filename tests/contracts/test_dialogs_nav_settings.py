@@ -101,6 +101,7 @@ def test_the_sidebar(client):
     from app.plugins import manager
     assert info(client, "nav-sidebar")["enabled"] is False and info(client, "nav")["enabled"] is True
     assert manager.builtin_for("view:nav").id == "nav"
+    assert "nav-libraries" not in client.get("/").text  # the top bar leaves the nav-items slot out
     nav_job = next(j for j in client.get("/api/plugins").json()["jobs"] if j["key"] == "view:nav")
     assert set(nav_job["plugins"]) >= {"nav", "nav-sidebar"} and nav_job["exclusive"]  # one "pick one" group
     r = client.put("/api/plugins/nav-sidebar", json={"enabled": True})
@@ -111,6 +112,9 @@ def test_the_sidebar(client):
         assert 'class="sidebar"' in page and 'class="with-sidebar"' in page
         assert page.count('id="settings-link"') == 1 and 'class="nav-label">Settings' in page
         assert 'data-slot="topbar"' in page
+        # the libraries in the column (the nav-items slot), as well as their tabs (for phones)
+        assert 'data-slot="nav-items"' in page and 'class="nav-section nav-libraries"' in page
+        assert 'class="tabs shelf-tabs"' in page
         assert info(client, "nav-sidebar")["warnings"] == []
         assert manager.builtin_for("view:nav").id == "nav"  # still the fallback
     finally:
