@@ -1,6 +1,31 @@
+        {#- One installed plugin's row: name, one line of description and what needs a look; what it does (its
+            jobs) and its settings are on its own page, which the row opens. `v` is the Alpine name of the
+            plugin; caller() is what's on the right (its switch, or a "pick one" row's Use button). -#}
+        {% macro plugin_row(v, cls="") -%}
+                        <div class="plugin-item {{ cls }}" :class="{ off: !{{ v }}.enabled }" @click="openPlugin({{ v }})">
+                          <span class="plugin-ico" aria-hidden="true" x-html="navIcon(catIcon({{ v }}.category))"></span>
+                          <span class="plugin-text">
+                            <span class="plugin-title">
+                              <a :href="'#/settings/plugin-' + {{ v }}.id" @click.stop x-text="{{ v }}.name"></a>
+                              <small x-text="'v' + {{ v }}.version"></small>
+                              <template x-for="c in rowTags({{ v }})" :key="c"><span class="plugin-tag" x-text="catLabel(c)"></span></template>
+                            </span>
+                            <small class="plugin-desc" x-show="{{ v }}.description" :title="{{ v }}.description" x-text="{{ v }}.description"></small>
+                            <small class="plugin-status" x-show="{{ v }}.enabled && {{ v }}.status" x-text="{{ v }}.status"></small>
+                            <small class="plugin-blocked err" x-show="{{ v }}.blocked" x-text="{{ v }}.blocked"></small>
+                            <template x-for="w in {{ v }}.warnings || []"><small class="plugin-blocked err" x-text="w"></small></template>
+                          </span>
+                          <span class="row-buttons">
+                            <span class="chip warn" x-show="hasUpdate({{ v }})" x-text="'Update ' + {{ v }}.update.latest"></span>
+                            <span class="chip err" x-show="{{ v }}.update.error" title="The update check failed">Update check failed</span>
+{{ caller() }}
+                          </span>
+                        </div>
+        {%- endmacro %}
         <!-- plugins, in three tabs: the ones you have (grouped by category, with search and filters;
              installed ones first, the built-in ones folded into a group of their own), the ones the
-             sources offer, and the sources and setup. A row opens the plugin's page. -->
+             sources offer, and the sources and setup. A row opens the plugin's page. Plugins that do the
+             same job (the top bar and the sidebar) are one row, named after the job, that opens to pick one. -->
         <section class="plugins-section" x-show="section === 'plugins'" x-effect="pview = computePluginView()">
           <h2>Plugins</h2>
           <div class="tabs plugin-tabs" role="tablist" aria-label="Plugins">
@@ -74,30 +99,63 @@
                       <small>Come with MangaVibe</small><svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
                     <h3 class="plugin-group-title" x-show="group === 'installed' && pview.builtin.length">Installed</h3>
                     <div class="plugin-list" x-show="group === 'installed' || pview.open">
-                      <!-- a row is kept short: name, one line of description and what needs a look; what
-                           the plugin does (its jobs) and its settings are on its own page -->
                       <template x-for="p in list" :key="p.id">
-                        <div class="plugin-item" :class="{ off: !p.enabled }" @click="openPlugin(p)">
-                          <span class="plugin-ico" aria-hidden="true" x-html="navIcon(catIcon(p.category))"></span>
-                          <span class="plugin-text">
-                            <span class="plugin-title">
-                              <a :href="`#/settings/plugin-${p.id}`" @click.stop x-text="p.name"></a>
-                              <small x-text="`v${p.version}`"></small>
-                              <template x-for="c in rowTags(p)" :key="c"><span class="plugin-tag" x-text="catLabel(c)"></span></template>
-                            </span>
-                            <small class="plugin-desc" x-show="p.description" :title="p.description" x-text="p.description"></small>
-                            <small class="plugin-status" x-show="p.enabled && p.status" x-text="p.status"></small>
-                            <small class="plugin-blocked err" x-show="p.blocked" x-text="p.blocked"></small>
-                            <template x-for="w in p.warnings || []"><small class="plugin-blocked err" x-text="w"></small></template>
-                          </span>
-                          <span class="row-buttons">
-                            <span class="chip warn" x-show="hasUpdate(p)" x-text="`Update ${p.update.latest}`"></span>
-                            <span class="chip err" x-show="p.update.error" title="The update check failed">Update check failed</span>
+                        <div class="plugin-row">
+                          <template x-if="!p.choice">
+                            <div>
+                              {% call plugin_row("p") %}
                             <!-- the only plugin doing a job the app needs: it stays on until another one does it -->
                             <span class="chip required" x-show="requiredText(p)" :title="requiredText(p)">Required</span>
                             <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" @click.stop
                                    :disabled="!!requiredText(p)" :title="requiredText(p) || null" :aria-label="`${p.name} on`">
-                          </span>
+                              {% endcall %}
+                            </div>
+                          </template>
+                          <!-- plugins that do the same job: one row named after it, with the plugin in use and how
+                               many there are; opened, each of them with a Use button (only one of them runs) -->
+                          <template x-if="p.choice">
+                            <div class="plugin-choice" :class="{ open: choiceOpen[p.job.key] }">
+                              <button type="button" class="plugin-item plugin-choice-head" @click="toggleChoice(p.job.key)"
+                                      :aria-expanded="!!choiceOpen[p.job.key]" :aria-controls="`choice-${p.job.key}`">
+                                <span class="plugin-ico" aria-hidden="true" x-html="navIcon(catIcon(p.current?.category || p.members[0].category))"></span>
+                                <span class="plugin-text">
+                                  <span class="plugin-title">
+                                    <span class="plugin-choice-name" x-text="p.name"></span>
+                                    <span class="plugin-tag pick" x-text="p.job.required ? 'Pick one' : 'Pick one or none'"></span>
+                                  </span>
+                                  <small class="plugin-desc" x-show="p.job.description" :title="p.job.description" x-text="p.job.description"></small>
+                                  <small class="plugin-status">
+                                    <span x-show="p.current">In use: <b x-text="p.current?.name"></b></span>
+                                    <span x-show="!p.current">None in use</span></small>
+                                </span>
+                                <span class="row-buttons">
+                                  <span class="chip warn" x-show="p.update">Update</span>
+                                  <span class="chip" x-text="`${p.members.length} plugins`"></span>
+                                  <svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg>
+                                </span>
+                              </button>
+                              <div class="plugin-choice-options" :id="`choice-${p.job.key}`" x-show="choiceOpen[p.job.key]">
+                                <template x-for="m in p.members" :key="m.id">
+                                  <div>
+                                    {% call plugin_row("m") %}
+                                    <span class="chip on" x-show="m.enabled">In use</span>
+                                    <button type="button" class="btn small" x-show="!m.enabled" @click.stop="pickPlugin(p.job, m)"
+                                            :aria-label="`Use ${m.name} for ${p.name}`">Use</button>
+                                    {% endcall %}
+                                  </div>
+                                </template>
+                                <!-- a job the app can do without: none of them -->
+                                <div class="plugin-item plugin-none" x-show="!p.job.required" :class="{ off: p.current }">
+                                  <span class="plugin-text"><span class="plugin-title">None</span>
+                                    <small class="plugin-desc" x-text="`Without ${p.name}`"></small></span>
+                                  <span class="row-buttons">
+                                    <span class="chip on" x-show="!p.current">In use</span>
+                                    <button type="button" class="btn small" x-show="p.current" @click="pickPlugin(p.job, null)">Use</button>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </template>
                         </div>
                       </template>
                     </div>

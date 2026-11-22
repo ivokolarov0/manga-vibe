@@ -1741,7 +1741,7 @@ const SETTING_ROWS = {
       options: [["contained", "Contained"], ["full", "Full width"]] },
     { key: "page_width_series", label: "Series page full width as well", personal: true, sub: true, check: true,
       hint: "The page of a series also uses the whole screen", show: (st) => st.page_width === "full" },
-    { key: "nav_position", label: "Navigation bar", hint: "Where Library and Continue sit",
+    { key: "nav_position", label: "Navigation bar", hint: "Where Library and Continue sit (with the Sidebar plugin: on phones only)",
       options: [["bottom", "Bottom"], ["top", "Top"]] },
     { key: "library_listing", label: "Library listing", hint: "Load more while scrolling, or show numbered pages",
       options: [["lazy", "Lazy load"], ["paged", "Paginated"]] },
@@ -1888,7 +1888,23 @@ function settingsView() {
         .map((c) => [c, count((p) => inSrc(p) && inCat(p, c))]);
       const srcCounts = Object.fromEntries(["all", "installed", "builtin"].map((s) => [s, count((p) => inCat(p) && inSrc(p, s))]));
       const list = st === "errors" ? [] : base.filter((p) => inCat(p) && inSrc(p));
-      const installed = list.filter((p) => !p.builtin), builtin = list.filter((p) => p.builtin);
+      // plugins that do the same exclusive job (Navigation: the top bar or the sidebar) are one row of the
+      // list instead, named after the job, that opens to pick one of them. It's listed when one of them
+      // matches the filters, always with all of them (so the others can be picked from any view); under
+      // Installed if one of them is. A plugin doing two such jobs is in both rows
+      const rows = [], grouped = new Set();
+      for (const job of this.pluginJobs) {
+        if (!job.exclusive || job.plugins.length < 2) continue;
+        job.plugins.forEach((id) => grouped.add(id));
+        if (!list.some((p) => job.plugins.includes(p.id))) continue;
+        const members = this.plugins.filter((p) => job.plugins.includes(p.id)).sort((a, b) => a.name.localeCompare(b.name));
+        rows.push({ choice: true, id: `job:${job.key}`, name: job.label, job, members,
+                    current: members.find((p) => p.enabled && !p.blocked) || null,
+                    builtin: members.every((p) => p.builtin), update: members.some((p) => this.hasUpdate(p)) });
+      }
+      rows.push(...list.filter((p) => !grouped.has(p.id)));
+      rows.sort((a, b) => a.name.localeCompare(b.name));
+      const installed = rows.filter((p) => !p.builtin), builtin = rows.filter((p) => p.builtin);
       // the built-in ones are folded away, unless that would hide the whole answer: a search, a picked
       // category or source, or nothing installed to show
       const forced = !!q || src === "builtin" || cat !== "all" || !installed.length;
@@ -2081,14 +2097,29 @@ Your files are not touched. `
       const jobs = (p.required_for || []).map((k) => this.jobLabel(k)).join(", ");
       return jobs && `MangaVibe needs ${jobs}. To switch ${p.name} off, switch on another plugin that does it.`;
     },
-    async togglePlugin(p) {
-      const replaced = p.enabled ? this.replacedBy(p) : [];
+    // the "pick one" rows (computePluginView) that are open, by job key
+    choiceOpen: {},
+    toggleChoice(key) { this.choiceOpen = { ...this.choiceOpen, [key]: !this.choiceOpen[key] }; },
+    // a "pick one" row's Use button: p switched on, which switches the row's other one off; or, for a job
+    // the app can do without, null for none of them
+    pickPlugin(job, p) {
+      const current = this.plugins.find((x) => x.enabled && job.plugins.includes(x.id));
+      const target = p || current;
+      if (!target || (p && target === current)) return;
+      target.enabled = !!p;
+      this.togglePlugin(target, job.key);
+    },
+    // picked: the job key when p was picked in that job's "pick one" row
+    async togglePlugin(p, picked = null) {
+      // picked from a row, it's clear what it replaces there: only ask about the other jobs it takes over
+      const replaced = p.enabled ? this.replacedBy(p).filter(([, job]) => job.key !== picked) : [];
       if (replaced.length && !confirm(replaced.map(([q, job]) => `${p.name} replaces ${q.name} (${job.label}).`)
           .join("\n") + " Switch it on?")) return (p.enabled = false);
       let r;
       try { r = await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } }); }
       catch (e) {  // e.g. Libraries while one has a password, or the only plugin doing a job the app needs
         p.enabled = !p.enabled;
+        if (picked) this.refreshPlugins();  // the radio buttons show what's on again
         return toast(e.message, 8000, "error");
       }
       // a view (the cards, a page, a dialog, a Settings section...) is drawn when the page is put together:

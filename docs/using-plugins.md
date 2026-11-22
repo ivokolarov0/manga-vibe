@@ -181,7 +181,7 @@ These are the parts a plugin can do today, each done by a built-in plugin until 
 |---|---|
 | Library page, Continue reading page, Series page | the pages themselves |
 | Series cards | how a series looks in the grid, the list and Continue reading |
-| Top bar | the bar at the top and the Library / Continue bar |
+| Navigation | the bar at the top and Library / Continue: the built-in **Top bar**, or the built-in **Sidebar** (Library, Continue and Settings on the left, the search box at the top; the usual bar on phones) |
 | Edit dialog, Fix match dialog | editing a series' details and poster; picking the right metadata |
 | Settings: Library folders, Display, Reader, Metadata, Updates | Settings' pages (these can also just be switched off) |
 | Library filters and sorting | what the library can be filtered and sorted by |
@@ -196,6 +196,12 @@ More parts become replaceable over time.
 **To swap one:** install the other plugin (it starts off, so nothing changes yet), then switch it on in
 **Settings → Plugins**. MangaVibe tells you which plugin it replaces (*X replaces Y (Series page)*) and
 switches that one off when you confirm. To go back, switch the built-in one on again.
+
+**Plugins that do the same part are grouped.** Once you have two or more plugins for one part (the Top bar
+and the Sidebar, say), Settings → Plugins lists them as one row named after the part (*Navigation · Pick
+one*), which says which one is in use and how many there are. Open it to see them, each with a **Use**
+button instead of a switch: using one switches the other off, without asking (it still asks if the plugin
+takes over other parts too). A part the app can do without has a **None** choice too.
 
 - **Required.** Some parts the app can't do without (the reader, the parser, the pages…). The plugin
   doing one is marked **Required** and its switch can't be used: switch on another plugin for that

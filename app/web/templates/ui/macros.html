@@ -10,13 +10,19 @@
 {%- endmacro %}
 
 {#- The Settings button with the Needs attention count: what a top bar (view:nav) must have, as
-    settings_link() (the page gives it to the nav view and checks it's there). -#}
-{% macro settings_link_markup() -%}
-<a href="#/settings" id="settings-link" class="iconbtn" :class="{ active: $store.app.view === 'settings' }"
+    settings_link() (the page gives it to the nav view and checks it's there). settings_link(nav=True): as
+    an entry of the Library / Continue bar instead, its icon in a .nav-ic pill and "Settings" under it (the
+    sidebar's). -#}
+{% macro settings_link_markup(nav=False) -%}
+<a href="#/settings" id="settings-link"{% if not nav %} class="iconbtn"{% endif %} :class="{ active: $store.app.view === 'settings' }"
    :aria-current="$store.app.view === 'settings' ? 'page' : null"
    :aria-label="$store.app.attentionCount ? `Settings, ${$store.app.attentionCount} need attention` : 'Settings'"
    :title="$store.app.attentionCount ? `Settings (${$store.app.attentionCount} need attention)` : 'Settings'">
+{% if nav %}
+  <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></span><span class="nav-label">Settings</span>
+{% else %}
   <svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>
+{% endif %}
   <i id="att-count" x-show="$store.app.attentionCount" aria-hidden="true" x-cloak
      x-text="$store.app.attentionCount > 99 ? '99+' : $store.app.attentionCount"></i>
 </a>

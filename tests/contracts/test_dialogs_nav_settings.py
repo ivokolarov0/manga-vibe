@@ -95,6 +95,29 @@ def test_a_top_bar_of_its_own(client, mine):
     assert info(client, "my-nav")["warnings"] == []
 
 
+def test_the_sidebar(client):
+    """The built-in alternative to the top bar: off at first (the top bar stays the fallback), and once
+    picked it draws the sidebar with Settings as an entry, switching the top bar off."""
+    from app.plugins import manager
+    assert info(client, "nav-sidebar")["enabled"] is False and info(client, "nav")["enabled"] is True
+    assert manager.builtin_for("view:nav").id == "nav"
+    nav_job = next(j for j in client.get("/api/plugins").json()["jobs"] if j["key"] == "view:nav")
+    assert set(nav_job["plugins"]) >= {"nav", "nav-sidebar"} and nav_job["exclusive"]  # one "pick one" group
+    r = client.put("/api/plugins/nav-sidebar", json={"enabled": True})
+    assert r.status_code == 200, r.text
+    try:
+        assert "nav" in r.json()["stopped"]
+        page = client.get("/").text
+        assert 'class="sidebar"' in page and 'class="with-sidebar"' in page
+        assert page.count('id="settings-link"') == 1 and 'class="nav-label">Settings' in page
+        assert 'data-slot="topbar"' in page
+        assert info(client, "nav-sidebar")["warnings"] == []
+        assert manager.builtin_for("view:nav").id == "nav"  # still the fallback
+    finally:
+        client.put("/api/plugins/nav", json={"enabled": True})
+    assert info(client, "nav-sidebar")["enabled"] is False
+
+
 def test_a_settings_section_of_its_own(client, mine):
     r = mine("my-display", {"settings:display": 1}, "settings-display.html",
              '<section x-show="section === \'display\'"><h2>My display</h2></section>',

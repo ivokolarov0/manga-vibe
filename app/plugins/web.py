@@ -244,9 +244,9 @@ def part_functions(spec, used: set) -> dict:
     macros = templates.get_template("ui/macros.html").module
 
     def part(name):
-        def draw():
+        def draw(*args, **kwargs):  # e.g. settings_link(nav=True)
             used.add(name)
-            return getattr(macros, f"{name}_markup")()
+            return getattr(macros, f"{name}_markup")(*args, **kwargs)
         return draw
     return {name: part(name) for name in spec.get("parts", {})}
 

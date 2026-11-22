@@ -665,6 +665,70 @@
     margin: 12px 0 2px;
   }
 
+  /* plugins that do the same job (Navigation: the top bar or the sidebar): one row named after the job,
+     with the one in use and how many there are; opened, the plugins under it, each with a Use button */
+  .plugin-choice {
+    & .plugin-choice-head {
+      width: 100%;
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+
+      & .plugin-choice-name {
+        font-weight: 600;
+      }
+
+      & .plugin-status b {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      & .chev {
+        flex: none;
+        color: var(--muted);
+        transition: transform 0.15s;
+      }
+
+      &[aria-expanded="true"] .chev {
+        transform: rotate(180deg);
+      }
+    }
+
+    & .plugin-tag.pick {
+      background: var(--accent-soft);
+      border-color: transparent;
+      color: var(--accent);
+    }
+
+    &.open .plugin-choice-head {
+      border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+    }
+
+    /* the plugins under the row: indented, joined to it by a line on the left */
+    & .plugin-choice-options {
+      display: grid;
+      gap: 6px;
+      margin-left: 16px;
+      padding: 6px 0 2px 12px;
+      border-left: 2px solid color-mix(in srgb, var(--accent) 40%, var(--border));
+    }
+
+    & .plugin-choice-options .plugin-item:not(.off) {
+      border-color: var(--accent);
+    }
+
+    & .plugin-none {
+      padding-block: 8px;
+      cursor: default;
+    }
+
+    & .chip.on {
+      background: var(--accent-soft);
+      border-color: transparent;
+      color: var(--accent);
+    }
+  }
+
   /* the built-in plugins: folded away until opened (open while searching or picked) */
   .plugin-group-head {
     display: flex;
