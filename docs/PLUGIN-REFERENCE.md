@@ -821,6 +821,30 @@ class Weather(Plugin):
         return str(data)
 ```
 
+### Files it can get again
+
+`ctx.cache_dir` is a folder of the plugin's own (`cache/plugins/<id>` in the data folder) for files it can
+download again, e.g. pictures. Data that matters goes in settings or `set_series_data` instead.
+
+```python
+# Download a picture once, then use the saved copy
+from app.plugins import Action, Plugin
+
+class Banner(Plugin):
+    id = "banner"
+    global_actions = [Action("get", "Get the banner")]
+
+    def run_global_action(self, ctx, action_key):
+        path = ctx.cache_dir / "banner.png"
+        if not path.exists():
+            path.write_bytes(ctx.http.get_bytes("https://example.com/banner.png"))
+        return f"{path.stat().st_size} bytes"
+```
+
+The built-in **AniList recommendations** plugin (`app/plugins/builtin/anilist_recommendations/`) puts these
+together: its own route asks AniList through `ctx.http`, keeps the answer with `set_series_data`, saves the
+covers in `ctx.cache_dir`, and draws a panel in the `series-end` slot.
+
 ---
 
 ## Metadata providers
@@ -1528,5 +1552,6 @@ from app.plugins.sdk import Book, Series, SessionLocal, display_title, get_setti
 | `ctx.list_pages()`, `ctx.list_entries()`, `ctx.read_entry()`, `ctx.read_page()`, `ctx.text_sections()`, `ctx.read_series_file()` | reading books and series folders |
 | `ctx.reading_status()`, `ctx.set_reading_status()`, `ctx.reading_direction()` | reading status and mode |
 | `ctx.http` | the HTTP client |
+| `ctx.cache_dir` | a folder for files the plugin can get again |
 | `ctx.web_url(path)` | the address of the plugin's `handle_web` |
 | `ctx.run_in_background()`, `ctx.run_in_thread()`, `ctx.should_stop()` | long work |

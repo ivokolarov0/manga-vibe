@@ -136,6 +136,8 @@ Tap a section for the details.
   last read, score, year or unread count.
 - **Save a search** (e.g. only Isekai) and pick it again from the Saved button, in any library.
 - **Continue**: everything you're in the middle of, to pick up where you left off.
+- **If you liked this**: AniList's recommendations at the end of a series page, with covers; the ones
+  you already have open here (a built-in plugin you can switch off).
 - **Reading status** worked out from your progress (reading, completed, …), or set by hand, plus
   favorites. Mark a book read or unread, or everything before it.
 

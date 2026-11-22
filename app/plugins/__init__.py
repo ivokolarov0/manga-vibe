@@ -411,6 +411,14 @@ class Context:
         (taken from the last request), e.g. for an OAuth redirect address."""
         return f"{manager.base_url}/api/plugins/{self.plugin.id}/web/{path.lstrip('/')}"
 
+    @property
+    def cache_dir(self) -> Path:
+        """A folder of the plugin's own for files it can get again (e.g. pictures it downloaded):
+        <data folder>/cache/plugins/<plugin id>, made on first use. Plugin API 26."""
+        path = config.CACHE_DIR / "plugins" / self.plugin.id
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
     def run_in_background(self, fn, *args):
         """Run fn(ctx, *args) later on the plugin worker, with its own database session that
         is committed afterwards. Pass ids, not database rows."""
