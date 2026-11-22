@@ -1,0 +1,20 @@
+<!-- AniList recommendations (series-end slot): shown only when there are some -->
+<section class="panel wide recs-panel" x-data="anilistRecs()" x-show="items.length" x-cloak aria-labelledby="recs-head">
+  <h2 id="recs-head">If you liked this</h2>
+  <ul class="recs">
+    <template x-for="r in items" :key="r.id">
+      <li>
+        <a class="rec" :href="r.href" :target="r.local ? null : '_blank'" :rel="r.local ? null : 'noopener noreferrer'"
+           :title="r.local ? r.title : r.title + ' (AniList)'">
+          <span class="rec-cover">
+            <img x-show="r.cover" :src="r.cover" alt="" loading="lazy" referrerpolicy="no-referrer" @error="r.cover = null">
+            <span class="rec-here" x-show="r.local">In your library</span>
+          </span>
+          <span class="rec-title" x-text="r.title"></span>
+          <span class="rec-sub"><span x-text="sub(r)"></span><svg class="ic" x-show="!r.local" aria-hidden="true"><use href="#i-external"/></svg></span>
+        </a>
+      </li>
+    </template>
+  </ul>
+  <p class="recs-source muted">From AniList readers' recommendations.</p>
+</section>

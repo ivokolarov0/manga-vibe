@@ -93,6 +93,26 @@ if you also read the files elsewhere.
 
 ---
 
+## AniList recommendations (built in)
+
+**If you liked this** at the end of a series page: the series AniList's readers recommend, best rated
+first, each with its cover. A series you already have shows *In your library* and opens its page here;
+the others open on AniList. Only series matched on AniList get them; the others show nothing extra.
+
+- **Covers:** *Saved on this server* (the default) downloads each cover once and keeps it, so they show
+  offline and your browser only talks to MangaVibe. *Loaded from AniList* uses no disk space, but your
+  browser asks AniList for every cover.
+- **How many:** up to 5, 10 (the default), 15 or 25.
+- **Ask AniList again after:** a day, a week (the default) or a month. Until then a series shows what it
+  got last time, so opening a series page doesn't ask AniList each time.
+- **Forget saved recommendations and covers** on its page in **Settings → Plugins** clears them all; the
+  line under the plugin says how many series and covers are saved, and how much space they take.
+
+Adult series are left out unless **Settings → Metadata → Include adult titles** is on. Switch the plugin
+off in **Settings → Plugins** and the series page shows nothing extra.
+
+---
+
 ## Install a plugin
 
 ```mermaid

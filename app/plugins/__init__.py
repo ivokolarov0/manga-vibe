@@ -51,7 +51,7 @@ from pathlib import Path
 from app import config
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 25
+API_VERSION = 26
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
@@ -410,6 +410,14 @@ class Context:
         """Full address of this plugin's handle_web() page as the browser reaches the app
         (taken from the last request), e.g. for an OAuth redirect address."""
         return f"{manager.base_url}/api/plugins/{self.plugin.id}/web/{path.lstrip('/')}"
+
+    @property
+    def cache_dir(self) -> Path:
+        """A folder of the plugin's own for files it can get again (e.g. pictures it downloaded):
+        <data folder>/cache/plugins/<plugin id>, made on first use. Plugin API 26."""
+        path = config.CACHE_DIR / "plugins" / self.plugin.id
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     def run_in_background(self, fn, *args):
         """Run fn(ctx, *args) later on the plugin worker, with its own database session that

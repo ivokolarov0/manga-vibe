@@ -1169,3 +1169,28 @@ Plugin API version, and the app works after every one.
 - **No browser tests in the suite** (it has no browser): the contract test checks the server side and the
   script's registration; the reader was clicked through in Firefox with Playwright (paged, vertical, zoom
   with an overlay, the drawer, the end card, `MangaVibe.reader.*`, a replacement reader and a broken one).
+
+### AniList recommendations as a built-in plugin (Plugin API 26, issue #244)
+
+- **A built-in plugin, not core**: `app/plugins/builtin/anilist_recommendations/`, using only the SDK. A
+  panel in the existing `series-end` slot, filled by its own route, so the series page and its contract
+  don't change, and switched off it leaves nothing behind on the page.
+- **Asked for after the page shows, not in `series_info()`**: AniList can be slow or down, and the series
+  page must not wait for it. The panel fetches `/api/plugins/anilist-recommendations/api/series/<id>`
+  and stays hidden while there's nothing (no match, no recommendations, AniList down): no error shown.
+- **Kept per series with `set_series_data`**, with an expiry (the "days" setting, a week by default), so
+  a series page asks AniList at most once a week. A failure keeps what was saved and asks again after
+  15 minutes, not on every view. A lock per series stops two views asking twice. Requests go through
+  `ctx.http` (the AniList throttle, 30 a minute) with one retry, so a page view never waits minutes.
+  Library and title language are applied when answering, not when saving, so they never go stale.
+- **Covers saved on the server by default** ("cache"): the browser then only talks to MangaVibe, covers
+  show offline, and AniList's image server sees one request per cover ever. Hotlinking is the setting
+  for owners who'd rather not use the disk (a few hundred KB per series). Hotlinked images go with
+  `referrerpolicy="no-referrer"`. The cover route only downloads covers the series' saved answer lists,
+  and only from `anilist.co` hosts, so it can't be used to fetch anything else.
+- **`ctx.cache_dir` (Plugin API 26)**: plugins had nowhere to put files. It's under the data folder's
+  `cache`, so it's clearly something that can be thrown away.
+- **Series already in the library** (same `anilist_id`, and visible to the person asking) link to their
+  page and use their own poster, so a locked library's series never shows up.
+- **On by default**: the app already talks to AniList for metadata, and the panel only shows for series
+  matched there.
