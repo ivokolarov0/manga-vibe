@@ -217,11 +217,7 @@ function imageCtl(book) {
     reading() { if (mine() && uiShown() && !controlsBusy()) hideUi(); },  // reading on: the bars go away
     keepControls() { if (mine()) restartHideTimer(); },             // its option was used: the bars stay
     // change reader settings: applied at once, saved for all devices (a promise)
-    async saveSettings(change) {
-      Object.assign(settings, change);
-      try { await api("/api/settings", { method: "PUT", body: change }); }
-      catch (e) { toast(e.message, 6000, "error"); }
-    },
+    saveSettings: saveReaderSettings,
     reopen() { if (mine()) openReader(book.id, R.page); },  // draw the book again (e.g. another fit)
     openBook: (which, page = null) => openBook(which, page),
   };
@@ -350,6 +346,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
       <!-- the image reader's own options (built in: the fit, the zoom lock and Page look), once it's open -->
       <div id="r-own" style="display: contents"></div>
       <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
+      <div class="d-row"><label class="d-field pick"><small>Hide controls after</small><span id="r-autohide-label"></span>
+        <select id="r-autohide" aria-label="Hide controls after"></select></label></div>
       <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>Reader settings</span></a>
       <!-- last, after a line: everything a plugin adds, one row per plugin -->
       ${plugins.length ? `<div class="d-head d-plugins">Plugins</div>` : ""}
@@ -388,6 +386,11 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   $("#r-page").onchange = (e) => imgCall("goTo", +e.target.value);
   $("#r-pprev").onclick = () => imgCall("step", false);
   $("#r-pnext").onclick = () => imgCall("step", true);
+  autohidePicker();
+  $("#r-autohide").onchange = (e) => {
+    saveReaderSettings({ reader_autohide: +e.target.value });
+    autohidePicker();
+  };
   $("#r-mode").onclick = () => setMode(cycle(Object.fromEntries(imgModes().map((m) => [m, 1])), R.mode));
   const toPrev = () => location.replace(`#/read/${book.prev.id}`);
   const toNext = () => location.replace(`#/read/${book.next.id}?page=0`);
@@ -1118,6 +1121,23 @@ function hideUi() {
 }
 
 function inChrome(el) { return !!el?.closest?.("#reader .chrome, #reader .drawer, #reader .d-panel"); }
+
+/* change reader settings: applied at once, saved for all devices (a promise) */
+async function saveReaderSettings(change) {
+  Object.assign(settings, change);
+  try { await api("/api/settings", { method: "PUT", body: change }); }
+  catch (e) { toast(e.message, 6000, "error"); }
+}
+
+/* the reading options' "Hide controls after": the same choices as Settings → Reader */
+function autohidePicker() {
+  const sel = $("#r-autohide");
+  if (!sel) return;
+  const secs = +settings.reader_autohide, cur = secs > 0 ? String(secs) : "0", options = autohideOptions(cur);
+  sel.innerHTML = options.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+  sel.value = cur;
+  $("#r-autohide-label").textContent = options.find(([v]) => v === cur)[1];
+}
 
 function restartHideTimer() {
   clearTimeout(R.hideTimer);

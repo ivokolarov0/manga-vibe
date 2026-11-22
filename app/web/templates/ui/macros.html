@@ -6,7 +6,7 @@
 {% macro setting_rows(rows) -%}
 <template x-for="r in {{ rows }}" :key="r.key"><label class="setting-row" :class="{ sub: r.sub }" x-show="!r.show || r.show(st)"><span class="label"><span x-text="r.label"></span><small x-show="r.hint" x-text="r.hint"></small></span>
   <template x-if="r.check"><input type="checkbox" :checked="st[r.key] === 'true'" @change="st[r.key] = String($event.target.checked); save(r.key)"></template>
-  <template x-if="!r.check"><select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in r.options" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></template></label></template>
+  <template x-if="!r.check"><select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in (r.choices ? r.choices(st[r.key]) : r.options)" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></template></label></template>
 {%- endmacro %}
 
 {#- The Settings button with the Needs attention count: what a top bar (view:nav) must have, as
