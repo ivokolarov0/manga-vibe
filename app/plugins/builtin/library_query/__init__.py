@@ -61,8 +61,9 @@ SCHEMA = {
          "units": [[u, label] for u, label, _ in LENGTH_UNITS],
          "params": [p for u, _, _ in LENGTH_UNITS for p in (f"{u}_min", f"{u}_max")] + ["length_unknown"]},
         {"key": "genres", "label": "Genres & tags", "kind": "tags", "params": ["genre", "exclude"]},
-        # the series page links each author name here (author=A&author=B: by both)
-        {"key": "author", "label": "Author", "kind": "names", "params": ["author"]},
+        # the series page links each author name here (author=A&author=B: by both); the filter sheet
+        # lists the names from `source`
+        {"key": "author", "label": "Author", "kind": "names", "params": ["author"], "source": "/api/authors"},
         {"key": "fav", "label": "Favorites", "kind": "toggle", "params": ["fav"]},
         {"key": "letter", "label": "Starts with", "kind": "letter", "params": ["letter"]},
         # only through links and assistants for now: the sheets don't show them

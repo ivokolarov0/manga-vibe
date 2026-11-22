@@ -88,8 +88,13 @@ def test_filter_by_author(client):
         assert ids("Story") == []                          # a role is not a name
         assert len(ids("")) == client.get("/api/series").json()["total"]  # empty: no filter
         schema = client.get("/api/library/schema").json()
-        assert {"key": "author", "label": "Author", "kind": "names", "params": ["author"]} in schema["filters"]
+        f = next(f for f in schema["filters"] if f["key"] == "author")
+        assert (f["kind"], f["params"], f["source"]) == ("names", ["author"], "/api/authors")
         assert "author" in schema["params"]
+        # the filter sheet's Author group: each name once, with how many series
+        found = {a["name"]: a["count"] for a in client.get("/api/authors").json()}
+        assert found["Hisamu Oto"] == 2 and found["尾田 栄一郎"] == 1 and found["Zoë Ångström"] == 1
+        assert "Story" not in found
     finally:
         with SessionLocal() as db:
             for sid, authors in before.items():

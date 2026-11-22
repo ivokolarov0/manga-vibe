@@ -842,7 +842,7 @@ grid, the quick buttons, saved searches and `MangaVibe.filterLabels()` are all b
 | `filters` | a list of `{key, label, kind, params, ...}`. `params` are the query parameters it reads; no two filters share one |
 | kind `choice` | a group of options in the filter sheet: `options: [[value, label], ...]`, values sent comma-separated (`read=unread,reading`). **Add one and it shows up, with its chips and in saved searches, without any markup.** `read` with the reading statuses also makes the quick buttons |
 | kind `tags` | the Genres and Tags groups: `params: ["genre", "exclude"]`, one parameter per name (`genre=A&genre=B`) |
-| kind `names` | free-text names, one parameter per name (`author=A&author=B`), each a chip "Label: A" that can be removed. The sheets have no picker for it: links set it (the series page links each author name to `author=<name>`). Plugin API 26 |
+| kind `names` | free-text names, one parameter per name (`author=A&author=B`), each a chip "Label: A" that can be removed. `source`: a URL giving `[{name, count}]`, the names its group in the filter sheet offers (called with the library's scope, like `/api/tags`); the built-in Author filter uses `/api/authors`, and the series page links each author name to `author=<name>`. Plugin API 26 |
 | kind `length` | published totals in a range: `units: [["chapters", "Chapters"], ...]`, params `<unit>_min`, `<unit>_max`, `length_unknown` |
 | kind `toggle` | on or off (`fav=1`); `fav` is the Favorites quick button |
 | kind `letter`, `text` | the Letter sheet (`letter=a`, `#` for the rest), the search box (`q`) |

@@ -20,7 +20,7 @@ const COUNTRY = { JP: "Manga", KR: "Manhwa", CN: "Manhua", TW: "Manhua" };
    - choice: a group of options in the filter sheet (comma-separated values: read=unread,reading)
    - tags: the Genres and Tags groups (include/exclude; one parameter per value: genre=A&genre=B)
    - names: free-text names, one parameter per value (author=A&author=B), each a chip "Author: A";
-     the sheets have no picker for them, links set them (the series page's author names)
+     a group in the filter sheet lists the names `source` gives ([{name, count}], e.g. /api/authors)
    - length: published totals within a range per unit (<unit>_min, <unit>_max, length_unknown)
    - toggle "fav" and the "read" choice also make the quick buttons; letter: the Letter sheet
    - text: the search box; anything "hidden" only comes through links and assistants */
@@ -40,7 +40,7 @@ function deriveLib(s = {}) {
     defaultSort: s.default_sort || sorts[0]?.key || "",
     repeated: [...(tags ? tags.params : []), ...names.map((f) => f.params[0])],  // one URL parameter per value
     tags: !!tags,
-    names: names.map((f) => [f.params[0], f.label]),  // [param, label] of each names filter
+    names: names.map((f) => [f.params[0], f.label, f.source || ""]),  // [param, label, source] of each names filter
     listKeys: [...choices.map((f) => f.params[0]), ...(tags ? tags.params : []), ...names.map((f) => f.params[0])],
     lengthUnits: length ? length.units || [] : [],
     lengthKeys: length ? length.params || [] : [],
@@ -878,9 +878,29 @@ function filterSheet() {
         // unfold the groups that have something selected, so nothing chosen is hidden
         for (const [k] of this.groups) if (this.selected(k)) this.open[k] = true;
         if (this.selected("length")) this.open.length = true;
+        for (const [k] of this.lib.names) if (this.selected(k)) this.open[k] = true;
+        this.loadNames();
         this.tags = await api(`/api/tags?${scopeParam()}`).catch(() => this.tags);
         for (const k of ["genres", "tags"]) if (this.selected(k)) this.open[k] = true;
       });
+    },
+    // the names filters' groups (Author): the names their source lists, the chosen ones first
+    nameLists: {}, nameQuery: {},
+    async loadNames() {
+      for (const [k, , source] of this.lib.names) {
+        if (!source) continue;
+        const sep = source.includes("?") ? "&" : "?";
+        this.nameLists[k] = await api(`${source}${sep}${scopeParam()}`).catch(() => this.nameLists[k] || []);
+      }
+    },
+    shownNames(k) {
+      const q = (this.nameQuery[k] || "").toLowerCase(), on = getList(this.p, k);
+      const all = this.nameLists[k] || [], known = new Set(all.map((n) => n.name));
+      const chosen = [...on.filter((v) => !known.has(v)).map((name) => ({ name, count: 0 })),
+                      ...all.filter((n) => on.includes(n.name))];
+      const rest = all.filter((n) => !on.includes(n.name) && n.name.toLowerCase().includes(q))
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)).slice(0, 60);
+      return [...chosen, ...rest];
     },
     toggleGroup(k) { this.open[k] = !this.open[k]; },
     // how many options of a group are on (include and exclude both count)
