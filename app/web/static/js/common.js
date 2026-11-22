@@ -164,3 +164,23 @@ async function loadSettings() {
 /* The MangaVibe Android app (android/) puts the page in a WebView and adds window.MangaVibeAndroid:
    readerState(open, volumeKeys), changeServer(), server(), version(). Null in a browser. */
 const androidApp = window.MangaVibeAndroid || null;
+
+/* Android tablets (the app, and Chrome): a <select>'s list opens beside it, not as the phone's full-screen
+   picker, and a tap on the select while its list is open closes the list and then opens it again at once,
+   so it can't be closed that way (#246). That tap now only closes it. Taps only: a mouse works as on a
+   computer. The list is closed again when an option is picked, or when another tap lands elsewhere; a phone's
+   picker takes the window's focus, so the page getting it back means that picker is gone. */
+if (/Android/i.test(navigator.userAgent)) {
+  let openSelect = null;  // the select whose list a tap opened
+  document.addEventListener("mousedown", (e) => {
+    if (!e.sourceCapabilities?.firesTouchEvents) return;
+    const sel = e.target.closest?.("select");
+    if (sel && sel === openSelect) {
+      e.preventDefault();  // the select doesn't open its list again
+      sel.blur();
+      openSelect = null;
+    } else openSelect = sel && !sel.disabled ? sel : null;
+  }, true);
+  document.addEventListener("change", (e) => { if (e.target === openSelect) openSelect = null; }, true);
+  window.addEventListener("focus", () => { openSelect = null; });
+}
