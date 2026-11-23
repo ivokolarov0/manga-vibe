@@ -1372,7 +1372,7 @@ function seriesController() {
     get details() {
       const s = this.s;
       return [
-        ["Author", s.authors.map((a) => a.name + (a.role ? ` (${a.role})` : "")).join("\n")],
+        ["Author", (s.creators || []).map((a) => a.name + (a.roles.length ? ` (${a.roles.join(", ")})` : "")).join("\n")],
         ["Year", s.start_year], ["Type", kindOf(s)], ["Status", PUB_LABELS[s.publication_status]],
         ["Length", [s.volumes_total && `${s.volumes_total} volumes`, s.chapters_total && `${s.chapters_total} chapters`].filter(Boolean).join(" · ")],
         ["You have", haveText(s.collection)],

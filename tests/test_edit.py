@@ -102,6 +102,40 @@ def test_filter_by_author(client):
             db.commit()
 
 
+def test_creators_only(client):
+    """The series page and the filter sheet's Author list show the writers and artists, not the
+    translators, letterers and other staff AniList lists; the editor keeps everyone."""
+    from app.db import SessionLocal
+    from app.models import Series
+    from app.metadata.creators import creator_roles
+    assert creator_roles("Story & Art") == ["Story & Art"]
+    assert creator_roles("Original Story (Light Novel)") == ["Original Story"]
+    assert creator_roles("Story, Translator") == ["Story"]
+    assert creator_roles("Touch-up Art & Lettering") is None and creator_roles("Translator (English)") is None
+    assert creator_roles("") == [] and creator_roles(None) == []  # no role: counts, with none shown
+    sid = client.get("/api/series").json()["items"][0]["id"]
+    people = [{"name": "Hisamu Oto", "role": "Story & Art"}, {"name": "Ann Writer", "role": "Original Story"},
+              {"name": "Tom Translator", "role": "Translator (English)"}, {"name": "Lee Letters", "role": "Lettering"},
+              {"name": "Hisamu Oto", "role": "Artist"}, {"name": "Zoë Ångström", "role": ""}]
+    with SessionLocal() as db:
+        before = db.get(Series, sid).authors
+        db.get(Series, sid).authors = people
+        db.commit()
+    try:
+        s = client.get(f"/api/series/{sid}").json()
+        assert s["creators"] == [{"name": "Hisamu Oto", "roles": ["Story & Art", "Artist"]},
+                                 {"name": "Ann Writer", "roles": ["Original Story"]},
+                                 {"name": "Zoë Ångström", "roles": []}]
+        assert s["authors"] == people  # everyone, for the editor
+        found = {a["name"] for a in client.get("/api/authors").json()}
+        assert {"Hisamu Oto", "Ann Writer", "Zoë Ångström"} <= found
+        assert not found & {"Tom Translator", "Lee Letters"}
+    finally:
+        with SessionLocal() as db:
+            db.get(Series, sid).authors = before
+            db.commit()
+
+
 @pytest.mark.parametrize("body", [
     {"start_year": 1500}, {"publication_status": "SOMETIMES"}, {"average_score": 140},
     {"links": [{"site": "x", "url": "javascript:alert(1)"}]}, {"title_english": "x" * 301},
