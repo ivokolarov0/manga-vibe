@@ -1,12 +1,13 @@
 """Library grid, series details, continue reading, plugin actions."""
 import logging
 import traceback
+from collections import Counter
 from datetime import timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
-from sqlalchemy import and_, func, true
+from sqlalchemy import and_, func
 
 from app.api import filters
 from app.api.common import (READING_STATUSES, book_dict, continue_target, emit_reading_events, get_or_404, now,
@@ -19,6 +20,7 @@ from app.users import manage
 from app.db import get_db
 from app.direction import MODES, reading_direction
 from app.metadata import service as metadata, worker as metadata_worker
+from app.metadata.creators import creators
 from app.metadata.http import ProviderError
 from app.models import Book, Library, Link, PluginField, Progress, Series, SeriesState, SeriesTag, Tag
 from app.plugins import Context, action_result, implements, manager as plugins
@@ -139,14 +141,13 @@ def list_tags(request: Request, db=Depends(get_db)):
 @router.get("/authors")
 def list_authors(request: Request, db=Depends(get_db)):
     """Author names with the number of series by them (the filter panel's Author group), of the series
-    the request may see. A name listed twice on a series (Author and Artist) counts it once."""
-    people = func.json_each(Series.authors).table_valued("value").alias("people")
-    name = func.trim(func.json_extract(people.c.value, "$.name"))
-    rows = (db.query(name, func.count(Series.id.distinct()))
-            .select_from(Series).join(people, true())
-            .filter(Series.missing_since.is_(None), name != "", *visible_series(db, request))
-            .group_by(name).order_by(name).all())
-    return [{"name": n, "count": c} for n, c in rows if n]
+    the request may see. Only the creators (story, art), as on the series page: not translators and
+    other staff. A name listed twice on a series (Author and Artist) counts it once."""
+    counts = Counter()
+    for (people,) in (db.query(Series.authors)
+                      .filter(Series.missing_since.is_(None), *visible_series(db, request))):
+        counts.update(p["name"] for p in creators(people))
+    return [{"name": n, "count": counts[n]} for n in sorted(counts)]
 
 
 def host_path(lib, folder):
@@ -189,6 +190,8 @@ def get_series(series_id: int, db=Depends(get_db)):
         "collection": filters.collections(db, [s])[s.id],
         "editions": s.editions or [], "edition_volumes": s.edition_volumes,
         "average_score": s.average_score, "authors": s.authors or [],
+        # the writers and artists among them, each once (the page shows these; the editor all of them)
+        "creators": creators(s.authors),
         "match_status": s.match_status, "match_confidence": s.match_confidence,
         "metadata_source": s.metadata_source, "match_candidates": s.match_candidates or [],
         "publication_status": s.publication_status, "country_of_origin": s.country_of_origin,

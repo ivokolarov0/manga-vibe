@@ -33,17 +33,10 @@ MangaVibe.onStart(() => {
       },
       get spoilerCount() { return c().tagList.filter((t) => t.spoiler).length; },
       tagUrl(name) { return MangaVibe.ui.libraryUrl({ genre: name }); },
-      // the Author row: each name once, with its roles ("OTO Hisamu" as Author and Artist: one link)
+      // the Author row: the writers and artists (the API's `creators`, without translators and other
+      // staff), each name once with its roles ("OTO Hisamu" as Author and Artist: one link)
       get authors() {
-        const out = new Map();
-        for (const a of c().s?.authors || []) {
-          const name = (a.name || "").trim();
-          if (!name) continue;
-          const roles = out.get(name) || [];
-          if (a.role && !roles.includes(a.role)) roles.push(a.role);
-          out.set(name, roles);
-        }
-        return [...out].map(([name, roles]) => ({ name, roles: roles.join(", ") }));
+        return (c().s?.creators || []).map((a) => ({ name: a.name, roles: a.roles.join(", ") }));
       },
       authorUrl(name) { return MangaVibe.ui.libraryUrl({ author: name }); },
 
