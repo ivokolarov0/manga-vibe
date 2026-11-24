@@ -257,13 +257,21 @@ msgstr "自動：最初のページ"
 msgid "Automatic: {mode}"
 msgstr "自動：{mode}"
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Back"
 msgstr "戻る"
+
+#: app/web/static/js/reader.js
+msgid "Back to series"
+msgstr "シリーズに戻る"
 
 #: app/web/static/js/app.js
 msgid "Back to the numbers from the file name"
 msgstr "ファイル名の番号に戻しました"
+
+#: app/web/static/js/reader.js
+msgid "Back to the reading options"
+msgstr "読書オプションに戻る"
 
 #: app/web/static/js/app.js
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
@@ -285,6 +293,22 @@ msgstr "本"
 msgid "Bottom"
 msgstr "下"
 
+#: app/web/static/js/reader.js
+msgid "Box background"
+msgstr "枠の背景"
+
+#: app/web/static/js/reader.js
+msgid "Box hidden. Reader options → Show hidden boxes brings it back."
+msgstr "枠を隠しました。読書オプション → 隠した枠を表示 で戻せます。"
+
+#: app/web/static/js/reader.js
+msgid "Boxes on the page"
+msgstr "ページ上の枠"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Brightness"
+msgstr "明るさ"
+
 #: app/web/static/js/app.js
 msgid "Browser's language"
 msgstr "ブラウザの言語"
@@ -300,6 +324,10 @@ msgstr "Docker イメージに内蔵、ダウンロード不要"
 #: app/web/static/js/app.js
 msgid "Built-in version (from the Docker image)"
 msgstr "組み込みバージョン（Docker イメージ）"
+
+#: app/web/static/js/reader.js
+msgid "Can't reach MangaVibe"
+msgstr "MangaVibe に接続できません"
 
 #: app/web/templates/settings/plugin.html
 msgid "Can't run: {why}"
@@ -357,7 +385,7 @@ msgstr "サーバーを変更"
 msgid "Change your password"
 msgstr "パスワードの変更"
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/reader.js
 msgid "Chapter"
 msgstr "話"
 
@@ -409,9 +437,13 @@ msgstr "検索をクリア"
 msgid "Cleared: the series page shows the path inside Docker"
 msgstr "クリアしました。シリーズのページには Docker 内のパスが表示されます"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/shell/toasts.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/reader.js app/web/templates/shell/toasts.html
 msgid "Close"
 msgstr "閉じる"
+
+#: app/web/static/js/reader.js
+msgid "Close options"
+msgstr "オプションを閉じる"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py
 msgid "Collection"
@@ -465,6 +497,10 @@ msgstr "続きを読む"
 msgid "Continue reading page"
 msgstr "続きを読むページ"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Contrast"
+msgstr "コントラスト"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copied"
 msgstr "コピーしました"
@@ -476,6 +512,10 @@ msgstr "コピー"
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copy path"
 msgstr "パスをコピー"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Could not load page {n}"
+msgstr "{n} ページを読み込めませんでした"
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Could not load the library: {error}"
@@ -596,6 +636,10 @@ msgstr "あらすじ"
 msgid "Details"
 msgstr "詳細"
 
+#: app/web/static/js/reader.js
+msgid "Device default"
+msgstr "端末の既定"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Disabled"
 msgstr "無効"
@@ -692,6 +736,14 @@ msgstr "編集 · {title}"
 msgid "Edition"
 msgstr "版"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "End of the series."
+msgstr "シリーズの終わりです。"
+
+#: app/web/static/js/reader.js
+msgid "End of {book}"
+msgstr "{book} の終わり"
+
 #: app/web/static/js/app.js
 msgid "English"
 msgstr "英語"
@@ -727,6 +779,10 @@ msgstr "全員がログインします。アカウントごとに読書の進み
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18."
 msgstr "例：10〜18 話を含む zip → 話 10、終わりの話 18。"
+
+#: app/web/static/js/reader.js
+msgid "Exit fullscreen"
+msgstr "全画面を終了"
 
 #: app/web/templates/settings/backup.html
 msgid "Export"
@@ -816,15 +872,15 @@ msgstr "完結済みで巻や話が欠けているシリーズ"
 msgid "Fit"
 msgstr "サイズ合わせ"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Fit height"
 msgstr "高さに合わせる"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Fit screen"
 msgstr "画面に合わせる"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Fit width"
 msgstr "幅に合わせる"
 
@@ -895,6 +951,14 @@ msgstr "リリースノートを見る"
 #: app/web/static/js/app.js
 msgid "Full width"
 msgstr "全幅"
+
+#: app/web/static/js/reader.js
+msgid "Fullscreen"
+msgstr "全画面"
+
+#: app/web/static/js/reader.js
+msgid "Fullscreen not available"
+msgstr "全画面にできません"
 
 #: app/web/static/js/app.js
 msgid "Fullscreen on first tap"
@@ -996,7 +1060,7 @@ msgstr "非表示（古い版）"
 msgid "Hidden from this list. “Show ignored” brings it back."
 msgstr "この一覧から隠しました。「無視した項目を表示」で戻せます。"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Hide controls after"
 msgstr "操作ボタンを隠すまで"
 
@@ -1007,6 +1071,10 @@ msgstr "読書から隠す"
 #: app/web/templates/settings/attention.html
 msgid "Hide ignored rows"
 msgstr "無視した項目を隠す"
+
+#: app/web/static/js/reader.js
+msgid "Hide this box"
+msgstr "この枠を隠す"
 
 #: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
 msgid "Hide this one"
@@ -1132,7 +1200,7 @@ msgstr "インストール済み"
 msgid "Installed v{version}"
 msgstr "v{version} をインストール済み"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Inverted"
 msgstr "反転"
 
@@ -1140,7 +1208,7 @@ msgstr "反転"
 msgid "Inverted turns white pages black with white lines. Warm takes out the blue light"
 msgstr "反転は白いページを黒地に白い線にします。暖色はブルーライトを抑えます"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Inverted, warm"
 msgstr "反転・暖色"
 
@@ -1244,7 +1312,7 @@ msgstr "左で戻る、右で進む"
 msgid "Length"
 msgstr "長さ"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Less"
 msgstr "低め"
 
@@ -1332,7 +1400,7 @@ msgstr "スクロールで続きを読み込むか、ページ番号で表示し
 msgid "Loading the plugin sources…"
 msgstr "プラグインのソースを読み込み中…"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr "読み込み中…"
 
@@ -1535,7 +1603,7 @@ msgstr "欠けている章：{chapters}"
 msgid "Missing metadata"
 msgstr "メタデータなし"
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "More"
 msgstr "高め"
 
@@ -1555,7 +1623,7 @@ msgstr "高めにすると薄い線や小さな文字が見やすくなります
 msgid "More plugins come from other sources: {link}."
 msgstr "ほかのソースからもプラグインを入手できます：{link}。"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Most"
 msgstr "最大"
 
@@ -1674,9 +1742,17 @@ msgstr "新しい順"
 msgid "Next"
 msgstr "次へ"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/web/static/js/reader.js
+msgid "Next chapter"
+msgstr "次の章"
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Next page"
 msgstr "次のページ"
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/reader.js
+msgid "Next: {book}"
+msgstr "次：{book}"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "No"
@@ -1734,6 +1810,10 @@ msgstr "プラグインはインストールされていません。"
 msgid "No plugins match."
 msgstr "一致するプラグインはありません。"
 
+#: app/web/static/js/reader.js
+msgid "No reader for pictures loaded. Reload the page, or check Settings → Plugins."
+msgstr "画像用のリーダーが読み込まれていません。ページを再読み込みするか、設定 → プラグイン を確認してください。"
+
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "No results. Try a different spelling or the English/Japanese title."
 msgstr "結果がありません。別の表記か英語・日本語のタイトルで試してください。"
@@ -1762,7 +1842,7 @@ msgstr "なし"
 msgid "None in use"
 msgstr "使用中のものはありません"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Normal"
 msgstr "標準"
 
@@ -1846,7 +1926,7 @@ msgstr "番号は手動設定"
 msgid "Numbers, symbols and other scripts"
 msgstr "数字・記号・その他の文字"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
 msgid "Off"
 msgstr "オフ"
 
@@ -1858,7 +1938,7 @@ msgstr "オフ（スワイプのみ）"
 msgid "Oldest first"
 msgstr "古い順"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr "オン"
 
@@ -1970,6 +2050,10 @@ msgstr "順序"
 msgid "Original"
 msgstr "原寸"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Original size"
+msgstr "原寸"
+
 #: app/plugins/__init__.py app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Other"
 msgstr "その他"
@@ -1998,7 +2082,7 @@ msgstr "オーバーレイ文字のふち"
 msgid "owner/repo or https://…/plugins.json"
 msgstr "owner/repo または https://…/plugins.json"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/reader.js
 msgid "Page"
 msgstr "ページ"
 
@@ -2006,7 +2090,7 @@ msgstr "ページ"
 msgid "Page brightness"
 msgstr "ページの明るさ"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page colours"
 msgstr "ページの色"
 
@@ -2014,15 +2098,23 @@ msgstr "ページの色"
 msgid "Page contrast"
 msgstr "ページのコントラスト"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Page look"
+msgstr "ページの見た目"
+
 #: app/web/static/js/app.js
 msgid "Page width"
 msgstr "ページの幅"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/reader.js
+msgid "Page {n}"
+msgstr "{n} ページ"
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr "{pages} ページ中 {page} ページ"
 
-#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Pages"
 msgstr "ページ"
 
@@ -2122,7 +2214,7 @@ msgstr "プラグインのソースを更新しました"
 msgid "Plugin tools"
 msgstr "プラグインのツール"
 
-#: app/plugins/web.py app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/web.py app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "プラグイン"
 
@@ -2154,7 +2246,11 @@ msgstr "プレビュー（未保存）"
 msgid "Previous"
 msgstr "前へ"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/web/static/js/reader.js
+msgid "Previous chapter"
+msgstr "前の章"
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Previous page"
 msgstr "前のページ"
 
@@ -2182,6 +2278,10 @@ msgstr "ディスク上のファイルを直したあと、このシリーズの
 msgid "Read"
 msgstr "既読"
 
+#: app/web/static/js/reader.js
+msgid "Read aloud"
+msgstr "読み上げ"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
 msgstr "ブラウザの代わりに MangaVibe アプリで読めます。ブラウザのバーのない全画面で、読んでいる間は画面が消えず、音量ボタンでページをめくれます。同じ MangaVibe を表示するので、ライブラリ・進み具合・設定はそのままです。"
@@ -2189,6 +2289,10 @@ msgstr "ブラウザの代わりに MangaVibe アプリで読めます。ブラ�
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
 msgstr "リーダー"
+
+#: app/web/static/js/reader.js
+msgid "Reader settings"
+msgstr "リーダーの設定"
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Reading"
@@ -2213,6 +2317,14 @@ msgstr "読み方：{mode}"
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Reading mode…"
 msgstr "読み方…"
+
+#: app/web/static/js/reader.js
+msgid "Reading options"
+msgstr "読書オプション"
+
+#: app/web/static/js/reader.js
+msgid "Reading speed"
+msgstr "読み上げの速さ"
 
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "Reading status"
@@ -2492,7 +2604,7 @@ msgstr "{source} を検索中…"
 msgid "See {url}"
 msgstr "{url} を参照"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "See-through"
 msgstr "透明"
 
@@ -2617,6 +2729,11 @@ msgid "Show {n} file"
 msgid_plural "Show {n} files"
 msgstr[0] "{n} 個のファイルを表示"
 
+#: app/web/static/js/reader.js
+msgid "Show {n} hidden box"
+msgid_plural "Show {n} hidden boxes"
+msgstr[0] "隠した枠 {n} 個を表示"
+
 #: app/web/templates/settings/attention.html
 msgid "Show {n} ignored"
 msgstr "無視した {n} 件を表示"
@@ -2638,7 +2755,7 @@ msgstr "このバージョンをスキップ"
 msgid "Small"
 msgstr "小"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Solid"
 msgstr "不透明"
 
@@ -2682,6 +2799,10 @@ msgstr "ソースと設定"
 msgid "Start"
 msgstr "読み始める"
 
+#: app/web/static/js/reader.js
+msgid "Start of book. Previous: {book}"
+msgstr "本の始めです。前：{book}"
+
 #: app/web/static/js/app.js
 msgid "Starting…"
 msgstr "開始中…"
@@ -2718,6 +2839,10 @@ msgstr "オンにしますか？"
 msgid "Switch the plugin on to change its settings."
 msgstr "設定を変更するにはプラグインをオンにしてください。"
 
+#: app/web/static/js/reader.js
+msgid "Switch {overlay} on above to hear its text."
+msgstr "テキストを聞くには、上の {overlay} をオンにしてください。"
+
 #: app/plugins/__init__.py
 msgid "System"
 msgstr "システム"
@@ -2730,9 +2855,17 @@ msgstr "タグ"
 msgid "Tap once to include, again to exclude, again to clear."
 msgstr "1 回タップで含める、もう 1 回で除外、さらにもう 1 回で解除。"
 
+#: app/web/static/js/reader.js
+msgid "Tap the page to start reading aloud"
+msgstr "ページをタップすると読み上げを始めます"
+
 #: app/web/static/js/app.js
 msgid "Tap zones"
 msgstr "タップ領域"
+
+#: app/web/static/js/reader.js
+msgid "Text outline"
+msgstr "文字のふち"
 
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
@@ -2789,6 +2922,14 @@ msgstr "新しいバージョンが動き出すと、ページは自動で再読
 #: app/web/templates/sheets/library.html
 msgid "The published total, from the metadata. Leave a box empty for no limit."
 msgstr "メタデータにある刊行総数です。空欄なら制限なし。"
+
+#: app/web/static/js/reader.js
+msgid "The reader for this book didn't load. Reload the page, or check its plugin in Settings → Plugins."
+msgstr "この本のリーダーが読み込まれませんでした。ページを再読み込みするか、設定 → プラグイン でそのプラグインを確認してください。"
+
+#: app/web/static/js/reader.js
+msgid "The reader for this book failed: {error}"
+msgstr "この本のリーダーでエラーが起きました：{error}"
 
 #: app/contracts/__init__.py
 msgid "The Reader page of Settings"
@@ -2866,17 +3007,21 @@ msgstr "これらのファイルは開けませんでした。理由はメッセ
 msgid "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."
 msgstr "これらのシリーズはオンラインの同じ作品に照合されています。フォルダが二つに分かれているか、照合が誤っていることがよくあります。"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Thick"
 msgstr "太い"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Thin"
 msgstr "細い"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "This can't be undone."
 msgstr "元に戻せません。"
+
+#: app/web/static/js/reader.js
+msgid "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."
+msgstr "テキストの本（ライトノベル）です。読むには 設定 → プラグイン でテキスト用のリーダーを追加してください。"
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "This is the only library. Add another one first."
@@ -2918,6 +3063,10 @@ msgstr "このバージョンをスキップしました。次のバージョン
 msgid "This version needs a new Docker image"
 msgstr "このバージョンには新しい Docker イメージが必要です"
 
+#: app/web/static/js/reader.js
+msgid "This was the last book in the series."
+msgstr "シリーズ最後の本でした。"
+
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Title"
 msgstr "タイトル"
@@ -2942,7 +3091,7 @@ msgstr "終わりの話"
 msgid "Top"
 msgstr "上"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Top bar"
 msgstr "上部バー"
 
@@ -2950,13 +3099,17 @@ msgstr "上部バー"
 msgid "Tried in this order. Fallbacks are used when the main source has no match or is down."
 msgstr "この順に試します。メインのソースで見つからないか停止中のときは予備を使います。"
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js
 msgid "Try again"
 msgstr "再試行"
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Try automatic match again"
 msgstr "もう一度自動照合する"
+
+#: app/web/static/js/reader.js
+msgid "Turn pages by itself"
+msgstr "自動でページをめくる"
 
 #: app/plugins/builtin/attention_lists/__init__.py
 msgid "Two or more files with the same chapter number. Both are kept."
@@ -3114,7 +3267,7 @@ msgstr "バージョン {version} があります"
 msgid "Version {version} is available (you have {current})"
 msgstr "バージョン {version} があります（現在 {current}）"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Vertical"
 msgstr "縦スクロール"
 
@@ -3125,6 +3278,10 @@ msgstr "縦スクロール（ウェブトゥーン）"
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "View"
 msgstr "表示"
+
+#: app/web/static/js/reader.js
+msgid "Voice"
+msgstr "声"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "vol {n}"
@@ -3146,7 +3303,7 @@ msgstr "本のファイル名から巻・章・版を読み取ります"
 msgid "Volumes"
 msgstr "巻数"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Warm"
 msgstr "暖色"
 
@@ -3202,7 +3359,7 @@ msgstr "フォルダ名から、ソースの検索結果のどれがシリーズ
 msgid "Without {job}"
 msgstr "{job} なし"
 
-#: app/web/static/js/app.js app/web/templates/shell/toasts.html
+#: app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/shell/toasts.html
 msgid "Working…"
 msgstr "処理中…"
 
@@ -3251,6 +3408,14 @@ msgstr "ライブラリ、進み具合、設定はそのままです。アプリ
 msgid "Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble."
 msgstr "自分で入れたプラグインは読み込まれておらず、組み込みのものだけです。問題のあるプラグインをオフにしてください。"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Zoom allowed (tap to lock)"
+msgstr "ズーム可（タップでロック）"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Zoom locked (tap to allow zoom and moving)"
+msgstr "ズームをロック中（タップでズームと移動を許可）"
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "{account} doesn't see {library} now"
 msgstr "{account} は {library} を見られなくなりました"
@@ -3274,6 +3439,10 @@ msgstr "{label}：不明"
 #: app/web/static/js/app.js
 msgid "{length} or unknown"
 msgstr "{length} または不明"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "{level} contrast"
+msgstr "コントラスト：{level}"
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "{library} is locked"

@@ -257,12 +257,20 @@ msgstr ""
 msgid "Automatic: {mode}"
 msgstr ""
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Back"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Back to series"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Back to the numbers from the file name"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Back to the reading options"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -285,6 +293,22 @@ msgstr ""
 msgid "Bottom"
 msgstr ""
 
+#: app/web/static/js/reader.js
+msgid "Box background"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Box hidden. Reader options → Show hidden boxes brings it back."
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Boxes on the page"
+msgstr ""
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Brightness"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Browser's language"
 msgstr ""
@@ -299,6 +323,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Built-in version (from the Docker image)"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Can't reach MangaVibe"
 msgstr ""
 
 #: app/web/templates/settings/plugin.html
@@ -357,7 +385,7 @@ msgstr ""
 msgid "Change your password"
 msgstr ""
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/reader.js
 msgid "Chapter"
 msgstr ""
 
@@ -409,8 +437,12 @@ msgstr ""
 msgid "Cleared: the series page shows the path inside Docker"
 msgstr ""
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/shell/toasts.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/reader.js app/web/templates/shell/toasts.html
 msgid "Close"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Close options"
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py
@@ -465,6 +497,10 @@ msgstr ""
 msgid "Continue reading page"
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Contrast"
+msgstr ""
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copied"
 msgstr ""
@@ -475,6 +511,10 @@ msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copy path"
+msgstr ""
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Could not load page {n}"
 msgstr ""
 
 #: app/plugins/builtin/library_page/templates/views/library.html
@@ -599,6 +639,10 @@ msgstr ""
 msgid "Details"
 msgstr ""
 
+#: app/web/static/js/reader.js
+msgid "Device default"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Disabled"
 msgstr ""
@@ -695,6 +739,14 @@ msgstr ""
 msgid "Edition"
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "End of the series."
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "End of {book}"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "English"
 msgstr ""
@@ -729,6 +781,10 @@ msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18."
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Exit fullscreen"
 msgstr ""
 
 #: app/web/templates/settings/backup.html
@@ -819,15 +875,15 @@ msgstr ""
 msgid "Fit"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Fit height"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Fit screen"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Fit width"
 msgstr ""
 
@@ -897,6 +953,14 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Full width"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Fullscreen"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Fullscreen not available"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -999,7 +1063,7 @@ msgstr ""
 msgid "Hidden from this list. “Show ignored” brings it back."
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Hide controls after"
 msgstr ""
 
@@ -1009,6 +1073,10 @@ msgstr ""
 
 #: app/web/templates/settings/attention.html
 msgid "Hide ignored rows"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Hide this box"
 msgstr ""
 
 #: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
@@ -1135,7 +1203,7 @@ msgstr ""
 msgid "Installed v{version}"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Inverted"
 msgstr ""
 
@@ -1143,7 +1211,7 @@ msgstr ""
 msgid "Inverted turns white pages black with white lines. Warm takes out the blue light"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Inverted, warm"
 msgstr ""
 
@@ -1247,7 +1315,7 @@ msgstr ""
 msgid "Length"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Less"
 msgstr ""
 
@@ -1335,7 +1403,7 @@ msgstr ""
 msgid "Loading the plugin sources…"
 msgstr ""
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr ""
 
@@ -1541,7 +1609,7 @@ msgstr ""
 msgid "Missing metadata"
 msgstr ""
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "More"
 msgstr ""
 
@@ -1561,7 +1629,7 @@ msgstr ""
 msgid "More plugins come from other sources: {link}."
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Most"
 msgstr ""
 
@@ -1683,8 +1751,16 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/web/static/js/reader.js
+msgid "Next chapter"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Next page"
+msgstr ""
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/reader.js
+msgid "Next: {book}"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
@@ -1743,6 +1819,10 @@ msgstr ""
 msgid "No plugins match."
 msgstr ""
 
+#: app/web/static/js/reader.js
+msgid "No reader for pictures loaded. Reload the page, or check Settings → Plugins."
+msgstr ""
+
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "No results. Try a different spelling or the English/Japanese title."
 msgstr ""
@@ -1771,7 +1851,7 @@ msgstr ""
 msgid "None in use"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Normal"
 msgstr ""
 
@@ -1855,7 +1935,7 @@ msgstr ""
 msgid "Numbers, symbols and other scripts"
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
 msgid "Off"
 msgstr ""
 
@@ -1867,7 +1947,7 @@ msgstr ""
 msgid "Oldest first"
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr ""
 
@@ -1979,6 +2059,10 @@ msgstr ""
 msgid "Original"
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Original size"
+msgstr ""
+
 #: app/plugins/__init__.py app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Other"
 msgstr ""
@@ -2007,7 +2091,7 @@ msgstr ""
 msgid "owner/repo or https://…/plugins.json"
 msgstr ""
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/reader.js
 msgid "Page"
 msgstr ""
 
@@ -2015,7 +2099,7 @@ msgstr ""
 msgid "Page brightness"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page colours"
 msgstr ""
 
@@ -2023,15 +2107,23 @@ msgstr ""
 msgid "Page contrast"
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Page look"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Page width"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/reader.js
+msgid "Page {n}"
+msgstr ""
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr ""
 
-#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Pages"
 msgstr ""
 
@@ -2131,7 +2223,7 @@ msgstr ""
 msgid "Plugin tools"
 msgstr ""
 
-#: app/plugins/web.py app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/web.py app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr ""
 
@@ -2163,7 +2255,11 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/web/static/js/reader.js
+msgid "Previous chapter"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Previous page"
 msgstr ""
 
@@ -2191,12 +2287,20 @@ msgstr ""
 msgid "Read"
 msgstr ""
 
+#: app/web/static/js/reader.js
+msgid "Read aloud"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
 msgstr ""
 
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Reader settings"
 msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
@@ -2221,6 +2325,14 @@ msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Reading mode…"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Reading options"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Reading speed"
 msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html
@@ -2503,7 +2615,7 @@ msgstr ""
 msgid "See {url}"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "See-through"
 msgstr ""
 
@@ -2629,6 +2741,12 @@ msgid_plural "Show {n} files"
 msgstr[0] ""
 msgstr[1] ""
 
+#: app/web/static/js/reader.js
+msgid "Show {n} hidden box"
+msgid_plural "Show {n} hidden boxes"
+msgstr[0] ""
+msgstr[1] ""
+
 #: app/web/templates/settings/attention.html
 msgid "Show {n} ignored"
 msgstr ""
@@ -2651,7 +2769,7 @@ msgstr ""
 msgid "Small"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Solid"
 msgstr ""
 
@@ -2695,6 +2813,10 @@ msgstr ""
 msgid "Start"
 msgstr ""
 
+#: app/web/static/js/reader.js
+msgid "Start of book. Previous: {book}"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Starting…"
 msgstr ""
@@ -2731,6 +2853,10 @@ msgstr ""
 msgid "Switch the plugin on to change its settings."
 msgstr ""
 
+#: app/web/static/js/reader.js
+msgid "Switch {overlay} on above to hear its text."
+msgstr ""
+
 #: app/plugins/__init__.py
 msgid "System"
 msgstr ""
@@ -2743,8 +2869,16 @@ msgstr ""
 msgid "Tap once to include, again to exclude, again to clear."
 msgstr ""
 
+#: app/web/static/js/reader.js
+msgid "Tap the page to start reading aloud"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Tap zones"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Text outline"
 msgstr ""
 
 #: app/contracts/__init__.py
@@ -2801,6 +2935,14 @@ msgstr ""
 
 #: app/web/templates/sheets/library.html
 msgid "The published total, from the metadata. Leave a box empty for no limit."
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "The reader for this book didn't load. Reload the page, or check its plugin in Settings → Plugins."
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "The reader for this book failed: {error}"
 msgstr ""
 
 #: app/contracts/__init__.py
@@ -2879,16 +3021,20 @@ msgstr ""
 msgid "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Thick"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Thin"
 msgstr ""
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "This can't be undone."
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."
 msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
@@ -2931,6 +3077,10 @@ msgstr ""
 msgid "This version needs a new Docker image"
 msgstr ""
 
+#: app/web/static/js/reader.js
+msgid "This was the last book in the series."
+msgstr ""
+
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Title"
 msgstr ""
@@ -2955,7 +3105,7 @@ msgstr ""
 msgid "Top"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Top bar"
 msgstr ""
 
@@ -2963,12 +3113,16 @@ msgstr ""
 msgid "Tried in this order. Fallbacks are used when the main source has no match or is down."
 msgstr ""
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js
 msgid "Try again"
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Try automatic match again"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Turn pages by itself"
 msgstr ""
 
 #: app/plugins/builtin/attention_lists/__init__.py
@@ -3127,7 +3281,7 @@ msgstr ""
 msgid "Version {version} is available (you have {current})"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Vertical"
 msgstr ""
 
@@ -3137,6 +3291,10 @@ msgstr ""
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "View"
+msgstr ""
+
+#: app/web/static/js/reader.js
+msgid "Voice"
 msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
@@ -3159,7 +3317,7 @@ msgstr ""
 msgid "Volumes"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Warm"
 msgstr ""
 
@@ -3215,7 +3373,7 @@ msgstr ""
 msgid "Without {job}"
 msgstr ""
 
-#: app/web/static/js/app.js app/web/templates/shell/toasts.html
+#: app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/shell/toasts.html
 msgid "Working…"
 msgstr ""
 
@@ -3265,6 +3423,14 @@ msgstr ""
 msgid "Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble."
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Zoom allowed (tap to lock)"
+msgstr ""
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Zoom locked (tap to allow zoom and moving)"
+msgstr ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "{account} doesn't see {library} now"
 msgstr ""
@@ -3287,6 +3453,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "{length} or unknown"
+msgstr ""
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "{level} contrast"
 msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js

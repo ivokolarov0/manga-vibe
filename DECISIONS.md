@@ -1246,6 +1246,9 @@ Plugin API version, and the app works after every one.
   all show the page's language. A text with a number in it is one translated sentence per unit ("{n}+
   chapters", "Up to {n} volumes") instead of English words joined around the number. Book labels ("Vol 1")
   and errors from the server stay English until the server-texts step.
+- **Step 2c, the reader**: reader.js builds its markup as strings, so every translated text that goes into
+  `innerHTML` is escaped (`esc(t(…))`); the image reader (a plugin) uses `MangaVibe.t` and its own
+  `escHtml`. Messages only for developers (`console.error`) stay English.
 
 ### Export and import (issue #262)
 
