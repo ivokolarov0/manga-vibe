@@ -8,6 +8,7 @@ Replace it with a plugin of your own that provides {"book:label": 1} and has boo
 from pathlib import Path
 
 from app.plugins import Plugin
+from app.plugins.sdk import t
 
 
 def _fmt(n):
@@ -15,17 +16,18 @@ def _fmt(n):
 
 
 def label(b):
-    """b: a Book. Its numbers with the owner's changes (eff_*)."""
+    """b: a Book. Its numbers with the owner's changes (eff_*), in the language of the person asking (#263)."""
     if b.eff_extra and b.eff_chapter is None and b.eff_volume is None:
-        return "Extra" + ("" if b.extra_index is None else f" {_fmt(b.extra_index)}")
+        return t("Extra") if b.extra_index is None else t("Extra {n}", n=_fmt(b.extra_index))
     parts = []
     if b.eff_volume is not None:
-        parts.append(f"Vol {_fmt(b.eff_volume)}")
+        parts.append(t("Vol {n}", n=_fmt(b.eff_volume)))
     if b.eff_chapter is not None:
         end = b.eff_chapter_end
-        parts.append(f"Ch {_fmt(b.eff_chapter)}" + (f"-{_fmt(end)}" if end is not None else ""))
+        parts.append(t("Ch {n}", n=_fmt(b.eff_chapter)) if end is None
+                     else t("Ch {from}-{to}", **{"from": _fmt(b.eff_chapter), "to": _fmt(end)}))
     if b.eff_extra:
-        parts.append("extra")
+        parts.append(t("extra"))
     return " ".join(parts) or Path(b.file_name).stem
 
 

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.api.common import ensure_inside_library, get_or_404
 from app.db import get_db
+from app.i18n import t
 from app.metadata import favicon, http, service as metadata
 from app.models import Book, Link, Series, SeriesTag, Tag
 from app.plugins import Context
@@ -178,7 +179,7 @@ def choose_poster(series_id: int, body: PosterChoice, db=Depends(get_db)):
                 raise HTTPException(404, "The provider has no cover for this series")
             save_poster_bytes(s, http.get_bytes(url), "provider")
         except http.ProviderError as e:
-            raise HTTPException(503, f"Provider unavailable: {e}")
+            raise HTTPException(503, t("Provider unavailable: {error}", error=e))
         except PosterError as e:
             raise HTTPException(400, str(e))
         _lock_poster(s, False)

@@ -8,6 +8,7 @@ How it converts and swaps files safely is in core.py. MangaVibe shows every form
 from pathlib import Path
 
 from app.plugins import Action, Plugin, SettingDef
+from app.plugins.sdk import t, tn
 from app.plugins.builtin.optimize import core
 
 FORMAT_OPTIONS = [("jxl", "JPEG XL (smallest)"), ("avif", "AVIF"), ("webp", "WebP (opens in the most apps)")]
@@ -82,15 +83,16 @@ class Optimize(Plugin):
             return "Stopping after the page being converted"
         ids = core.series_to_optimize(ctx.db)
         if not ids:
-            return "Every series is optimized already"
+            return t("Every series is optimized already")
         ids, blocked = self._writable(ctx, ids)
         if not ids:
             return blocked
         added = core.add_to_queue(ids)
         core.start(ctx)
         if not added:
-            return "Optimizing is running already"
-        return f"Optimizing {len(ids)} series" + (f". Left out: {blocked}" if blocked else "")
+            return t("Optimizing is running already")
+        started = tn("Optimizing {n} series", "Optimizing {n} series", len(ids))
+        return t("{started}. Left out: {blocked}", started=started, blocked=blocked) if blocked else started
 
     @staticmethod
     def _writable(ctx, ids):
@@ -108,18 +110,19 @@ class Optimize(Plugin):
         return ok, " ".join(sorted(set(why.values())))
 
     def status(self, ctx):
-        t = core.totals(ctx.db)
-        saved = t.get("before", 0) - t.get("after", 0)
-        done = (f"Saved {core._size(saved)} in {t['books']} books" if t.get("books")
-                else "Nothing optimized yet")
+        """In the language of the person asking (#263)."""
+        totals = core.totals(ctx.db)
+        saved = totals.get("before", 0) - totals.get("after", 0)
+        done = (tn("Saved {size} in {n} book", "Saved {size} in {n} books", totals["books"], size=core._size(saved))
+                if totals.get("books") else t("Nothing optimized yet"))
         if not core.running():
             return done
         waiting = max(0, len(core.queue()) - 1)
         s = core.state
-        line = f"Optimizing {s['series'] or '…'}, book {s['book']} of {s['books']}"
+        parts = [t("Optimizing {series}, book {book} of {books}", series=s["series"] or "…", book=s["book"], books=s["books"])]
         if waiting:
-            line += f" · {waiting} series waiting"
-        return f"{line} · {done[0].lower()}{done[1:]}"
+            parts.append(tn("{n} series waiting", "{n} series waiting", waiting))
+        return " · ".join(parts + [done])
 
     def book_badges(self, ctx, books):
         if not books:

@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
 from app import images, users
+from app.i18n import t
 from app.api.common import (book_dict, display_title, emit_reading_events, ensure_inside_library,
                             get_or_404, my_progress, now, retry_on_conflict, status_of, title_lang,
                             visible_books_query)
@@ -40,13 +41,14 @@ def get_book(book_id: int, db=Depends(get_db)):
             "next": {"id": nxt.id, "label": book_dict(nxt)["label"]} if nxt else None,
             "prev": {"id": prev.id, "label": book_dict(prev)["label"]} if prev else None,
             # reader toggles for plugins that draw over pages, and their buttons for this book
-            "overlays": [{"plugin": p.id, "name": p.name or p.id, "label": p.overlay_label} for p in overlay_plugins()],
+            "overlays": [{"plugin": p.id, "name": t(p.name or p.id), "label": t(p.overlay_label)} for p in overlay_plugins()],
             "hidden_boxes": db.query(OverlayHidden).filter_by(book_id=b.id).count(),
             # the plugin whose reader shows this book (e.g. a light novel), or None: the page reader
             "reader": (r.id if (r := plugins.reader_for(b.format)) else None),
             # who draws its pages (the reader:images job, #211): the plugin doing it, then the built-in one
             "image_readers": [p.id for p in plugins.doing("reader:images")] or ["image-reader"],
-            "actions": [{"plugin": p.id, "name": p.name or p.id, "key": a.key, "label": a.label, "confirm": a.confirm}
+            "actions": [{"plugin": p.id, "name": t(p.name or p.id), "key": a.key, "label": t(a.label),
+                         "confirm": t(a.confirm) if a.confirm else a.confirm}
                         for p in plugins.enabled() for a in p.book_actions]}
 
 
@@ -140,7 +142,7 @@ def run_book_action(book_id: int, plugin_id: str, action_key: str, db=Depends(ge
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(500, f"Plugin error: {type(e).__name__}: {e}")
+        raise HTTPException(500, t("Plugin error: {error}", error=f"{type(e).__name__}: {e}"))
     return action_result(result)
 
 

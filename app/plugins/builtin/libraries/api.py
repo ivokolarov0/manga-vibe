@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func
 
 from app import users
-from app.plugins.sdk import READING_MODES as MODES, Library, Series, Shelf, get_db, get_or_404
+from app.plugins.sdk import READING_MODES as MODES, Library, Series, Shelf, get_db, get_or_404, t
 from app.users import manage
 
 from . import core as shelves
@@ -58,7 +58,7 @@ def _check_name(db, name, shelf_id=None):
         raise HTTPException(400, "Give the library a name")
     same = db.query(Shelf).filter(func.lower(Shelf.name) == name.lower(), Shelf.id != (shelf_id or -1)).first()
     if same:
-        raise HTTPException(400, f"There is already a library called {same.name}")
+        raise HTTPException(400, t("There is already a library called {name}", name=same.name))
     return name
 
 
@@ -99,7 +99,7 @@ def patch_shelf(shelf_id: int, body: ShelfPatch, request: Request, db=Depends(ge
 
 def _unlocked_or_403(db, request, shelf):
     if shelf.id in shelves.locked_for(db, request):
-        raise HTTPException(403, f"Unlock {shelf.name} first")
+        raise HTTPException(403, t("Unlock {name} first", name=shelf.name))
 
 
 @router.delete("/{shelf_id}", dependencies=[manage])

@@ -1,11 +1,14 @@
 """MangaVibe entry point: `uvicorn app.main:app`."""
 import logging
 import mimetypes
+import re
 import threading
 import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -128,7 +131,52 @@ class RememberAddress:
         return await self.app(scope, receive, send)
 
 
+class Language:
+    """Every request runs in the language of the person asking (app/i18n.py, issue #263): their Settings →
+    Display → Language, else the browser's. So what the server says (book labels, error messages, plugin
+    descriptions) can use t(). Innermost, after the accounts plugin knows who is asking. Not for the
+    server's own calls on someone's behalf (an assistant: it gets the app's words, English), nor for
+    files (static files, page images and thumbnails have no words)."""
+
+    SKIP = re.compile(r"^/static/|^/api/books/\d+/(pages|thumbnail)|^/api/series/\d+/poster|^/api/links/\d+/icon")
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope.get("mangavibe.internal") or self.SKIP.match(scope["path"]):
+            return await self.app(scope, receive, send)
+        with i18n.using(request_language(Request(scope))):
+            return await self.app(scope, receive, send)
+
+
+def request_language(request: Request) -> str:
+    """The language for this request: the person's saved one, else the browser's (Accept-Language)."""
+    try:
+        with database.SessionLocal() as db:
+            saved = str(system.personal_setting(db, "language"))
+    except Exception:  # noqa: BLE001 - e.g. before the database is ready: the browser's language
+        saved = None
+    return i18n.pick_language(saved, request.headers.get("accept-language"))
+
+
 app = FastAPI(title="MangaVibe", lifespan=lifespan)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def translated_error(request: Request, exc: StarletteHTTPException):
+    """An error's message in the language of the person asking (#263): HTTPException(404, "…") texts are in
+    messages.pot (python -m app.i18n finds them); one with a {"message": …} keeps its other fields. A text
+    that isn't a known one (with values in it) is shown as it is."""
+    detail = exc.detail
+    if isinstance(detail, str):
+        detail = i18n.t(detail)
+    elif isinstance(detail, dict) and isinstance(detail.get("message"), str):
+        detail = {**detail, "message": i18n.t(detail["message"])}
+    return await http_exception_handler(request, StarletteHTTPException(exc.status_code, detail, exc.headers))
+
+
+app.add_middleware(Language)  # innermost: added first
 app.add_middleware(UploadSizeLimit, limit=MAX_UPLOAD + 64 * 1024)  # + room for the multipart headers
 app.add_middleware(RememberAddress)
 # the plugins' own guards (Plugin.middleware), e.g. libraries: a locked library's series, books and pages
@@ -191,10 +239,8 @@ def index(request: Request, safe: str = ""):
     /?safe=1: safe mode, without the owner's own plugins in the page (only the built-in ones), so a
     plugin that breaks the page can still be switched off in Settings -> Plugins."""
     on = safe not in ("", "0", "false")
-    with database.SessionLocal() as db:  # the person's language, else the browser's (app/i18n.py, #263)
-        lang = i18n.pick_language(str(system.personal_setting(db, "language")), request.headers.get("accept-language"))
-    with i18n.using(lang):
-        page = plugin_web.render_index(safe=on)
+    lang = i18n.current()  # the person's language, else the browser's (the Language middleware, #263)
+    page = plugin_web.render_index(safe=on)
     response = HTMLResponse(page, headers={"Cache-Control": "no-cache", "Content-Language": lang,
                                            "Vary": "Accept-Language"})
     if on:

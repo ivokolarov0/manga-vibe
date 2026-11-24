@@ -340,12 +340,69 @@ def extract() -> dict[tuple[str, str | None], list[str]]:
     for path in source_files():
         text = path.read_text(encoding="utf-8")
         rel = path.relative_to(ROOT).as_posix()
+        if path.suffix == ".py":
+            for key in python_texts(text):
+                found.setdefault(key, []).append(rel)
+            continue
         for m in CALL_TN.finditer(text):
             found.setdefault((_literal(m, 1), _literal(m, 3)), []).append(rel)
         for m in CALL_T.finditer(text):
             found.setdefault((_literal(m, 1), None), []).append(rel)
     found.pop(("", None), None)
     return found
+
+
+# Python is read with ast (so "a" "b" across lines is one text, and comments don't count). Besides t(), tn()
+# and N_(): the messages of HTTPException (translated on their way out, app/main.py), and what a plugin
+# shows in Settings -> Plugins: its name, description and permissions, and the labels of its settings,
+# buttons, fields and dropdowns (translated in app/api/system.py and app/api/series.py)
+PLUGIN_TEXTS = {"name", "description", "permissions", "overlay_label"}
+LABELLED = {"SettingDef": ("help",), "Action": ("confirm",), "FieldDef": (), "Choice": ()}
+
+
+def python_texts(text: str):
+    import ast
+
+    def const(node):
+        return node.value if isinstance(node, ast.Constant) and isinstance(node.value, str) else None
+
+    def name_of(func):
+        return func.id if isinstance(func, ast.Name) else func.attr if isinstance(func, ast.Attribute) else ""
+
+    out = []
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return out
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            fn, args = name_of(node.func), node.args
+            if fn in ("t", "N_") and args and const(args[0]):
+                out.append((const(args[0]), None))
+            elif fn == "tn" and len(args) >= 2 and const(args[0]) and const(args[1]):
+                out.append((const(args[0]), const(args[1])))
+            elif fn == "HTTPException":
+                detail = args[1] if len(args) > 1 else next((k.value for k in node.keywords if k.arg == "detail"), None)
+                if detail is not None and const(detail):
+                    out.append((const(detail), None))
+            elif fn in LABELLED:
+                if len(args) > 1 and const(args[1]):
+                    out.append((const(args[1]), None))
+                for k in node.keywords:
+                    if k.arg in LABELLED[fn] and const(k.value):
+                        out.append((const(k.value), None))
+                    if k.arg == "options" and isinstance(k.value, ast.List):
+                        for opt in k.value.elts:
+                            if isinstance(opt, ast.Tuple) and len(opt.elts) == 2 and const(opt.elts[1]):
+                                out.append((const(opt.elts[1]), None))
+        elif isinstance(node, ast.ClassDef) and any(name_of(b) == "Plugin" for b in node.bases):
+            for item in node.body:
+                if not (isinstance(item, ast.Assign) and len(item.targets) == 1
+                        and isinstance(item.targets[0], ast.Name) and item.targets[0].id in PLUGIN_TEXTS):
+                    continue
+                values = item.value.elts if isinstance(item.value, ast.List) else [item.value]
+                out += [(const(v), None) for v in values if const(v)]
+    return out
 
 
 def _quote(s: str) -> str:

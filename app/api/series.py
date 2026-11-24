@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy import and_, func
 
 from app.api import filters
+from app.i18n import t
 from app.api.common import (READING_STATUSES, book_dict, continue_target, emit_reading_events, get_or_404, now,
                             latest_labels, series_card, series_counts, status_of, title_lang,
                             visible_books_query)
@@ -202,9 +203,9 @@ def get_series(series_id: int, db=Depends(get_db)):
         "tags": [{"name": t.name, "kind": t.kind, "spoiler": st.is_spoiler} for t, st in tags],
         "links": [{"id": l.id, "site": l.site, "url": l.url} for l in db.query(Link).filter_by(series_id=s.id)],
         "locked_fields": s.locked_fields or [], "poster_source": s.poster_source,
-        "plugin_fields": [{"plugin": f.plugin, "key": f.key, "label": f.label, "value": f.value}
+        "plugin_fields": [{"plugin": f.plugin, "key": f.key, "label": t(f.label), "value": f.value}
                           for f in fields],
-        "actions": [{"plugin": p.id, "key": a.key, "label": a.label, "confirm": a.confirm}
+        "actions": [{"plugin": p.id, "key": a.key, "label": t(a.label), "confirm": t(a.confirm) if a.confirm else a.confirm}
                     for p in plugins.enabled() for a in p.actions],
         "choices": choices,
         "continue": {"book_id": book.id, "page": page, "label": book_dict(book)["label"],
@@ -463,8 +464,8 @@ def _series_choices(db, series):
                 continue
             if value is False:
                 continue
-            out.append({"plugin": p.id, "key": c.key, "label": c.label,
-                        "options": [[str(v), str(label)] for v, label in c.options],
+            out.append({"plugin": p.id, "key": c.key, "label": t(c.label),
+                        "options": [[str(v), t(str(label))] for v, label in c.options],
                         "value": None if value is None else str(value)})
     return out
 
@@ -487,7 +488,7 @@ def set_choice(series_id: int, plugin_id: str, key: str, body: ChoiceBody, db=De
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(500, f"Plugin error: {type(e).__name__}: {e}")
+        raise HTTPException(500, t("Plugin error: {error}", error=f"{type(e).__name__}: {e}"))
     return action_result(result)
 
 
@@ -502,7 +503,7 @@ def run_action(series_id: int, plugin_id: str, action_key: str, db=Depends(get_d
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(500, f"Plugin error: {type(e).__name__}: {e}")
+        raise HTTPException(500, t("Plugin error: {error}", error=f"{type(e).__name__}: {e}"))
     return action_result(result)
 
 
@@ -518,11 +519,11 @@ def providers():
 def metadata_providers():
     """All provider plugins for the Settings page: enabled ones in the order they are tried
     (the first is the main source, the rest are fallbacks), then disabled ones."""
-    out = [{"id": p.id, "name": p.name, "description": p.description, "url": p.url or None,
+    out = [{"id": p.id, "name": p.name, "description": t(p.description), "url": p.url or None,
             "enabled": True, "role": "main" if i == 0 else "fallback",
             "available": not metadata._is_down(p.id)}
            for i, p in enumerate(metadata.ordered_providers())]
-    out += [{"id": p.id, "name": p.name, "description": p.description, "url": p.url or None,
+    out += [{"id": p.id, "name": p.name, "description": t(p.description), "url": p.url or None,
              "enabled": False, "role": None, "available": False}
             for p in plugins.plugins.values() if p.is_provider and p.id in plugins.disabled]
     return out
@@ -545,7 +546,7 @@ def match_search(series_id: int, body: SearchBody, db=Depends(get_db)):
         return metadata.search(db, s, body.provider, body.query.strip() or s.folder_name)
     except ProviderError as e:
         metadata._mark_down(metadata.provider(body.provider), e)
-        raise HTTPException(503, f"Provider unavailable: {e}")
+        raise HTTPException(503, t("Provider unavailable: {error}", error=e))
     except ValueError as e:
         raise HTTPException(400, str(e))
 
@@ -562,7 +563,7 @@ def _metadata_call(db, fn, *args, **kw):
         db.commit()
     except ProviderError as e:
         db.rollback()
-        raise HTTPException(503, f"Provider unavailable: {e}")
+        raise HTTPException(503, t("Provider unavailable: {error}", error=e))
     except ValueError as e:
         db.rollback()
         raise HTTPException(400, str(e))
@@ -627,8 +628,8 @@ def delete_series(series_id: int, db=Depends(get_db)):
     except KeyError:
         raise HTTPException(404, "Series not found")
     if not result["deleted"]:
-        raise HTTPException(500, f"{result['left']} files could not be deleted ({result['error']}). "
-                                 "The series stays in the library with what is left.")
+        raise HTTPException(500, t("{n} files could not be deleted ({error}). The series stays in the library with what is left.",
+                                   n=result["left"], error=result["error"]))
     return result
 
 

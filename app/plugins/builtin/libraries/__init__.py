@@ -19,7 +19,7 @@ from sqlalchemy import func
 
 from app import config
 from app.plugins import Plugin
-from app.plugins.sdk import Library, Series, Shelf
+from app.plugins.sdk import Library, Series, Shelf, t
 
 from . import api, core
 
@@ -90,7 +90,7 @@ class Libraries(Plugin):
         shelf_id = core.shelf_id_of(ctx.db, series)
         shelf = ctx.db.get(Shelf, shelf_id) if shelf_id is not None else None
         if shelf is not None and shelf.reader_mode:
-            return shelf.reader_mode, f"the mode of {shelf.name}"
+            return shelf.reader_mode, t("the mode of {library}", library=shelf.name)
         return None
 
     # --- folders and switching on/off ----------------------------------------------------------------

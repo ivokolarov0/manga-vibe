@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from app import users
 from app.plugins import Context, McpTool, Plugin
 from app.plugins.query import search_params
-from app.plugins.sdk import get_setting, set_setting
+from app.plugins.sdk import get_setting, set_setting, t
 from app.plugins.web import plugin_ctx
 
 HERE = Path(__file__).parent
@@ -71,7 +71,7 @@ def add_saved(body: SavedBody, ctx: Context = Depends(plugin_ctx)):
         same["query"] = query
     else:
         if len(items) >= MAX:
-            raise HTTPException(400, f"At most {MAX} saved searches")
+            raise HTTPException(400, t("At most {n} saved searches", n=MAX))
         same = {"id": max((x["id"] for x in items), default=0) + 1, "name": name, "query": query}
         items.append(same)
     set_setting(ctx.db, _key(), items)

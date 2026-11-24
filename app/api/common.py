@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app import users
 from app.db import get_setting
+from app.i18n import N_, t
 from app.metadata import editions
 from app.models import Book, Library, Progress, Series, SeriesState
 
@@ -241,7 +242,10 @@ def continue_target(db, series_id):
 def get_or_404(db, model, id_):
     obj = db.get(model, id_)
     if obj is None:
-        raise HTTPException(404, f"{model.__name__} not found")
+        # whole sentences for the usual ones (a translation can't decline an English class name)
+        known = {"Series": N_("Series not found"), "Book": N_("Book not found"), "Library": N_("Library not found")}
+        raise HTTPException(404, t(known[model.__name__]) if model.__name__ in known
+                            else t("{what} not found", what=model.__name__))
     return obj
 
 
