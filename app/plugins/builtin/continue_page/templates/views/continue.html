@@ -4,7 +4,7 @@
     continue-top. -#}
 {% from "ui/macros.html" import continue_card with context %}
     <div class="continue-page-view" x-data>
-      <h2>Continue reading</h2>
+      <h2>{{ t("Continue reading") }}</h2>
       {{ slot("continue-top") }}
       {% block grid %}
       <div class="grid">
@@ -14,8 +14,8 @@
       </div>
       <div class="empty" x-show="$store.continue.items && !$store.continue.items.length">
         <svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>
-        <span>Nothing in progress. Start a series and it shows up here.</span>
-        <a class="btn small primary" href="#/">Open the Library</a>
+        <span>{{ t("Nothing in progress. Start a series and it shows up here.") }}</span>
+        <a class="btn small primary" href="#/">{{ t("Open the Library") }}</a>
       </div>
       {% endblock %}
     </div>

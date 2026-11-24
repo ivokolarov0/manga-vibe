@@ -26,7 +26,7 @@ MangaVibe.onStart(() => {
     },
 
     sub(r) {
-      return [MangaVibe.ui.kind({ format: r.format, country_of_origin: r.country }) || "Manga", r.year]
+      return [MangaVibe.ui.kind({ format: r.format, country_of_origin: r.country }) || MangaVibe.t("Manga"), r.year]
         .filter(Boolean).join(" · ");
     },
   }));

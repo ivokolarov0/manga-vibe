@@ -1,26 +1,22 @@
         <!-- backup: everything MangaVibe knows in one file, and back (app/backup.py, issue #262). Admins only -->
         <section x-show="section === 'backup'">
-          <h2>Backup</h2>
-          <p class="muted">One file with your library's metadata and edits, everyone's reading progress, the accounts,
-            the posters and all settings (plugins' too). The manga files aren't in it. Plugins you installed
-            yourself aren't either: their settings are, so install them again after an import.</p>
-          <label class="setting-row"><span class="label">Include tokens<small>The GitHub token and the plugins' secret settings (API keys, logins). Leave this off for a file you'll keep somewhere others can see it.</small></span>
-            <select x-model="backupTokens"><option value="false">Off</option><option value="true">On</option></select></label>
+          <h2>{{ t("Backup") }}</h2>
+          <p class="muted">{{ t("One file with your library's metadata and edits, everyone's reading progress, the accounts, the posters and all settings (plugins' too). The manga files aren't in it. Plugins you installed yourself aren't either: their settings are, so install them again after an import.") }}</p>
+          <label class="setting-row"><span class="label">{{ t("Include tokens") }}<small>{{ t("The GitHub token and the plugins' secret settings (API keys, logins). Leave this off for a file you'll keep somewhere others can see it.") }}</small></span>
+            <select x-model="backupTokens"><option value="false">{{ t("Off") }}</option><option value="true">{{ t("On") }}</option></select></label>
           <div class="setting-row">
-            <div class="label"><span>Export</span><small>Downloads mangavibe-backup-<span x-text="new Date().toISOString().slice(0, 10)"></span>.zip</small></div>
+            <div class="label"><span>{{ t("Export") }}</span><small>{{ t("Downloads {file}", file='mangavibe-backup-<span x-text="new Date().toISOString().slice(0, 10)"></span>.zip'|safe) }}</small></div>
             <a class="btn small primary" :href="`/api/backup/export?tokens=${backupTokens}`" download>
-              <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>Export</a>
+              <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>{{ t("Export") }}</a>
           </div>
           <div class="setting-row">
             <div class="label">
-              <span>Import</span>
-              <small>Replaces everything on this server with the file: library data, progress, accounts and settings.
-                The current database is copied to /data/backups first. Files from older versions are updated;
-                files from a newer version need MangaVibe updated first.</small>
+              <span>{{ t("Import") }}</span>
+              <small>{{ t("Replaces everything on this server with the file: library data, progress, accounts and settings. The current database is copied to /data/backups first. Files from older versions are updated; files from a newer version need MangaVibe updated first.") }}</small>
             </div>
             <label class="btn small file-btn" :class="{ disabled: importing }" :aria-disabled="importing">
               <input type="file" accept=".zip,application/zip" hidden :disabled="importing" @change="importBackup($event)">
-              <svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg><span x-text="importing ? 'Importing…' : 'Import…'"></span>
+              <svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg><span x-text="importing ? t('Importing…') : t('Import…')"></span>
             </label>
           </div>
         </section>

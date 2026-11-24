@@ -2,20 +2,19 @@
 <div class="sheet saved-sheet" x-data="savedSearchesSheet" x-show="$store.app.sheet === 'saved-searches'" x-cloak
      x-dialog="$store.app.sheet = null">
   <div>
-    <div class="sheet-head"><b>Saved searches</b>
-      <span class="btn-row"><button class="btn small primary" x-show="store.canSave" @click="store.save()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Save this search</button>
-        <button class="btn small" @click="$store.app.sheet = null">Done</button></span></div>
+    <div class="sheet-head"><b x-text="t('Saved searches')"></b>
+      <span class="btn-row"><button class="btn small primary" x-show="store.canSave" @click="store.save()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span x-text="t('Save this search')"></span></button>
+        <button class="btn small" @click="$store.app.sheet = null" x-text="t('Done')"></button></span></div>
     <div class="saved-empty" x-show="!store.items.length">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
-      <b>No saved searches yet</b>
-      <span>Pick filters (for example the tag Isekai) and a sort, then save them here.
-        A saved search works in every library.</span>
+      <b x-text="t('No saved searches yet')"></b>
+      <span x-text="t('Pick filters (for example the tag Isekai) and a sort, then save them here. A saved search works in every library.')"></span>
     </div>
     <div class="saved-list">
       <template x-for="x in store.items" :key="x.id">
         <div class="saved-item" :class="{ on: isOn(x) }">
           <button class="saved-main" :aria-pressed="isOn(x)" @click="pick(x)"
-                  :title="isOn(x) ? 'Shown now: tap to clear it' : 'Show these series'">
+                  :title="isOn(x) ? t('Shown now: tap to clear it') : t('Show these series')">
             <span class="saved-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></span>
             <span class="saved-text">
@@ -25,7 +24,7 @@
             </span>
             <span class="saved-check" x-show="isOn(x)" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span>
           </button>
-          <button class="saved-del" :aria-label="'Delete ' + x.name" title="Delete" @click="store.remove(x)">
+          <button class="saved-del" :aria-label="t('Delete {name}', { name: x.name })" :title="t('Delete')" @click="store.remove(x)">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         </div>
       </template>

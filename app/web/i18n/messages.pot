@@ -5,16 +5,44 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: app/web/templates/sheets/library.html
+msgid "# is for titles that start with a number, a symbol or a non-Latin script."
+msgstr ""
+
 #: app/web/templates/dialogs/folder-picker.html
 msgid "(already a library)"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "(AniList will be tried again when it's back online)"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "(built into the image)"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "(in Docker: {path})"
+msgstr ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "(moved here; its folder's is {library})"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "(regular: {n})"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "(single)"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "({n} without metadata skipped)"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "+{n} more"
 msgstr ""
 
 #: app/web/templates/shell/toasts.html
@@ -27,6 +55,10 @@ msgstr ""
 
 #: app/web/templates/shell/toasts.html
 msgid "A new version of MangaVibe is available"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "A page from a book"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -47,6 +79,18 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "A white outline around the letters, so they stay readable over the art"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "About"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "about {h} h {min} min left"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "about {min} min left"
 msgstr ""
 
 #: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
@@ -97,16 +141,38 @@ msgstr ""
 msgid "Add source"
 msgstr ""
 
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
+msgid "Add to favorites"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Added {n} series to favorites"
+msgid_plural "Added {n} series to favorites"
+msgstr[0] ""
+msgstr[1] ""
+
 #: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
 msgid "Admin"
 msgstr ""
 
-#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html app/web/static/js/app.js app/web/templates/settings/plugins.html
 msgid "All"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "All read"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "All selected"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Allow them and install it?"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr ""
 
 #: app/web/static/js/common.js
@@ -117,7 +183,7 @@ msgstr ""
 msgid "an earlier update"
 msgstr ""
 
-#: app/web/templates/shell/toasts.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/shell/toasts.html
 msgid "and {n} more"
 msgid_plural "and {n} more"
 msgstr[0] ""
@@ -139,6 +205,14 @@ msgstr ""
 msgid "Appearance"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Apply"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Ascending"
+msgstr ""
+
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
 msgid "Ask for the passwords again"
 msgstr ""
@@ -151,6 +225,14 @@ msgstr ""
 msgid "Asks GitHub ({repo}) for its newest release and shows a message when one is out"
 msgstr ""
 
+#: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+msgid "Author"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Authors"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Auto"
 msgstr ""
@@ -159,16 +241,44 @@ msgstr ""
 msgid "Auto-accept a match from"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js
+msgid "Automatic"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Automatic (first page)"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Automatic: first page"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Automatic: {mode}"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+msgid "Back"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Back to the numbers from the file name"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
 msgstr ""
 
-#: app/plugins/web.py
+#: app/plugins/web.py app/web/templates/settings/backup.html
 msgid "Backup"
 msgstr ""
 
 #: app/contracts/__init__.py
 msgid "Book labels"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Books"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -195,12 +305,20 @@ msgstr ""
 msgid "Can't run: {why}"
 msgstr ""
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/web/templates/dialogs/folder-picker.html
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Can't tell if complete"
+msgstr ""
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/dialogs/folder-picker.html
 msgid "Cancel"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Cancel to see the other choice."
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Cancelled"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -215,6 +333,10 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "ch {n}"
+msgstr ""
+
 #: app/plugins/builtin/libraries/settings.html
 msgid "Change or remove…"
 msgstr ""
@@ -223,12 +345,24 @@ msgstr ""
 msgid "Change password…"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Change poster"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Change server"
 msgstr ""
 
 #: app/plugins/builtin/accounts/login.html
 msgid "Change your password"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Chapter"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py
+msgid "Chapters"
 msgstr ""
 
 #: app/web/templates/settings/plugin.html
@@ -243,12 +377,28 @@ msgstr ""
 msgid "Check now"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Checking the folder…"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Checking…"
 msgstr ""
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/web/templates/sheets/library.html
 msgid "Clear"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Clear all"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Clear progress for every book in this series? It will also be removed from Continue reading."
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Clear the filters"
 msgstr ""
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
@@ -259,24 +409,88 @@ msgstr ""
 msgid "Cleared: the series page shows the path inside Docker"
 msgstr ""
 
-#: app/web/templates/shell/toasts.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/shell/toasts.html
 msgid "Close"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py
+msgid "Collection"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
 msgid "Come with MangaVibe"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "comma separated"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Complete"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "complete"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "complete (set by you)"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Complete collection"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Complete: count the collection as complete whatever the numbers say, e.g. for omnibus editions"
+msgstr ""
+
+#: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Completed"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Contained"
 msgstr ""
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Continue"
+msgstr ""
+
+#: app/plugins/builtin/continue_page/templates/views/continue.html app/web/static/js/app.js
+msgid "Continue reading"
 msgstr ""
 
 #: app/contracts/__init__.py
 msgid "Continue reading page"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Copied"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Copy"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Copy path"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Could not load the library: {error}"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Could not save the view: {error}"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Couldn't copy. Select the path and copy it by hand."
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Cover from {source}"
 msgstr ""
 
 #: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
@@ -295,8 +509,20 @@ msgstr ""
 msgid "Default reading mode"
 msgstr ""
 
-#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html
+#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/saved_searches/sheet.html
 msgid "Delete"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Delete series"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Delete series and files"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Delete series…"
 msgstr ""
 
 #: app/plugins/builtin/accounts/accounts.js
@@ -307,8 +533,70 @@ msgstr ""
 msgid "Delete the library “{name}”?"
 msgstr ""
 
+#: app/plugins/builtin/saved_searches/saved_searches.js
+msgid "Delete the saved search “{name}”?"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/sheet.html
+msgid "Delete {name}"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Delete {n} series"
+msgid_plural "Delete {n} series"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Delete {n} series and files"
+msgid_plural "Delete {n} series and files"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/web/static/js/app.js
+msgid "Deleted {done} of {total}. {error}"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Deleted {n} series"
+msgid_plural "Deleted {n} series"
+msgstr[0] ""
+msgstr[1] ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Deleted. Its series are in {library} now."
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Deleted: {title}"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Deletes their folders from the drive, and the series from MangaVibe with their reading progress, metadata and posters:"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Deletes {title} from the drive and from MangaVibe:"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Deleting {done} of {total}…"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Deleting…"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Descending"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Description"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Details"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
@@ -327,12 +615,20 @@ msgstr ""
 msgid "Don't match"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Don't match this series"
+msgstr ""
+
 #: app/web/templates/shell/banners.html
 msgid "Don't show again"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Don't skip"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/sheet.html app/web/templates/sheets/library.html
+msgid "Done"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
@@ -351,11 +647,27 @@ msgstr ""
 msgid "Downloaded from GitHub"
 msgstr ""
 
+#: app/web/templates/settings/backup.html
+msgid "Downloads {file}"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "Draws the pages in the reader: paged or vertical, zoom, swipes, the fit"
 msgstr ""
 
-#: app/plugins/builtin/attention_lists/__init__.py
+#: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Dropped"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "duplicate"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Duplicate of another file with the same number"
+msgstr ""
+
+#: app/plugins/builtin/attention_lists/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "Duplicates"
 msgstr ""
 
@@ -367,16 +679,40 @@ msgstr ""
 msgid "Earlier versions"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Edit"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "Edit dialog"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Edit · {title}"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js
+msgid "Edition"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "English"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "English title"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Enter the first chapter of the range"
+msgstr ""
+
 #: app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
 msgid "Errors"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Every file in the series folder, in reading order. Faded rows are older revisions or hidden. Use {edit} when a file name has the wrong number or holds several chapters: your numbers re-order the list. The files themselves are never changed."
 msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
@@ -391,6 +727,22 @@ msgstr ""
 msgid "Everyone logs in. Each account has its own reading progress, favorites, Continue reading, saved searches and Settings → Reader. Admins also manage the app: settings, folders, metadata, plugins, deleting, and these accounts."
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18."
+msgstr ""
+
+#: app/web/templates/settings/backup.html
+msgid "Export"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "extra"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Extra / bonus"
+msgstr ""
+
 #: app/web/templates/settings/plugins.html
 msgid "Failed to load"
 msgstr ""
@@ -401,6 +753,18 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Falls back to the next one if missing"
+msgstr ""
+
+#: app/plugins/builtin/cards/templates/views/card.html
+msgid "Favorite"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Favorites"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Fewest first"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -415,12 +779,40 @@ msgstr ""
 msgid "File shown again"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Files"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Files alone are not enough for it. See {url}"
 msgstr ""
 
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/sheets/library.html
+msgid "Filter"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Filter by first letter"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Find a tag"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Find metadata automatically"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Find: {what}"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Finished"
+msgstr ""
+
+#: app/plugins/builtin/cards/templates/views/card.html
+msgid "Finished series with volumes or chapters missing"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -439,12 +831,24 @@ msgstr ""
 msgid "Fit width"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Fix match"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "Fix match dialog"
 msgstr ""
 
-#: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/attention_lists/templates/attention/same.html
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Fix match · {folder}"
+msgstr ""
+
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/attention_lists/templates/attention/same.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Fix match…"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+msgid "Folder"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -471,8 +875,20 @@ msgstr ""
 msgid "Forgot it? Start MangaVibe once with {setting}. The app has no accounts, so this keeps the library from others using it; anyone who can open the files or the database still can."
 msgstr ""
 
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Format"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/panel.html
+msgid "From AniList readers' recommendations."
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "From card size"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "from the pages per volume"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/shell/toasts.html
@@ -493,6 +909,18 @@ msgstr ""
 
 #: app/plugins/builtin/attention_lists/__init__.py
 msgid "Gaps in the chapter numbers. Often fine (volumes may cover them)."
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/sheets/library.html
+msgid "Genres"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html
+msgid "Genres & tags"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Genres appear once series have metadata."
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -547,12 +975,24 @@ msgstr ""
 msgid "gone"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
 msgid "Grid"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Grid columns"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Has metadata"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Hiatus"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Hidden (older revision)"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -561,6 +1001,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Hide controls after"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Hide from reading"
 msgstr ""
 
 #: app/web/templates/settings/attention.html
@@ -575,6 +1019,10 @@ msgstr ""
 msgid "Hide with the controls"
 msgstr ""
 
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Highest first"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "How a series looks in the library grid, its list view and Continue reading"
 msgstr ""
@@ -585,6 +1033,10 @@ msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
 msgid "If a new version has a problem. The version you leave isn't offered again until a newer one is out."
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/panel.html
+msgid "If you liked this"
 msgstr ""
 
 #: app/plugins/builtin/attention_lists/templates/attention/files.html app/plugins/builtin/attention_lists/templates/attention/gaps.html app/web/templates/settings/attention-plain.html
@@ -599,6 +1051,30 @@ msgstr ""
 msgid "Image reader"
 msgstr ""
 
+#: app/web/templates/settings/backup.html
+msgid "Import"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first."
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Imported {series} and {books}. Reloading…"
+msgstr ""
+
+#: app/web/templates/settings/backup.html
+msgid "Importing…"
+msgstr ""
+
+#: app/web/templates/settings/backup.html
+msgid "Import…"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "In library"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "In the reader: volume down goes to the next page, volume up goes back"
 msgstr ""
@@ -611,8 +1087,28 @@ msgstr ""
 msgid "In use: {name}"
 msgstr ""
 
+#: app/plugins/builtin/anilist_recommendations/panel.html
+msgid "In your library"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Include adult titles"
+msgstr ""
+
+#: app/web/templates/settings/backup.html
+msgid "Include tokens"
+msgstr ""
+
+#: app/plugins/builtin/cards/templates/views/card.html
+msgid "Incomplete"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Incomplete collection"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Info"
 msgstr ""
 
 #: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
@@ -655,12 +1151,24 @@ msgstr ""
 msgid "It's listed by {source}, not by MangaVibe."
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "Its default (e.g. its library's), else Settings → Reader"
+msgstr ""
+
 #: app/plugins/builtin/accounts/accounts.js
 msgid "Its reading progress, favorites and saved searches are deleted too. The series and files stay."
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "its reading progress, metadata and poster"
+msgstr ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Its series show in {library} now"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "JPEG, PNG, WebP, GIF or AVIF, up to 10 MB. The image is checked and saved as a new JPEG."
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -687,6 +1195,10 @@ msgstr ""
 msgid "Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
 msgstr ""
 
+#: app/plugins/builtin/saved_searches/save_button.html
+msgid "Keep these filters under a name: the Saved button brings them back"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Language"
 msgstr ""
@@ -711,6 +1223,10 @@ msgstr ""
 msgid "Later"
 msgstr ""
 
+#: app/plugins/builtin/cards/templates/views/card.html
+msgid "Latest: {book}"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Lazy load"
 msgstr ""
@@ -727,15 +1243,31 @@ msgstr ""
 msgid "Left back, right forward"
 msgstr ""
 
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js app/web/templates/sheets/library.html
+msgid "Length"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Less"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "less than a minute left"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Let metadata refresh change all fields again? Your edits stay until the next refresh."
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Letter"
 msgstr ""
 
 #: app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "Libraries"
 msgstr ""
 
-#: app/plugins/__init__.py app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/plugins/__init__.py app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Library"
 msgstr ""
 
@@ -783,7 +1315,11 @@ msgstr ""
 msgid "Like Settings → Reader"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html
+msgid "Links"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
 msgid "List"
 msgstr ""
 
@@ -799,7 +1335,7 @@ msgstr ""
 msgid "Loading the plugin sources…"
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr ""
 
@@ -839,8 +1375,16 @@ msgstr ""
 msgid "Look again"
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "Looking for metadata…"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Lower = fewer series in Needs attention, more wrong matches"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Lowest first"
 msgstr ""
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
@@ -859,6 +1403,10 @@ msgstr ""
 msgid "Manages the app and the accounts"
 msgstr ""
 
+#: app/plugins/builtin/anilist_recommendations/recs.js app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Manga"
+msgstr ""
+
 #: app/web/templates/shell/banners.html
 msgid "MangaVibe for Android"
 msgstr ""
@@ -875,8 +1423,64 @@ msgstr ""
 msgid "MangaVibe: Library"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Manhua"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Manhwa"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "manual"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Mark all read"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Mark all unread"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Mark read"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Mark this and all previous as read"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Mark unread"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Marked {n} series as read"
+msgid_plural "Marked {n} series as read"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Marked {n} series as unread"
+msgid_plural "Marked {n} series as unread"
+msgstr[0] ""
+msgstr[1] ""
+
 #: app/web/static/js/app.js
 msgid "Match device"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Matched"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Matched automatically · {score}"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Matched by you"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -889,20 +1493,36 @@ msgid_plural "Matching metadata: {done} of {n} series"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/plugins/builtin/attention_lists/templates/attention/matches.html
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Matching…"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Max"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Medium"
 msgstr ""
 
-#: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+#: app/plugins/__init__.py app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Metadata"
 msgstr ""
 
 #: app/contracts/__init__.py
 msgid "Metadata matcher"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Metadata refreshed"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Metadata removed"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Min"
 msgstr ""
 
 #: app/plugins/builtin/attention_lists/templates/attention/gaps.html
@@ -921,12 +1541,16 @@ msgstr ""
 msgid "Missing metadata"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "More"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "More = smoother, uses more data"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "More actions"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -939,6 +1563,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Most"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Most first"
 msgstr ""
 
 #: app/plugins/builtin/libraries/select_menu.html
@@ -967,6 +1595,10 @@ msgstr[1] ""
 msgid "Name"
 msgstr ""
 
+#: app/plugins/builtin/saved_searches/saved_searches.js
+msgid "Name for this search ({filters})"
+msgstr ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Name of the new library, e.g. Comics"
 msgstr ""
@@ -983,6 +1615,10 @@ msgstr ""
 msgid "Native"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Native title"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "Navigation"
 msgstr ""
@@ -995,7 +1631,7 @@ msgstr ""
 msgid "needs attention"
 msgstr ""
 
-#: app/web/templates/views/settings.html
+#: app/plugins/builtin/library_query/__init__.py app/web/templates/views/settings.html
 msgid "Needs attention"
 msgstr ""
 
@@ -1039,12 +1675,32 @@ msgstr ""
 msgid "New version: {version}"
 msgstr ""
 
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Newest first"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Next"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Next page"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "No"
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "No confident match"
+msgstr ""
+
 #: app/plugins/builtin/attention_lists/__init__.py
 msgid "No confident match was found online. Pick the right one, or open Fix match."
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "No description."
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
@@ -1057,6 +1713,14 @@ msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "No folders: only series moved here by hand"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "No match."
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "No metadata"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
@@ -1079,8 +1743,24 @@ msgstr ""
 msgid "No plugins match."
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "No results. Try a different spelling or the English/Japanese title."
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/sheet.html
+msgid "No saved searches yet"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "No series match these filters."
+msgstr ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "No series or files are deleted: its folders and the series moved to it show in another library."
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "No series yet. The first scan may still be running; see Settings."
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1115,6 +1795,10 @@ msgstr ""
 msgid "not found, check the volume mount"
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "Not matched (your choice)"
+msgstr ""
+
 #: app/web/templates/settings/plugin.html
 msgid "Not running: {why}"
 msgstr ""
@@ -1123,12 +1807,24 @@ msgstr ""
 msgid "Not supported"
 msgstr ""
 
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Not yet released"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "not {tag}"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Notes"
 msgstr ""
 
 #: app/web/templates/settings/attention.html
 msgid "Nothing here. All good."
+msgstr ""
+
+#: app/plugins/builtin/continue_page/templates/views/continue.html
+msgid "Nothing in progress. Start a series and it shows up here."
 msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
@@ -1143,11 +1839,23 @@ msgstr ""
 msgid "Nothing was installed"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Novel"
+msgstr ""
+
 #: app/web/templates/ui/macros.html
 msgid "Now: {title}"
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/plugins.html
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Numbers set by you"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Numbers, symbols and other scripts"
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
 msgid "Off"
 msgstr ""
 
@@ -1155,8 +1863,36 @@ msgstr ""
 msgid "Off (swipe only)"
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Oldest first"
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "On hold"
+msgstr ""
+
+#: app/web/templates/settings/backup.html
+msgid "One file with your library's metadata and edits, everyone's reading progress, the accounts, the posters and all settings (plugins' too). The manga files aren't in it. Plugins you installed yourself aren't either: their settings are, so install them again after an import."
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "One page at a time, the next one on the right"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "one per line"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "one per line: Name (Role)"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "one per line: Site | https://…"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1167,12 +1903,20 @@ msgstr ""
 msgid "One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "One-shot"
+msgstr ""
+
 #: app/web/templates/settings/plugins.html
 msgid "Only add sources you trust: a plugin runs inside MangaVibe with full access to its data."
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Only folders mounted in the container are visible (e.g. /library2)."
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Only for this series. “Automatic” follows its library (Settings → Libraries), else Settings → Reader."
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1199,8 +1943,16 @@ msgstr ""
 msgid "Open in the app"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Open on {source}"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Open the downloaded MangaVibe.apk and allow installing apps from your browser when Android asks. Then come back here and tap Open app"
+msgstr ""
+
+#: app/plugins/builtin/continue_page/templates/views/continue.html
+msgid "Open the Library"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
@@ -1211,12 +1963,32 @@ msgstr ""
 msgid "Optional: keeps this library private from others using the app"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "or"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Or paste a link"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Order"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Original"
 msgstr ""
 
-#: app/plugins/__init__.py
+#: app/plugins/__init__.py app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Other"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Other titles"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Other titles ({n})"
 msgstr ""
 
 #: app/web/templates/settings/plugin.html
@@ -1235,6 +2007,10 @@ msgstr ""
 msgid "owner/repo or https://…/plugins.json"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Page"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Page brightness"
 msgstr ""
@@ -1251,7 +2027,11 @@ msgstr ""
 msgid "Page width"
 msgstr ""
 
-#: app/plugins/builtin/libraries/settings.html app/web/static/js/app.js
+#: app/web/static/js/app.js
+msgid "Page {page} of {pages}"
+msgstr ""
+
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
 msgid "Pages"
 msgstr ""
 
@@ -1287,7 +2067,7 @@ msgstr ""
 msgid "Password saved. This browser stays unlocked until “Lock now” or a new tab."
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+#: app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Path outside Docker"
 msgstr ""
 
@@ -1295,8 +2075,16 @@ msgstr ""
 msgid "Path outside Docker for {name}"
 msgstr ""
 
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Per page"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/sheet.html
+msgid "Pick filters (for example the tag Isekai) and a sort, then save them here. A saved search works in every library."
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1309,6 +2097,14 @@ msgstr ""
 
 #: app/contracts/__init__.py
 msgid "Picking the right metadata for a series, drawn with fixMatch()"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Plan to read"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Please choose an image file"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1331,6 +2127,10 @@ msgstr ""
 msgid "Plugin sources refreshed"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Plugin tools"
+msgstr ""
+
 #: app/plugins/web.py app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr ""
@@ -1347,12 +2147,48 @@ msgstr ""
 msgid "Plugins from this source run inside MangaVibe with full access to its data. Only add sources you trust. Add it?"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html
+msgid "Poster"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Poster changed"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Preview (not saved yet)"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Previous"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Previous page"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Publication"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
 msgstr ""
 
+#: app/plugins/builtin/cards/templates/views/card.html
+msgid "p{page}/{pages}"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Queued for automatic matching"
+msgstr ""
+
 #: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
 msgid "Re-read this series' folder after fixing the files on disk"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+msgid "Read"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
@@ -1363,11 +2199,15 @@ msgstr ""
 msgid "Reader"
 msgstr ""
 
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Reading"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Reading hand"
 msgstr ""
 
-#: app/plugins/builtin/libraries/settings.html
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Reading mode"
 msgstr ""
 
@@ -1375,16 +2215,62 @@ msgstr ""
 msgid "Reading mode for {name}"
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "Reading mode: {mode}"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Reading mode…"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html
+msgid "Reading status"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Ready to install"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Recently added"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Recently read"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Recently updated"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
 msgid "Refresh"
 msgstr ""
 
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
+msgid "Refresh metadata"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Refreshing metadata for {n} series in the background"
+msgid_plural "Refreshing metadata for {n} series in the background"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Refreshing…"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "regular"
+msgstr ""
+
 #: app/web/templates/settings/plugin.html
 msgid "Release to install"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Releasing"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1399,6 +2285,10 @@ msgstr ""
 msgid "Remove"
 msgstr ""
 
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
+msgid "Remove from favorites"
+msgstr ""
+
 #: app/plugins/builtin/libraries/settings.html
 msgid "Remove password"
 msgstr ""
@@ -1407,12 +2297,26 @@ msgstr ""
 msgid "Remove the source {name}? Plugins you installed from it stay."
 msgstr ""
 
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Remove {filter}"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Remove “{name}” ({path}) from MangaVibe?"
 msgstr ""
 
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Removed {n} series from favorites"
+msgid_plural "Removed {n} series from favorites"
+msgstr[0] ""
+msgstr[1] ""
+
 #: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
 msgid "Renamed to {name}"
+msgstr ""
+
+#: app/web/templates/settings/backup.html
+msgid "Replaces everything on this server with the file: library data, progress, accounts and settings. The current database is copied to /data/backups first. Files from older versions are updated; files from a newer version need MangaVibe updated first."
 msgstr ""
 
 #: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
@@ -1427,6 +2331,10 @@ msgstr ""
 msgid "Rescan all"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Rescan this series"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Rescanned: {files}"
 msgstr ""
@@ -1435,7 +2343,7 @@ msgstr ""
 msgid "Rescanned: {files}, {errors} with errors"
 msgstr ""
 
-#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Rescanning…"
 msgstr ""
 
@@ -1447,12 +2355,20 @@ msgstr ""
 msgid "Restored"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "rev {n}"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Right"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Romaji"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Romaji title"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
@@ -1475,7 +2391,7 @@ msgstr ""
 msgid "Same {ids}"
 msgstr ""
 
-#: app/plugins/builtin/accounts/login.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/settings/plugins.html
 msgid "Save"
 msgstr ""
 
@@ -1483,7 +2399,15 @@ msgstr ""
 msgid "Save password"
 msgstr ""
 
-#: app/plugins/builtin/libraries/libraries.js app/web/static/js/app.js
+#: app/plugins/builtin/saved_searches/save_button.html
+msgid "Save search"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/sheet.html
+msgid "Save this search"
+msgstr ""
+
+#: app/plugins/builtin/libraries/libraries.js app/plugins/builtin/saved_searches/tool.html app/web/static/js/app.js
 msgid "Saved"
 msgstr ""
 
@@ -1491,7 +2415,11 @@ msgstr ""
 msgid "Saved (type to replace)"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/plugins/builtin/saved_searches/saved_searches.js
+msgid "Saved as “{name}”. The Saved button brings it back, in any library."
+msgstr ""
+
+#: app/contracts/__init__.py app/plugins/builtin/saved_searches/sheet.html app/plugins/builtin/saved_searches/tool.html
 msgid "Saved searches"
 msgstr ""
 
@@ -1507,8 +2435,20 @@ msgstr ""
 msgid "Saved. It's in {library} now, which is locked."
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "Saved. The list is re-ordered."
+msgstr ""
+
 #: app/web/templates/settings/plugins.html
 msgid "Saved. Updates from private repos use it."
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Saved. Your changes are kept when metadata is refreshed."
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Saving…"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
@@ -1535,7 +2475,11 @@ msgstr ""
 msgid "Scanning…"
 msgstr ""
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Score"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_query/__init__.py app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Search"
 msgstr ""
 
@@ -1551,12 +2495,28 @@ msgstr ""
 msgid "Search your library"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Searching {source}…"
+msgstr ""
+
 #: app/web/templates/shell/toasts.html
 msgid "See {url}"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "See-through"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Select all"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Select all {n}"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Selected series"
 msgstr ""
 
 #: app/contracts/__init__.py
@@ -1585,6 +2545,10 @@ msgstr ""
 
 #: app/web/templates/settings/plugins.html
 msgid "Set by GITHUB_TOKEN. A token saved here is used instead."
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "set by you"
 msgstr ""
 
 #: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
@@ -1639,8 +2603,20 @@ msgstr ""
 msgid "Show it again"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Show less"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Show more"
+msgstr ""
+
 #: app/web/templates/settings/plugin.html
 msgid "Show the {category} plugins"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/sheet.html
+msgid "Show these series"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
@@ -1657,6 +2633,16 @@ msgstr[1] ""
 msgid "Show {n} ignored"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Show {n} spoiler tag"
+msgid_plural "Show {n} spoiler tags"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/plugins/builtin/saved_searches/sheet.html
+msgid "Shown now: tap to clear it"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/shell/toasts.html
 msgid "Skip this version"
 msgstr ""
@@ -1669,12 +2655,32 @@ msgstr ""
 msgid "Solid"
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "some missing"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/sheets/library.html
+msgid "Sort"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Sort by"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Sort: {sort}"
+msgstr ""
+
 #: app/web/templates/settings/plugins.html
 msgid "Source"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Source added"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Source: {name}"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
@@ -1685,12 +2691,36 @@ msgstr ""
 msgid "Sources & setup"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Start"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Starting…"
 msgstr ""
 
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Starts with"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js app/web/templates/sheets/library.html
+msgid "Starts with {letter}"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js
+msgid "Status"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Status: {status} (auto)"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Still on the server, no download"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Stop selecting"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1705,6 +2735,14 @@ msgstr ""
 msgid "System"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/sheets/library.html
+msgid "Tags"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Tap once to include, again to exclude, again to clear."
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Tap zones"
 msgstr ""
@@ -1715,6 +2753,18 @@ msgstr ""
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "the first one: has the reading from before accounts"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "the folder {folder}"
+msgstr ""
+
+#: app/web/templates/settings/backup.html
+msgid "The GitHub token and the plugins' secret settings (API keys, logins). Leave this off for a file you'll keep somewhere others can see it."
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "The image is larger than 10 MB"
 msgstr ""
 
 #: app/contracts/__init__.py
@@ -1749,6 +2799,10 @@ msgstr ""
 msgid "The page reloads by itself when the new version is running."
 msgstr ""
 
+#: app/web/templates/sheets/library.html
+msgid "The published total, from the metadata. Leave a box empty for no limit."
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "The Reader page of Settings"
 msgstr ""
@@ -1771,6 +2825,10 @@ msgstr ""
 
 #: app/contracts/__init__.py
 msgid "The series' Edit dialog (info and poster), drawn with editSeries()"
+msgstr ""
+
+#: app/web/static/js/common.js
+msgid "The server is taking too long to answer"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1805,6 +2863,10 @@ msgstr ""
 msgid "Theme"
 msgstr ""
 
+#: app/web/templates/sheets/library.html
+msgid "These appear once series have metadata."
+msgstr ""
+
 #: app/web/templates/dialogs/folder-picker.html
 msgid "These are the folders inside the MangaVibe container. To see another folder here, first mount it into the container as a volume, then restart it."
 msgstr ""
@@ -1825,8 +2887,16 @@ msgstr ""
 msgid "Thin"
 msgstr ""
 
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
+msgid "This can't be undone."
+msgstr ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "This is the only library. Add another one first."
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "This is the path inside Docker. To see the one on your NAS, set {setting} for its library folder."
 msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
@@ -1839,6 +2909,10 @@ msgstr ""
 
 #: app/web/templates/settings/plugin.html
 msgid "This plugin is not installed."
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "This series won't be matched"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1857,8 +2931,24 @@ msgstr ""
 msgid "This version needs a new Docker image"
 msgstr ""
 
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Title"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Title language"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "Title starts with"
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "Title starts with {letter}"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "to chapter"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1873,12 +2963,20 @@ msgstr ""
 msgid "Tried in this order. Fallbacks are used when the main source has no match or is down."
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Try again"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Try automatic match again"
 msgstr ""
 
 #: app/plugins/builtin/attention_lists/__init__.py
 msgid "Two or more files with the same chapter number. Both are kept."
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js
+msgid "Type"
 msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
@@ -1889,6 +2987,14 @@ msgstr ""
 msgid "Undo a move: each follows its folder again"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Unknown"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Unknown status"
+msgstr ""
+
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
 msgid "Unlock"
 msgstr ""
@@ -1897,12 +3003,36 @@ msgstr ""
 msgid "unlocked"
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "Unlocked"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "Unmatch (use folder name)"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+msgid "Unread"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Unread count"
+msgstr ""
+
 #: app/web/templates/dialogs/folder-picker.html
 msgid "Up"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Up to date. New versions come from {url}"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Up to {n} chapters"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Up to {n} volumes"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1929,6 +3059,10 @@ msgstr ""
 msgid "Update {version}"
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "Updated {when}"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "Updates"
 msgstr ""
@@ -1941,12 +3075,40 @@ msgstr ""
 msgid "Updating MangaVibe…"
 msgstr ""
 
-#: app/plugins/builtin/attention_lists/templates/attention/matches.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Upload an image"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Uploaded by you"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Uploading…"
+msgstr ""
+
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/web/templates/settings/plugins.html
 msgid "Use"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Use a page from a book"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Use file name again"
 msgstr ""
 
 #: app/web/templates/dialogs/folder-picker.html
 msgid "Use this folder"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Use this image"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Use this page"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1973,6 +3135,18 @@ msgstr ""
 msgid "Vertical (webtoons)"
 msgstr ""
 
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "View"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "vol {n}"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Volume"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Volume buttons turn pages"
 msgstr ""
@@ -1981,8 +3155,16 @@ msgstr ""
 msgid "Volume, chapter and revision from a book's file name"
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py
+msgid "Volumes"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Warm"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Webtoons, long strips"
 msgstr ""
 
 #: app/contracts/__init__.py
@@ -2017,6 +3199,10 @@ msgstr ""
 msgid "Where this folder's series show. Series moved to another library by hand stay there."
 msgstr ""
 
+#: app/plugins/builtin/dialogs/templates/views/edit.html
+msgid "Which edition your files are from (regular, kanzenban, omnibus...). Automatic: worked out from the pages per volume and the editions MangaUpdates lists"
+msgstr ""
+
 #: app/plugins/builtin/libraries/edit_field.html
 msgid "Which library it shows in. The files stay in their folder."
 msgstr ""
@@ -2029,8 +3215,12 @@ msgstr ""
 msgid "Without {job}"
 msgstr ""
 
-#: app/web/templates/shell/toasts.html
+#: app/web/static/js/app.js app/web/templates/shell/toasts.html
 msgid "Working…"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+msgid "Year"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
@@ -2039,6 +3229,10 @@ msgstr ""
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "you"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "You have"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js
@@ -2079,6 +3273,22 @@ msgstr ""
 msgid "{account} sees {library} now"
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "{from}–{to} chapters"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "{from}–{to} volumes"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "{label}: unknown"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "{length} or unknown"
+msgstr ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "{library} is locked"
 msgstr ""
@@ -2089,6 +3299,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "{matched} matched, {failed} need attention"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/templates/views/fix-match.html
+msgid "{name} (offline)"
 msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
@@ -2127,9 +3341,15 @@ msgstr ""
 msgid "{name}'s password is changed; they're logged out everywhere."
 msgstr ""
 
-#: app/plugins/builtin/attention_lists/templates/attention/same.html
+#: app/plugins/builtin/attention_lists/templates/attention/same.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "{n} book"
 msgid_plural "{n} books"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/web/static/js/app.js
+msgid "{n} chapter"
+msgid_plural "{n} chapters"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -2139,7 +3359,7 @@ msgid_plural "{n} errors"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/plugins/builtin/attention_lists/templates/attention/files.html app/web/static/js/app.js
+#: app/plugins/builtin/attention_lists/templates/attention/files.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "{n} file"
 msgid_plural "{n} files"
 msgstr[0] ""
@@ -2161,7 +3381,7 @@ msgstr[1] ""
 msgid "{n} not installed yet"
 msgstr ""
 
-#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/web/static/js/app.js
 msgid "{n} page"
 msgid_plural "{n} pages"
 msgstr[0] ""
@@ -2189,15 +3409,49 @@ msgid_plural "{n} seconds"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
+#: app/plugins/builtin/library_page/templates/views/library.html
+msgid "{n} selected"
+msgstr ""
+
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/static/js/app.js
 msgid "{n} series"
 msgid_plural "{n} series"
 msgstr[0] ""
 msgstr[1] ""
 
+#: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+msgid "{n} unread"
+msgstr ""
+
 #: app/web/templates/settings/plugins.html
 msgid "{n} update available"
 msgid_plural "{n} updates available"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/web/static/js/app.js
+msgid "{n} volume"
+msgid_plural "{n} volumes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/web/static/js/app.js
+msgid "{n}+ chapters"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "{n}+ volumes"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "{owned} / {n} chapter"
+msgid_plural "{owned} / {n} chapters"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/web/static/js/app.js
+msgid "{owned} / {n} volume"
+msgid_plural "{owned} / {n} volumes"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -2223,4 +3477,16 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "{version} is older than your database: newer versions have changed it since."
+msgstr ""
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
+msgid "{warning} The files don't go to a recycle bin."
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "{what}, at least"
+msgstr ""
+
+#: app/web/templates/sheets/library.html
+msgid "{what}, at most"
 msgstr ""

@@ -11,14 +11,14 @@
         <div class="lib-tools">
           <button class="tool" :class="{ on: filterCount }" @click="openSheet('filter')">
             <svg aria-hidden="true"><use href="#i-filter"/></svg>
-            <span>Filter</span><b class="count" x-show="filterCount" x-text="filterCount" x-cloak></b></button>
+            <span>{{ t("Filter") }}</span><b class="count" x-show="filterCount" x-text="filterCount" x-cloak></b></button>
           <button class="tool" :class="{ on: customSort }" @click="openSheet('sort')">
             <svg aria-hidden="true"><use href="#i-sort"/></svg>
-            <span>Sort</span></button>
+            <span>{{ t("Sort") }}</span></button>
           <button class="tool" :class="{ on: letter }" @click="openSheet('letter')" x-show="lib.letter"
-                  :aria-label="letter ? 'Title starts with ' + letter : 'Filter by first letter'">
+                  :aria-label="letter ? t('Title starts with {letter}', { letter }) : t('Filter by first letter')">
             <i class="az" aria-hidden="true">A<small>z</small></i>
-            <span x-text="letter ? 'Starts with ' + letter : 'Letter'"></span></button>
+            <span x-text="letter ? t('Starts with {letter}', { letter }) : t('Letter')"></span></button>
           {{ slot("library-tools") }}
         </div>
         <div class="quick">
@@ -34,56 +34,56 @@
       <!-- the filters on (tap one to drop it), then Clear all and what plugins add (e.g. Save search) -->
       <div class="active-filters" x-show="chips.length || (filtersOn && $store.app.pluginSlots.includes('library-filters'))" x-cloak>
         <template x-for="c in chips" :key="c.k + c.v">
-          <button class="filter-chip" :class="{ ex: c.ex }" @click="removeChip(c)" :aria-label="'Remove ' + c.label">
+          <button class="filter-chip" :class="{ ex: c.ex }" @click="removeChip(c)" :aria-label="t('Remove {filter}', { filter: c.label })">
             <span x-text="c.label"></span>
             <i aria-hidden="true"><svg><use href="#i-x"/></svg></i></button>
         </template>
-        <button class="clear-all" x-show="chips.length" @click="clearAll()">Clear all</button>
+        <button class="clear-all" x-show="chips.length" @click="clearAll()">{{ t("Clear all") }}</button>
         {{ slot("library-filters") }}
       </div>
       <div class="page-info" x-show="total > 0" x-cloak>
-        <span x-text="paged ? pageInfo : `${total} series`"></span>
+        <span x-text="paged ? pageInfo : tn('{n} series', '{n} series', total)"></span>
         <div class="page-tools">
-          <label x-show="paged">Per page
+          <label x-show="paged">{{ t("Per page") }}
             <select :value="pageSize" @change="setPageSize($event.target.value)">
               <template x-for="n in pageSizes" :key="n"><option :value="n" x-text="n" :selected="n === pageSize"></option></template>
             </select></label>
           <!-- grid or list: the library_view setting -->
-          <div class="segmented view-switch" role="group" aria-label="View">
+          <div class="segmented view-switch" role="group" aria-label="{{ t('View') }}">
             <button :class="{ on: layout === 'grid' }" :aria-pressed="layout === 'grid'" @click="setLayout('grid')"
-                    aria-label="Grid" title="Grid"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></button>
+                    aria-label="{{ t('Grid') }}" title="{{ t('Grid') }}"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></button>
             <button :class="{ on: layout === 'list' }" :aria-pressed="layout === 'list'" @click="setLayout('list')"
-                    aria-label="List" title="List"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg></button>
+                    aria-label="{{ t('List') }}" title="{{ t('List') }}"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg></button>
           </div>
         </div>
       </div>
       {% endblock %}
       <!-- multi-select: hold a card to start (MangaVibe.library) -->
-      <div class="select-bar" x-show="selecting" x-cloak role="toolbar" aria-label="Selected series"
+      <div class="select-bar" x-show="selecting" x-cloak role="toolbar" aria-label="{{ t('Selected series') }}"
            @keydown.escape.window="if (!delOpen) endSelect()">
-        <button class="icon-btn" aria-label="Stop selecting" title="Stop selecting" :disabled="!!working"
+        <button class="icon-btn" aria-label="{{ t('Stop selecting') }}" title="{{ t('Stop selecting') }}" :disabled="!!working"
                 @click="endSelect()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
-        <b class="count" x-text="working || `${selCount} selected`" aria-live="polite"></b>
+        <b class="count" x-text="working || t('{n} selected', { n: selCount })" aria-live="polite"></b>
         <button class="btn small" :disabled="!!working" @click="selectAll()"
-                x-text="total && selCount >= total ? 'All selected' : `Select all${total ? ' ' + total : ''}`"></button>
+                x-text="total && selCount >= total ? t('All selected') : total ? t('Select all {n}', { n: total }) : t('Select all')"></button>
         <button class="btn small danger" x-show="$store.app.admin" :disabled="!!working || !selCount" @click="delOpen = true">
-          <svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Delete</button>
+          <svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>{{ t("Delete") }}</button>
         <div class="menu" @click.outside="selMenu = false">
-          <button class="icon-btn" aria-label="More actions" title="More actions" :disabled="!!working || !selCount"
+          <button class="icon-btn" aria-label="{{ t('More actions') }}" title="{{ t('More actions') }}" :disabled="!!working || !selCount"
                   @click="selMenu = !selMenu">
             <svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg>
           </button>
           <div class="menu-pop" x-show="selMenu" x-transition.opacity x-cloak>
-            <button @click="bulk('read', (n) => `Marked ${n} series as read`)">
-              <svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg>Mark read</button>
-            <button @click="bulk('unread', (n) => `Marked ${n} series as unread`)">
-              <svg class="ic" aria-hidden="true"><use href="#i-circle"/></svg>Mark unread</button>
-            <button @click="bulk('favorite', (n) => `Added ${n} series to favorites`)">
-              <svg class="ic fill" aria-hidden="true"><use href="#i-star"/></svg>Add to favorites</button>
-            <button @click="bulk('unfavorite', (n) => `Removed ${n} series from favorites`)">
-              <svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>Remove from favorites</button>
-            <button x-show="$store.app.admin" @click="bulk('refresh', (n) => `Refreshing metadata for ${n} series in the background`)">
-              <svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Refresh metadata</button>
+            <button @click="bulk('read', (n) => tn('Marked {n} series as read', 'Marked {n} series as read', n))">
+              <svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg>{{ t("Mark read") }}</button>
+            <button @click="bulk('unread', (n) => tn('Marked {n} series as unread', 'Marked {n} series as unread', n))">
+              <svg class="ic" aria-hidden="true"><use href="#i-circle"/></svg>{{ t("Mark unread") }}</button>
+            <button @click="bulk('favorite', (n) => tn('Added {n} series to favorites', 'Added {n} series to favorites', n))">
+              <svg class="ic fill" aria-hidden="true"><use href="#i-star"/></svg>{{ t("Add to favorites") }}</button>
+            <button @click="bulk('unfavorite', (n) => tn('Removed {n} series from favorites', 'Removed {n} series from favorites', n))">
+              <svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>{{ t("Remove from favorites") }}</button>
+            <button x-show="$store.app.admin" @click="bulk('refresh', (n) => tn('Refreshing metadata for {n} series in the background', 'Refreshing metadata for {n} series in the background', n))">
+              <svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>{{ t("Refresh metadata") }}</button>
             {{ slot("select-menu") }}
           </div>
         </div>
@@ -94,18 +94,18 @@
       <!-- delete the selected series and their folders -->
       <div class="modal" x-show="delOpen" x-cloak x-dialog="delOpen = false">
         <div class="small-dialog delete-dialog">
-          <div class="sheet-head"><b x-text="`Delete ${selCount} series`"></b>
-            <button class="btn small" @click="delOpen = false">Cancel</button></div>
-          <p>Deletes their folders from the drive, and the series from MangaVibe with their reading
-            progress, metadata and posters:</p>
+          <div class="sheet-head"><b x-text="tn('Delete {n} series', 'Delete {n} series', selCount)"></b>
+            <button class="btn small" @click="delOpen = false">{{ t("Cancel") }}</button></div>
+          <p>{{ t("Deletes their folders from the drive, and the series from MangaVibe with their reading progress, metadata and posters:") }}</p>
           <ul class="delete-what">
             <!-- keyed by place: two series can have the same title -->
             <template x-for="(title, i) in selTitles.slice(0, 8)" :key="i"><li x-text="title"></li></template>
-            <li x-show="selCount > Math.min(selTitles.length, 8)" x-text="`and ${selCount - Math.min(selTitles.length, 8)} more`"></li>
+            <li x-show="selCount > Math.min(selTitles.length, 8)" x-text="tn('and {n} more', 'and {n} more', selCount - Math.min(selTitles.length, 8))"></li>
           </ul>
-          <p><b>This can't be undone.</b> The files don't go to a recycle bin.</p>
+          {% set undone %}<b>{{ t("This can't be undone.") }}</b>{% endset %}
+          <p>{{ t("{warning} The files don't go to a recycle bin.", warning=undone) }}</p>
           <div class="btn-row">
-            <button class="btn danger" @click="deleteSelected()" x-text="`Delete ${selCount} series and files`"></button>
+            <button class="btn danger" @click="deleteSelected()" x-text="tn('Delete {n} series and files', 'Delete {n} series and files', selCount)"></button>
           </div>
         </div>
       </div>
@@ -119,14 +119,14 @@
       <!-- more cards are loaded as this comes near the screen (MangaVibe.library.watchEnd) -->
       <div x-init="watchEnd($el)"></div>
       <!-- the first cards, or more at the bottom, are on their way (a new page keeps the old cards, dimmed) -->
-      <p class="muted loading-line lib-loading" x-show="loading && !failed && (!items.length || !paged && !done)" x-cloak>Loading…</p>
+      <p class="muted loading-line lib-loading" x-show="loading && !failed && (!items.length || !paged && !done)" x-cloak>{{ t("Loading…") }}</p>
       <div class="empty" x-show="failed" x-cloak>
         <svg class="ic" aria-hidden="true"><use href="#i-books"/></svg>
-        <span x-text="'Could not load the library: ' + failed"></span>
-        <button class="btn small" @click="retry()">Try again</button>
+        <span x-text="t('Could not load the library: {error}', { error: failed })"></span>
+        <button class="btn small" @click="retry()">{{ t("Try again") }}</button>
       </div>
-      <nav class="pager" x-show="paged && pages() > 1" x-cloak aria-label="Pages">
-        <button class="pager-step" :disabled="page <= 1" @click="goPage(page - 1)" aria-label="Previous page"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg><span> Previous</span></button>
+      <nav class="pager" x-show="paged && pages() > 1" x-cloak aria-label="{{ t('Pages') }}">
+        <button class="pager-step" :disabled="page <= 1" @click="goPage(page - 1)" aria-label="{{ t('Previous page') }}"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg><span> {{ t("Previous") }}</span></button>
         <template x-for="(n, i) in pageNums" :key="i + '-' + n">
           <span class="pager-item">
             <span class="pager-gap" x-show="n === '…'">…</span>
@@ -134,12 +134,12 @@
                     @click="goPage(n)" x-text="n"></button>
           </span>
         </template>
-        <button class="pager-step" :disabled="page >= pages()" @click="goPage(page + 1)" aria-label="Next page"><span>Next </span><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+        <button class="pager-step" :disabled="page >= pages()" @click="goPage(page + 1)" aria-label="{{ t('Next page') }}"><span>{{ t("Next") }} </span><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
       </nav>
       <div class="empty" x-show="total === 0" x-cloak>
         <svg class="ic" aria-hidden="true"><use :href="params.toString() ? '#i-search' : '#i-books'"/></svg>
         <span x-text="emptyText"></span>
-        <button class="btn small" x-show="chips.length" @click="clearAll()">Clear the filters</button>
+        <button class="btn small" x-show="chips.length" @click="clearAll()">{{ t("Clear the filters") }}</button>
       </div>
       {% endblock %}
     </div>

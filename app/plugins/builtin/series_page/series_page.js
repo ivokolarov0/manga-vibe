@@ -85,7 +85,7 @@ MangaVibe.onStart(() => {
       },
 
       sizeText: MangaVibe.ui.fileSize,
-      mb(n) { return (n / 1048576).toFixed(1) + " MB"; },
+      mb(n) { return MangaVibe.fmtNum(n / 1048576, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + " MB"; },
       n: MangaVibe.ui.number,
     };
     // what the markup reads from MangaVibe.series under the same names

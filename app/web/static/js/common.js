@@ -77,7 +77,7 @@ async function api(path, opts = {}) {
     });
   } catch (e) {
     if (e.name === "TimeoutError") {
-      const err = new Error("The server is taking too long to answer");
+      const err = new Error(t("The server is taking too long to answer"));
       err.timeout = true;
       throw err;
     }
@@ -96,7 +96,7 @@ async function api(path, opts = {}) {
   }
   try { return await res.json(); } catch (e) {
     // the answer stopped coming partway (the timeout also covers reading it)
-    if (e.name === "TimeoutError") throw new Error("The server is taking too long to answer");
+    if (e.name === "TimeoutError") throw new Error(t("The server is taking too long to answer"));
     throw e;
   }
 }
