@@ -108,11 +108,17 @@ languages. The translations are gettext files in `app/web/i18n/`: `messages.pot`
 the code) and one `<lang>.po` per language (`bg`, `de`, `ja` so far). English is the code itself.
 
 - **Templates**: `{{ t("Saved") }}`, `{{ t("See {url}", url=link) }}`, `{{ tn("{n} book", "{n} books", count) }}`.
-  The page is drawn in the person's language on the server.
+  The page is drawn in the person's language on the server. Markup inside a sentence goes in a placeholder,
+  marked safe: `{{ t("Path of {path}", path='<code x-text="l.path"></code>'|safe) }}` (the text itself is
+  escaped). Plugins' own markup (`html`) isn't Jinja: there it's `x-text="t('…')"`, and `x-html="th('…', {…})"`
+  for a sentence with markup.
 - **Alpine expressions and scripts**: `t('Saved')`, `t('Now: {title}', { title })`, `tn(…)` (`common.js`);
   dates and numbers with `fmtDate`, `fmtDateTime`, `fmtTime`, `fmtNum`. Don't call a variable `t`
   (`x-for="t in tags"`): it would hide `t()` inside it; a test checks the templates.
-- **Python** (e.g. a Settings page's label): `N_("Display")` marks it, `t()` translates it where it's shown.
+- **Python** (e.g. a Settings page's label): `N_("Display")` marks it, `t()` translates it where it's shown:
+  on the server while the page is drawn, or in the browser with `t(label)` when it comes from the API (job
+  labels, plugin categories). `t()` of a text nobody marked is that text, so that's safe for any value.
+- **Built-in plugins' scripts** call `MV.t(…)` (their name for `window.MangaVibe`); the extractor finds those too.
 - Give `t()` the English text itself as one plain string ("…" or '…'): `python -m app.i18n` finds the texts
   by reading the code, so a variable, a `template ${string}` or `"a" + "b"` isn't found. Put changing parts
   in `{name}` placeholders instead of joining sentences, so a translator can move them.

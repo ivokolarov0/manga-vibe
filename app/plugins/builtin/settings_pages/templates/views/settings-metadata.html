@@ -1,12 +1,12 @@
 {% from "ui/macros.html" import meta_progress %}
         <!-- metadata -->
         <section x-show="section === 'metadata'">
-          <h2>Metadata</h2>
+          <h2>{{ t("Metadata") }}</h2>
           {{ meta_progress() }}
           <p class="muted" x-show="metaText" x-text="metaText"></p>
           <div class="meta-sources">
-            <h3>Sources</h3>
-            <p class="muted">Tried in this order. Fallbacks are used when the main source has no match or is down.</p>
+            <h3>{{ t("Sources") }}</h3>
+            <p class="muted">{{ t("Tried in this order. Fallbacks are used when the main source has no match or is down.") }}</p>
             <template x-for="p in providers" :key="p.id">
               <div class="setting-row" :class="{ off: !p.enabled }">
                 <span class="label">
@@ -14,16 +14,16 @@
                   <small x-text="p.description"></small>
                 </span>
                 <span class="chip" :class="{ main: p.role === 'main', warn: p.enabled && !p.available }"
-                  x-text="!p.enabled ? 'Disabled' : (p.role === 'main' ? 'Main' : 'Fallback') + (p.available ? '' : ' · down')"></span>
+                  x-text="!p.enabled ? t('Disabled') : [p.role === 'main' ? t('Main') : t('Fallback'), p.available ? '' : t('down')].filter(Boolean).join(' · ')"></span>
               </div>
             </template>
-            <p class="muted" x-show="!providers.some((p) => p.enabled)">No metadata sources are enabled. Turn one on in Plugins.</p>
-            <p class="meta-sources-manage"><a href="#/settings/plugins" @click.prevent="go('plugins')">Manage in Plugins</a></p>
+            <p class="muted" x-show="!providers.some((p) => p.enabled)">{{ t("No metadata sources are enabled. Turn one on in Plugins.") }}</p>
+            <p class="meta-sources-manage"><a href="#/settings/plugins" @click.prevent="go('plugins')">{{ t("Manage in Plugins") }}</a></p>
           </div>
-          <label class="setting-row"><span class="label">Find metadata automatically<small>For new series after each scan</small></span>
-            <select x-model="st.auto_match" @change="save('auto_match')"><option value="true">On</option><option value="false">Off</option></select></label>
-          <label class="setting-row"><span class="label">Auto-accept a match from<small>Lower = fewer series in Needs attention, more wrong matches</small></span>
-            <select x-model="st.match_threshold" @change="save('match_threshold')"><option value="80">80%</option><option value="85">85%</option><option value="90">90% (default)</option><option value="95">95%</option></select></label>
-          <label class="setting-row"><span class="label">Include adult titles</span>
-            <select x-model="st.include_adult" @change="save('include_adult')"><option value="false">No</option><option value="true">Yes</option></select></label>
+          <label class="setting-row"><span class="label">{{ t("Find metadata automatically") }}<small>{{ t("For new series after each scan") }}</small></span>
+            <select x-model="st.auto_match" @change="save('auto_match')"><option value="true">{{ t("On") }}</option><option value="false">{{ t("Off") }}</option></select></label>
+          <label class="setting-row"><span class="label">{{ t("Auto-accept a match from") }}<small>{{ t("Lower = fewer series in Needs attention, more wrong matches") }}</small></span>
+            <select x-model="st.match_threshold" @change="save('match_threshold')"><option value="80" x-text="pct(80)"></option><option value="85" x-text="pct(85)"></option><option value="90" x-text="t('{value} (default)', { value: pct(90) })"></option><option value="95" x-text="pct(95)"></option></select></label>
+          <label class="setting-row"><span class="label">{{ t("Include adult titles") }}</span>
+            <select x-model="st.include_adult" @change="save('include_adult')"><option value="false">{{ t("No") }}</option><option value="true">{{ t("Yes") }}</option></select></label>
         </section>

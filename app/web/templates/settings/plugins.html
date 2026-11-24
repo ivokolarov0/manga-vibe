@@ -16,8 +16,8 @@
                             <template x-for="w in {{ v }}.warnings || []"><small class="plugin-blocked err" x-text="w"></small></template>
                           </span>
                           <span class="row-buttons">
-                            <span class="chip warn" x-show="hasUpdate({{ v }})" x-text="'Update ' + {{ v }}.update.latest"></span>
-                            <span class="chip err" x-show="{{ v }}.update.error" title="The update check failed">Update check failed</span>
+                            <span class="chip warn" x-show="hasUpdate({{ v }})" x-text="t('Update {version}', { version: {{ v }}.update.latest })"></span>
+                            <span class="chip err" x-show="{{ v }}.update.error" title="{{ t('The update check failed') }}">{{ t("Update check failed") }}</span>
 {{ caller() }}
                           </span>
                         </div>
@@ -27,17 +27,17 @@
              sources offer, and the sources and setup. A row opens the plugin's page. Plugins that do the
              same job (the top bar and the sidebar) are one row, named after the job, that opens to pick one. -->
         <section class="plugins-section" x-show="section === 'plugins'" x-effect="pview = computePluginView()">
-          <h2>Plugins</h2>
-          <div class="tabs plugin-tabs" role="tablist" aria-label="Plugins">
-            <template x-for="[tab, label] in [['installed', 'Installed'], ['get', 'Get plugins'], ['setup', 'Sources & setup']]" :key="tab">
+          <h2>{{ t("Plugins") }}</h2>
+          <div class="tabs plugin-tabs" role="tablist" aria-label="{{ t('Plugins') }}">
+            <template x-for="[tab, label] in [['installed', t('Installed')], ['get', t('Get plugins')], ['setup', t('Sources & setup')]]" :key="tab">
               <button role="tab" :class="{ active: pf.tab === tab }" :aria-selected="pf.tab === tab"
                       @click="setPluginFilter('tab', tab)">
                 <span x-text="label"></span>
                 <span class="count" x-show="tab === 'installed'" x-text="plugins.length"></span>
-                <span class="count new" x-show="tab === 'get' && availNew" :title="`${availNew} not installed yet`" x-text="availNew"></span>
+                <span class="count new" x-show="tab === 'get' && availNew" :title="t('{n} not installed yet', { n: availNew })" x-text="availNew"></span>
                 <!-- something needs a look on the Installed tab while another one is open -->
                 <span class="dot" x-show="tab === 'installed' && pf.tab !== 'installed' && (pluginUpdates || pluginErrorCount)"
-                      aria-label="needs attention"></span>
+                      aria-label="{{ t('needs attention') }}"></span>
               </button>
             </template>
           </div>
@@ -47,21 +47,21 @@
             <!-- what needs a look, so it isn't lost in the list -->
             <div class="plugin-alerts" x-show="pluginUpdates || pluginErrorCount">
               <button class="chip-btn warn" x-show="pluginUpdates" @click="setPluginFilter('status', 'update')"
-                      x-text="pluginUpdates === 1 ? '1 update available' : `${pluginUpdates} updates available`"></button>
+                      x-text="tn('{n} update available', '{n} updates available', pluginUpdates)"></button>
               <button class="chip-btn ex-err" x-show="pluginErrorCount" @click="setPluginFilter('status', 'errors')"
-                      x-text="pluginErrorCount === 1 ? '1 plugin failed to load' : `${pluginErrorCount} plugins failed to load`"></button>
+                      x-text="tn('{n} plugin failed to load', '{n} plugins failed to load', pluginErrorCount)"></button>
             </div>
             <!-- built-in plugins you used that moved to a repo of their own: switched off until installed -->
             <template x-for="m in pluginsMoved" :key="m.id">
-              <p class="err"><strong x-text="m.name"></strong> is no longer built in and is switched off.
-                To keep using it, install it from <a :href="m.url" target="_blank" rel="noopener" x-text="m.url"></a>
-                and switch it on again.</p>
+              <p class="err">{{ t("{name} is no longer built in and is switched off. To keep using it, install it from {url} and switch it on again.",
+                                  name='<strong x-text="m.name"></strong>'|safe,
+                                  url='<a :href="m.url" target="_blank" rel="noopener" x-text="m.url"></a>'|safe) }}</p>
             </template>
             <div class="plugins-layout">
-              <nav class="plugin-cats" aria-label="Plugin categories">
-                <h4>Category</h4>
+              <nav class="plugin-cats" aria-label="{{ t('Plugin categories') }}">
+                <h4>{{ t("Category") }}</h4>
                 <button :class="{ on: pf.cat === 'all' }" :aria-pressed="pf.cat === 'all'" @click="setPluginFilter('cat', 'all')">
-                  <span class="ico" aria-hidden="true"><svg class="ic"><use href="#i-blocks"/></svg></span><span>All</span>
+                  <span class="ico" aria-hidden="true"><svg class="ic"><use href="#i-blocks"/></svg></span><span>{{ t("All") }}</span>
                   <span class="count" x-text="pview.all"></span></button>
                 <template x-for="[c, n] in pview.cats" :key="c">
                   <button :class="{ on: pf.cat === c }" :aria-pressed="pf.cat === c" @click="setPluginFilter('cat', c)">
@@ -69,8 +69,8 @@
                     <span class="count" :class="{ zero: !n }" x-text="n"></span></button>
                 </template>
                 <!-- no "everything" here (All above is enough): tapping the picked one again shows both -->
-                <h4>Source</h4>
-                <template x-for="[s, label] in [['installed', 'Installed'], ['builtin', 'Built in']]" :key="s">
+                <h4>{{ t("Source") }}</h4>
+                <template x-for="[s, label] in [['installed', t('Installed')], ['builtin', t('Built in')]]" :key="s">
                   <button :class="{ on: pf.src === s }" :aria-pressed="pf.src === s"
                           @click="setPluginFilter('src', pf.src === s ? 'all' : s)">
                     <span class="ico" aria-hidden="true" x-text="{ installed: '⬇', builtin: '◆' }[s]"></span><span x-text="label"></span>
@@ -79,9 +79,9 @@
               </nav>
               <div class="plugin-main">
                 <div class="plugin-tools">
-                  <input type="search" class="plugin-search" x-model="pf.q" placeholder="Search plugins" aria-label="Search plugins">
-                  <div class="plugin-status-filter" role="group" aria-label="Show">
-                    <template x-for="[s, label] in [['all', 'All'], ['on', 'On'], ['off', 'Off'], ['update', 'Updates'], ['errors', 'Errors']]" :key="s">
+                  <input type="search" class="plugin-search" x-model="pf.q" placeholder="{{ t('Search plugins') }}" aria-label="{{ t('Search plugins') }}">
+                  <div class="plugin-status-filter" role="group" aria-label="{{ t('Show') }}">
+                    <template x-for="[s, label] in [['all', t('All')], ['on', t('On')], ['off', t('Off')], ['update', t('Updates')], ['errors', t('Errors')]]" :key="s">
                       <button class="chip-btn" :class="{ on: pf.status === s }" :aria-pressed="pf.status === s"
                               @click="setPluginFilter('status', s)">
                         <span x-text="label"></span><span class="n" x-show="s === 'update' && pluginUpdates" x-text="pluginUpdates"></span><span
@@ -95,9 +95,9 @@
                     <button class="plugin-group-head" x-show="group === 'builtin'" :aria-expanded="pview.open"
                             :disabled="pview.forced"
                             @click="setPluginFilter('builtinOpen', !pf.builtinOpen)">
-                      <span>Built in</span><span class="count" x-text="list.length"></span>
-                      <small>Come with MangaVibe</small><svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
-                    <h3 class="plugin-group-title" x-show="group === 'installed' && pview.builtin.length">Installed</h3>
+                      <span>{{ t("Built in") }}</span><span class="count" x-text="list.length"></span>
+                      <small>{{ t("Come with MangaVibe") }}</small><svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
+                    <h3 class="plugin-group-title" x-show="group === 'installed' && pview.builtin.length">{{ t("Installed") }}</h3>
                     <div class="plugin-list" x-show="group === 'installed' || pview.open">
                       <template x-for="p in list" :key="p.id">
                         <div class="plugin-row">
@@ -105,9 +105,9 @@
                             <div>
                               {% call plugin_row("p") %}
                             <!-- the only plugin doing a job the app needs: it stays on until another one does it -->
-                            <span class="chip required" x-show="requiredText(p)" :title="requiredText(p)">Required</span>
+                            <span class="chip required" x-show="requiredText(p)" :title="requiredText(p)">{{ t("Required") }}</span>
                             <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" @click.stop
-                                   :disabled="!!requiredText(p)" :title="requiredText(p) || null" :aria-label="`${p.name} on`">
+                                   :disabled="!!requiredText(p)" :title="requiredText(p) || null" :aria-label="t('{name} on', { name: p.name })">
                               {% endcall %}
                             </div>
                           </template>
@@ -121,16 +121,16 @@
                                 <span class="plugin-text">
                                   <span class="plugin-title">
                                     <span class="plugin-choice-name" x-text="p.name"></span>
-                                    <span class="plugin-tag pick" x-text="p.job.required ? 'Pick one' : 'Pick one or none'"></span>
+                                    <span class="plugin-tag pick" x-text="p.job.required ? t('Pick one') : t('Pick one or none')"></span>
                                   </span>
-                                  <small class="plugin-desc" x-show="p.job.description" :title="p.job.description" x-text="p.job.description"></small>
+                                  <small class="plugin-desc" x-show="p.job.description" :title="t(p.job.description)" x-text="t(p.job.description)"></small>
                                   <small class="plugin-status">
-                                    <span x-show="p.current">In use: <b x-text="p.current?.name"></b></span>
-                                    <span x-show="!p.current">None in use</span></small>
+                                    <span x-show="p.current">{{ t("In use: {name}", name='<b x-text="p.current?.name"></b>'|safe) }}</span>
+                                    <span x-show="!p.current">{{ t("None in use") }}</span></small>
                                 </span>
                                 <span class="row-buttons">
-                                  <span class="chip warn" x-show="p.update">Update</span>
-                                  <span class="chip" x-text="`${p.members.length} plugins`"></span>
+                                  <span class="chip warn" x-show="p.update">{{ t("Update") }}</span>
+                                  <span class="chip" x-text="tn('{n} plugin', '{n} plugins', p.members.length)"></span>
                                   <svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg>
                                 </span>
                               </button>
@@ -138,19 +138,19 @@
                                 <template x-for="m in p.members" :key="m.id">
                                   <div>
                                     {% call plugin_row("m") %}
-                                    <span class="chip on" x-show="m.enabled">In use</span>
+                                    <span class="chip on" x-show="m.enabled">{{ t("In use") }}</span>
                                     <button type="button" class="btn small" x-show="!m.enabled" @click.stop="pickPlugin(p.job, m)"
-                                            :aria-label="`Use ${m.name} for ${p.name}`">Use</button>
+                                            :aria-label="t('Use {plugin} for {job}', { plugin: m.name, job: p.name })">{{ t("Use") }}</button>
                                     {% endcall %}
                                   </div>
                                 </template>
                                 <!-- a job the app can do without: none of them -->
                                 <div class="plugin-item plugin-none" x-show="!p.job.required" :class="{ off: p.current }">
-                                  <span class="plugin-text"><span class="plugin-title">None</span>
-                                    <small class="plugin-desc" x-text="`Without ${p.name}`"></small></span>
+                                  <span class="plugin-text"><span class="plugin-title">{{ t("None") }}</span>
+                                    <small class="plugin-desc" x-text="t('Without {job}', { job: p.name })"></small></span>
                                   <span class="row-buttons">
-                                    <span class="chip on" x-show="!p.current">In use</span>
-                                    <button type="button" class="btn small" x-show="p.current" @click="pickPlugin(p.job, null)">Use</button>
+                                    <span class="chip on" x-show="!p.current">{{ t("In use") }}</span>
+                                    <button type="button" class="btn small" x-show="p.current" @click="pickPlugin(p.job, null)">{{ t("Use") }}</button>
                                   </span>
                                 </div>
                               </div>
@@ -163,15 +163,15 @@
                 </template>
 
                 <p class="muted plugin-empty" x-show="!plugins.length && !pluginErrorCount">
-                  No plugins installed. <a href="#" @click.prevent="setPluginFilter('tab', 'get')">Get plugins</a></p>
+                  {{ t("No plugins installed.") }} <a href="#" @click.prevent="setPluginFilter('tab', 'get')">{{ t("Get plugins") }}</a></p>
                 <p class="muted plugin-empty" x-show="plugins.length && pf.status !== 'errors' && !pview.installed.length && !pview.builtin.length">
-                  No plugins match. <a href="#" @click.prevent="Object.assign(pf, { cat: 'all', src: 'all', status: 'all', q: '' }); savePluginView()">Show all</a></p>
+                  {{ t("No plugins match.") }} <a href="#" @click.prevent="Object.assign(pf, { cat: 'all', src: 'all', status: 'all', q: '' }); savePluginView()">{{ t("Show all") }}</a></p>
                 <!-- plugins that failed to load: they aren't in the list above -->
                 <div class="plugin-errors" x-show="pluginErrorCount && (pf.status === 'errors' || pf.status === 'all')">
-                  <h3>Failed to load</h3>
+                  <h3>{{ t("Failed to load") }}</h3>
                   <template x-for="[f, e] in Object.entries(pluginErrors)" :key="f"><p class="err"><strong x-text="f"></strong> <span x-text="e"></span></p></template>
                 </div>
-                <p class="muted plugin-empty" x-show="pf.status === 'errors' && !pluginErrorCount">Every plugin loaded.</p>
+                <p class="muted plugin-empty" x-show="pf.status === 'errors' && !pluginErrorCount">{{ t("Every plugin loaded.") }}</p>
               </div>
             </div>
           </div>
@@ -182,23 +182,23 @@
           <div class="plugin-get" x-show="pf.tab === 'get'">
             <div class="plugin-tools">
               <div class="plugin-get-head">
-                <input type="search" class="plugin-search" x-model="pf.q" placeholder="Search the plugin sources"
-                       aria-label="Search the plugin sources">
+                <input type="search" class="plugin-search" x-model="pf.q" placeholder="{{ t('Search the plugin sources') }}"
+                       aria-label="{{ t('Search the plugin sources') }}">
                 <button class="btn small" @click="loadAvailable(true)" :disabled="availBusy"
-                        :class="{ busy: availBusy }">Refresh</button>
+                        :class="{ busy: availBusy }">{{ t("Refresh") }}</button>
               </div>
-              <div class="plugin-status-filter" role="group" aria-label="Category" x-show="availCats.length > 1">
+              <div class="plugin-status-filter" role="group" aria-label="{{ t('Category') }}" x-show="availCats.length > 1">
                 <button class="chip-btn" :class="{ on: pf.getCat === 'all' }" :aria-pressed="pf.getCat === 'all'"
-                        @click="pf.getCat = 'all'">All</button>
+                        @click="pf.getCat = 'all'">{{ t("All") }}</button>
                 <template x-for="c in availCats" :key="c">
                   <button class="chip-btn" :class="{ on: pf.getCat === c }" :aria-pressed="pf.getCat === c"
                           @click="pf.getCat = c" x-text="catLabel(c)"></button>
                 </template>
               </div>
             </div>
-            <p class="muted plugin-empty" x-show="!avail.loaded">Loading the plugin sources…</p>
+            <p class="muted plugin-empty" x-show="!avail.loaded">{{ t("Loading the plugin sources…") }}</p>
             <p class="muted plugin-empty" x-show="avail.loaded && !availList.length"
-               x-text="avail.plugins.length ? 'No plugin from the sources matches.' : 'The sources list no plugins yet.'"></p>
+               x-text="avail.plugins.length ? t('No plugin from the sources matches.') : t('The sources list no plugins yet.')"></p>
             <div class="plugin-list">
               <template x-for="a in availList" :key="a.source + ' ' + a.id">
                 <div class="plugin-item" :class="{ off: a.installed }"
@@ -215,58 +215,57 @@
                   </span>
                   <span class="row-buttons">
                     <span class="chip" x-show="a.installed"
-                          x-text="a.builtin ? 'Built in' : `Installed v${a.installed_version}`"></span>
+                          x-text="a.builtin ? t('Built in') : t('Installed v{version}', { version: a.installed_version })"></span>
                     <button class="btn small primary" x-show="!a.installed" @click.stop="installAvailable(a)"
-                            :disabled="!!availInstalling" :class="{ busy: availInstalling === a.source + ' ' + a.id }">Install</button>
+                            :disabled="!!availInstalling" :class="{ busy: availInstalling === a.source + ' ' + a.id }">{{ t("Install") }}</button>
                   </span>
                 </div>
               </template>
             </div>
-            <p class="muted plugin-empty">More plugins come from other sources:
-              <a href="#" @click.prevent="setPluginFilter('tab', 'setup')">add one</a>.</p>
+            {% set add_one %}<a href="#" @click.prevent="setPluginFilter('tab', 'setup')">{{ t("add one") }}</a>{% endset %}
+            <p class="muted plugin-empty">{{ t("More plugins come from other sources: {link}.", link=add_one) }}</p>
           </div>
 
           <!-- ---------------- Sources & setup ---------------- -->
           <div x-show="pf.tab === 'setup'">
             <!-- where Get plugins comes from: MangaVibe's own list, and the ones the owner added -->
             <div class="plugin-sources">
-              <div class="label"><span>Plugin sources</span>
-                <small>A source is a list of plugins (a plugins.json file). Add one by its GitHub repo
-                  (owner/name) or the file's address.</small></div>
+              <div class="label"><span>{{ t("Plugin sources") }}</span>
+                <small>{{ t("A source is a list of plugins (a plugins.json file). Add one by its GitHub repo (owner/name) or the file's address.") }}</small></div>
               <template x-for="s in avail.sources" :key="s.url">
                 <div class="plugin-source">
                   <span class="plugin-text">
                     <strong x-text="s.name"></strong>
-                    <small x-text="s.official ? 'MangaVibe\'s own plugins' : s.url"></small>
+                    <small x-text="s.official ? t('MangaVibe\'s own plugins') : s.url"></small>
                     <small class="err" x-show="s.error" x-text="s.error"></small>
-                    <small x-show="!s.error" x-text="s.count === 1 ? '1 plugin' : `${s.count} plugins`"></small>
+                    <small x-show="!s.error" x-text="tn('{n} plugin', '{n} plugins', s.count)"></small>
                   </span>
-                  <button class="btn small" x-show="!s.official" @click="removeSource(s)">Remove</button>
+                  <button class="btn small" x-show="!s.official" @click="removeSource(s)">{{ t("Remove") }}</button>
                 </div>
               </template>
               <form class="btn-row" @submit.prevent="addSource()">
-                <input type="text" x-model="newSource" placeholder="owner/repo or https://…/plugins.json"
-                       aria-label="New plugin source" autocomplete="off" spellcheck="false">
-                <button class="btn small" type="submit" :disabled="!newSource.trim() || availBusy">Add source</button>
+                <input type="text" x-model="newSource" placeholder="{{ t('owner/repo or https://…/plugins.json') }}"
+                       aria-label="{{ t('New plugin source') }}" autocomplete="off" spellcheck="false">
+                <button class="btn small" type="submit" :disabled="!newSource.trim() || availBusy">{{ t("Add source") }}</button>
               </form>
-              <small class="muted">Only add sources you trust: a plugin runs inside MangaVibe with full access to its data.</small>
+              <small class="muted">{{ t("Only add sources you trust: a plugin runs inside MangaVibe with full access to its data.") }}</small>
             </div>
             <div class="setting-row">
-              <div class="label"><span>Plugins and custom styles</span>
-                <small>Plugins (a .py file or a folder) go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css</small></div>
-              <button class="btn small" @click="reloadPlugins()">Reload plugins</button>
+              <div class="label"><span>{{ t("Plugins and custom styles") }}</span>
+                <small>{{ t("Plugins (a .py file or a folder) go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css") }}</small></div>
+              <button class="btn small" @click="reloadPlugins()">{{ t("Reload plugins") }}</button>
             </div>
             <!-- a token lets updates come from private GitHub repos; it is never shown again -->
             <form class="setting-row" @submit.prevent="saveGitHubToken(false)">
-              <span class="label"><span>GitHub token for private plugins</span>
-                <small x-text="{ settings: 'Saved. Updates from private repos use it.',
-                                 env: 'Set by GITHUB_TOKEN. A token saved here is used instead.' }[ghTokenFrom]
-                               || 'Only needed when a plugin updates from a private repo. A fine-grained token with read-only Contents access is enough.'"></small></span>
+              <span class="label"><span>{{ t("GitHub token for private plugins") }}</span>
+                <small x-text="{ settings: t('Saved. Updates from private repos use it.'),
+                                 env: t('Set by GITHUB_TOKEN. A token saved here is used instead.') }[ghTokenFrom]
+                               || t('Only needed when a plugin updates from a private repo. A fine-grained token with read-only Contents access is enough.')"></small></span>
               <span class="btn-row">
-                <input type="password" x-model="ghToken" autocomplete="off" aria-label="GitHub token"
-                       :placeholder="ghTokenFrom === 'settings' ? 'Saved (type to replace)' : 'github_pat_…'">
-                <button class="btn small" type="submit" :disabled="!ghToken.trim()">Save</button>
-                <button class="btn small" type="button" x-show="ghTokenFrom === 'settings'" @click="saveGitHubToken(true)">Remove</button>
+                <input type="password" x-model="ghToken" autocomplete="off" aria-label="{{ t('GitHub token') }}"
+                       :placeholder="ghTokenFrom === 'settings' ? t('Saved (type to replace)') : 'github_pat_…'">
+                <button class="btn small" type="submit" :disabled="!ghToken.trim()">{{ t("Save") }}</button>
+                <button class="btn small" type="button" x-show="ghTokenFrom === 'settings'" @click="saveGitHubToken(true)">{{ t("Remove") }}</button>
               </span>
             </form>
           </div>

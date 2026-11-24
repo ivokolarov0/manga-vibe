@@ -10,11 +10,11 @@
                     </div>
                     <div class="btn-row">
                       <button class="btn small" :class="{ busy: !!rescanning[d.series_id] }" :disabled="!!rescanning[d.series_id]" @click="rescan(d.series_id)"
-                              title="Re-read this series' folder after fixing the files on disk">
+                              title="{{ t("Re-read this series' folder after fixing the files on disk") }}">
                         <svg class="ic" x-show="!rescanning[d.series_id]" aria-hidden="true"><use href="#i-refresh"/></svg>
-                        <span x-text="rescanning[d.series_id] ? 'Rescanning…' : 'Rescan'"></span></button>
+                        <span x-text="rescanning[d.series_id] ? t('Rescanning…') : t('Rescan')"></span></button>
                       <button class="btn small" @click="ignore(d.key, !d.ignored)"
-                              x-text="d.ignored ? 'Restore' : 'Not a duplicate'"></button>
+                              x-text="d.ignored ? t('Restore') : t('Not a duplicate')"></button>
                     </div>
                   </div>
                   <div class="dup-files">
@@ -22,10 +22,10 @@
                       <div class="dup-file" :class="{ hidden: f.hidden }">
                         <a :href="'#/read/' + f.book_id"><img :src="f.thumbnail" loading="lazy" alt=""></a>
                         <div class="name" x-text="f.file"></div>
-                        <div class="muted" x-text="`${f.page_count} pages · ${(f.file_size / 1048576).toFixed(1)} MB` + (f.revision > 1 ? ` · v${f.revision}` : '')"></div>
+                        <div class="muted" x-text="[tn('{n} page', '{n} pages', f.page_count), MangaVibe.ui.fileSize(f.file_size)].join(' · ') + (f.revision > 1 ? ` · v${f.revision}` : '')"></div>
                         <div class="btn-row">
-                          <a class="btn small" :href="'#/read/' + f.book_id">Open</a>
-                          <button class="btn small" @click="hideFile(f)" x-text="f.hidden ? 'Show again' : 'Hide this one'"></button>
+                          <a class="btn small" :href="'#/read/' + f.book_id">{{ t("Open") }}</a>
+                          <button class="btn small" @click="hideFile(f)" x-text="f.hidden ? t('Show again') : t('Hide this one')"></button>
                         </div>
                       </div>
                     </template>

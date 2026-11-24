@@ -16,7 +16,7 @@ from sqlalchemy import func
 from app.plugins import Plugin
 from app.plugins.sdk import (BOOK_FORMATS as SUPPORTED, ID_FIELDS, TEXT_BOOK, TEXT_EPUB, Book, Library,
                              Series, book_label, chapter_gaps, display_title, numberings, poster_version,
-                             title_lang, visible_series)
+                             title_lang, visible_series, N_)
 
 
 def same_match_groups(rows):
@@ -140,8 +140,7 @@ class Rows:
                 if b.series_id in live:
                     out.append({"key": f"err:{b.id}", "series_id": b.series_id, "series": self.name(b.series_id),
                                 "book_id": b.id, "file": b.file_name, "path": b.path, "format": b.format,
-                                "error": "A text book (a light novel). Add a reader for text books in Settings → "
-                                         "Plugins to read it (e.g. Light novel reader)."})
+                                "error": N_("A text book (a light novel). Add a reader for text books in Settings → Plugins to read it (e.g. Light novel reader).")})
         return out
 
     def duplicates(self):
@@ -201,21 +200,23 @@ class AttentionLists(Plugin):
     permissions = ["Lists problems in your library in Settings; connects to nothing"]
     provides = {"attention:list": 1}
     # alert: counts towards the badge on Settings (missing chapters and unsupported books don't)
+    # label and help: N_() marks them, the page shows them in its language (app/plugins/web.py)
     attention_lists = [
-        {"key": "unreadable", "label": "Errors", "help": "These files could not be opened. The message says why.",
+        {"key": "unreadable", "label": N_("Errors"), "help": N_("These files could not be opened. The message says why."),
          "alert": True, "view": "files"},
-        {"key": "matches", "label": "Missing metadata",
-         "help": "No confident match was found online. Pick the right one, or open Fix match.", "alert": True,
+        {"key": "matches", "label": N_("Missing metadata"),
+         "help": N_("No confident match was found online. Pick the right one, or open Fix match."), "alert": True,
          "view": "matches"},
-        {"key": "same", "label": "Same match",
-         "help": "These series are matched to the same entry online. Often one folder is split in two, or one "
-                 "match is wrong.", "alert": True, "view": "same"},
-        {"key": "duplicates", "label": "Duplicates", "help": "Two or more files with the same chapter number. "
-         "Both are kept.", "alert": True, "view": "duplicates"},
-        {"key": "gaps", "label": "Missing chapters", "help": "Gaps in the chapter numbers. Often fine (volumes "
-         "may cover them).", "view": "gaps"},
-        {"key": "unsupported", "label": "Not supported", "help": "Light novels (text EPUBs) are listed here "
-         "until a reader for text books is added in Plugins.", "view": "files"},
+        {"key": "same", "label": N_("Same match"),
+         "help": N_("These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."),
+         "alert": True, "view": "same"},
+        {"key": "duplicates", "label": N_("Duplicates"),
+         "help": N_("Two or more files with the same chapter number. Both are kept."), "alert": True, "view": "duplicates"},
+        {"key": "gaps", "label": N_("Missing chapters"),
+         "help": N_("Gaps in the chapter numbers. Often fine (volumes may cover them)."), "view": "gaps"},
+        {"key": "unsupported", "label": N_("Not supported"),
+         "help": N_("Light novels (text EPUBs) are listed here until a reader for text books is added in Plugins."),
+         "view": "files"},
     ]
 
     def attention_rows(self, ctx, key, request):

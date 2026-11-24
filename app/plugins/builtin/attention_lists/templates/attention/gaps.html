@@ -4,9 +4,10 @@
                 <div class="att-row" :class="{ ignored: x.ignored }">
                   <div class="what">
                     <a :href="'#/series/' + x.series_id"><b x-text="x.series"></b></a>
-                    <span class="muted" x-text="'Missing ' + (x.gaps.length === 1 && !x.gaps[0].includes('–') ? 'chapter ' : 'chapters ') + x.gaps.join(', ')"></span>
+                    <span class="muted" x-text="x.gaps.length === 1 && !x.gaps[0].includes('–')
+                      ? t('Missing chapter {chapters}', { chapters: x.gaps[0] }) : t('Missing chapters {chapters}', { chapters: x.gaps.join(', ') })"></span>
                   </div>
-                  <button class="btn small" @click="ignore(x.key, !x.ignored)" x-text="x.ignored ? 'Restore' : 'Ignore'"></button>
+                  <button class="btn small" @click="ignore(x.key, !x.ignored)" x-text="x.ignored ? t('Restore') : t('Ignore')"></button>
                 </div>
               </template>
             </div>

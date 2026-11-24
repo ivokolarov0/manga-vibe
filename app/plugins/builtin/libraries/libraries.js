@@ -55,13 +55,13 @@ MangaVibe.onStart(() => {
     },
     openUnlock(id, onDone) { this.unlock = { open: true, id, onDone }; },
     async add() {
-      const name = prompt("Name of the new library, e.g. Comics");
+      const name = prompt(MV.t("Name of the new library, e.g. Comics"));
       if (!name?.trim()) return null;
       try {
         const r = await MV.api(`${API}/shelves`, { method: "POST", body: { name } });
         await this.load();
-        MV.toast(`${r.name} added. Move series to it with Edit, or several at once: hold a card to select them. `
-          + "A whole folder: Settings → Library folders.", 9000);
+        MV.toast(MV.t("{name} added. Move series to it with Edit, or several at once: hold a card to select them. A whole folder: Settings → Library folders.",
+                      { name: r.name }), 9000);
         return r;
       } catch (e) { MV.toast(e.message, 6000, "error"); return null; }
     },
@@ -71,16 +71,19 @@ MangaVibe.onStart(() => {
     },
     async lockNow() {
       await MV.api(`${API}/shelves/lock`, { method: "POST" }).catch(() => {});
-      MV.toast("Locked. The password is needed again.");
+      MV.toast(MV.t("Locked. The password is needed again."));
       await this.changed();
     },
-    movedText(n, id) { return `Moved ${n} series to ${id ? this.name(id) : "their folders' libraries"}`; },
+    movedText(n, id) {
+      return id ? MV.tn("Moved {n} series to {library}", "Moved {n} series to {library}", n, { library: this.name(id) })
+        : MV.tn("Moved {n} series to their folders' libraries", "Moved {n} series to their folders' libraries", n);
+    },
     // Settings → Library folders: the library a folder's series show in
     folderShelf(folderId) { return this.list.find((s) => s.folders.some((f) => f.id === folderId))?.id ?? null; },
     async setFolder(folder, v) {
       try {
         await MV.api(`${API}/folders/${folder.id}`, { method: "PUT", body: { shelf_id: +v } });
-        MV.toast(`Its series show in ${this.name(+v)} now`);
+        MV.toast(MV.t("Its series show in {library} now", { library: this.name(+v) }));
       } catch (e) { MV.toast(e.message, 6000, "error"); }
       await this.changed();
     },
@@ -100,14 +103,15 @@ MangaVibe.onStart(() => {
       const shelves = all.every((id) => now.has(id)) ? null : [...now];  // all ticked: no limit
       try {
         await MV.api(`${API}/access/${account.id}`, { method: "PUT", body: { shelves } });
-        MV.toast(`${account.name} ${on ? "sees" : "doesn't see"} ${this.name(shelfId)} now`);
+        MV.toast(on ? MV.t("{account} sees {library} now", { account: account.name, library: this.name(shelfId) })
+          : MV.t("{account} doesn't see {library} now", { account: account.name, library: this.name(shelfId) }));
       } catch (e) { MV.toast(e.message, 6000, "error"); }
       await this.loadAccess();
     },
     // the series Edit dialog's choices: [value, label]; "0" follows the folder
     get editOptions() {
       const own = this.edit.info?.folder_shelf?.name;
-      return [["0", own ? `Like its folder: ${own}` : "Like its folder"],
+      return [["0", own ? MV.t("Like its folder: {library}", { library: own }) : MV.t("Like its folder")],
         ...this.list.map((x) => [String(x.id), x.name + (x.locked ? " 🔒" : "")])];
     },
   });
@@ -140,7 +144,7 @@ MangaVibe.onStart(() => {
   /* the password dialog of a locked library (store.openUnlock) */
   Alpine.data("libraryUnlock", () => ({
     password: "", error: "", busy: false,
-    get name() { return store.name(store.unlock.id) || "This library"; },
+    get name() { return store.name(store.unlock.id) || MV.t("This library"); },
     init() {
       this.$watch("$store.libraries.unlock.open", (open) => {
         if (!open) return;
@@ -170,7 +174,7 @@ MangaVibe.onStart(() => {
   Alpine.data("librarySettings", () => ({
     get store() { return store; },
     pw: null,  // the password form of one library: { id, current, password, again }
-    async patch(s, body, msg = "Saved") {
+    async patch(s, body, msg = MV.t("Saved")) {
       try {
         await MV.api(`${API}/shelves/${s.id}`, { method: "PATCH", body });
         MV.toast(msg);
@@ -179,44 +183,45 @@ MangaVibe.onStart(() => {
     },
     rename(s, v) {
       v = v.trim();
-      if (v && v !== s.name) this.patch(s, { name: v }, `Renamed to ${v}`);
+      if (v && v !== s.name) this.patch(s, { name: v }, MV.t("Renamed to {name}", { name: v }));
     },
     async remove(s) {
       if (s.locked) return store.openUnlock(s.id, () => this.remove(store.list.find((x) => x.id === s.id)));
-      if (store.list.length < 2) return MV.toast("This is the only library. Add another one first.", 5000);
-      if (!confirm(`Delete the library "${s.name}"?\n\nNo series or files are deleted: its folders and the series `
-        + "moved to it show in another library.")) return;
+      if (store.list.length < 2) return MV.toast(MV.t("This is the only library. Add another one first."), 5000);
+      if (!confirm(MV.t("Delete the library “{name}”?", { name: s.name }) + "\n\n"
+        + MV.t("No series or files are deleted: its folders and the series moved to it show in another library."))) return;
       try {
         const r = await MV.api(`${API}/shelves/${s.id}`, { method: "DELETE" });
-        MV.toast(`Deleted. Its series are in ${r.moved_to.name} now.`, 5000);
+        MV.toast(MV.t("Deleted. Its series are in {library} now.", { library: r.moved_to.name }), 5000);
         await store.changed();
       } catch (e) { MV.toast(e.message, 6000, "error"); }
     },
     openPassword(s) { this.pw = { id: s.id, current: "", password: "", again: "" }; },
     async savePassword(s, remove = false) {
       const f = this.pw;
-      if (!remove && !f.password) return MV.toast("Type the new password");
-      if (!remove && f.password !== f.again) return MV.toast("The two new passwords are different");
+      if (!remove && !f.password) return MV.toast(MV.t("Type the new password"));
+      if (!remove && f.password !== f.again) return MV.toast(MV.t("The two new passwords are different"));
       try {
         await MV.api(`${API}/shelves/${s.id}/password`, { method: "PUT",
           body: { current: f.current, password: remove ? "" : f.password } });
         this.pw = null;
-        MV.toast(remove ? "Password removed" : "Password saved. This browser stays unlocked until “Lock now” or a new tab.", 6000);
+        MV.toast(remove ? MV.t("Password removed")
+          : MV.t("Password saved. This browser stays unlocked until “Lock now” or a new tab."), 6000);
         await store.changed();
       } catch (e) { MV.toast(e.message, 6000, "error"); }
     },
     async lock(s) {
       await MV.api(`${API}/shelves/${s.id}/lock`, { method: "POST" }).catch(() => {});
-      MV.toast(`${s.name} is locked`);
+      MV.toast(MV.t("{library} is locked", { library: s.name }));
       await store.changed();
     },
-    folders(s) { return s.folders.map((f) => f.root_path).join(", ") || "No folders: only series moved here by hand"; },
+    folders(s) { return s.folders.map((f) => f.root_path).join(", ") || MV.t("No folders: only series moved here by hand"); },
   }));
 
   /* ---- what the app asks (MangaVibe.on): only while the plugin is on ---- */
   MV.on(ID, "start", async () => {
     await lockOnNewTab();
-    MV.settingsPage(ID, "shelves", "Libraries", "books", 0);
+    MV.settingsPage(ID, "shelves", MV.t("Libraries"), "books", 0);
     await store.load().catch(() => {});
   });
   MV.on(ID, "stop", () => {
@@ -236,20 +241,20 @@ MangaVibe.onStart(() => {
   MV.on(ID, "series-info", (s) => {
     const info = s.plugin_data?.libraries;
     if (!info?.shelf || store.list.length < 2) return null;
-    return [["Library", info.shelf.name
-      + (info.shelf_override ? ` (moved here; its folder's is ${info.folder_shelf?.name || "gone"})` : "")]];
+    return [[MV.t("Library"), info.shelf.name
+      + (info.shelf_override ? " " + MV.t("(moved here; its folder's is {library})", { library: info.folder_shelf?.name || MV.t("gone") }) : "")]];
   });
   // the library page with nothing to show: say why
   MV.on(ID, "empty-library", () => {
     const list = store.list;
     // every library is locked (e.g. the only one has a password): nothing can be shown until one is opened
     if (list.length && list.every((s) => s.locked)) {
-      const one = list.length === 1;
-      return `${one ? list[0].name + " is" : "Every library is"} locked. Tap ${one ? "its" : "a"} tab above to unlock it.`;
+      return list.length === 1 ? MV.t("{library} is locked. Tap its tab above to unlock it.", { library: list[0].name })
+        : MV.t("Every library is locked. Tap a tab above to unlock it.");
     }
     if (store.picked && list.length > 1) {
-      return `Nothing in ${store.name(store.picked)} yet. Move series here with Edit, or select several `
-        + "(hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders.";
+      return MV.t("Nothing in {library} yet. Move series here with Edit, or select several (hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders.",
+                  { library: store.name(store.picked) });
     }
     return null;
   });
@@ -267,7 +272,8 @@ MangaVibe.onStart(() => {
     await MV.api(`${API}/series/${s.id}`, { method: "PUT", body: { shelf_id: id } });
     await store.load().catch(() => {});  // the series counts
     const target = store.list.find((x) => x.id === id);
-    if (target?.locked) return { leave: true, message: `Saved. It's in ${target.name} now, which is locked.` };
-    return { message: `Saved. It shows in ${target?.name || "its folder's library"} now.` };
+    if (target?.locked) return { leave: true, message: MV.t("Saved. It's in {library} now, which is locked.", { library: target.name }) };
+    return { message: target ? MV.t("Saved. It shows in {library} now.", { library: target.name })
+      : MV.t("Saved. It shows in its folder's library now.") };
   });
 });

@@ -7,7 +7,7 @@
                     <a :href="x.url || ('#/series/' + x.series_id)"><b x-text="x.series"></b></a>
                     <span class="muted" x-show="x.text" x-text="x.text"></span>
                   </div>
-                  <button class="btn small" x-show="x.key" @click="ignore(x.key, !x.ignored)" x-text="x.ignored ? 'Restore' : 'Ignore'"></button>
+                  <button class="btn small" x-show="x.key" @click="ignore(x.key, !x.ignored)" x-text="x.ignored ? t('Restore') : t('Ignore')"></button>
                 </div>
               </template>
             </div>

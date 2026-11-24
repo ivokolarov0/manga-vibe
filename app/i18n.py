@@ -314,9 +314,11 @@ ROOT = Path(__file__).resolve().parent.parent
 SCAN = [("app", ("*.html", "*.js", "*.py"))]
 SKIP_PARTS = {"vendor", "__pycache__"}
 _STR = r"""(?:"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)')"""
-# t("…") and tn("…", "…", n) in templates and scripts, N_("…") in Python; not obj.t( or format(
-CALL_T = re.compile(r"(?<![\w.$])(?:t|N_)\(\s*" + _STR)
-CALL_TN = re.compile(r"(?<![\w.$])tn\(\s*" + _STR + r"\s*,\s*" + _STR)
+# t("…") and tn("…", "…", n) in templates and scripts (th("…") for HTML), N_("…") in Python; not obj.t( or
+# format(; MangaVibe.t( and MV.t( (the built-in plugins' name for it) in plugins' scripts
+_START = r"(?:(?<![\w.$])|(?<=MangaVibe\.)|(?<=\bMV\.))"
+CALL_T = re.compile(_START + r"(?:t|th|N_)\(\s*" + _STR)
+CALL_TN = re.compile(_START + r"tn\(\s*" + _STR + r"\s*,\s*" + _STR)
 
 
 def _literal(m, first: int) -> str:

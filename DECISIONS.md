@@ -1231,3 +1231,11 @@ Plugin API version, and the app works after every one.
 - **Step by step**: this first step has the machinery, the picker, and the top bar, banners, toasts and
   Settings → Display / Reader / Android app translated. The rest of the page moves to `t()` in the next
   steps, then a test that fails on text written straight into a template.
+- **Step 2a, the rest of Settings**: Library folders, Metadata, Updates, Plugins, a plugin's page, Needs
+  attention, the folder picker, Libraries and Accounts. Jinja's `t()` escapes the translation and fills in
+  its placeholders, so markup (a `<code>`, an Alpine-bound `<b>`) can sit inside a translated sentence
+  without the translation itself ever being HTML. Plugin markup (not Jinja) uses `th()` for that.
+- **Texts that come from the server through the API** (job labels and descriptions, plugin categories, the
+  Needs attention lists' labels) are marked `N_()` and translated in the browser with `t()`; the API stays
+  language-free. Built-in plugins' names, descriptions and permissions, and the server's error messages,
+  are a later step.

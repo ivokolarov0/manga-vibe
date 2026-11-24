@@ -125,6 +125,15 @@ def test_t_and_tn_in_the_current_language():
         assert i18n.tn("{n} second", "{n} seconds", 5) == "5 秒"
 
 
+def test_templates_t_escapes_the_text_and_keeps_markup_values():
+    """{{ t(text, name=markup|safe) }}: the translation is escaped, a markup value goes in as it is, any
+    other value escaped."""
+    tpl = web.templates.from_string("""{{ t('a <b> {x} {y}', x='<code>c</code>'|safe, y='<i>') }}""")
+    assert tpl.render() == "a &lt;b&gt; <code>c</code> &lt;i&gt;"
+    tpl = web.templates.from_string("""<p title="{{ t("Don't show again") }}">""")
+    assert tpl.render() == '<p title="Don&#x27;t show again">'
+
+
 @pytest.mark.parametrize("header, lang", [
     ("bg-BG,bg;q=0.9,en;q=0.8", "bg"),
     ("de-AT", "de"),

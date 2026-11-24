@@ -2,9 +2,8 @@
   <div class="modal" x-data="folderPicker()" x-show="$store.app.folderPicker" x-cloak
        x-dialog="close()">
     <div>
-      <div class="sheet-head"><b>Add a library folder</b><button class="btn small" @click="close()">Cancel</button></div>
-      <p class="muted">These are the folders inside the MangaVibe container. To see another folder here,
-        first mount it into the container as a volume, then restart it.</p>
+      <div class="sheet-head"><b>{{ t("Add a library folder") }}</b><button class="btn small" @click="close()">{{ t("Cancel") }}</button></div>
+      <p class="muted">{{ t("These are the folders inside the MangaVibe container. To see another folder here, first mount it into the container as a volume, then restart it.") }}</p>
       <div class="chips" x-show="crumbs.length">
         <template x-for="c in crumbs" :key="c.path">
           <button class="chip-btn" @click="open(c.path)" x-text="c.name"></button>
@@ -12,16 +11,16 @@
       </div>
       <p class="err" x-show="error" x-text="error"></p>
       <div class="folder-list">
-        <button x-show="parent !== null && path" @click="open(parent)"><svg class="ic" aria-hidden="true"><use href="#i-arrow-up"/></svg> <span>Up</span></button>
+        <button x-show="parent !== null && path" @click="open(parent)"><svg class="ic" aria-hidden="true"><use href="#i-arrow-up"/></svg> <span>{{ t("Up") }}</span></button>
         <template x-for="d in dirs" :key="d.path">
           <button @click="open(d.path)"><svg class="ic" aria-hidden="true"><use href="#i-folder"/></svg> <span x-text="d.name"></span>
-            <small class="muted" x-show="d.library">(already a library)</small></button>
+            <small class="muted" x-show="d.library">{{ t("(already a library)") }}</small></button>
         </template>
-        <p class="muted" style="margin: 0; padding: 10px 12px" x-show="path && !dirs.length">No folders inside.</p>
+        <p class="muted" style="margin: 0; padding: 10px 12px" x-show="path && !dirs.length">{{ t("No folders inside.") }}</p>
       </div>
       <div class="row" x-show="path">
         <div class="folder-path" style="flex: 1" x-text="path"></div>
-        <button class="btn primary" :disabled="busy" @click="choose()">Use this folder</button>
+        <button class="btn primary" :disabled="busy" @click="choose()">{{ t("Use this folder") }}</button>
       </div>
     </div>
   </div>

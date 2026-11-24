@@ -7,21 +7,117 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: app/web/templates/dialogs/folder-picker.html
+msgid "(already a library)"
+msgstr "(schon eine Bibliothek)"
+
+#: app/web/static/js/app.js
+msgid "(built into the image)"
+msgstr "(im Image enthalten)"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "(moved here; its folder's is {library})"
+msgstr "(hierher verschoben; die ihres Ordners ist {library})"
+
 #: app/web/templates/shell/toasts.html
 msgid "A new MangaVibe version needs a new Docker image"
 msgstr "Die neue MangaVibe-Version braucht ein neues Docker-Image"
+
+#: app/web/static/js/app.js
+msgid "A new version is available"
+msgstr "Eine neue Version ist verfügbar"
 
 #: app/web/templates/shell/toasts.html
 msgid "A new version of MangaVibe is available"
 msgstr "Eine neue Version von MangaVibe ist verfügbar"
 
 #: app/web/static/js/app.js
+msgid "A scan is already running. Try again when it has finished."
+msgstr "Es läuft schon ein Scan. Versuch es noch einmal, wenn er fertig ist."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "A scan is running"
+msgstr "Ein Scan läuft"
+
+#: app/web/templates/settings/plugins.html
+msgid "A source is a list of plugins (a plugins.json file). Add one by its GitHub repo (owner/name) or the file's address."
+msgstr "Eine Quelle ist eine Liste von Plugins (eine plugins.json-Datei). Füge sie über ihr GitHub-Repo (owner/name) oder die Adresse der Datei hinzu."
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "A text book (a light novel). Add a reader for text books in Settings → Plugins to read it (e.g. Light novel reader)."
+msgstr "Ein Textbuch (eine Light Novel). Füge unter Einstellungen → Plugins einen Reader für Textbücher hinzu, um es zu lesen (z. B. Light novel reader)."
+
+#: app/web/static/js/app.js
 msgid "A white outline around the letters, so they stay readable over the art"
 msgstr "Ein weißer Rand um die Buchstaben, damit sie auf dem Bild lesbar bleiben"
+
+#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
+msgid "Account"
+msgstr "Konto"
+
+#: app/plugins/builtin/accounts/menu.html
+msgid "Account: {name}"
+msgstr "Konto: {name}"
+
+#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html
+msgid "Accounts"
+msgstr "Konten"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Accounts are on. Make the first account: an admin, who manages the app and the other accounts. It keeps everything read so far."
+msgstr "Konten sind eingeschaltet. Lege das erste Konto an: einen Admin, der die App und die anderen Konten verwaltet. Es behält alles bisher Gelesene."
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "Add"
+msgstr "Hinzufügen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Add a folder"
+msgstr "Ordner hinzufügen"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Add a library"
+msgstr "Bibliothek hinzufügen"
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "Add a library folder"
+msgstr "Bibliotheksordner hinzufügen"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "Add an account"
+msgstr "Konto hinzufügen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Add folder"
+msgstr "Ordner hinzufügen"
+
+#: app/web/templates/settings/plugins.html
+msgid "add one"
+msgstr "füge eine hinzu"
+
+#: app/web/templates/settings/plugins.html
+msgid "Add source"
+msgstr "Quelle hinzufügen"
+
+#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
+msgid "Admin"
+msgstr "Admin"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html app/web/templates/settings/plugins.html
+msgid "All"
+msgstr "Alle"
+
+#: app/web/static/js/app.js
+msgid "Allow them and install it?"
+msgstr "Erlauben und installieren?"
 
 #: app/web/static/js/common.js
 msgid "Always visible"
 msgstr "Immer sichtbar"
+
+#: app/web/static/js/app.js
+msgid "an earlier update"
+msgstr "einem früheren Update"
 
 #: app/web/templates/shell/toasts.html
 msgid "and {n} more"
@@ -33,17 +129,45 @@ msgstr[1] "und {n} weitere"
 msgid "Android app"
 msgstr "Android-App"
 
+#: app/web/static/js/app.js
+msgid "AniList/MangaUpdates not reachable; retrying at {time}"
+msgstr "AniList/MangaUpdates nicht erreichbar; neuer Versuch um {time}"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "App version"
 msgstr "App-Version"
+
+#: app/plugins/__init__.py
+msgid "Appearance"
+msgstr "Aussehen"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
+msgid "Ask for the passwords again"
+msgstr "Passwörter wieder abfragen"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Asked for when the library is opened. Its series are hidden everywhere until then."
+msgstr "Wird beim Öffnen der Bibliothek abgefragt. Bis dahin sind ihre Serien überall verborgen."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Asks GitHub ({repo}) for its newest release and shows a message when one is out"
+msgstr "Fragt GitHub ({repo}) nach der neuesten Version und zeigt eine Nachricht, wenn eine erscheint"
 
 #: app/web/static/js/app.js
 msgid "Auto"
 msgstr "Automatisch"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Auto-accept a match from"
+msgstr "Treffer automatisch annehmen ab"
+
 #: app/web/static/js/app.js
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
 msgstr "Zurück, Vollbild und die Optionen liegen auf dieser Seite, in Daumennähe"
+
+#: app/contracts/__init__.py
+msgid "Book labels"
+msgstr "Buchbezeichnungen"
 
 #: app/web/static/js/app.js
 msgid "Bottom"
@@ -53,6 +177,30 @@ msgstr "Unten"
 msgid "Browser's language"
 msgstr "Sprache des Browsers"
 
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Built in"
+msgstr "Eingebaut"
+
+#: app/web/static/js/app.js
+msgid "Built into the Docker image, no download"
+msgstr "Im Docker-Image enthalten, kein Download"
+
+#: app/web/static/js/app.js
+msgid "Built-in version (from the Docker image)"
+msgstr "Eingebaute Version (aus dem Docker-Image)"
+
+#: app/web/templates/settings/plugin.html
+msgid "Can't run: {why}"
+msgstr "Kann nicht laufen: {why}"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/web/templates/dialogs/folder-picker.html
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: app/web/static/js/app.js
+msgid "Cancel to see the other choice."
+msgstr "Abbrechen, um die andere Wahl zu sehen."
+
 #: app/web/static/js/app.js
 msgid "Card size"
 msgstr "Kartengröße"
@@ -61,9 +209,41 @@ msgstr "Kartengröße"
 msgid "Card width"
 msgstr "Kartenbreite"
 
+#: app/web/templates/settings/plugins.html
+msgid "Category"
+msgstr "Kategorie"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Change or remove…"
+msgstr "Ändern oder entfernen…"
+
+#: app/plugins/builtin/accounts/menu.html
+msgid "Change password…"
+msgstr "Passwort ändern…"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Change server"
 msgstr "Server wechseln"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Change your password"
+msgstr "Passwort ändern"
+
+#: app/web/templates/settings/plugin.html
+msgid "Check for updates"
+msgstr "Nach Updates suchen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Check for updates every day"
+msgstr "Täglich nach Updates suchen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Check now"
+msgstr "Jetzt prüfen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Checking…"
+msgstr "Wird geprüft…"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear"
@@ -73,9 +253,17 @@ msgstr "Leeren"
 msgid "Clear the search"
 msgstr "Suche leeren"
 
+#: app/web/static/js/app.js
+msgid "Cleared: the series page shows the path inside Docker"
+msgstr "Geleert: die Serienseite zeigt den Pfad in Docker"
+
 #: app/web/templates/shell/toasts.html
 msgid "Close"
 msgstr "Schließen"
+
+#: app/web/templates/settings/plugins.html
+msgid "Come with MangaVibe"
+msgstr "Kommen mit MangaVibe"
 
 #: app/web/static/js/app.js
 msgid "Contained"
@@ -84,6 +272,14 @@ msgstr "Begrenzt"
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Continue"
 msgstr "Weiterlesen"
+
+#: app/contracts/__init__.py
+msgid "Continue reading page"
+msgstr "Seite Weiterlesen"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
+msgid "Current password"
+msgstr "Aktuelles Passwort"
 
 #: app/web/static/js/app.js
 msgid "Dark"
@@ -97,13 +293,49 @@ msgstr "Dunklere Seiten schonen die Augen, z. B. nachts"
 msgid "Default reading mode"
 msgstr "Standard-Lesemodus"
 
+#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html
+msgid "Delete"
+msgstr "Löschen"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Delete the account “{name}”?"
+msgstr "Das Konto „{name}“ löschen?"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Delete the library “{name}”?"
+msgstr "Die Bibliothek „{name}“ löschen?"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Deleted. Its series are in {library} now."
+msgstr "Gelöscht. Ihre Serien sind jetzt in {library}."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Disabled"
+msgstr "Aus"
+
 #: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-display.html
 msgid "Display"
 msgstr "Anzeige"
 
+#: app/web/templates/settings/plugin.html
+msgid "Does: {jobs}"
+msgstr "Macht: {jobs}"
+
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html
+msgid "Don't match"
+msgstr "Nicht zuordnen"
+
 #: app/web/templates/shell/banners.html
 msgid "Don't show again"
 msgstr "Nicht mehr anzeigen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Don't skip"
+msgstr "Nicht überspringen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "down"
+msgstr "nicht erreichbar"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Download"
@@ -114,12 +346,80 @@ msgid "Download newest"
 msgstr "Neueste herunterladen"
 
 #: app/web/static/js/app.js
+msgid "Downloaded from GitHub"
+msgstr "Wird von GitHub geladen"
+
+#: app/contracts/__init__.py
+msgid "Draws the pages in the reader: paged or vertical, zoom, swipes, the fit"
+msgstr "Zeichnet die Seiten im Reader: seitenweise oder vertikal, Zoom, Wischen, Einpassen"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Duplicates"
+msgstr "Duplikate"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Each library shows its own series, picked with the tabs on the home screen. A folder's series show in its library (Settings → Library folders); one series can be moved to another with Edit, or several at once by holding a card. Files never move."
+msgstr "Jede Bibliothek zeigt ihre eigenen Serien, ausgewählt über die Tabs auf dem Startbildschirm. Die Serien eines Ordners erscheinen in seiner Bibliothek (Einstellungen → Bibliotheksordner); eine Serie lässt sich mit Bearbeiten verschieben, mehrere auf einmal durch Halten einer Karte. Dateien werden nie verschoben."
+
+#: app/web/templates/settings/plugin.html
+msgid "Earlier versions"
+msgstr "Frühere Versionen"
+
+#: app/contracts/__init__.py
+msgid "Edit dialog"
+msgstr "Bearbeiten-Dialog"
+
+#: app/web/static/js/app.js
 msgid "English"
 msgstr "Englisch"
+
+#: app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
+msgid "Errors"
+msgstr "Fehler"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Every library is locked. Tap a tab above to unlock it."
+msgstr "Alle Bibliotheken sind gesperrt. Tippe oben auf einen Tab, um sie zu entsperren."
+
+#: app/web/templates/settings/plugins.html
+msgid "Every plugin loaded."
+msgstr "Alle Plugins wurden geladen."
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "Everyone logs in. Each account has its own reading progress, favorites, Continue reading, saved searches and Settings → Reader. Admins also manage the app: settings, folders, metadata, plugins, deleting, and these accounts."
+msgstr "Alle melden sich an. Jedes Konto hat seinen eigenen Lesefortschritt, Favoriten, Weiterlesen, gespeicherte Suchen und Einstellungen → Reader. Admins verwalten außerdem die App: Einstellungen, Ordner, Metadaten, Plugins, Löschen und diese Konten."
+
+#: app/web/templates/settings/plugins.html
+msgid "Failed to load"
+msgstr "Nicht geladen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Fallback"
+msgstr "Ersatz"
 
 #: app/web/static/js/app.js
 msgid "Falls back to the next one if missing"
 msgstr "Fehlt er, wird der nächste genommen"
+
+#: app/web/static/js/app.js
+msgid "File hidden from reading (it stays on disk)"
+msgstr "Datei beim Lesen ausgeblendet (sie bleibt auf der Festplatte)"
+
+#: app/contracts/__init__.py
+msgid "File name parser"
+msgstr "Dateinamen-Erkennung"
+
+#: app/web/static/js/app.js
+msgid "File shown again"
+msgstr "Datei wird wieder gezeigt"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Files alone are not enough for it. See {url}"
+msgstr "Dateien allein reichen dafür nicht. Siehe {url}"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Find metadata automatically"
+msgstr "Metadaten automatisch suchen"
 
 #: app/web/static/js/app.js
 msgid "Fit"
@@ -137,11 +437,43 @@ msgstr "An Bildschirm anpassen"
 msgid "Fit width"
 msgstr "An Breite anpassen"
 
+#: app/contracts/__init__.py
+msgid "Fix match dialog"
+msgstr "Zuordnung-korrigieren-Dialog"
+
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/attention_lists/templates/attention/same.html
+msgid "Fix match…"
+msgstr "Zuordnung korrigieren…"
+
+#: app/web/static/js/app.js
+msgid "Folder added. Scanning…"
+msgstr "Ordner hinzugefügt. Wird gescannt…"
+
+#: app/web/static/js/app.js
+msgid "Folder removed"
+msgstr "Ordner entfernt"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "For example Manga, Comics, Manhwa. Then point a folder at it, or move series to it. Just a set of filters (e.g. only Isekai)? Filter the home screen and use “Save search”."
+msgstr "Zum Beispiel Manga, Comics, Manhwa. Weise ihr dann einen Ordner zu oder verschiebe Serien hinein. Nur ein paar Filter (z. B. nur Isekai)? Filtere den Startbildschirm und nutze „Suche speichern“."
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "For its series that don't set their own"
+msgstr "Für ihre Serien ohne eigenen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "For new series after each scan"
+msgstr "Für neue Serien nach jedem Scan"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Forgot it? Start MangaVibe once with {setting}. The app has no accounts, so this keeps the library from others using it; anyone who can open the files or the database still can."
+msgstr "Vergessen? Starte MangaVibe einmal mit {setting}. Die App hat keine Konten, also schützt das die Bibliothek nur vor anderen, die die App nutzen; wer die Dateien oder die Datenbank öffnen kann, kommt trotzdem dran."
+
 #: app/web/static/js/app.js
 msgid "From card size"
 msgstr "Nach Kartengröße"
 
-#: app/web/templates/shell/toasts.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/shell/toasts.html
 msgid "Full release notes"
 msgstr "Alle Änderungen"
 
@@ -157,6 +489,50 @@ msgstr "Vollbild beim ersten Tippen"
 msgid "Fullscreen, the screen stays on, volume buttons turn pages"
 msgstr "Vollbild, der Bildschirm bleibt an, Lautstärketasten blättern um"
 
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Gaps in the chapter numbers. Often fine (volumes may cover them)."
+msgstr "Lücken in den Kapitelnummern. Oft in Ordnung (Bände können sie abdecken)."
+
+#: app/web/templates/settings/plugins.html
+msgid "Get plugins"
+msgstr "Plugins holen"
+
+#: app/web/templates/settings/plugins.html
+msgid "GitHub token"
+msgstr "GitHub-Token"
+
+#: app/web/templates/settings/plugins.html
+msgid "GitHub token for private plugins"
+msgstr "GitHub-Token für private Plugins"
+
+#: app/web/static/js/app.js
+msgid "GitHub token removed"
+msgstr "GitHub-Token entfernt"
+
+#: app/web/static/js/app.js
+msgid "GitHub token saved"
+msgstr "GitHub-Token gespeichert"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Go back"
+msgstr "Zurück"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Go back to an earlier version"
+msgstr "Zu einer früheren Version zurück"
+
+#: app/web/static/js/app.js
+msgid "Go back to {plugin} {version}? It's the copy kept when you updated it."
+msgstr "Zurück zu {plugin} {version}? Das ist die Kopie, die beim Update behalten wurde."
+
+#: app/web/templates/settings/plugin.html
+msgid "Go back to {version}"
+msgstr "Zurück zu {version}"
+
+#: app/web/static/js/app.js
+msgid "Go back to {version}? MangaVibe restarts with it. {current} won't be offered again until a newer version is out."
+msgstr "Zurück zu {version}? MangaVibe startet damit neu. {current} wird erst wieder angeboten, wenn eine neuere Version erscheint."
+
 #: app/web/templates/shell/toasts.html
 msgid "Going back failed"
 msgstr "Zurückgehen fehlgeschlagen"
@@ -164,6 +540,10 @@ msgstr "Zurückgehen fehlgeschlagen"
 #: app/web/templates/shell/toasts.html
 msgid "Going back to an earlier version…"
 msgstr "Zurück zu einer früheren Version…"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "gone"
+msgstr "weg"
 
 #: app/web/static/js/app.js
 msgid "Grid"
@@ -174,20 +554,88 @@ msgid "Grid columns"
 msgstr "Spalten"
 
 #: app/web/static/js/app.js
+msgid "Hidden from this list. “Show ignored” brings it back."
+msgstr "Aus dieser Liste ausgeblendet. „Ignorierte zeigen“ holt es zurück."
+
+#: app/web/static/js/app.js
 msgid "Hide controls after"
 msgstr "Steuerung ausblenden nach"
+
+#: app/web/templates/settings/attention.html
+msgid "Hide ignored rows"
+msgstr "Ignorierte ausblenden"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Hide this one"
+msgstr "Diese ausblenden"
 
 #: app/web/static/js/common.js
 msgid "Hide with the controls"
 msgstr "Mit der Steuerung ausblenden"
 
+#: app/contracts/__init__.py
+msgid "How a series looks in the library grid, its list view and Continue reading"
+msgstr "Wie eine Serie im Bibliotheksraster, in der Listenansicht und bei Weiterlesen aussieht"
+
+#: app/web/static/js/app.js
+msgid "Idle. New series are matched automatically after each scan."
+msgstr "Nichts zu tun. Neue Serien werden nach jedem Scan automatisch zugeordnet."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
+msgid "If a new version has a problem. The version you leave isn't offered again until a newer one is out."
+msgstr "Falls eine neue Version Probleme macht. Die verlassene Version wird erst wieder angeboten, wenn eine neuere erscheint."
+
+#: app/plugins/builtin/attention_lists/templates/attention/files.html app/plugins/builtin/attention_lists/templates/attention/gaps.html app/web/templates/settings/attention-plain.html
+msgid "Ignore"
+msgstr "Ignorieren"
+
+#: app/plugins/builtin/attention_lists/templates/attention/files.html
+msgid "Ignore all {n}"
+msgstr "Alle {n} ignorieren"
+
+#: app/contracts/__init__.py
+msgid "Image reader"
+msgstr "Bild-Reader"
+
 #: app/web/static/js/app.js
 msgid "In the reader: volume down goes to the next page, volume up goes back"
 msgstr "Im Reader: leiser blättert vor, lauter blättert zurück"
 
+#: app/web/templates/settings/plugins.html
+msgid "In use"
+msgstr "In Gebrauch"
+
+#: app/web/templates/settings/plugins.html
+msgid "In use: {name}"
+msgstr "In Gebrauch: {name}"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Include adult titles"
+msgstr "Titel für Erwachsene einbeziehen"
+
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Install"
+msgstr "Installieren"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Install the app"
 msgstr "App installieren"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin} from {url}?"
+msgstr "{plugin} von {url} installieren?"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin} {version} from {url}?"
+msgstr "{plugin} {version} von {url} installieren?"
+
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Installed"
+msgstr "Installiert"
+
+#: app/web/templates/settings/plugins.html
+msgid "Installed v{version}"
+msgstr "Installiert v{version}"
 
 #: app/web/static/js/app.js
 msgid "Inverted"
@@ -200,6 +648,18 @@ msgstr "Invertiert macht weiße Seiten schwarz mit weißen Linien. Warm nimmt da
 #: app/web/static/js/app.js
 msgid "Inverted, warm"
 msgstr "Invertiert, warm"
+
+#: app/web/static/js/app.js
+msgid "It's listed by {source}, not by MangaVibe."
+msgstr "Es wird von {source} angeboten, nicht von MangaVibe."
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Its reading progress, favorites and saved searches are deleted too. The series and files stay."
+msgstr "Lesefortschritt, Favoriten und gespeicherte Suchen werden auch gelöscht. Serien und Dateien bleiben."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Its series show in {library} now"
+msgstr "Seine Serien erscheinen jetzt in {library}"
 
 #: app/web/static/js/app.js
 msgid "Just for you"
@@ -222,12 +682,28 @@ msgid "Just for you. Missing words are shown in English"
 msgstr "Nur für dich. Fehlende Wörter erscheinen auf Englisch"
 
 #: app/web/static/js/app.js
+msgid "Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
+msgstr "Die neuere Datenbank behalten? {version} versteht vielleicht nicht, was neuere Versionen hinzugefügt haben, und Teile können kaputtgehen. Ein erneutes Update behebt das."
+
+#: app/web/static/js/app.js
 msgid "Language"
 msgstr "Sprache"
 
 #: app/web/static/js/app.js
 msgid "Large"
 msgstr "Groß"
+
+#: app/web/static/js/app.js
+msgid "Last checked {when}"
+msgstr "Zuletzt geprüft: {when}"
+
+#: app/web/static/js/app.js
+msgid "last checked {when}"
+msgstr "zuletzt geprüft: {when}"
+
+#: app/web/static/js/app.js
+msgid "Last scan finished {when}"
+msgstr "Letzter Scan fertig: {when}"
 
 #: app/web/templates/shell/toasts.html
 msgid "Later"
@@ -253,17 +729,33 @@ msgstr "Links zurück, rechts vor"
 msgid "Less"
 msgstr "Weniger"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+msgid "Libraries"
+msgstr "Bibliotheken"
+
+#: app/plugins/__init__.py app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Library"
 msgstr "Bibliothek"
 
-#: app/plugins/builtin/settings_pages/__init__.py
+#: app/contracts/__init__.py
+msgid "Library filters and sorting"
+msgstr "Filter und Sortierung der Bibliothek"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Library folders"
 msgstr "Bibliotheksordner"
+
+#: app/plugins/builtin/libraries/folder_row.html
+msgid "Library for the series in {folder}"
+msgstr "Bibliothek für die Serien in {folder}"
 
 #: app/web/static/js/app.js
 msgid "Library listing"
 msgstr "Bibliotheksliste"
+
+#: app/contracts/__init__.py
+msgid "Library page"
+msgstr "Bibliotheksseite"
 
 #: app/web/static/js/app.js
 msgid "Library view"
@@ -273,21 +765,109 @@ msgstr "Bibliotheksansicht"
 msgid "Light"
 msgstr "Hell"
 
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Light novels (text EPUBs) are listed here until a reader for text books is added in Plugins."
+msgstr "Light Novels (Text-EPUBs) stehen hier, bis unter Plugins ein Reader für Textbücher hinzugefügt wird."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Like its folder"
+msgstr "Wie sein Ordner"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Like its folder: {library}"
+msgstr "Wie sein Ordner: {library}"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Like Settings → Reader"
+msgstr "Wie Einstellungen → Reader"
+
 #: app/web/static/js/app.js
 msgid "List"
 msgstr "Liste"
+
+#: app/contracts/__init__.py
+msgid "Lists of things in the library worth a look, in Settings → Needs attention"
+msgstr "Listen mit Dingen in der Bibliothek, die einen Blick wert sind, unter Einstellungen → Braucht Aufmerksamkeit"
 
 #: app/web/static/js/app.js
 msgid "Load more while scrolling, or show numbered pages"
 msgstr "Beim Scrollen mehr laden oder nummerierte Seiten zeigen"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/web/templates/settings/plugins.html
+msgid "Loading the plugin sources…"
+msgstr "Plugin-Quellen werden geladen…"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
+msgid "Loading…"
+msgstr "Wird geladen…"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+msgid "Lock now"
+msgstr "Jetzt sperren"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
+msgid "locked"
+msgstr "gesperrt"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Locked"
+msgstr "Gesperrt"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Locked. The password is needed again."
+msgstr "Gesperrt. Das Passwort wird wieder gebraucht."
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
+msgid "Locked: asks for the password"
+msgstr "Gesperrt: fragt nach dem Passwort"
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Locked: they disappear until it is unlocked"
+msgstr "Gesperrt: sie verschwinden, bis sie entsperrt ist"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Log in"
+msgstr "Anmelden"
+
+#: app/plugins/builtin/accounts/menu.html
+msgid "Log out"
+msgstr "Abmelden"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Look again"
+msgstr "Erneut suchen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Lower = fewer series in Needs attention, more wrong matches"
+msgstr "Niedriger = weniger Serien unter Braucht Aufmerksamkeit, mehr falsche Treffer"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Main"
 msgstr "Hauptnavigation"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Make the admin account"
+msgstr "Admin-Konto anlegen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Manage in Plugins"
+msgstr "In Plugins verwalten"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "Manages the app and the accounts"
+msgstr "Verwaltet die App und die Konten"
 
 #: app/web/templates/shell/banners.html
 msgid "MangaVibe for Android"
 msgstr "MangaVibe für Android"
+
+#: app/web/static/js/app.js
+msgid "MangaVibe needs {jobs}. To switch {plugin} off, switch on another plugin that does it."
+msgstr "MangaVibe braucht {jobs}. Um {plugin} auszuschalten, schalte ein anderes Plugin ein, das das macht."
+
+#: app/web/templates/settings/plugins.html
+msgid "MangaVibe's own plugins"
+msgstr "Die eigenen Plugins von MangaVibe"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "MangaVibe: Library"
@@ -297,19 +877,47 @@ msgstr "MangaVibe: Bibliothek"
 msgid "Match device"
 msgstr "Wie das Gerät"
 
+#: app/web/static/js/app.js
+msgid "Matched: {title}"
+msgstr "Zugeordnet: {title}"
+
 #: app/web/templates/ui/macros.html
 msgid "Matching metadata: {done} of {n} series"
 msgid_plural "Matching metadata: {done} of {n} series"
 msgstr[0] "Metadaten werden gesucht: {done} von {n} Serie"
 msgstr[1] "Metadaten werden gesucht: {done} von {n} Serien"
 
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html
+msgid "Matching…"
+msgstr "Wird zugeordnet…"
+
 #: app/web/static/js/app.js
 msgid "Medium"
 msgstr "Mittel"
 
-#: app/plugins/builtin/settings_pages/__init__.py
+#: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Metadata"
 msgstr "Metadaten"
+
+#: app/contracts/__init__.py
+msgid "Metadata matcher"
+msgstr "Metadaten-Zuordnung"
+
+#: app/plugins/builtin/attention_lists/templates/attention/gaps.html
+msgid "Missing chapter {chapters}"
+msgstr "Fehlendes Kapitel {chapters}"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Missing chapters"
+msgstr "Fehlende Kapitel"
+
+#: app/plugins/builtin/attention_lists/templates/attention/gaps.html
+msgid "Missing chapters {chapters}"
+msgstr "Fehlende Kapitel {chapters}"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Missing metadata"
+msgstr "Fehlende Metadaten"
 
 #: app/web/static/js/app.js
 msgid "More"
@@ -323,35 +931,221 @@ msgstr "Mehr = flüssiger, braucht mehr Daten"
 msgid "More makes faint lines and small text stand out"
 msgstr "Mehr hebt blasse Linien und kleine Schrift hervor"
 
+#: app/web/templates/settings/plugins.html
+msgid "More plugins come from other sources: {link}."
+msgstr "Weitere Plugins kommen aus anderen Quellen: {link}."
+
 #: app/web/static/js/app.js
 msgid "Most"
 msgstr "Am meisten"
+
+#: app/plugins/builtin/libraries/select_menu.html
+msgid "Move to library…"
+msgstr "In Bibliothek verschieben…"
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Move {n} series to"
+msgid_plural "Move {n} series to"
+msgstr[0] "{n} Serie verschieben nach"
+msgstr[1] "{n} Serien verschieben nach"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Moved {n} series to their folders' libraries"
+msgid_plural "Moved {n} series to their folders' libraries"
+msgstr[0] "{n} Serie in die Bibliothek ihres Ordners verschoben"
+msgstr[1] "{n} Serien in die Bibliotheken ihrer Ordner verschoben"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Moved {n} series to {library}"
+msgid_plural "Moved {n} series to {library}"
+msgstr[0] "{n} Serie nach {library} verschoben"
+msgstr[1] "{n} Serien nach {library} verschoben"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html
+msgid "Name"
+msgstr "Name"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Name of the new library, e.g. Comics"
+msgstr "Name der neuen Bibliothek, z. B. Comics"
+
+#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html
+msgid "Name of {name}"
+msgstr "Name von {name}"
+
+#: app/contracts/__init__.py
+msgid "Named library filters and sort, kept in the jobs:saved-searches setting"
+msgstr "Benannte Filter und Sortierungen der Bibliothek, gespeichert in der Einstellung jobs:saved-searches"
 
 #: app/web/static/js/app.js
 msgid "Native"
 msgstr "Original"
 
+#: app/contracts/__init__.py
+msgid "Navigation"
+msgstr "Navigation"
+
 #: app/web/static/js/app.js
 msgid "Navigation bar"
 msgstr "Navigationsleiste"
+
+#: app/web/templates/settings/plugins.html
+msgid "needs attention"
+msgstr "braucht Aufmerksamkeit"
 
 #: app/web/templates/views/settings.html
 msgid "Needs attention"
 msgstr "Braucht Aufmerksamkeit"
 
+#: app/contracts/__init__.py
+msgid "Needs attention lists"
+msgstr "Listen „Braucht Aufmerksamkeit“"
+
+#: app/web/templates/settings/plugin.html
+msgid "Needs: {jobs}"
+msgstr "Braucht: {jobs}"
+
 #: app/web/static/js/common.js
 msgid "Never"
 msgstr "Nie"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+msgid "New library"
+msgstr "Neue Bibliothek"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
+msgid "New password"
+msgstr "Neues Passwort"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
+msgid "New password again"
+msgstr "Neues Passwort wiederholen"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "New password for {name} (at least 4 characters)"
+msgstr "Neues Passwort für {name} (mindestens 4 Zeichen)"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "New password…"
+msgstr "Neues Passwort…"
+
+#: app/web/templates/settings/plugins.html
+msgid "New plugin source"
+msgstr "Neue Plugin-Quelle"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "New version: {version}"
+msgstr "Neue Version: {version}"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "No"
+msgstr "Nein"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "No confident match was found online. Pick the right one, or open Fix match."
+msgstr "Online wurde kein sicherer Treffer gefunden. Wähle den richtigen oder öffne Zuordnung korrigieren."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "No earlier version found."
+msgstr "Keine frühere Version gefunden."
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "No folders inside."
+msgstr "Keine Ordner darin."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "No folders: only series moved here by hand"
+msgstr "Keine Ordner: nur von Hand hierher verschobene Serien"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "No metadata sources are enabled. Turn one on in Plugins."
+msgstr "Keine Metadatenquelle ist eingeschaltet. Schalte eine unter Plugins ein."
+
+#: app/web/static/js/app.js
+msgid "No other release found"
+msgstr "Keine andere Version gefunden"
+
+#: app/web/templates/settings/plugins.html
+msgid "No plugin from the sources matches."
+msgstr "Kein Plugin aus den Quellen passt."
+
+#: app/web/templates/settings/plugins.html
+msgid "No plugins installed."
+msgstr "Keine Plugins installiert."
+
+#: app/web/templates/settings/plugins.html
+msgid "No plugins match."
+msgstr "Keine Plugins passen."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "No series or files are deleted: its folders and the series moved to it show in another library."
+msgstr "Es werden keine Serien oder Dateien gelöscht: ihre Ordner und die hierher verschobenen Serien erscheinen in einer anderen Bibliothek."
+
+#: app/web/templates/settings/plugins.html
+msgid "None"
+msgstr "Keins"
+
+#: app/web/templates/settings/plugins.html
+msgid "None in use"
+msgstr "Keins in Gebrauch"
 
 #: app/web/static/js/app.js
 msgid "Normal"
 msgstr "Normal"
 
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Not a duplicate"
+msgstr "Kein Duplikat"
+
+#: app/plugins/builtin/attention_lists/templates/attention/same.html
+msgid "Not a problem"
+msgstr "Kein Problem"
+
+#: app/web/static/js/app.js
+msgid "Not checked yet"
+msgstr "Noch nicht geprüft"
+
+#: app/web/static/js/app.js
+msgid "not checked yet"
+msgstr "noch nicht geprüft"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "not found, check the volume mount"
+msgstr "nicht gefunden, prüfe das Volume-Mount"
+
+#: app/web/templates/settings/plugin.html
+msgid "Not running: {why}"
+msgstr "Läuft nicht: {why}"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Not supported"
+msgstr "Nicht unterstützt"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Notes"
+msgstr "Notizen"
+
+#: app/web/templates/settings/attention.html
+msgid "Nothing here. All good."
+msgstr "Hier ist nichts. Alles gut."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Nothing in {library} yet. Move series here with Edit, or select several (hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders."
+msgstr "In {library} ist noch nichts. Verschiebe Serien mit Bearbeiten hierher oder wähle mehrere aus (Karte halten) und nutze ⋯ → In Bibliothek verschieben. Einen ganzen Ordner: Einstellungen → Bibliotheksordner."
+
+#: app/web/static/js/app.js
+msgid "Nothing was changed"
+msgstr "Nichts wurde geändert"
+
+#: app/web/static/js/app.js
+msgid "Nothing was installed"
+msgstr "Nichts wurde installiert"
+
 #: app/web/templates/ui/macros.html
 msgid "Now: {title}"
 msgstr "Jetzt: {title}"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/plugins.html
 msgid "Off"
 msgstr "Aus"
 
@@ -359,7 +1153,7 @@ msgstr "Aus"
 msgid "Off (swipe only)"
 msgstr "Aus (nur Wischen)"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr "An"
 
@@ -370,6 +1164,30 @@ msgstr "Einhändig"
 #: app/web/static/js/app.js
 msgid "One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu"
 msgstr "Einhändig: fast die ganze Seite blättert vor, ein schmaler Rand zurück, die Mitte öffnet das Menü"
+
+#: app/web/templates/settings/plugins.html
+msgid "Only add sources you trust: a plugin runs inside MangaVibe with full access to its data."
+msgstr "Füge nur Quellen hinzu, denen du vertraust: ein Plugin läuft in MangaVibe mit vollem Zugriff auf seine Daten."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Only folders mounted in the container are visible (e.g. /library2)."
+msgstr "Nur im Container eingebundene Ordner sind sichtbar (z. B. /library2)."
+
+#: app/web/templates/settings/plugins.html
+msgid "Only needed when a plugin updates from a private repo. A fine-grained token with read-only Contents access is enough."
+msgstr "Nur nötig, wenn ein Plugin aus einem privaten Repo aktualisiert wird. Ein Fine-grained-Token mit Nur-Lese-Zugriff auf Contents reicht."
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Only where they show: their files stay in their folders, and a rescan keeps them there."
+msgstr "Nur wo sie erscheinen: ihre Dateien bleiben in ihren Ordnern, und ein neuer Scan lässt sie dort."
+
+#: app/plugins/builtin/libraries/attention_note.html
+msgid "Only {library}, the library picked on the home screen"
+msgstr "Nur {library}, die auf dem Startbildschirm gewählte Bibliothek"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
+msgid "Open"
+msgstr "Öffnen"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html app/web/templates/shell/banners.html
 msgid "Open app"
@@ -387,9 +1205,21 @@ msgstr "Öffne die heruntergeladene MangaVibe.apk und erlaube die Installation a
 msgid "Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead"
 msgstr "Öffnet die App und verbindet sie mit diesem Server. Ist sie nicht installiert, wird sie stattdessen heruntergeladen"
 
+#: app/plugins/builtin/libraries/settings.html
+msgid "Optional: keeps this library private from others using the app"
+msgstr "Optional: hält diese Bibliothek vor anderen Nutzern der App privat"
+
 #: app/web/static/js/app.js
 msgid "Original"
 msgstr "Originalgröße"
+
+#: app/plugins/__init__.py
+msgid "Other"
+msgstr "Sonstiges"
+
+#: app/web/templates/settings/plugin.html
+msgid "Other versions…"
+msgstr "Andere Versionen…"
 
 #: app/web/static/js/app.js
 msgid "Overlay box background"
@@ -398,6 +1228,10 @@ msgstr "Hintergrund der Overlay-Boxen"
 #: app/web/static/js/app.js
 msgid "Overlay text outline"
 msgstr "Textumriss im Overlay"
+
+#: app/web/templates/settings/plugins.html
+msgid "owner/repo or https://…/plugins.json"
+msgstr "owner/repo oder https://…/plugins.json"
 
 #: app/web/static/js/app.js
 msgid "Page brightness"
@@ -415,7 +1249,7 @@ msgstr "Seitenkontrast"
 msgid "Page width"
 msgstr "Seitenbreite"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/libraries/settings.html app/web/static/js/app.js
 msgid "Pages"
 msgstr "Seiten"
 
@@ -431,9 +1265,49 @@ msgstr "Seiten: eine nach der anderen, die nächste rechts (→, Tippen rechts, 
 msgid "Paginated"
 msgstr "Seitenweise"
 
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
+msgid "Password"
+msgstr "Passwort"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Password again"
+msgstr "Passwort wiederholen"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Password changed. Your other devices need it now."
+msgstr "Passwort geändert. Deine anderen Geräte brauchen es jetzt."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Password removed"
+msgstr "Passwort entfernt"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Password saved. This browser stays unlocked until “Lock now” or a new tab."
+msgstr "Passwort gespeichert. Dieser Browser bleibt entsperrt bis „Jetzt sperren“ oder zu einem neuen Tab."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Path outside Docker"
+msgstr "Pfad außerhalb von Docker"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Path outside Docker for {name}"
+msgstr "Pfad außerhalb von Docker für {name}"
+
 #: app/web/static/js/app.js
 msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
 msgstr "Handys und Tablets; nach dem Sperren führt das nächste Tippen zurück ins Vollbild. Mit der Maus: die Vollbild-Taste oder F"
+
+#: app/web/templates/settings/plugins.html
+msgid "Pick one"
+msgstr "Eins wählen"
+
+#: app/web/templates/settings/plugins.html
+msgid "Pick one or none"
+msgstr "Eins oder keins wählen"
+
+#: app/contracts/__init__.py
+msgid "Picking the right metadata for a series, drawn with fixMatch()"
+msgstr "Die richtigen Metadaten für eine Serie wählen, gezeichnet mit fixMatch()"
 
 #: app/web/static/js/app.js
 msgid "Plugin"
@@ -443,21 +1317,133 @@ msgstr "Plugin"
 msgid "Plugin boxes over the page, e.g. translations. Lower shows the art underneath"
 msgstr "Plugin-Boxen über der Seite, z. B. Übersetzungen. Weniger zeigt das Bild darunter"
 
-#: app/web/static/js/app.js app/web/templates/shell/banners.html
+#: app/web/templates/settings/plugins.html
+msgid "Plugin categories"
+msgstr "Plugin-Kategorien"
+
+#: app/web/templates/settings/plugins.html
+msgid "Plugin sources"
+msgstr "Plugin-Quellen"
+
+#: app/web/static/js/app.js
+msgid "Plugin sources refreshed"
+msgstr "Plugin-Quellen aktualisiert"
+
+#: app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "Plugins"
+
+#: app/web/templates/settings/plugins.html
+msgid "Plugins (a .py file or a folder) go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css"
+msgstr "Plugins (eine .py-Datei oder ein Ordner) kommen nach docker/mangavibe/plugins; dein CSS nach docker/mangavibe/custom.css"
+
+#: app/web/templates/settings/plugins.html
+msgid "Plugins and custom styles"
+msgstr "Plugins und eigene Styles"
+
+#: app/web/static/js/app.js
+msgid "Plugins from this source run inside MangaVibe with full access to its data. Only add sources you trust. Add it?"
+msgstr "Plugins aus dieser Quelle laufen in MangaVibe mit vollem Zugriff auf seine Daten. Füge nur Quellen hinzu, denen du vertraust. Hinzufügen?"
+
+#: app/web/static/js/app.js
+msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
+msgstr "Die Kopie der Datenbank vom {when} zurückholen? Lesefortschritt, Einstellungen und andere Änderungen seitdem gehen verloren."
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Re-read this series' folder after fixing the files on disk"
+msgstr "Den Ordner dieser Serie neu einlesen, nachdem die Dateien auf der Festplatte korrigiert wurden"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
 msgstr "Lies in der MangaVibe-App statt im Browser: Vollbild ohne Browserleisten, der Bildschirm bleibt beim Lesen an und die Lautstärketasten blättern um. Sie zeigt dasselbe MangaVibe, also sind Bibliothek, Fortschritt und Einstellungen gleich."
 
-#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+#: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
 msgstr "Reader"
 
 #: app/web/static/js/app.js
 msgid "Reading hand"
 msgstr "Lesehand"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Reading mode"
+msgstr "Lesemodus"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Reading mode for {name}"
+msgstr "Lesemodus für {name}"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Ready to install"
+msgstr "Bereit zur Installation"
+
+#: app/web/templates/settings/plugins.html
+msgid "Refresh"
+msgstr "Aktualisieren"
+
+#: app/web/templates/settings/plugin.html
+msgid "Release to install"
+msgstr "Zu installierende Version"
+
+#: app/web/templates/settings/plugins.html
+msgid "Reload plugins"
+msgstr "Plugins neu laden"
+
+#: app/web/static/js/app.js
+msgid "Reload the page to see the change ({error})"
+msgstr "Lade die Seite neu, um die Änderung zu sehen ({error})"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/templates/settings/plugins.html
+msgid "Remove"
+msgstr "Entfernen"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Remove password"
+msgstr "Passwort entfernen"
+
+#: app/web/static/js/app.js
+msgid "Remove the source {name}? Plugins you installed from it stay."
+msgstr "Die Quelle {name} entfernen? Daraus installierte Plugins bleiben."
+
+#: app/web/static/js/app.js
+msgid "Remove “{name}” ({path}) from MangaVibe?"
+msgstr "„{name}“ ({path}) aus MangaVibe entfernen?"
+
+#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
+msgid "Renamed to {name}"
+msgstr "Umbenannt in {name}"
+
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Required"
+msgstr "Erforderlich"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Rescan"
+msgstr "Neu scannen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Rescan all"
+msgstr "Alles neu scannen"
+
+#: app/web/static/js/app.js
+msgid "Rescanned: {files}"
+msgstr "Neu gescannt: {files}"
+
+#: app/web/static/js/app.js
+msgid "Rescanned: {files}, {errors} with errors"
+msgstr "Neu gescannt: {files}, {errors} mit Fehlern"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Rescanning…"
+msgstr "Wird neu gescannt…"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/files.html app/plugins/builtin/attention_lists/templates/attention/gaps.html app/plugins/builtin/attention_lists/templates/attention/same.html app/web/templates/settings/attention-plain.html
+msgid "Restore"
+msgstr "Wiederherstellen"
+
+#: app/web/static/js/app.js
+msgid "Restored"
+msgstr "Wiederhergestellt"
 
 #: app/web/static/js/app.js
 msgid "Right"
@@ -467,17 +1453,97 @@ msgstr "Rechts"
 msgid "Romaji"
 msgstr "Romaji"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Running version"
+msgstr "Laufende Version"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Runs by itself every 6 hours and on start."
+msgstr "Läuft von selbst alle 6 Stunden und beim Start."
+
 #: app/web/templates/shell/banners.html
 msgid "Safe mode"
 msgstr "Abgesicherter Modus"
 
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Same match"
+msgstr "Gleiche Zuordnung"
+
 #: app/web/static/js/app.js
+msgid "Same {ids}"
+msgstr "Gleiche {ids}"
+
+#: app/plugins/builtin/accounts/login.html app/web/templates/settings/plugins.html
+msgid "Save"
+msgstr "Speichern"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Save password"
+msgstr "Passwort speichern"
+
+#: app/plugins/builtin/libraries/libraries.js app/web/static/js/app.js
 msgid "Saved"
 msgstr "Gespeichert"
+
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Saved (type to replace)"
+msgstr "Gespeichert (tippen zum Ersetzen)"
+
+#: app/contracts/__init__.py
+msgid "Saved searches"
+msgstr "Gespeicherte Suchen"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Saved. It shows in its folder's library now."
+msgstr "Gespeichert. Sie erscheint jetzt in der Bibliothek ihres Ordners."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Saved. It shows in {library} now."
+msgstr "Gespeichert. Sie erscheint jetzt in {library}."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Saved. It's in {library} now, which is locked."
+msgstr "Gespeichert. Sie ist jetzt in {library}, die gesperrt ist."
+
+#: app/web/templates/settings/plugins.html
+msgid "Saved. Updates from private repos use it."
+msgstr "Gespeichert. Updates aus privaten Repos nutzen ihn."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Scan"
+msgstr "Scannen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Scan for new files"
+msgstr "Nach neuen Dateien suchen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Scan only this folder"
+msgstr "Nur diesen Ordner scannen"
+
+#: app/web/static/js/app.js
+msgid "Scanning {done}/{total}: {current}"
+msgstr "Scan {done}/{total}: {current}"
+
+#: app/web/static/js/app.js
+msgid "Scanning {done}/{total}…"
+msgstr "Scan {done}/{total}…"
+
+#: app/web/static/js/app.js
+msgid "Scanning…"
+msgstr "Wird gescannt…"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Search"
 msgstr "Suche"
+
+#: app/web/templates/settings/plugins.html
+msgid "Search plugins"
+msgstr "Plugins durchsuchen"
+
+#: app/web/templates/settings/plugins.html
+msgid "Search the plugin sources"
+msgstr "Plugin-Quellen durchsuchen"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Search your library"
@@ -491,6 +1557,14 @@ msgstr "Siehe {url}"
 msgid "See-through"
 msgstr "Durchsichtig"
 
+#: app/contracts/__init__.py
+msgid "Series cards"
+msgstr "Serienkarten"
+
+#: app/contracts/__init__.py
+msgid "Series page"
+msgstr "Serienseite"
+
 #: app/web/static/js/app.js
 msgid "Series page full width as well"
 msgstr "Auch die Serienseite in voller Breite"
@@ -502,6 +1576,14 @@ msgstr "Serien pro Seite"
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Server"
 msgstr "Server"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Set a password…"
+msgstr "Passwort festlegen…"
+
+#: app/web/templates/settings/plugins.html
+msgid "Set by GITHUB_TOKEN. A token saved here is used instead."
+msgstr "Gesetzt durch GITHUB_TOKEN. Ein hier gespeicherter Token wird stattdessen benutzt."
 
 #: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
 msgid "Settings"
@@ -515,7 +1597,65 @@ msgstr "Einstellungen ({n} brauchen Aufmerksamkeit)"
 msgid "Settings, {n} need attention"
 msgstr "Einstellungen, {n} brauchen Aufmerksamkeit"
 
-#: app/web/templates/shell/toasts.html
+#: app/contracts/__init__.py
+msgid "Settings: Display"
+msgstr "Einstellungen: Anzeige"
+
+#: app/contracts/__init__.py
+msgid "Settings: Library folders"
+msgstr "Einstellungen: Bibliotheksordner"
+
+#: app/contracts/__init__.py
+msgid "Settings: Metadata"
+msgstr "Einstellungen: Metadaten"
+
+#: app/contracts/__init__.py
+msgid "Settings: Reader"
+msgstr "Einstellungen: Reader"
+
+#: app/contracts/__init__.py
+msgid "Settings: Updates"
+msgstr "Einstellungen: Updates"
+
+#: app/web/templates/settings/plugins.html
+msgid "Show"
+msgstr "Zeigen"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Show again"
+msgstr "Wieder zeigen"
+
+#: app/web/templates/settings/plugins.html
+msgid "Show all"
+msgstr "Alle zeigen"
+
+#: app/plugins/builtin/libraries/attention_note.html
+msgid "show all libraries"
+msgstr "alle Bibliotheken zeigen"
+
+#: app/web/templates/settings/plugin.html
+msgid "Show it again"
+msgstr "Wieder anzeigen"
+
+#: app/web/templates/settings/plugin.html
+msgid "Show the {category} plugins"
+msgstr "Die Plugins unter {category} zeigen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Show versions"
+msgstr "Versionen zeigen"
+
+#: app/plugins/builtin/attention_lists/templates/attention/files.html
+msgid "Show {n} file"
+msgid_plural "Show {n} files"
+msgstr[0] "{n} Datei zeigen"
+msgstr[1] "{n} Dateien zeigen"
+
+#: app/web/templates/settings/attention.html
+msgid "Show {n} ignored"
+msgstr "{n} ignorierte zeigen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/shell/toasts.html
 msgid "Skip this version"
 msgstr "Diese Version überspringen"
 
@@ -527,9 +1667,77 @@ msgstr "Klein"
 msgid "Solid"
 msgstr "Deckend"
 
+#: app/web/templates/settings/plugins.html
+msgid "Source"
+msgstr "Herkunft"
+
+#: app/web/static/js/app.js
+msgid "Source added"
+msgstr "Quelle hinzugefügt"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Sources"
+msgstr "Quellen"
+
+#: app/web/templates/settings/plugins.html
+msgid "Sources & setup"
+msgstr "Quellen & Einrichtung"
+
+#: app/web/static/js/app.js
+msgid "Starting…"
+msgstr "Wird gestartet…"
+
+#: app/web/static/js/app.js
+msgid "Still on the server, no download"
+msgstr "Noch auf dem Server, kein Download"
+
+#: app/web/static/js/app.js
+msgid "Switch it on?"
+msgstr "Einschalten?"
+
+#: app/web/templates/settings/plugin.html
+msgid "Switch the plugin on to change its settings."
+msgstr "Schalte das Plugin ein, um seine Einstellungen zu ändern."
+
+#: app/plugins/__init__.py
+msgid "System"
+msgstr "System"
+
 #: app/web/static/js/app.js
 msgid "Tap zones"
 msgstr "Tippbereiche"
+
+#: app/contracts/__init__.py
+msgid "The Display page of Settings"
+msgstr "Die Seite Anzeige in den Einstellungen"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "the first one: has the reading from before accounts"
+msgstr "das erste: hat das Gelesene von vor den Konten"
+
+#: app/contracts/__init__.py
+msgid "The Library folders page of Settings"
+msgstr "Die Seite Bibliotheksordner in den Einstellungen"
+
+#: app/contracts/__init__.py
+msgid "The library: its filters' buttons, the cards, paging and multi-select, from MangaVibe.library"
+msgstr "Die Bibliothek: Filter-Buttons, Karten, Seiten und Mehrfachauswahl, aus MangaVibe.library"
+
+#: app/contracts/__init__.py
+msgid "The Metadata page of Settings"
+msgstr "Die Seite Metadaten in den Einstellungen"
+
+#: app/web/static/js/app.js
+msgid "The new version did not start. MangaVibe went back to the previous one; see the container log."
+msgstr "Die neue Version ist nicht gestartet. MangaVibe ist zur vorherigen zurückgekehrt; siehe das Container-Log."
+
+#: app/plugins/builtin/libraries/account_row.html
+msgid "The ones this account sees; the others are hidden from it everywhere"
+msgstr "Die, die dieses Konto sieht; die anderen sind überall vor ihm verborgen"
+
+#: app/contracts/__init__.py
+msgid "The page a series opens on, drawn from MangaVibe.series"
+msgstr "Die Seite, auf der sich eine Serie öffnet, gezeichnet aus MangaVibe.series"
 
 #: app/web/static/js/app.js
 msgid "The page of a series also uses the whole screen"
@@ -539,13 +1747,73 @@ msgstr "Auch die Seite einer Serie nutzt den ganzen Bildschirm"
 msgid "The page reloads by itself when the new version is running."
 msgstr "Die Seite lädt von selbst neu, sobald die neue Version läuft."
 
+#: app/contracts/__init__.py
+msgid "The Reader page of Settings"
+msgstr "Die Seite Reader in den Einstellungen"
+
+#: app/web/static/js/app.js
+msgid "the running version"
+msgstr "die laufende Version"
+
 #: app/web/static/js/app.js
 msgid "The series and chapter at the top. When there's room: it stays while the page leaves space above it, so it covers none of the picture"
 msgstr "Serie und Kapitel oben. Wenn Platz ist: sie bleibt, solange die Seite oben Platz lässt, und verdeckt so nichts vom Bild"
 
 #: app/web/static/js/app.js
+msgid "The series folder is gone, so the series was removed from the library"
+msgstr "Der Ordner der Serie ist weg, also wurde die Serie aus der Bibliothek entfernt"
+
+#: app/contracts/__init__.py
+msgid "The series in progress, from MangaVibe.continue"
+msgstr "Die angefangenen Serien, aus MangaVibe.continue"
+
+#: app/contracts/__init__.py
+msgid "The series' Edit dialog (info and poster), drawn with editSeries()"
+msgstr "Der Bearbeiten-Dialog einer Serie (Infos und Cover), gezeichnet mit editSeries()"
+
+#: app/web/templates/settings/plugins.html
+msgid "The sources list no plugins yet."
+msgstr "Die Quellen bieten noch keine Plugins an."
+
+#: app/contracts/__init__.py
+msgid "The top bar and Library / Continue (a bar, or a sidebar); it must keep the Settings button"
+msgstr "Die obere Leiste und Bibliothek / Weiterlesen (eine Leiste oder Seitenleiste); sie muss den Einstellungen-Button behalten"
+
+#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
+msgid "The two new passwords are different"
+msgstr "Die beiden neuen Passwörter sind verschieden"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "The two passwords are different"
+msgstr "Die beiden Passwörter sind verschieden"
+
+#: app/web/templates/settings/plugins.html
+msgid "The update check failed"
+msgstr "Die Update-Prüfung ist fehlgeschlagen"
+
+#: app/contracts/__init__.py
+msgid "The Updates page of Settings"
+msgstr "Die Seite Updates in den Einstellungen"
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Their folder's library"
+msgstr "Die Bibliothek ihres Ordners"
+
+#: app/web/static/js/app.js
 msgid "Theme"
 msgstr "Design"
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "These are the folders inside the MangaVibe container. To see another folder here, first mount it into the container as a volume, then restart it."
+msgstr "Das sind die Ordner im MangaVibe-Container. Um hier einen anderen Ordner zu sehen, binde ihn zuerst als Volume in den Container ein und starte ihn dann neu."
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "These files could not be opened. The message says why."
+msgstr "Diese Dateien ließen sich nicht öffnen. Die Meldung sagt, warum."
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."
+msgstr "Diese Serien sind demselben Online-Eintrag zugeordnet. Oft ist ein Ordner zweigeteilt oder eine Zuordnung falsch."
 
 #: app/web/static/js/app.js
 msgid "Thick"
@@ -554,6 +1822,38 @@ msgstr "Dick"
 #: app/web/static/js/app.js
 msgid "Thin"
 msgstr "Dünn"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "This is the only library. Add another one first."
+msgstr "Das ist die einzige Bibliothek. Füge zuerst eine weitere hinzu."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "This library"
+msgstr "Diese Bibliothek"
+
+#: app/plugins/builtin/libraries/unlock_dialog.html
+msgid "This library is locked. Its series show again in this browser after the password, until “Lock now” or a new tab."
+msgstr "Diese Bibliothek ist gesperrt. Nach dem Passwort erscheinen ihre Serien in diesem Browser wieder, bis „Jetzt sperren“ oder zu einem neuen Tab."
+
+#: app/web/templates/settings/plugin.html
+msgid "This plugin is not installed."
+msgstr "Dieses Plugin ist nicht installiert."
+
+#: app/web/static/js/app.js
+msgid "This version"
+msgstr "Diese Version"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "This version did not start, so MangaVibe went back"
+msgstr "Diese Version ist nicht gestartet, also ist MangaVibe zurückgekehrt"
+
+#: app/web/static/js/app.js
+msgid "This version is skipped. You'll be told about the next one."
+msgstr "Diese Version wird übersprungen. Über die nächste wirst du informiert."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "This version needs a new Docker image"
+msgstr "Diese Version braucht ein neues Docker-Image"
 
 #: app/web/static/js/app.js
 msgid "Title language"
@@ -567,33 +1867,137 @@ msgstr "Oben"
 msgid "Top bar"
 msgstr "Obere Leiste"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Tried in this order. Fallbacks are used when the main source has no match or is down."
+msgstr "In dieser Reihenfolge versucht. Ersatzquellen werden benutzt, wenn die Hauptquelle keinen Treffer hat oder nicht erreichbar ist."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Try again"
+msgstr "Erneut versuchen"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Two or more files with the same chapter number. Both are kept."
+msgstr "Zwei oder mehr Dateien mit derselben Kapitelnummer. Beide bleiben erhalten."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Type the new password"
+msgstr "Gib das neue Passwort ein"
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Undo a move: each follows its folder again"
+msgstr "Verschieben rückgängig: jede folgt wieder ihrem Ordner"
+
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
+msgid "Unlock"
+msgstr "Entsperren"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
+msgid "unlocked"
+msgstr "entsperrt"
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "Up"
+msgstr "Nach oben"
+
+#: app/web/static/js/app.js
+msgid "Up to date. New versions come from {url}"
+msgstr "Aktuell. Neue Versionen kommen von {url}"
+
+#: app/web/templates/settings/plugins.html
+msgid "Update"
+msgstr "Update"
+
+#: app/web/templates/settings/plugins.html
+msgid "Update check failed"
+msgstr "Update-Prüfung fehlgeschlagen"
+
 #: app/web/templates/shell/toasts.html
 msgid "Update failed"
 msgstr "Update fehlgeschlagen"
 
-#: app/web/templates/shell/toasts.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/shell/toasts.html
 msgid "Update now"
 msgstr "Jetzt aktualisieren"
 
-#: app/plugins/builtin/settings_pages/__init__.py
+#: app/web/templates/settings/plugin.html
+msgid "Update to {version}"
+msgstr "Auf {version} aktualisieren"
+
+#: app/web/templates/settings/plugins.html
+msgid "Update {version}"
+msgstr "Update {version}"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "Updates"
 msgstr "Updates"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Updates work only in the MangaVibe Docker image. Here, update with git."
+msgstr "Updates funktionieren nur im MangaVibe-Docker-Image. Hier aktualisierst du mit git."
 
 #: app/web/templates/shell/toasts.html
 msgid "Updating MangaVibe…"
 msgstr "MangaVibe wird aktualisiert…"
 
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html app/web/templates/settings/plugins.html
+msgid "Use"
+msgstr "Benutzen"
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "Use this folder"
+msgstr "Diesen Ordner benutzen"
+
+#: app/web/templates/settings/plugins.html
+msgid "Use {plugin} for {job}"
+msgstr "{plugin} für {job} benutzen"
+
+#: app/web/templates/settings/plugin.html
+msgid "Uses:"
+msgstr "Nutzt:"
+
+#: app/web/static/js/app.js
+msgid "Version {version} is available"
+msgstr "Version {version} ist verfügbar"
+
+#: app/web/static/js/app.js
+msgid "Version {version} is available (you have {current})"
+msgstr "Version {version} ist verfügbar (du hast {current})"
+
 #: app/web/static/js/app.js
 msgid "Vertical"
 msgstr "Vertikal"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Vertical (webtoons)"
+msgstr "Vertikal (Webtoons)"
 
 #: app/web/static/js/app.js
 msgid "Volume buttons turn pages"
 msgstr "Lautstärketasten blättern um"
 
+#: app/contracts/__init__.py
+msgid "Volume, chapter and revision from a book's file name"
+msgstr "Band, Kapitel und Revision aus dem Dateinamen eines Buchs"
+
 #: app/web/static/js/app.js
 msgid "Warm"
 msgstr "Warm"
+
+#: app/contracts/__init__.py
+msgid "What a book is called in the lists, the reader and Continue (Vol 3, Ch 12-14)"
+msgstr "Wie ein Buch in den Listen, im Reader und bei Weiterlesen heißt (Bd. 3, Kap. 12-14)"
+
+#: app/contracts/__init__.py
+msgid "What the library can be filtered and sorted by, and how"
+msgstr "Wonach und wie die Bibliothek gefiltert und sortiert werden kann"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "What {path} is on your NAS or computer, e.g. {example1} or {example2}. The series page shows and copies it."
+msgstr "Was {path} auf deinem NAS oder Computer ist, z. B. {example1} oder {example2}. Die Serienseite zeigt und kopiert ihn."
+
+#: app/web/templates/settings/plugin.html
+msgid "What's new"
+msgstr "Was ist neu"
 
 #: app/web/static/js/app.js
 msgid "When nothing is touched. Turning the page or a tap in the middle hides them at once"
@@ -607,13 +2011,171 @@ msgstr "Wenn Platz ist"
 msgid "Where Library and Continue sit (with the Sidebar plugin: on phones only)"
 msgstr "Wo Bibliothek und Weiterlesen sitzen (mit dem Seitenleisten-Plugin: nur auf Handys)"
 
+#: app/plugins/builtin/libraries/folder_row.html
+msgid "Where this folder's series show. Series moved to another library by hand stay there."
+msgstr "Wo die Serien dieses Ordners erscheinen. Von Hand in eine andere Bibliothek verschobene Serien bleiben dort."
+
+#: app/plugins/builtin/libraries/edit_field.html
+msgid "Which library it shows in. The files stay in their folder."
+msgstr "In welcher Bibliothek sie erscheint. Die Dateien bleiben in ihrem Ordner."
+
+#: app/contracts/__init__.py
+msgid "Which provider result is the series, from its folder name"
+msgstr "Welches Ergebnis der Quelle die Serie ist, anhand ihres Ordnernamens"
+
+#: app/web/templates/settings/plugins.html
+msgid "Without {job}"
+msgstr "Ohne {job}"
+
 #: app/web/templates/shell/toasts.html
 msgid "Working…"
 msgstr "Läuft…"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Yes"
+msgstr "Ja"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "you"
+msgstr "du"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js
+msgid "You have the newest version"
+msgstr "Du hast die neueste Version"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "You skipped this version"
+msgstr "Du hast diese Version übersprungen"
+
+#: app/web/static/js/app.js
+msgid "You skipped version {version}. A newer one will show here"
+msgstr "Du hast Version {version} übersprungen. Eine neuere wird hier angezeigt"
+
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html
+msgid "Your copy · folder: {folder}"
+msgstr "Deine Kopie · Ordner: {folder}"
+
+#: app/web/static/js/app.js
+msgid "Your files are not touched. Its {n} series and their reading progress are removed from the app."
+msgid_plural "Your files are not touched. Its {n} series and their reading progress are removed from the app."
+msgstr[0] "Deine Dateien bleiben unberührt. Seine {n} Serie und ihr Lesefortschritt werden aus der App entfernt."
+msgstr[1] "Deine Dateien bleiben unberührt. Seine {n} Serien und ihr Lesefortschritt werden aus der App entfernt."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Your library, progress and settings are kept. The app restarts by itself."
+msgstr "Bibliothek, Fortschritt und Einstellungen bleiben erhalten. Die App startet von selbst neu."
+
 #: app/web/templates/shell/banners.html
 msgid "Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble."
 msgstr "Deine eigenen Plugins sind nicht geladen, nur die eingebauten. Schalte das aus, das Probleme macht."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{account} doesn't see {library} now"
+msgstr "{account} sieht {library} jetzt nicht mehr"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{account} sees {library} now"
+msgstr "{account} sieht {library} jetzt"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{library} is locked"
+msgstr "{library} ist gesperrt"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{library} is locked. Tap its tab above to unlock it."
+msgstr "{library} ist gesperrt. Tippe oben auf ihren Tab, um sie zu entsperren."
+
+#: app/web/static/js/app.js
+msgid "{matched} matched, {failed} need attention"
+msgstr "{matched} zugeordnet, {failed} brauchen Aufmerksamkeit"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{name} added. Move series to it with Edit, or several at once: hold a card to select them. A whole folder: Settings → Library folders."
+msgstr "{name} hinzugefügt. Verschiebe Serien mit Bearbeiten hinein oder mehrere auf einmal: halte eine Karte, um sie auszuwählen. Einen ganzen Ordner: Einstellungen → Bibliotheksordner."
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "{name} can log in now."
+msgstr "{name} kann sich jetzt anmelden."
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "{name} is an admin"
+msgstr "{name} ist Admin"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "{name} is an admin now"
+msgstr "{name} ist jetzt Admin"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "{name} is deleted"
+msgstr "{name} ist gelöscht"
+
+#: app/web/templates/settings/plugins.html
+msgid "{name} is no longer built in and is switched off. To keep using it, install it from {url} and switch it on again."
+msgstr "{name} ist nicht mehr eingebaut und ausgeschaltet. Um es weiter zu nutzen, installiere es von {url} und schalte es wieder ein."
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "{name} isn't an admin any more"
+msgstr "{name} ist kein Admin mehr"
+
+#: app/web/templates/settings/plugins.html
+msgid "{name} on"
+msgstr "{name} an"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "{name}'s password is changed; they're logged out everywhere."
+msgstr "Das Passwort von {name} ist geändert; das Konto ist überall abgemeldet."
+
+#: app/plugins/builtin/attention_lists/templates/attention/same.html
+msgid "{n} book"
+msgid_plural "{n} books"
+msgstr[0] "{n} Buch"
+msgstr[1] "{n} Bücher"
+
+#: app/web/static/js/app.js
+msgid "{n} error"
+msgid_plural "{n} errors"
+msgstr[0] "{n} Fehler"
+msgstr[1] "{n} Fehler"
+
+#: app/plugins/builtin/attention_lists/templates/attention/files.html app/web/static/js/app.js
+msgid "{n} file"
+msgid_plural "{n} files"
+msgstr[0] "{n} Datei"
+msgstr[1] "{n} Dateien"
+
+#: app/web/static/js/app.js
+msgid "{n} file hidden from this list"
+msgid_plural "{n} files hidden from this list"
+msgstr[0] "{n} Datei aus dieser Liste ausgeblendet"
+msgstr[1] "{n} Dateien aus dieser Liste ausgeblendet"
+
+#: app/web/static/js/app.js
+msgid "{n} new book"
+msgid_plural "{n} new books"
+msgstr[0] "{n} neues Buch"
+msgstr[1] "{n} neue Bücher"
+
+#: app/web/templates/settings/plugins.html
+msgid "{n} not installed yet"
+msgstr "{n} noch nicht installiert"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "{n} page"
+msgid_plural "{n} pages"
+msgstr[0] "{n} Seite"
+msgstr[1] "{n} Seiten"
+
+#: app/web/templates/settings/plugins.html
+msgid "{n} plugin"
+msgid_plural "{n} plugins"
+msgstr[0] "{n} Plugin"
+msgstr[1] "{n} Plugins"
+
+#: app/web/templates/settings/plugins.html
+msgid "{n} plugin failed to load"
+msgid_plural "{n} plugins failed to load"
+msgstr[0] "{n} Plugin konnte nicht geladen werden"
+msgstr[1] "{n} Plugins konnten nicht geladen werden"
 
 #: app/web/static/js/app.js
 msgid "{n} px"
@@ -624,3 +2186,39 @@ msgid "{n} second"
 msgid_plural "{n} seconds"
 msgstr[0] "{n} Sekunde"
 msgstr[1] "{n} Sekunden"
+
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "{n} series"
+msgid_plural "{n} series"
+msgstr[0] "{n} Serie"
+msgstr[1] "{n} Serien"
+
+#: app/web/templates/settings/plugins.html
+msgid "{n} update available"
+msgid_plural "{n} updates available"
+msgstr[0] "{n} Update verfügbar"
+msgstr[1] "{n} Updates verfügbar"
+
+#: app/web/static/js/app.js
+msgid "{plugin} asks for these permissions:"
+msgstr "{plugin} fragt nach diesen Berechtigungen:"
+
+#: app/web/static/js/app.js
+msgid "{plugin} is up to date"
+msgstr "{plugin} ist aktuell"
+
+#: app/web/static/js/app.js
+msgid "{plugin} replaces {other} ({job})."
+msgstr "{plugin} ersetzt {other} ({job})."
+
+#: app/web/static/js/app.js
+msgid "{plugin} {version} asks for new permissions:"
+msgstr "{plugin} {version} fragt nach neuen Berechtigungen:"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "{value} (default)"
+msgstr "{value} (Standard)"
+
+#: app/web/static/js/app.js
+msgid "{version} is older than your database: newer versions have changed it since."
+msgstr "{version} ist älter als deine Datenbank: neuere Versionen haben sie seitdem geändert."

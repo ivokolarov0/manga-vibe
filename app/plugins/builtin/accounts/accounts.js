@@ -31,7 +31,7 @@ MangaVibe.onStart(() => {
     init() { this.$watch("$store.accounts.gate", (on) => on && this.$nextTick(() => this.$refs.name?.focus())); },
     async submit() {
       if (this.busy) return;
-      if (store.setup && this.password !== this.again) return (this.error = "The two passwords are different");
+      if (store.setup && this.password !== this.again) return (this.error = MV.t("The two passwords are different"));
       this.busy = true;
       this.error = "";
       try {
@@ -51,11 +51,11 @@ MangaVibe.onStart(() => {
     current: "", password: "", again: "",
     init() { this.$watch("$store.accounts.pwOpen", (on) => on && Object.assign(this, { current: "", password: "", again: "" })); },
     async save() {
-      if (this.password !== this.again) return MV.toast("The two new passwords are different");
+      if (this.password !== this.again) return MV.toast(MV.t("The two new passwords are different"));
       try {
         await MV.api(`${API}/me/password`, { method: "PUT", body: { current: this.current, password: this.password } });
         store.pwOpen = false;
-        MV.toast("Password changed. Your other devices need it now.", 5000);
+        MV.toast(MV.t("Password changed. Your other devices need it now."), 5000);
       } catch (e) { MV.toast(e.message, 6000, "error"); }
     },
   }));
@@ -69,7 +69,7 @@ MangaVibe.onStart(() => {
         const a = await MV.api(`${API}/accounts`, { method: "POST", body: this.add });
         this.add = { name: "", password: "", admin: false };
         await store.load();
-        MV.toast(`${a.name} can log in now.`);
+        MV.toast(MV.t("{name} can log in now.", { name: a.name }));
       } catch (e) { MV.toast(e.message, 6000, "error"); }
     },
     async patch(a, body, msg) {
@@ -81,18 +81,18 @@ MangaVibe.onStart(() => {
     },
     rename(a, v) {
       v = v.trim();
-      if (v && v !== a.name) this.patch(a, { name: v }, `Renamed to ${v}`);
+      if (v && v !== a.name) this.patch(a, { name: v }, MV.t("Renamed to {name}", { name: v }));
     },
     newPassword(a) {
-      const pw = prompt(`New password for ${a.name} (at least 4 characters)`);
-      if (pw) this.patch(a, { password: pw }, `${a.name}'s password is changed; they're logged out everywhere.`);
+      const pw = prompt(MV.t("New password for {name} (at least 4 characters)", { name: a.name }));
+      if (pw) this.patch(a, { password: pw }, MV.t("{name}'s password is changed; they're logged out everywhere.", { name: a.name }));
     },
     async remove(a) {
-      if (!confirm(`Delete the account "${a.name}"?\n\nIts reading progress, favorites and saved searches are `
-        + "deleted too. The series and files stay.")) return;
+      if (!confirm(MV.t("Delete the account “{name}”?", { name: a.name }) + "\n\n"
+        + MV.t("Its reading progress, favorites and saved searches are deleted too. The series and files stay."))) return;
       try {
         await MV.api(`${API}/accounts/${a.id}`, { method: "DELETE" });
-        MV.toast(`${a.name} is deleted`);
+        MV.toast(MV.t("{name} is deleted", { name: a.name }));
       } catch (e) { MV.toast(e.message, 6000, "error"); }
       await store.load();
     },
@@ -106,7 +106,7 @@ MangaVibe.onStart(() => {
       store.gate = true;
       return new Promise(() => {});
     }
-    if (store.me.admin) MV.settingsPage(ID, "accounts", "Accounts", "users", 1);
+    if (store.me.admin) MV.settingsPage(ID, "accounts", MV.t("Accounts"), "users", 1);
   });
   // switched off: everyone is the owner again, with the first admin's reading
   MV.on(ID, "stop", () => location.reload());
