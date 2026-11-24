@@ -1,17 +1,17 @@
     <!-- ============ safe mode (/?safe=1): the page without the owner's own plugins ============ -->
     <div class="app-banner safe-banner" x-data x-show="$store.app.safe && $store.app.view !== 'read'" x-cloak role="status">
       <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
-      <div class="label"><b>Safe mode</b>
-        <small>Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble.</small></div>
-      <a class="btn small" href="?safe=1#/settings/plugins" x-show="$store.app.view !== 'settings'">Plugins</a>
-      <a class="btn small primary" href="/#/settings/plugins">Leave</a>
+      <div class="label"><b>{{ t("Safe mode") }}</b>
+        <small>{{ t("Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble.") }}</small></div>
+      <a class="btn small" href="?safe=1#/settings/plugins" x-show="$store.app.view !== 'settings'">{{ t("Plugins") }}</a>
+      <a class="btn small primary" href="/#/settings/plugins">{{ t("Leave") }}</a>
     </div>
 
     <!-- ============ Android browser: offer the app (android/) ============ -->
     <div class="app-banner" x-data x-show="$store.app.appBanner && $store.app.view === 'library'" x-cloak>
       <img src="/static/icons/icon-192.png" alt="">
-      <div class="label"><b>MangaVibe for Android</b>
-        <small>Fullscreen, the screen stays on, volume buttons turn pages</small></div>
-      <button class="btn small primary" @click="openAndroidApp()">Open app</button>
-      <button class="icon" aria-label="Don't show again" title="Don't show again" @click="dismissAppBanner()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+      <div class="label"><b>{{ t("MangaVibe for Android") }}</b>
+        <small>{{ t("Fullscreen, the screen stays on, volume buttons turn pages") }}</small></div>
+      <button class="btn small primary" @click="openAndroidApp()">{{ t("Open app") }}</button>
+      <button class="icon" aria-label="{{ t("Don't show again") }}" title="{{ t("Don't show again") }}" @click="dismissAppBanner()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
     </div>

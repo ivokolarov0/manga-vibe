@@ -6,7 +6,7 @@
 {% macro setting_rows(rows) -%}
 <template x-for="r in {{ rows }}" :key="r.key"><label class="setting-row" :class="{ sub: r.sub }" x-show="!r.show || r.show(st)"><span class="label"><span x-text="r.label"></span><small x-show="r.hint" x-text="r.hint"></small></span>
   <template x-if="r.check"><input type="checkbox" :checked="st[r.key] === 'true'" @change="st[r.key] = String($event.target.checked); save(r.key)"></template>
-  <template x-if="!r.check"><select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, t] in (r.choices ? r.choices(st[r.key]) : r.options)" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="t"></option></template></select></template></label></template>
+  <template x-if="!r.check"><select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, text] in (r.choices ? r.choices(st[r.key]) : r.options)" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="text"></option></template></select></template></label></template>
 {%- endmacro %}
 
 {#- The Settings button with the Needs attention count: what a top bar (view:nav) must have, as
@@ -16,10 +16,10 @@
 {% macro settings_link_markup(nav=False) -%}
 <a href="#/settings" id="settings-link"{% if not nav %} class="iconbtn"{% endif %} :class="{ active: $store.app.view === 'settings' }"
    :aria-current="$store.app.view === 'settings' ? 'page' : null"
-   :aria-label="$store.app.attentionCount ? `Settings, ${$store.app.attentionCount} need attention` : 'Settings'"
-   :title="$store.app.attentionCount ? `Settings (${$store.app.attentionCount} need attention)` : 'Settings'">
+   :aria-label="$store.app.attentionCount ? t('Settings, {n} need attention', { n: $store.app.attentionCount }) : t('Settings')"
+   :title="$store.app.attentionCount ? t('Settings ({n} need attention)', { n: $store.app.attentionCount }) : t('Settings')">
 {% if nav %}
-  <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></span><span class="nav-label">Settings</span>
+  <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></span><span class="nav-label">{{ t("Settings") }}</span>
 {% else %}
   <svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg>
 {% endif %}
@@ -53,11 +53,11 @@
 {% macro meta_progress() -%}
 <template x-if="$store.app.metaProgress">
   <div class="meta-progress" x-data="{ get p() { return $store.app.metaProgress } }">
-    <div class="head"><b x-text="`Matching metadata: ${p.done} of ${p.total} series`"></b>
-      <span x-text="p.pct + '%'"></span></div>
+    <div class="head"><b x-text="tn('Matching metadata: {done} of {n} series', 'Matching metadata: {done} of {n} series', p.total, { done: p.done })"></b>
+      <span x-text="fmtNum(p.pct / 100, { style: 'percent' })"></span></div>
     <div class="meta-bar" role="progressbar" :aria-valuenow="p.done" aria-valuemin="0" :aria-valuemax="p.total">
       <i :style="`width:${Math.max(p.pct, 1)}%`"></i></div>
-    <small x-text="[p.current && 'Now: ' + p.current, p.left].filter(Boolean).join(' · ')"></small>
+    <small x-text="[p.current && t('Now: {title}', { title: p.current }), p.left].filter(Boolean).join(' · ')"></small>
   </div>
 </template>
 {%- endmacro %}

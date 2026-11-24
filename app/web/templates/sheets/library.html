@@ -113,15 +113,15 @@
         <div x-show="open.genres">
           <p class="fhint">Tap once to include, again to exclude, again to clear.</p>
           <div class="wrap">
-            <template x-for="t in genres" :key="t.name">
-              <button class="chip-btn" :class="tagState(t.name)" @click="cycleTag(t.name)">
-                <span x-text="t.name"></span> <span class="n" x-text="t.count"></span></button>
+            <template x-for="tag in genres" :key="tag.name">
+              <button class="chip-btn" :class="tagState(tag.name)" @click="cycleTag(tag.name)">
+                <span x-text="tag.name"></span> <span class="n" x-text="tag.count"></span></button>
             </template>
             <span class="muted" x-show="!genres.length">Genres appear once series have metadata.</span>
           </div>
         </div>
       </section>
-      <template x-if="lib.tags && tags.some((t) => t.kind !== 'genre')">
+      <template x-if="lib.tags && tags.some((tag) => tag.kind !== 'genre')">
         <section class="fgroup" :class="{ open: open.tags }">
           <button class="fgroup-head" :aria-expanded="!!open.tags" @click="toggleGroup('tags')">
             <span>Tags</span>
@@ -131,9 +131,9 @@
           <div x-show="open.tags">
             <input class="ffind" x-model="tagQuery" placeholder="Find a tag" aria-label="Find a tag">
             <div class="wrap">
-              <template x-for="t in otherTags" :key="t.name">
-                <button class="chip-btn" :class="tagState(t.name)" @click="cycleTag(t.name)">
-                  <span x-text="t.name"></span> <span class="n" x-text="t.count"></span></button>
+              <template x-for="tag in otherTags" :key="tag.name">
+                <button class="chip-btn" :class="tagState(tag.name)" @click="cycleTag(tag.name)">
+                  <span x-text="tag.name"></span> <span class="n" x-text="tag.count"></span></button>
               </template>
             </div>
           </div>

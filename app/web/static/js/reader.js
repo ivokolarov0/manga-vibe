@@ -66,8 +66,7 @@ async function saveSettings(change) {
    hide: it goes with the other controls. always: it stays up. room: it stays up while no page picture
    reaches under the title, e.g. a fitted page on a tall phone screen; in vertical mode that is the page at
    the top of the screen. While the controls are away it lets every tap through to the page (reader.css). */
-// the same words as Settings → Reader (SETTING_ROWS.reader in app.js)
-const TOP_BAR = { hide: "Hide with the controls", always: "Always visible", room: "When there's room" };
+// the choices and their words: TOP_BAR in common.js, shared with Settings → Reader
 function topBarMode() { return settings.reader_top_bar in TOP_BAR ? settings.reader_top_bar : "hide"; }
 
 let topBarFrame = 0;
@@ -1245,7 +1244,7 @@ function autohidePicker() {
   const secs = +settings.reader_autohide, cur = secs > 0 ? String(secs) : "0", options = autohideOptions(cur);
   const values = options.map(([v]) => v).join(" ");
   if (sel.dataset.values !== values) {
-    sel.innerHTML = options.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+    sel.innerHTML = options.map(([v, text]) => `<option value="${v}">${esc(text)}</option>`).join("");
     sel.dataset.values = values;
   }
   sel.value = cur;

@@ -25,6 +25,7 @@ from app.scanner.parser import natural_key
 router = APIRouter(prefix="/api")
 
 DEFAULT_SETTINGS = {
+    "language": "auto",            # the app's language: auto (the browser's) | en | bg | de | ja ... (app/i18n.py)
     "title_language": "english",   # english | romaji | native
     "theme": "dark",               # dark | light | auto (follows the device)
     "card_size": "medium",         # small | medium | large
@@ -199,7 +200,7 @@ def scan_status():
 
 # Settings → Reader, and the theme: each user's own (app/users.py), starting from the shared ones (the
 # owner's). The rest is the app's, changed by admins only.
-PERSONAL_SETTINGS = {"theme", "reader_mode", "reader_fit", "auto_fullscreen", "preload", "reader_autohide",
+PERSONAL_SETTINGS = {"theme", "language", "reader_mode", "reader_fit", "auto_fullscreen", "preload", "reader_autohide",
                      "reader_top_bar", "reader_drawer_side", "reader_tap_layout", "reader_volume_keys", "overlay_opacity",
                      "overlay_outline", "reader_brightness", "reader_contrast", "reader_colors",
                      # the library page's own "per page" picker and grid/list switch, there for everyone

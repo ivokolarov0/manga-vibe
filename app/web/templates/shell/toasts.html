@@ -5,28 +5,28 @@
   <div id="update-toast" x-data="updateToast()" x-show="show" x-cloak role="alert">
     <template x-if="!busy && a">
       <div>
-        <strong x-text="a.needs_image ? 'A new MangaVibe version needs a new Docker image' : 'A new version of MangaVibe is available'"></strong>
+        <strong x-text="a.needs_image ? t('A new MangaVibe version needs a new Docker image') : t('A new version of MangaVibe is available')"></strong>
         <small x-text="[a.short, when, a.message].filter(Boolean).join(' · ')"></small>
         <ul class="release-changes" x-show="a.changes?.length">
           <template x-for="c in (a.changes || []).slice(0, 5)"><li x-text="c"></li></template>
-          <li x-show="a.changes?.length > 5" x-text="`and ${a.changes.length - 5} more`"></li>
+          <li x-show="a.changes?.length > 5" x-text="tn('and {n} more', 'and {n} more', a.changes.length - 5)"></li>
         </ul>
-        <small x-show="a.url"><a :href="a.url" target="_blank" rel="noopener">Full release notes<svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a></small>
-        <small x-show="a.needs_image">See github.com/ivokolarov0/manga-vibe#updating</small>
+        <small x-show="a.url"><a :href="a.url" target="_blank" rel="noopener">{{ t("Full release notes") }}<svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a></small>
+        <small x-show="a.needs_image">{{ t("See {url}", url="github.com/ivokolarov0/manga-vibe#updating") }}</small>
         <div class="btn-row">
-          <button class="btn small primary" x-show="!a.needs_image" @click="install()">Update now</button>
-          <button class="btn small" @click="skip()">Skip this version</button>
-          <button class="btn small" @click="later()">Later</button>
+          <button class="btn small primary" x-show="!a.needs_image" @click="install()">{{ t("Update now") }}</button>
+          <button class="btn small" @click="skip()">{{ t("Skip this version") }}</button>
+          <button class="btn small" @click="later()">{{ t("Later") }}</button>
         </div>
       </div>
     </template>
     <template x-if="busy">
       <div>
-        <strong x-text="$store.app.updatingBack ? (busy.error ? 'Going back failed' : 'Going back to an earlier version…')
-                        : (busy.error ? 'Update failed' : 'Updating MangaVibe…')"></strong>
-        <small x-text="busy.error || busy.message || 'Working…'"></small>
-        <small x-show="!busy.error">The page reloads by itself when the new version is running.</small>
-        <div class="btn-row" x-show="busy.error"><button class="btn small" @click="close()">Close</button></div>
+        <strong x-text="$store.app.updatingBack ? (busy.error ? t('Going back failed') : t('Going back to an earlier version…'))
+                        : (busy.error ? t('Update failed') : t('Updating MangaVibe…'))"></strong>
+        <small x-text="busy.error || busy.message || t('Working…')"></small>
+        <small x-show="!busy.error">{{ t("The page reloads by itself when the new version is running.") }}</small>
+        <div class="btn-row" x-show="busy.error"><button class="btn small" @click="close()">{{ t("Close") }}</button></div>
       </div>
     </template>
   </div>

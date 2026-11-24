@@ -3,7 +3,7 @@
 {% from "ui/macros.html" import setting_rows %}
         <!-- display -->
         <section x-show="section === 'display'">
-          <h2>Display</h2>
+          <h2>{{ t("Display") }}</h2>
           <!-- part of the page's settings: a dropdown each (SETTING_ROWS in app.js) -->
           {{ setting_rows("displayRows") }}
         </section>

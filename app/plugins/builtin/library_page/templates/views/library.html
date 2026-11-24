@@ -100,7 +100,7 @@
             progress, metadata and posters:</p>
           <ul class="delete-what">
             <!-- keyed by place: two series can have the same title -->
-            <template x-for="(t, i) in selTitles.slice(0, 8)" :key="i"><li x-text="t"></li></template>
+            <template x-for="(title, i) in selTitles.slice(0, 8)" :key="i"><li x-text="title"></li></template>
             <li x-show="selCount > Math.min(selTitles.length, 8)" x-text="`and ${selCount - Math.min(selTitles.length, 8)} more`"></li>
           </ul>
           <p><b>This can't be undone.</b> The files don't go to a recycle bin.</p>

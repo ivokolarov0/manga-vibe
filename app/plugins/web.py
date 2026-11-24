@@ -26,7 +26,7 @@ from markupsafe import Markup
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
-from app import config
+from app import config, i18n
 from app.plugins import Context, manager, plugin_jobs
 
 log = logging.getLogger("mangavibe.plugins")
@@ -67,6 +67,8 @@ class PageLoader(BaseLoader):
 templates = Environment(loader=PageLoader(TEMPLATES_DIR), autoescape=select_autoescape(["html"]),
                         undefined=StrictUndefined, trim_blocks=True, lstrip_blocks=True,
                         keep_trailing_newline=True, auto_reload=True)
+# t(text) and tn(singular, plural, n) in every template: the text in the page's language (app/i18n.py, #263)
+templates.globals.update(t=i18n.t, tn=i18n.tn)
 
 # The views a plugin can replace (Plugin API 17): name -> the job, its template in the plugin's
 # templates/ folder, the slots it must keep (other plugins put things there) and what they're for.
@@ -155,7 +157,8 @@ def render_index(safe: bool = False, template: str = "page.html") -> str:
     return templates.get_template(template).render(
         slot=slot_function(plugins), safe=safe, view=view, plugin_scripts=Markup(scripts),
         settings_pages=settings_pages(plugins), attention_views=attention_views(lists),
-        attention_lists=[{k: spec[k] for k in ("key", "label", "help", "alert")} for _, spec in lists])
+        attention_lists=[{k: spec[k] for k in ("key", "label", "help", "alert")} for _, spec in lists],
+        lang=i18n.current(), i18n={**i18n.catalog(i18n.current()).to_json(), "languages": i18n.languages()})
 
 
 def attention_lists_of(plugins):
@@ -186,17 +189,19 @@ def attention_views(lists):
 
 
 # Settings' own page, the core's: Plugins (how a broken plugin is switched off), in the middle of the menu
-CORE_SETTINGS_PAGES = [{"key": "plugins", "label": "Plugins", "icon": "blocks", "order": 50}]
+CORE_SETTINGS_PAGES = [{"key": "plugins", "label": i18n.N_("Plugins"), "icon": "blocks", "order": 50}]
 
 
 def settings_pages(plugins) -> list[dict]:
     """Settings' menu: the running plugins' `settings_pages` and the core's, by their order (Plugin API
     20). Each: key (the section, #/settings/<key>), label, icon, order, plugin, personal (everyone sees it,
-    not only admins), android (only on Android phones)."""
+    not only admins), android (only on Android phones). The labels in the page's language (#263)."""
     out = [dict(p) for p in CORE_SETTINGS_PAGES]
     for plugin in plugins:
         for page in getattr(plugin, "settings_pages", None) or []:
             out.append({"order": 100, "personal": False, "android": False, **page, "plugin": plugin.id})
+    for page in out:
+        page["label"] = i18n.t(str(page.get("label", "")))
     return sorted(out, key=lambda x: x["order"])
 
 

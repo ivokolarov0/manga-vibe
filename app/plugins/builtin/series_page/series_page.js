@@ -29,9 +29,9 @@ MangaVibe.onStart(() => {
       },
 
       get visibleTags() {
-        return c().tagList.filter((t, i) => (this.showAllTags || i < 12) && (!t.spoiler || this.showSpoilers));
+        return c().tagList.filter((tag, i) => (this.showAllTags || i < 12) && (!tag.spoiler || this.showSpoilers));
       },
-      get spoilerCount() { return c().tagList.filter((t) => t.spoiler).length; },
+      get spoilerCount() { return c().tagList.filter((tag) => tag.spoiler).length; },
       tagUrl(name) { return MangaVibe.ui.libraryUrl({ genre: name }); },
       // the Author row: the writers and artists (the API's `creators`, without translators and other
       // staff), each name once with its roles ("OTO Hisamu" as Author and Artist: one link)
@@ -50,7 +50,7 @@ MangaVibe.onStart(() => {
       toggleFav() { c().toggleFavorite(); },
       refreshMeta() { c().refreshMetadata(); },
       async setReader(v) { await c().setReadingMode(v); this.readerOpen = false; },
-      setTab(t) { c().setTab(t); },
+      setTab(tab) { c().setTab(tab); },
       rescan() { c().rescan(); },
       markAll(read) { c().markAll(read); },
       toggleBook(b) { c().toggleBook(b); },

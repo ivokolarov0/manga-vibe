@@ -224,13 +224,13 @@
                 <h2>Genres &amp; tags</h2>
                 <template x-if="genres.length">
                   <div><h3>Genres</h3><div class="chips">
-                    <template x-for="t in genres"><a class="chip tag" :href="tagUrl(t.name)" x-text="t.name"></a></template>
+                    <template x-for="tag in genres"><a class="chip tag" :href="tagUrl(tag.name)" x-text="tag.name"></a></template>
                   </div></div>
                 </template>
                 <template x-if="tagList.length">
                   <div><h3>Tags</h3><div class="chips">
-                    <template x-for="t in visibleTags" :key="t.name">
-                      <a class="chip tag" :class="{ spoiler: t.spoiler }" :href="tagUrl(t.name)" x-text="t.name"></a>
+                    <template x-for="tag in visibleTags" :key="tag.name">
+                      <a class="chip tag" :class="{ spoiler: tag.spoiler }" :href="tagUrl(tag.name)" x-text="tag.name"></a>
                     </template>
                     <button class="link-btn" x-show="!showAllTags && tagList.length > 12" @click="showAllTags = true"
                             x-text="`+${tagList.length - 12} more`"></button>

@@ -1,0 +1,626 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: MangaVibe\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: app/web/templates/shell/toasts.html
+msgid "A new MangaVibe version needs a new Docker image"
+msgstr "Die neue MangaVibe-Version braucht ein neues Docker-Image"
+
+#: app/web/templates/shell/toasts.html
+msgid "A new version of MangaVibe is available"
+msgstr "Eine neue Version von MangaVibe ist verfügbar"
+
+#: app/web/static/js/app.js
+msgid "A white outline around the letters, so they stay readable over the art"
+msgstr "Ein weißer Rand um die Buchstaben, damit sie auf dem Bild lesbar bleiben"
+
+#: app/web/static/js/common.js
+msgid "Always visible"
+msgstr "Immer sichtbar"
+
+#: app/web/templates/shell/toasts.html
+msgid "and {n} more"
+msgid_plural "and {n} more"
+msgstr[0] "und {n} weitere"
+msgstr[1] "und {n} weitere"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Android app"
+msgstr "Android-App"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "App version"
+msgstr "App-Version"
+
+#: app/web/static/js/app.js
+msgid "Auto"
+msgstr "Automatisch"
+
+#: app/web/static/js/app.js
+msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
+msgstr "Zurück, Vollbild und die Optionen liegen auf dieser Seite, in Daumennähe"
+
+#: app/web/static/js/app.js
+msgid "Bottom"
+msgstr "Unten"
+
+#: app/web/static/js/app.js
+msgid "Browser's language"
+msgstr "Sprache des Browsers"
+
+#: app/web/static/js/app.js
+msgid "Card size"
+msgstr "Kartengröße"
+
+#: app/web/static/js/app.js
+msgid "Card width"
+msgstr "Kartenbreite"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Change server"
+msgstr "Server wechseln"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Clear"
+msgstr "Leeren"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Clear the search"
+msgstr "Suche leeren"
+
+#: app/web/templates/shell/toasts.html
+msgid "Close"
+msgstr "Schließen"
+
+#: app/web/static/js/app.js
+msgid "Contained"
+msgstr "Begrenzt"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Continue"
+msgstr "Weiterlesen"
+
+#: app/web/static/js/app.js
+msgid "Dark"
+msgstr "Dunkel"
+
+#: app/web/static/js/app.js
+msgid "Darker pages are easier on the eyes, e.g. at night"
+msgstr "Dunklere Seiten schonen die Augen, z. B. nachts"
+
+#: app/web/static/js/app.js
+msgid "Default reading mode"
+msgstr "Standard-Lesemodus"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Display"
+msgstr "Anzeige"
+
+#: app/web/templates/shell/banners.html
+msgid "Don't show again"
+msgstr "Nicht mehr anzeigen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Download"
+msgstr "Herunterladen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Download newest"
+msgstr "Neueste herunterladen"
+
+#: app/web/static/js/app.js
+msgid "English"
+msgstr "Englisch"
+
+#: app/web/static/js/app.js
+msgid "Falls back to the next one if missing"
+msgstr "Fehlt er, wird der nächste genommen"
+
+#: app/web/static/js/app.js
+msgid "Fit"
+msgstr "Einpassen"
+
+#: app/web/static/js/app.js
+msgid "Fit height"
+msgstr "An Höhe anpassen"
+
+#: app/web/static/js/app.js
+msgid "Fit screen"
+msgstr "An Bildschirm anpassen"
+
+#: app/web/static/js/app.js
+msgid "Fit width"
+msgstr "An Breite anpassen"
+
+#: app/web/static/js/app.js
+msgid "From card size"
+msgstr "Nach Kartengröße"
+
+#: app/web/templates/shell/toasts.html
+msgid "Full release notes"
+msgstr "Alle Änderungen"
+
+#: app/web/static/js/app.js
+msgid "Full width"
+msgstr "Volle Breite"
+
+#: app/web/static/js/app.js
+msgid "Fullscreen on first tap"
+msgstr "Vollbild beim ersten Tippen"
+
+#: app/web/templates/shell/banners.html
+msgid "Fullscreen, the screen stays on, volume buttons turn pages"
+msgstr "Vollbild, der Bildschirm bleibt an, Lautstärketasten blättern um"
+
+#: app/web/templates/shell/toasts.html
+msgid "Going back failed"
+msgstr "Zurückgehen fehlgeschlagen"
+
+#: app/web/templates/shell/toasts.html
+msgid "Going back to an earlier version…"
+msgstr "Zurück zu einer früheren Version…"
+
+#: app/web/static/js/app.js
+msgid "Grid"
+msgstr "Raster"
+
+#: app/web/static/js/app.js
+msgid "Grid columns"
+msgstr "Spalten"
+
+#: app/web/static/js/app.js
+msgid "Hide controls after"
+msgstr "Steuerung ausblenden nach"
+
+#: app/web/static/js/common.js
+msgid "Hide with the controls"
+msgstr "Mit der Steuerung ausblenden"
+
+#: app/web/static/js/app.js
+msgid "In the reader: volume down goes to the next page, volume up goes back"
+msgstr "Im Reader: leiser blättert vor, lauter blättert zurück"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Install the app"
+msgstr "App installieren"
+
+#: app/web/static/js/app.js
+msgid "Inverted"
+msgstr "Invertiert"
+
+#: app/web/static/js/app.js
+msgid "Inverted turns white pages black with white lines. Warm takes out the blue light"
+msgstr "Invertiert macht weiße Seiten schwarz mit weißen Linien. Warm nimmt das blaue Licht heraus"
+
+#: app/web/static/js/app.js
+msgid "Inverted, warm"
+msgstr "Invertiert, warm"
+
+#: app/web/static/js/app.js
+msgid "Just for you"
+msgstr "Nur für dich"
+
+#: app/web/static/js/app.js
+msgid "Just for you, on wide screens. Cards are at least this wide and grow a little to fill the row"
+msgstr "Nur für dich, auf breiten Bildschirmen. Karten sind mindestens so breit und wachsen etwas, um die Reihe zu füllen"
+
+#: app/web/static/js/app.js
+msgid "Just for you. Auto fits as many cards as the screen has room for; narrow screens show fewer than picked"
+msgstr "Nur für dich. Automatisch zeigt so viele Karten, wie Platz haben; schmale Bildschirme zeigen weniger als gewählt"
+
+#: app/web/static/js/app.js
+msgid "Just for you. Full width lets the Library and Continue grids use the whole screen, however wide"
+msgstr "Nur für dich. Mit voller Breite nutzen Bibliothek und Weiterlesen den ganzen Bildschirm, egal wie breit"
+
+#: app/web/static/js/app.js
+msgid "Just for you. Missing words are shown in English"
+msgstr "Nur für dich. Fehlende Wörter erscheinen auf Englisch"
+
+#: app/web/static/js/app.js
+msgid "Language"
+msgstr "Sprache"
+
+#: app/web/static/js/app.js
+msgid "Large"
+msgstr "Groß"
+
+#: app/web/templates/shell/toasts.html
+msgid "Later"
+msgstr "Später"
+
+#: app/web/static/js/app.js
+msgid "Lazy load"
+msgstr "Beim Scrollen nachladen"
+
+#: app/web/templates/shell/banners.html
+msgid "Leave"
+msgstr "Verlassen"
+
+#: app/web/static/js/app.js
+msgid "Left"
+msgstr "Links"
+
+#: app/web/static/js/app.js
+msgid "Left back, right forward"
+msgstr "Links zurück, rechts vor"
+
+#: app/web/static/js/app.js
+msgid "Less"
+msgstr "Weniger"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Library"
+msgstr "Bibliothek"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Library folders"
+msgstr "Bibliotheksordner"
+
+#: app/web/static/js/app.js
+msgid "Library listing"
+msgstr "Bibliotheksliste"
+
+#: app/web/static/js/app.js
+msgid "Library view"
+msgstr "Bibliotheksansicht"
+
+#: app/web/static/js/app.js
+msgid "Light"
+msgstr "Hell"
+
+#: app/web/static/js/app.js
+msgid "List"
+msgstr "Liste"
+
+#: app/web/static/js/app.js
+msgid "Load more while scrolling, or show numbered pages"
+msgstr "Beim Scrollen mehr laden oder nummerierte Seiten zeigen"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Main"
+msgstr "Hauptnavigation"
+
+#: app/web/templates/shell/banners.html
+msgid "MangaVibe for Android"
+msgstr "MangaVibe für Android"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "MangaVibe: Library"
+msgstr "MangaVibe: Bibliothek"
+
+#: app/web/static/js/app.js
+msgid "Match device"
+msgstr "Wie das Gerät"
+
+#: app/web/templates/ui/macros.html
+msgid "Matching metadata: {done} of {n} series"
+msgid_plural "Matching metadata: {done} of {n} series"
+msgstr[0] "Metadaten werden gesucht: {done} von {n} Serie"
+msgstr[1] "Metadaten werden gesucht: {done} von {n} Serien"
+
+#: app/web/static/js/app.js
+msgid "Medium"
+msgstr "Mittel"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Metadata"
+msgstr "Metadaten"
+
+#: app/web/static/js/app.js
+msgid "More"
+msgstr "Mehr"
+
+#: app/web/static/js/app.js
+msgid "More = smoother, uses more data"
+msgstr "Mehr = flüssiger, braucht mehr Daten"
+
+#: app/web/static/js/app.js
+msgid "More makes faint lines and small text stand out"
+msgstr "Mehr hebt blasse Linien und kleine Schrift hervor"
+
+#: app/web/static/js/app.js
+msgid "Most"
+msgstr "Am meisten"
+
+#: app/web/static/js/app.js
+msgid "Native"
+msgstr "Original"
+
+#: app/web/static/js/app.js
+msgid "Navigation bar"
+msgstr "Navigationsleiste"
+
+#: app/web/templates/views/settings.html
+msgid "Needs attention"
+msgstr "Braucht Aufmerksamkeit"
+
+#: app/web/static/js/common.js
+msgid "Never"
+msgstr "Nie"
+
+#: app/web/static/js/app.js
+msgid "Normal"
+msgstr "Normal"
+
+#: app/web/templates/ui/macros.html
+msgid "Now: {title}"
+msgstr "Jetzt: {title}"
+
+#: app/web/static/js/app.js
+msgid "Off"
+msgstr "Aus"
+
+#: app/web/static/js/app.js
+msgid "Off (swipe only)"
+msgstr "Aus (nur Wischen)"
+
+#: app/web/static/js/app.js
+msgid "On"
+msgstr "An"
+
+#: app/web/static/js/app.js
+msgid "One-handed"
+msgstr "Einhändig"
+
+#: app/web/static/js/app.js
+msgid "One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu"
+msgstr "Einhändig: fast die ganze Seite blättert vor, ein schmaler Rand zurück, die Mitte öffnet das Menü"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html app/web/templates/shell/banners.html
+msgid "Open app"
+msgstr "App öffnen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Open in the app"
+msgstr "In der App öffnen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Open the downloaded MangaVibe.apk and allow installing apps from your browser when Android asks. Then come back here and tap Open app"
+msgstr "Öffne die heruntergeladene MangaVibe.apk und erlaube die Installation aus dem Browser, wenn Android fragt. Komm dann hierher zurück und tippe auf App öffnen"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead"
+msgstr "Öffnet die App und verbindet sie mit diesem Server. Ist sie nicht installiert, wird sie stattdessen heruntergeladen"
+
+#: app/web/static/js/app.js
+msgid "Original"
+msgstr "Originalgröße"
+
+#: app/web/static/js/app.js
+msgid "Overlay box background"
+msgstr "Hintergrund der Overlay-Boxen"
+
+#: app/web/static/js/app.js
+msgid "Overlay text outline"
+msgstr "Textumriss im Overlay"
+
+#: app/web/static/js/app.js
+msgid "Page brightness"
+msgstr "Seitenhelligkeit"
+
+#: app/web/static/js/app.js
+msgid "Page colours"
+msgstr "Seitenfarben"
+
+#: app/web/static/js/app.js
+msgid "Page contrast"
+msgstr "Seitenkontrast"
+
+#: app/web/static/js/app.js
+msgid "Page width"
+msgstr "Seitenbreite"
+
+#: app/web/static/js/app.js
+msgid "Pages"
+msgstr "Seiten"
+
+#: app/web/static/js/app.js
+msgid "Pages to preload"
+msgstr "Vorab geladene Seiten"
+
+#: app/web/static/js/app.js
+msgid "Pages: one at a time, the next one on the right (→, a tap on the right, a swipe to the left). For series whose library has no mode of its own (Settings → Libraries); each series can be set by hand"
+msgstr "Seiten: eine nach der anderen, die nächste rechts (→, Tippen rechts, Wischen nach links). Für Serien, deren Bibliothek keinen eigenen Modus hat (Einstellungen → Bibliotheken); jede Serie lässt sich einzeln einstellen"
+
+#: app/web/static/js/app.js
+msgid "Paginated"
+msgstr "Seitenweise"
+
+#: app/web/static/js/app.js
+msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
+msgstr "Handys und Tablets; nach dem Sperren führt das nächste Tippen zurück ins Vollbild. Mit der Maus: die Vollbild-Taste oder F"
+
+#: app/web/static/js/app.js
+msgid "Plugin"
+msgstr "Plugin"
+
+#: app/web/static/js/app.js
+msgid "Plugin boxes over the page, e.g. translations. Lower shows the art underneath"
+msgstr "Plugin-Boxen über der Seite, z. B. Übersetzungen. Weniger zeigt das Bild darunter"
+
+#: app/web/static/js/app.js app/web/templates/shell/banners.html
+msgid "Plugins"
+msgstr "Plugins"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
+msgstr "Lies in der MangaVibe-App statt im Browser: Vollbild ohne Browserleisten, der Bildschirm bleibt beim Lesen an und die Lautstärketasten blättern um. Sie zeigt dasselbe MangaVibe, also sind Bibliothek, Fortschritt und Einstellungen gleich."
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Reader"
+msgstr "Reader"
+
+#: app/web/static/js/app.js
+msgid "Reading hand"
+msgstr "Lesehand"
+
+#: app/web/static/js/app.js
+msgid "Right"
+msgstr "Rechts"
+
+#: app/web/static/js/app.js
+msgid "Romaji"
+msgstr "Romaji"
+
+#: app/web/templates/shell/banners.html
+msgid "Safe mode"
+msgstr "Abgesicherter Modus"
+
+#: app/web/static/js/app.js
+msgid "Saved"
+msgstr "Gespeichert"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Search"
+msgstr "Suche"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Search your library"
+msgstr "Bibliothek durchsuchen"
+
+#: app/web/templates/shell/toasts.html
+msgid "See {url}"
+msgstr "Siehe {url}"
+
+#: app/web/static/js/app.js
+msgid "See-through"
+msgstr "Durchsichtig"
+
+#: app/web/static/js/app.js
+msgid "Series page full width as well"
+msgstr "Auch die Serienseite in voller Breite"
+
+#: app/web/static/js/app.js
+msgid "Series per page"
+msgstr "Serien pro Seite"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Server"
+msgstr "Server"
+
+#: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: app/web/templates/ui/macros.html
+msgid "Settings ({n} need attention)"
+msgstr "Einstellungen ({n} brauchen Aufmerksamkeit)"
+
+#: app/web/templates/ui/macros.html
+msgid "Settings, {n} need attention"
+msgstr "Einstellungen, {n} brauchen Aufmerksamkeit"
+
+#: app/web/templates/shell/toasts.html
+msgid "Skip this version"
+msgstr "Diese Version überspringen"
+
+#: app/web/static/js/app.js
+msgid "Small"
+msgstr "Klein"
+
+#: app/web/static/js/app.js
+msgid "Solid"
+msgstr "Deckend"
+
+#: app/web/static/js/app.js
+msgid "Tap zones"
+msgstr "Tippbereiche"
+
+#: app/web/static/js/app.js
+msgid "The page of a series also uses the whole screen"
+msgstr "Auch die Seite einer Serie nutzt den ganzen Bildschirm"
+
+#: app/web/templates/shell/toasts.html
+msgid "The page reloads by itself when the new version is running."
+msgstr "Die Seite lädt von selbst neu, sobald die neue Version läuft."
+
+#: app/web/static/js/app.js
+msgid "The series and chapter at the top. When there's room: it stays while the page leaves space above it, so it covers none of the picture"
+msgstr "Serie und Kapitel oben. Wenn Platz ist: sie bleibt, solange die Seite oben Platz lässt, und verdeckt so nichts vom Bild"
+
+#: app/web/static/js/app.js
+msgid "Theme"
+msgstr "Design"
+
+#: app/web/static/js/app.js
+msgid "Thick"
+msgstr "Dick"
+
+#: app/web/static/js/app.js
+msgid "Thin"
+msgstr "Dünn"
+
+#: app/web/static/js/app.js
+msgid "Title language"
+msgstr "Sprache der Titel"
+
+#: app/web/static/js/app.js
+msgid "Top"
+msgstr "Oben"
+
+#: app/web/static/js/app.js
+msgid "Top bar"
+msgstr "Obere Leiste"
+
+#: app/web/templates/shell/toasts.html
+msgid "Update failed"
+msgstr "Update fehlgeschlagen"
+
+#: app/web/templates/shell/toasts.html
+msgid "Update now"
+msgstr "Jetzt aktualisieren"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Updates"
+msgstr "Updates"
+
+#: app/web/templates/shell/toasts.html
+msgid "Updating MangaVibe…"
+msgstr "MangaVibe wird aktualisiert…"
+
+#: app/web/static/js/app.js
+msgid "Vertical"
+msgstr "Vertikal"
+
+#: app/web/static/js/app.js
+msgid "Volume buttons turn pages"
+msgstr "Lautstärketasten blättern um"
+
+#: app/web/static/js/app.js
+msgid "Warm"
+msgstr "Warm"
+
+#: app/web/static/js/app.js
+msgid "When nothing is touched. Turning the page or a tap in the middle hides them at once"
+msgstr "Wenn nichts berührt wird. Umblättern oder Tippen in die Mitte blendet sie sofort aus"
+
+#: app/web/static/js/common.js
+msgid "When there's room"
+msgstr "Wenn Platz ist"
+
+#: app/web/static/js/app.js
+msgid "Where Library and Continue sit (with the Sidebar plugin: on phones only)"
+msgstr "Wo Bibliothek und Weiterlesen sitzen (mit dem Seitenleisten-Plugin: nur auf Handys)"
+
+#: app/web/templates/shell/toasts.html
+msgid "Working…"
+msgstr "Läuft…"
+
+#: app/web/templates/shell/banners.html
+msgid "Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble."
+msgstr "Deine eigenen Plugins sind nicht geladen, nur die eingebauten. Schalte das aus, das Probleme macht."
+
+#: app/web/static/js/app.js
+msgid "{n} px"
+msgstr "{n} px"
+
+#: app/web/static/js/common.js
+msgid "{n} second"
+msgid_plural "{n} seconds"
+msgstr[0] "{n} Sekunde"
+msgstr[1] "{n} Sekunden"

@@ -10,7 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from app import config, db as database, plugin_updates, updater
+from app import config, db as database, i18n, plugin_updates, updater
 from app.api import attention, books, edit, series, system, update
 from app.metadata import worker as metadata_worker
 from app.plugins import manager as plugins, web as plugin_web
@@ -190,7 +190,12 @@ def index(request: Request, safe: str = ""):
     /?safe=1: safe mode, without the owner's own plugins in the page (only the built-in ones), so a
     plugin that breaks the page can still be switched off in Settings -> Plugins."""
     on = safe not in ("", "0", "false")
-    response = HTMLResponse(plugin_web.render_index(safe=on), headers={"Cache-Control": "no-cache"})
+    with database.SessionLocal() as db:  # the person's language, else the browser's (app/i18n.py, #263)
+        lang = i18n.pick_language(str(system.personal_setting(db, "language")), request.headers.get("accept-language"))
+    with i18n.using(lang):
+        page = plugin_web.render_index(safe=on)
+    response = HTMLResponse(page, headers={"Cache-Control": "no-cache", "Content-Language": lang,
+                                           "Vary": "Accept-Language"})
     if on:
         response.set_cookie(SAFE_COOKIE, "1", httponly=True, samesite="strict")  # for /custom.css
     elif SAFE_COOKIE in request.cookies:  # out of safe mode

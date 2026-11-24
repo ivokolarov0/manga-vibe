@@ -9,6 +9,7 @@ its menu entry are gone; the keys keep their values. Settings -> Plugins is the 
 replaced. See docs/PLUGINS.md, "Settings' sections".
 """
 from app.plugins import Plugin
+from app.plugins.sdk import N_
 
 KEEP = "Draws a Settings page; connects to nothing"
 
@@ -21,7 +22,7 @@ class FoldersPage(Plugin):
     description = "Settings → Library folders: add and remove folders, scan, the path outside Docker. Built in."
     permissions = [KEEP]
     provides = {"settings:library": 1}
-    settings_pages = [{"key": "library", "label": "Library folders", "icon": "folder", "order": 10}]
+    settings_pages = [{"key": "library", "label": N_("Library folders"), "icon": "folder", "order": 10}]
 
 
 class DisplayPage(Plugin):
@@ -32,7 +33,7 @@ class DisplayPage(Plugin):
     description = "Settings → Display: theme, cards, page width, the library's listing and titles. Built in."
     permissions = [KEEP]
     provides = {"settings:display": 1}
-    settings_pages = [{"key": "display", "label": "Display", "icon": "palette", "order": 20, "personal": True}]
+    settings_pages = [{"key": "display", "label": N_("Display"), "icon": "palette", "order": 20, "personal": True}]
 
 
 class ReaderPage(Plugin):
@@ -43,9 +44,9 @@ class ReaderPage(Plugin):
     description = "Settings → Reader: the reading mode, fit, taps, overlays, the page's look; and the Android app. Built in."
     permissions = [KEEP]
     provides = {"settings:reader": 1}
-    settings_pages = [{"key": "app", "label": "Android app", "icon": "phone", "order": 25, "personal": True,
+    settings_pages = [{"key": "app", "label": N_("Android app"), "icon": "phone", "order": 25, "personal": True,
                        "android": True},
-                      {"key": "reader", "label": "Reader", "icon": "book-open", "order": 30, "personal": True}]
+                      {"key": "reader", "label": N_("Reader"), "icon": "book-open", "order": 30, "personal": True}]
 
 
 class MetadataPage(Plugin):
@@ -56,7 +57,7 @@ class MetadataPage(Plugin):
     description = "Settings → Metadata: the sources, automatic matching and its threshold. Built in."
     permissions = [KEEP]
     provides = {"settings:metadata": 1}
-    settings_pages = [{"key": "metadata", "label": "Metadata", "icon": "tag", "order": 40}]
+    settings_pages = [{"key": "metadata", "label": N_("Metadata"), "icon": "tag", "order": 40}]
 
 
 class UpdatesPage(Plugin):
@@ -67,4 +68,4 @@ class UpdatesPage(Plugin):
     description = "Settings → Updates: the running version, checking, installing and going back. Built in."
     permissions = [KEEP]
     provides = {"settings:updates": 1}
-    settings_pages = [{"key": "updates", "label": "Updates", "icon": "download", "order": 60}]
+    settings_pages = [{"key": "updates", "label": N_("Updates"), "icon": "download", "order": 60}]
