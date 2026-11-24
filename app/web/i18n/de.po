@@ -221,6 +221,10 @@ msgstr "Erlauben und installieren?"
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr "Auch Serien ohne bekannte Gesamtzahl zeigen (laufend, ohne Metadaten)"
 
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+msgid "Always"
+msgstr "Immer"
+
 #: app/web/static/js/common.js
 msgid "Always visible"
 msgstr "Immer sichtbar"
@@ -1581,6 +1585,10 @@ msgstr "Links"
 msgid "Left back, right forward"
 msgstr "Links zurück, rechts vor"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Left to right"
+msgstr "Links nach rechts"
+
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js app/web/templates/sheets/library.html
 msgid "Length"
 msgstr "Länge"
@@ -2293,7 +2301,7 @@ msgstr "Nummern von dir gesetzt"
 msgid "Numbers, symbols and other scripts"
 msgstr "Zahlen, Symbole und andere Schriften"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
 msgid "Off"
 msgstr "Aus"
 
@@ -2305,13 +2313,17 @@ msgstr "Aus (nur Wischen)"
 msgid "Oldest first"
 msgstr "Älteste zuerst"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr "An"
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "On hold"
 msgstr "Pausiert"
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+msgid "On wide screens"
+msgstr "Auf breiten Bildschirmen"
 
 #: app/web/templates/settings/backup.html
 msgid "One file with your library's metadata and edits, everyone's reading progress, the accounts, the posters and all settings (plugins' too). The manga files aren't in it. Plugins you installed yourself aren't either: their settings are, so install them again after an import."
@@ -2511,6 +2523,10 @@ msgstr "Seitenkontrast"
 msgid "Page look"
 msgstr "Seitenbild"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Page order"
+msgstr "Seitenreihenfolge"
+
 #: app/web/static/js/app.js
 msgid "Page width"
 msgstr "Seitenbreite"
@@ -2526,6 +2542,10 @@ msgstr "Seite {page} von {pages}"
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Pages"
 msgstr "Seiten"
+
+#: app/web/static/js/app.js
+msgid "Pages side by side, like an open book (in Pages mode). The cover and double-page pictures show alone. On wide screens: one page at a time while the screen is upright or narrow"
+msgstr "Seiten nebeneinander wie in einem aufgeschlagenen Buch (im Modus Seiten). Das Cover und Doppelseiten-Bilder stehen allein. Auf breiten Bildschirmen: eine Seite nach der anderen, solange der Bildschirm hochkant oder schmal ist"
 
 #: app/web/static/js/app.js
 msgid "Pages to preload"
@@ -2927,6 +2947,10 @@ msgstr "Rev. {n}"
 msgid "Right"
 msgstr "Rechts"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Right to left"
+msgstr "Rechts nach links"
+
 #: app/web/static/js/app.js
 msgid "Romaji"
 msgstr "Romaji"
@@ -3214,6 +3238,10 @@ msgstr "Einstellungen: Reader"
 #: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Updates"
 msgstr "Einstellungen: Updates"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Shift the pairs by one page"
+msgstr "Paare um eine Seite verschieben"
 
 #: app/web/templates/settings/plugins.html
 msgid "Show"
@@ -3545,6 +3573,10 @@ msgstr "Die Seite Reader in den Einstellungen"
 msgid "the running version"
 msgstr "die laufende Version"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "The screen is upright or narrow now, so one page shows at a time."
+msgstr "Der Bildschirm ist gerade hochkant oder schmal, daher wird eine Seite nach der anderen gezeigt."
+
 #: app/web/static/js/app.js
 msgid "The series and chapter at the top. When there's room: it stays while the page leaves space above it, so it covers none of the picture"
 msgstr "Serie und Kapitel oben. Wenn Platz ist: sie bleibt, solange die Seite oben Platz lässt, und verdeckt so nichts vom Bild"
@@ -3792,6 +3824,10 @@ msgstr "Von selbst umblättern"
 #: app/plugins/builtin/attention_lists/__init__.py
 msgid "Two or more files with the same chapter number. Both are kept."
 msgstr "Zwei oder mehr Dateien mit derselben Kapitelnummer. Beide bleiben erhalten."
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+msgid "Two pages"
+msgstr "Zwei Seiten"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js
 msgid "Type"

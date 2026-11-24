@@ -106,3 +106,29 @@ def test_plugins_get_the_direction(client):
         s = db.get(Series, sid)
         ctx = Context(Plugin(), db)
         assert ctx.reading_direction(s) in ("paged", "vertical")
+
+
+def test_two_pages_order(client):
+    """Two pages side by side (#276): printed right to left for Japanese manga and when the country isn't
+    known, left to right for Korean and Chinese books. Turning pages stays forward to the right."""
+    sid = series_id()
+    with SessionLocal() as db:
+        old = db.get(Series, sid).country_of_origin
+    book = client.get(f"/api/series/{sid}/books").json()[0]["id"]
+    try:
+        for country, rtl in [(None, True), ("JP", True), ("jp", True), ("KR", False), ("CN", False), ("TW", False)]:
+            set_series(sid, country_of_origin=country)
+            assert client.get(f"/api/books/{book}").json()["right_to_left"] is rtl, country
+    finally:
+        set_series(sid, country_of_origin=old)
+
+
+def test_two_pages_setting(client):
+    s = client.get("/api/settings").json()
+    assert s["reader_spread"] == "off"
+    try:
+        for value in ("auto", "on", "off"):
+            assert client.put("/api/settings", json={"reader_spread": value}).status_code == 200
+            assert client.get("/api/settings").json()["reader_spread"] == value
+    finally:
+        client.put("/api/settings", json={"reader_spread": "off"})

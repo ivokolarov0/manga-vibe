@@ -40,6 +40,7 @@ DEFAULT_SETTINGS = {
     "library_view": "grid",        # grid (poster cards) | list (one series per row)
     "reader_mode": "paged",        # paged | vertical
     "reader_fit": "screen",        # width | height | screen | original
+    "reader_spread": "off",        # off | auto (two pages side by side on wide screens) | on (always two)
     "auto_fullscreen": True,
     "preload": 4,
     "reader_autohide": 5,          # seconds until the reader controls hide; 0 = never
@@ -201,7 +202,7 @@ def scan_status():
 
 # Settings → Reader, and the theme: each user's own (app/users.py), starting from the shared ones (the
 # owner's). The rest is the app's, changed by admins only.
-PERSONAL_SETTINGS = {"theme", "language", "reader_mode", "reader_fit", "auto_fullscreen", "preload", "reader_autohide",
+PERSONAL_SETTINGS = {"theme", "language", "reader_mode", "reader_fit", "reader_spread", "auto_fullscreen", "preload", "reader_autohide",
                      "reader_top_bar", "reader_drawer_side", "reader_tap_layout", "reader_volume_keys", "overlay_opacity",
                      "overlay_outline", "reader_brightness", "reader_contrast", "reader_colors",
                      # the library page's own "per page" picker and grid/list switch, there for everyone

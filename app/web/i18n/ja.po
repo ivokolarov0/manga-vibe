@@ -220,6 +220,10 @@ msgstr "許可してインストールしますか？"
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr "総数が不明なシリーズも表示（連載中、メタデータなし）"
 
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+msgid "Always"
+msgstr "常に"
+
 #: app/web/static/js/common.js
 msgid "Always visible"
 msgstr "常に表示"
@@ -1576,6 +1580,10 @@ msgstr "左"
 msgid "Left back, right forward"
 msgstr "左で戻る、右で進む"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Left to right"
+msgstr "左から右"
+
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js app/web/templates/sheets/library.html
 msgid "Length"
 msgstr "長さ"
@@ -2282,7 +2290,7 @@ msgstr "番号は手動設定"
 msgid "Numbers, symbols and other scripts"
 msgstr "数字・記号・その他の文字"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
 msgid "Off"
 msgstr "オフ"
 
@@ -2294,13 +2302,17 @@ msgstr "オフ（スワイプのみ）"
 msgid "Oldest first"
 msgstr "古い順"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr "オン"
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "On hold"
 msgstr "保留"
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+msgid "On wide screens"
+msgstr "横長の画面で"
 
 #: app/web/templates/settings/backup.html
 msgid "One file with your library's metadata and edits, everyone's reading progress, the accounts, the posters and all settings (plugins' too). The manga files aren't in it. Plugins you installed yourself aren't either: their settings are, so install them again after an import."
@@ -2499,6 +2511,10 @@ msgstr "ページのコントラスト"
 msgid "Page look"
 msgstr "ページの見た目"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Page order"
+msgstr "ページの順番"
+
 #: app/web/static/js/app.js
 msgid "Page width"
 msgstr "ページの幅"
@@ -2514,6 +2530,10 @@ msgstr "{pages} ページ中 {page} ページ"
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Pages"
 msgstr "ページ"
+
+#: app/web/static/js/app.js
+msgid "Pages side by side, like an open book (in Pages mode). The cover and double-page pictures show alone. On wide screens: one page at a time while the screen is upright or narrow"
+msgstr "開いた本のようにページを左右に並べます（ページモード）。表紙と見開きの画像は単独で表示します。横長の画面で：画面が縦向きか狭いあいだは 1 ページずつ"
 
 #: app/web/static/js/app.js
 msgid "Pages to preload"
@@ -2913,6 +2933,10 @@ msgstr "版 {n}"
 msgid "Right"
 msgstr "右"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Right to left"
+msgstr "右から左"
+
 #: app/web/static/js/app.js
 msgid "Romaji"
 msgstr "ローマ字"
@@ -3198,6 +3222,10 @@ msgstr "設定：リーダー"
 #: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Updates"
 msgstr "設定：更新"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Shift the pairs by one page"
+msgstr "組み合わせを 1 ページずらす"
 
 #: app/web/templates/settings/plugins.html
 msgid "Show"
@@ -3526,6 +3554,10 @@ msgstr "設定のリーダーページ"
 msgid "the running version"
 msgstr "実行中のバージョン"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "The screen is upright or narrow now, so one page shows at a time."
+msgstr "いまは画面が縦向きか狭いため、1 ページずつ表示します。"
+
 #: app/web/static/js/app.js
 msgid "The series and chapter at the top. When there's room: it stays while the page leaves space above it, so it covers none of the picture"
 msgstr "上部のシリーズ名と章。「余白があるとき」は、ページの上に余白がある間だけ表示し、絵を隠しません"
@@ -3773,6 +3805,10 @@ msgstr "自動でページをめくる"
 #: app/plugins/builtin/attention_lists/__init__.py
 msgid "Two or more files with the same chapter number. Both are kept."
 msgstr "同じ章番号のファイルが複数あります。どちらも残します。"
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+msgid "Two pages"
+msgstr "見開き"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js
 msgid "Type"
