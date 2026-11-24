@@ -2,14 +2,14 @@
   <div class="sheet" x-data="sortSheet()" x-show="$store.app.sheet === 'sort'" x-cloak
        x-dialog="$store.app.sheet = null">
     <div>
-      <div class="sheet-head"><b>Sort</b><button class="btn small" @click="$store.app.sheet = null">Done</button></div>
-      <h3>Order</h3>
-      <div class="segmented" role="radiogroup" aria-label="Order">
+      <div class="sheet-head"><b>{{ t("Sort") }}</b><button class="btn small" @click="$store.app.sheet = null">{{ t("Done") }}</button></div>
+      <h3>{{ t("Order") }}</h3>
+      <div class="segmented" role="radiogroup" aria-label="{{ t('Order') }}">
         <button role="radio" :aria-checked="asc" :class="{ on: asc }" @click="setOrder(true)" x-text="orderLabels[0]"></button>
         <button role="radio" :aria-checked="!asc" :class="{ on: !asc }" @click="setOrder(false)" x-text="orderLabels[1]"></button>
       </div>
-      <h3>Sort by</h3>
-      <div class="options" role="radiogroup" aria-label="Sort by">
+      <h3>{{ t("Sort by") }}</h3>
+      <div class="options" role="radiogroup" aria-label="{{ t('Sort by') }}">
         <template x-for="[v, label] in sorts" :key="v">
           <button role="radio" :aria-checked="sort === v" :class="{ on: sort === v }" @click="setSort(v)">
             <span class="radio" aria-hidden="true"></span><span class="text" x-text="label"></span>
@@ -22,25 +22,25 @@
   <div class="sheet letter-sheet" x-data="letterSheet()" x-show="$store.app.sheet === 'letter'" x-cloak
        x-dialog="$store.app.sheet = null">
     <div>
-      <div class="sheet-head"><b>Title starts with</b>
-        <span class="btn-row"><button class="btn small" x-show="letter" @click="pick('')">Clear</button>
-          <button class="btn small" @click="$store.app.sheet = null">Done</button></span></div>
-      <div class="letter-grid" role="group" aria-label="Title starts with">
+      <div class="sheet-head"><b>{{ t("Title starts with") }}</b>
+        <span class="btn-row"><button class="btn small" x-show="letter" @click="pick('')">{{ t("Clear") }}</button>
+          <button class="btn small" @click="$store.app.sheet = null">{{ t("Done") }}</button></span></div>
+      <div class="letter-grid" role="group" aria-label="{{ t('Title starts with') }}">
         <template x-for="l in letters" :key="l">
           <button :class="{ on: letter === l }" :aria-pressed="letter === l" @click="pick(l)" x-text="l"
-                  :title="l === '#' ? 'Numbers, symbols and other scripts' : 'Starts with ' + l"></button>
+                  :title="l === '#' ? t('Numbers, symbols and other scripts') : t('Starts with {letter}', { letter: l })"></button>
         </template>
       </div>
-      <p class="fhint"># is for titles that start with a number, a symbol or a non-Latin script.</p>
+      <p class="fhint">{{ t("# is for titles that start with a number, a symbol or a non-Latin script.") }}</p>
     </div>
   </div>
 
   <div class="sheet filter-sheet" x-data="filterSheet()" x-show="$store.app.sheet === 'filter'" x-cloak
        x-dialog="$store.app.sheet = null">
     <div>
-      <div class="sheet-head"><b>Filter</b>
-        <span class="btn-row"><button class="btn small" @click="clearAll()">Clear</button>
-          <button class="btn small" @click="$store.app.sheet = null">Done</button></span></div>
+      <div class="sheet-head"><b>{{ t("Filter") }}</b>
+        <span class="btn-row"><button class="btn small" @click="clearAll()">{{ t("Clear") }}</button>
+          <button class="btn small" @click="$store.app.sheet = null">{{ t("Done") }}</button></span></div>
       <template x-for="[k, title, labels] in groups" :key="k">
         <section class="fgroup" :class="{ open: open[k] }">
           <button class="fgroup-head" :aria-expanded="!!open[k]" @click="toggleGroup(k)">
@@ -65,8 +65,8 @@
             <span class="chev" aria-hidden="true"></span>
           </button>
           <div x-show="open[k]">
-            <input class="ffind" x-model="nameQuery[k]" :placeholder="'Find ' + title.toLowerCase()"
-                   :aria-label="'Find ' + title.toLowerCase()">
+            <input class="ffind" x-model="nameQuery[k]" :placeholder="t('Find: {what}', { what: title })"
+                   :aria-label="t('Find: {what}', { what: title })">
             <div class="wrap">
               <template x-for="n in shownNames(k)" :key="n.name">
                 <button class="chip-btn" :class="{ on: isOn(k, n.name) }" :aria-pressed="isOn(k, n.name)"
@@ -74,62 +74,62 @@
                   <span x-text="n.name"></span> <span class="n" x-show="n.count" x-text="n.count"></span></button>
               </template>
               <span class="muted" x-show="!shownNames(k).length"
-                    x-text="nameQuery[k] ? 'No match.' : 'These appear once series have metadata.'"></span>
+                    x-text="nameQuery[k] ? t('No match.') : t('These appear once series have metadata.')"></span>
             </div>
           </div>
         </section>
       </template>
       <section class="fgroup" :class="{ open: open.length }" x-show="lengthUnits.length">
         <button class="fgroup-head" :aria-expanded="!!open.length" @click="toggleGroup('length')">
-          <span>Length</span>
+          <span>{{ t("Length") }}</span>
           <span class="fcount" x-show="selected('length')" x-text="selected('length')"></span>
           <span class="chev" aria-hidden="true"></span>
         </button>
         <div x-show="open.length">
-          <p class="fhint">The published total, from the metadata. Leave a box empty for no limit.</p>
+          <p class="fhint">{{ t("The published total, from the metadata. Leave a box empty for no limit.") }}</p>
           <template x-for="[u, label] in lengthUnits" :key="u">
             <div class="frange">
               <span x-text="label"></span>
-              <input type="number" min="0" step="1" inputmode="numeric" placeholder="Min"
-                     :aria-label="label + ', at least'" :value="bound(u + '_min')"
+              <input type="number" min="0" step="1" inputmode="numeric" placeholder="{{ t('Min') }}"
+                     :aria-label="t('{what}, at least', { what: label })" :value="bound(u + '_min')"
                      @change="setBound(u + '_min', $event.target.value)">
               <span aria-hidden="true">–</span>
-              <input type="number" min="0" step="1" inputmode="numeric" placeholder="Max"
-                     :aria-label="label + ', at most'" :value="bound(u + '_max')"
+              <input type="number" min="0" step="1" inputmode="numeric" placeholder="{{ t('Max') }}"
+                     :aria-label="t('{what}, at most', { what: label })" :value="bound(u + '_max')"
                      @change="setBound(u + '_max', $event.target.value)">
             </div>
           </template>
           <label class="funknown" x-show="selected('length')">
             <input type="checkbox" :checked="lengthUnknown" @change="setLengthUnknown($event.target.checked)">
-            Also show series with no known total (ongoing, no metadata)</label>
+            {{ t("Also show series with no known total (ongoing, no metadata)") }}</label>
         </div>
       </section>
       <section class="fgroup" :class="{ open: open.genres }" x-show="lib.tags">
         <button class="fgroup-head" :aria-expanded="!!open.genres" @click="toggleGroup('genres')">
-          <span>Genres</span>
+          <span>{{ t("Genres") }}</span>
           <span class="fcount" x-show="selected('genres')" x-text="selected('genres')"></span>
           <span class="chev" aria-hidden="true"></span>
         </button>
         <div x-show="open.genres">
-          <p class="fhint">Tap once to include, again to exclude, again to clear.</p>
+          <p class="fhint">{{ t("Tap once to include, again to exclude, again to clear.") }}</p>
           <div class="wrap">
             <template x-for="tag in genres" :key="tag.name">
               <button class="chip-btn" :class="tagState(tag.name)" @click="cycleTag(tag.name)">
                 <span x-text="tag.name"></span> <span class="n" x-text="tag.count"></span></button>
             </template>
-            <span class="muted" x-show="!genres.length">Genres appear once series have metadata.</span>
+            <span class="muted" x-show="!genres.length">{{ t("Genres appear once series have metadata.") }}</span>
           </div>
         </div>
       </section>
       <template x-if="lib.tags && tags.some((tag) => tag.kind !== 'genre')">
         <section class="fgroup" :class="{ open: open.tags }">
           <button class="fgroup-head" :aria-expanded="!!open.tags" @click="toggleGroup('tags')">
-            <span>Tags</span>
+            <span>{{ t("Tags") }}</span>
             <span class="fcount" x-show="selected('tags')" x-text="selected('tags')"></span>
             <span class="chev" aria-hidden="true"></span>
           </button>
           <div x-show="open.tags">
-            <input class="ffind" x-model="tagQuery" placeholder="Find a tag" aria-label="Find a tag">
+            <input class="ffind" x-model="tagQuery" placeholder="{{ t('Find a tag') }}" aria-label="{{ t('Find a tag') }}">
             <div class="wrap">
               <template x-for="tag in otherTags" :key="tag.name">
                 <button class="chip-btn" :class="tagState(tag.name)" @click="cycleTag(tag.name)">

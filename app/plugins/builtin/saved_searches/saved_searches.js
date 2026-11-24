@@ -17,16 +17,17 @@ MangaVibe.onStart(() => {
     },
     async save() {
       const p = MV.libraryFilters(), query = MV.filterQuery(p);
-      const name = prompt(`Name for this search (${MV.filterLabels(query).join(", ")})`, p.getAll("genre").find(Boolean) || "");
+      const name = prompt(MV.t("Name for this search ({filters})", { filters: MV.filterLabels(query).join(", ") }),
+                          p.getAll("genre").find(Boolean) || "");
       if (!name?.trim()) return;
       try {
         const r = await MV.api(API, { method: "POST", body: { name, query } });
         await this.load();
-        MV.toast(`Saved as “${r.name}”. The Saved button brings it back, in any library.`, 5000);
+        MV.toast(MV.t("Saved as “{name}”. The Saved button brings it back, in any library.", { name: r.name }), 5000);
       } catch (e) { MV.toast(e.message, 6000, "error"); }
     },
     async remove(x) {
-      if (!confirm(`Delete the saved search “${x.name}”?`)) return;
+      if (!confirm(MV.t("Delete the saved search “{name}”?", { name: x.name }))) return;
       await MV.api(`${API}/${x.id}`, { method: "DELETE" }).catch((e) => MV.toast(e.message, 6000, "error"));
       await this.load();
     },

@@ -1239,6 +1239,13 @@ Plugin API version, and the app works after every one.
   Needs attention lists' labels) are marked `N_()` and translated in the browser with `t()`; the API stays
   language-free. Built-in plugins' names, descriptions and permissions, and the server's error messages,
   are a later step.
+- **Step 2b, the library and the series page**: the library page, its filter / sort / letter sheets,
+  multi-select, cards, Continue reading, the series page, the Edit and Fix match dialogs, Saved searches,
+  AniList recommendations and Settings → Backup. The library-query schema keeps English labels (assistants
+  read it too) marked `N_()`; `deriveLib()` translates them once, so the sheets, chips and saved searches
+  all show the page's language. A text with a number in it is one translated sentence per unit ("{n}+
+  chapters", "Up to {n} volumes") instead of English words joined around the number. Book labels ("Vol 1")
+  and errors from the server stay English until the server-texts step.
 
 ### Export and import (issue #262)
 

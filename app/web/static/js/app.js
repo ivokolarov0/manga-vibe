@@ -9,11 +9,11 @@
      #/settings/plugin-mal_profile_sync  one plugin's settings page                                   */
 "use strict";
 
-const STATUS_LABELS = { unread: "Unread", reading: "Reading", completed: "Completed",
-  plan_to_read: "Plan to read", on_hold: "On hold", dropped: "Dropped" };
-const PUB_LABELS = { RELEASING: "Releasing", FINISHED: "Finished", HIATUS: "Hiatus", CANCELLED: "Cancelled",
-  NOT_YET_RELEASED: "Not yet released", UNKNOWN: "Unknown status" };
-const COUNTRY = { JP: "Manga", KR: "Manhwa", CN: "Manhua", TW: "Manhua" };
+const STATUS_LABELS = { unread: t("Unread"), reading: t("Reading"), completed: t("Completed"),
+  plan_to_read: t("Plan to read"), on_hold: t("On hold"), dropped: t("Dropped") };
+const PUB_LABELS = { RELEASING: t("Releasing"), FINISHED: t("Finished"), HIATUS: t("Hiatus"), CANCELLED: t("Cancelled"),
+  NOT_YET_RELEASED: t("Not yet released"), UNKNOWN: t("Unknown status") };
+const COUNTRY = { JP: t("Manga"), KR: t("Manhwa"), CN: t("Manhua"), TW: t("Manhua") };
 /* The library's filters and sorts are the library-query plugin's (Plugin API 16, issue #204): what
    GET /api/library/schema says, worked out once into what the sheets, chips and saved searches use, and
    kept in $store.app.lib (so they redraw when another plugin takes over the job). By kind:
@@ -23,9 +23,12 @@ const COUNTRY = { JP: "Manga", KR: "Manhwa", CN: "Manhua", TW: "Manhua" };
      a group in the filter sheet lists the names `source` gives ([{name, count}], e.g. /api/authors)
    - length: published totals within a range per unit (<unit>_min, <unit>_max, length_unknown)
    - toggle "fav" and the "read" choice also make the quick buttons; letter: the Letter sheet
-   - text: the search box; anything "hidden" only comes through links and assistants */
+   - text: the search box; anything "hidden" only comes through links and assistants
+   The schema's labels are English (assistants read it too): they're shown with t() (issue #263). */
 function deriveLib(s = {}) {
-  const filters = s.filters || [], sorts = s.sorts || [];
+  const filters = (s.filters || []).map((f) => ({ ...f, label: t(f.label || ""),
+    options: f.options?.map(([v, label]) => [v, t(label)]), units: f.units?.map(([u, label]) => [u, t(label)]) }));
+  const sorts = (s.sorts || []).map((x) => ({ ...x, label: t(x.label || ""), order_labels: x.order_labels?.map((l) => t(l)) }));
   const choices = filters.filter((f) => f.kind === "choice" && !f.hidden && f.params?.length);
   const tags = filters.find((f) => f.kind === "tags");
   const length = filters.find((f) => f.kind === "length");
@@ -56,18 +59,27 @@ const NO_LIB = deriveLib();
 async function loadLibrarySchema() {
   try { Alpine.store("app").lib = deriveLib(await api("/api/library/schema")); } catch {}
 }
-// "10–50 chapters", "100+ chapters", "up to 10 volumes"; "" when that unit has no range
+// "10–50 chapters", "100+ chapters", "up to 10 volumes"; "" when that unit has no range. The words of the
+// built-in units; another plugin's unit is shown by its key
+const LENGTH_WORDS = {
+  chapters: { one: (n) => tn("{n} chapter", "{n} chapters", n), range: (from, to) => t("{from}–{to} chapters", { from, to }),
+              min: (n) => t("{n}+ chapters", { n }), max: (n) => t("Up to {n} chapters", { n }) },
+  volumes: { one: (n) => tn("{n} volume", "{n} volumes", n), range: (from, to) => t("{from}–{to} volumes", { from, to }),
+             min: (n) => t("{n}+ volumes", { n }), max: (n) => t("Up to {n} volumes", { n }) },
+};
 function lengthLabel(p, unit) {
   const lo = p.get(`${unit}_min`), hi = p.get(`${unit}_max`);
-  if (lo && hi) return lo === hi ? `${lo} ${unit}` : `${lo}–${hi} ${unit}`;
-  if (lo) return `${lo}+ ${unit}`;
-  return hi ? `Up to ${hi} ${unit}` : "";
+  const w = LENGTH_WORDS[unit] || { one: (n) => `${n} ${unit}`, range: (a, b) => `${a}–${b} ${unit}`,
+                                    min: (n) => `${n}+ ${unit}`, max: (n) => `≤ ${n} ${unit}` };
+  if (lo && hi) return lo === hi ? w.one(+lo) : w.range(lo, hi);
+  if (lo) return w.min(lo);
+  return hi ? w.max(hi) : "";
 }
 // first-letter filter (letter=B); "#" is everything else: numbers, symbols, other scripts
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 // the quick buttons above the grid, each shown while the library-query plugin has its filter (lib())
-const QUICK = [["", "All"], ["unread", "Unread"], ["reading", "Reading"], ["completed", "Completed"],
-  ["plan_to_read", "Plan to read"], ["fav", "Favorites"]];  // Favorites gets a star icon (templates/views/library.html)
+const QUICK = [["", t("All")], ["unread", t("Unread")], ["reading", t("Reading")], ["completed", t("Completed")],
+  ["plan_to_read", t("Plan to read")], ["fav", t("Favorites")]];  // Favorites gets a star icon (templates/views/library.html)
 const quickButtons = () => QUICK.filter(([v]) => v === "" || (v === "fav" ? lib().fav : lib().readValues.includes(v)));
 // the Needs attention lists: [key, label, help, alert], the plugins' (attention:list, Plugin API 21: the page
 // gets them as MV_ATTENTION_LISTS). alert: its rows count towards the red numbers
@@ -98,32 +110,37 @@ function navigateLibrary(p) {
 }
 const libraryUrl = (params) => "#/?" + new URLSearchParams(params).toString();
 const scoreCls = (s) => (s >= 90 ? "hi" : s >= 70 ? "mid" : "lo");
-const kindOf = (s) => s.format === "NOVEL" ? "Novel" : s.format === "ONE_SHOT" ? "One-shot" : COUNTRY[s.country_of_origin];
+const kindOf = (s) => s.format === "NOVEL" ? t("Novel") : s.format === "ONE_SHOT" ? t("One-shot") : COUNTRY[s.country_of_origin];
 
 // "8 / 8 volumes · complete", "120 / 150 chapters · some missing"; empty when there's no total to compare with.
 // Marked complete by hand (omnibus editions): "12 / 37 volumes · complete (set by you)".
+function ownedText(c) {
+  return c.unit === "chapter" ? tn("{owned} / {n} chapter", "{owned} / {n} chapters", c.total, { owned: c.owned })
+    : tn("{owned} / {n} volume", "{owned} / {n} volumes", c.total, { owned: c.owned });
+}
 function haveText(c) {
-  if (c?.manual) return (c.total ? `${c.owned} / ${c.total} ${c.unit}${c.total === 1 ? "" : "s"} · ` : "") + "complete (set by you)";
+  if (c?.manual) return (c.total ? ownedText(c) + " · " : "") + t("complete (set by you)");
   if (!c?.total) return "";
-  const text = `${c.owned} / ${c.total} ${c.unit}${c.total === 1 ? "" : "s"}`;
-  return text + ({ complete: " · complete", incomplete: " · some missing" }[c.state] || "");
+  return ownedText(c) + ({ complete: " · " + t("complete"), incomplete: " · " + t("some missing") }[c.state] || "");
 }
 
 // The edition the volumes count against, when it isn't the regular one: "Kanzenban · 18 volumes (regular: 27)"
 function editionText(c) {
   const e = c?.edition;
   if (!e) return "";
-  return [e.names.join(", "), `${e.volumes} volumes` + (e.regular && e.regular !== e.volumes ? ` (regular: ${e.regular})` : ""),
-          e.manual ? "set by you" : "from the pages per volume"].filter(Boolean).join(" · ");
+  return [e.names.join(", "), tn("{n} volume", "{n} volumes", e.volumes)
+            + (e.regular && e.regular !== e.volumes ? " " + t("(regular: {n})", { n: e.regular }) : ""),
+          e.manual ? t("set by you") : t("from the pages per volume")].filter(Boolean).join(" · ");
 }
 
 // The Edit form's Edition choices: [value, label]; "0" is automatic
 function editionOptions(s) {
-  const out = [["0", "Automatic"]], seen = new Set();
+  const out = [["0", t("Automatic")]], seen = new Set();
   const add = (n, names) => {
     if (!n || seen.has(n)) return;
     seen.add(n);
-    out.push([String(n), `${n} volumes` + (names?.length ? ` · ${names.join(", ")}` : n === s.volumes_total ? " · regular" : "")]);
+    out.push([String(n), tn("{n} volume", "{n} volumes", n)
+      + (names?.length ? ` · ${names.join(", ")}` : n === s.volumes_total ? " · " + t("regular") : "")]);
   };
   add(s.volumes_total, []);
   for (const e of s.editions || []) add(e.volumes, e.names);
@@ -133,10 +150,10 @@ function editionOptions(s) {
 
 function cardSub(s) {
   const st = s.reading_status, read = s.book_count - s.unread_count;
-  if (st === "completed") return "Completed";  // the poster has the ✓ or ✕ badge
-  if (st === "dropped") return "Dropped";
-  if (st === "reading") return `Reading · ${read}/${s.book_count}`;
-  if (st === "unread") return `Unread · ${s.book_count} ${s.book_count === 1 ? "book" : "books"}`;
+  if (st === "completed") return STATUS_LABELS.completed;  // the poster has the ✓ or ✕ badge
+  if (st === "dropped") return STATUS_LABELS.dropped;
+  if (st === "reading") return `${STATUS_LABELS.reading} · ${read}/${s.book_count}`;
+  if (st === "unread") return `${STATUS_LABELS.unread} · ` + tn("{n} book", "{n} books", s.book_count);
   return STATUS_LABELS[st] || st;
 }
 
@@ -196,8 +213,9 @@ document.addEventListener("alpine:init", () => {
       let left = "";
       if (m.batch_started && done >= 5) {  // a few series in, the pace is known
         const min = Math.round((Date.now() / 1000 - m.batch_started) / done * (total - done) / 60);
-        left = min < 1 ? "less than a minute left"
-          : min < 60 ? `about ${min} min left` : `about ${Math.floor(min / 60)} h ${min % 60} min left`;
+        left = min < 1 ? t("less than a minute left")
+          : min < 60 ? t("about {min} min left", { min })
+            : t("about {h} h {min} min left", { h: Math.floor(min / 60), min: min % 60 });
       }
       return { done, total, pct: Math.floor((done / total) * 100), current: m.current, left };
     },
@@ -627,7 +645,7 @@ function libraryController() {
     pages(total = this.total) { return Math.max(1, Math.ceil((total || 0) / this.size)); },
     get pageNums() { return pageList(this.page, this.pages()); },
     get pageInfo() {
-      return `Page ${this.page} of ${this.pages()} · ${this.total} series`;
+      return t("Page {page} of {pages}", { page: this.page, pages: this.pages() }) + " · " + tn("{n} series", "{n} series", this.total);
     },
     pageSizes: PAGE_SIZES,
     pageSize: 80,  // the size picked; size is what a page holds (rounded to whole rows)
@@ -645,7 +663,7 @@ function libraryController() {
         await api("/api/settings", { method: "PUT", body: { library_view: v } });
         await loadSettings();
       } catch (e) {
-        toast("Could not save the view: " + e.message, 3000, "error");
+        toast(t("Could not save the view: {error}", { error: e.message }), 3000, "error");
       }
     },
     goPage(n, replace = false) {
@@ -711,19 +729,19 @@ function libraryController() {
       }
       if (lib().tags) {
         for (const v of getList(p, "genre")) out.push({ k: "genre", v, label: v });
-        for (const v of getList(p, "exclude")) out.push({ k: "exclude", v, label: "not " + v, ex: true });
+        for (const v of getList(p, "exclude")) out.push({ k: "exclude", v, label: t("not {tag}", { tag: v }), ex: true });
       }
       for (const [k, title] of lib().names) {
         for (const v of getList(p, k)) out.push({ k, v, label: `${title}: ${v}` });
       }
       for (const [u] of lib().lengthUnits) {
         const label = lengthLabel(p, u);
-        if (label) out.push({ k: "length", v: u, label: label + (p.get("length_unknown") ? " or unknown" : "") });
+        if (label) out.push({ k: "length", v: u, label: p.get("length_unknown") ? t("{length} or unknown", { length: label }) : label });
       }
-      if (p.get("letter")) out.push({ k: "letter", v: p.get("letter"), label: "Starts with " + p.get("letter") });
+      if (p.get("letter")) out.push({ k: "letter", v: p.get("letter"), label: t("Starts with {letter}", { letter: p.get("letter") }) });
       const sort = p.get("sort");
       if (sort && sort !== lib().defaultSort) out.push({ k: "sort", v: sort,
-        label: "Sort: " + (lib().sortInfo[sort]?.label || sort) + (p.get("order") === "asc" ? " ↑" : "") });
+        label: t("Sort: {sort}", { sort: lib().sortInfo[sort]?.label || sort }) + (p.get("order") === "asc" ? " ↑" : "") });
       return out;
     },
     removeChip(c) {
@@ -744,9 +762,9 @@ function libraryController() {
     // any filter or sort on (a plugin can add to their row, e.g. Save search)
     get filtersOn() { return !!searchQuery(this.params); },
     get emptyText() {
-      if (this.params.toString()) return "No series match these filters.";
+      if (this.params.toString()) return t("No series match these filters.");
       // a plugin may know why (e.g. libraries: this one is locked, or nothing was moved here yet)
-      return collectPlugins("empty-library")[0] || "No series yet. The first scan may still be running; see Settings.";
+      return collectPlugins("empty-library")[0] || t("No series yet. The first scan may still be running; see Settings.");
     },
 
     /* ---- multi-select: hold a card to start, then tap or shift-click to pick more ---- */
@@ -824,10 +842,10 @@ function libraryController() {
     // address: it gets { ids, action, ...extra } and answers { done, skipped } (e.g. libraries' Move)
     async bulk(action, msg, extra = {}, url = "/api/series/bulk") {
       this.selMenu = false;
-      this.working = "Working…";
+      this.working = t("Working…");
       try {
         const r = await api(url, { method: "POST", body: { ids: Object.keys(this.sel).map(Number), action, ...extra } });
-        toast(msg(r.done) + (r.skipped && action === "refresh" ? ` (${r.skipped} without metadata skipped)` : ""));
+        toast(msg(r.done) + (r.skipped && action === "refresh" ? " " + t("({n} without metadata skipped)", { n: r.skipped }) : ""));
         this.working = "";
         this.endSelect();
         Alpine.store("app").libraryDirty++;
@@ -841,7 +859,7 @@ function libraryController() {
       const failed = [];
       this.delOpen = false;
       for (const [i, id] of ids.entries()) {
-        this.working = `Deleting ${i + 1} of ${ids.length}…`;
+        this.working = t("Deleting {done} of {total}…", { done: i + 1, total: ids.length });
         try {
           await api(`/api/series/${id}`, { method: "DELETE" });
           done++;
@@ -855,8 +873,8 @@ function libraryController() {
         }
       }
       this.working = "";
-      if (failed.length) toast(`Deleted ${done} of ${ids.length}. ${failed[0]}`, 10000, "error");
-      else toast(`Deleted ${done} series`);
+      if (failed.length) toast(t("Deleted {done} of {total}. {error}", { done, total: ids.length, error: failed[0] }), 10000, "error");
+      else toast(tn("Deleted {n} series", "Deleted {n} series", done));
       if (!failed.length) this.endSelect();
       Alpine.store("app").libraryDirty++;
       refreshAttentionCount();
@@ -975,7 +993,7 @@ function sortSheet() {
     get p() { return new URLSearchParams(this.$store.app.query); },
     get sort() { return this.p.get("sort") || this.$store.app.lib.defaultSort; },
     get asc() { return this.p.get("order") === "asc" || (!this.p.get("order") && this.info.order === "asc"); },
-    get orderLabels() { return this.info.order_labels || ["Ascending", "Descending"]; },
+    get orderLabels() { return this.info.order_labels || [t("Ascending"), t("Descending")]; },
     setSort(v) {
       const p = libParams();
       v === this.$store.app.lib.defaultSort ? p.delete("sort") : p.set("sort", v);
@@ -1007,12 +1025,12 @@ function searchParts(qs) {
   const p = new URLSearchParams(qs || ""), out = [];
   if (p.get("q")) out.push(`“${p.get("q")}”`);
   for (const v of getList(p, "genre")) out.push(v);
-  for (const v of getList(p, "exclude")) out.push("not " + v);
+  for (const v of getList(p, "exclude")) out.push(t("not {tag}", { tag: v }));
   for (const [k] of lib().names) for (const v of getList(p, k)) out.push(v);
   for (const [k, , labels] of lib().groups) for (const v of getList(p, k)) out.push(labels[v] || v);
   for (const [u] of lib().lengthUnits) if (lengthLabel(p, u)) out.push(lengthLabel(p, u));
-  if (p.get("fav")) out.push("Favorites");
-  if (p.get("letter")) out.push("Starts with " + p.get("letter"));
+  if (p.get("fav")) out.push(t("Favorites"));
+  if (p.get("letter")) out.push(t("Starts with {letter}", { letter: p.get("letter") }));
   const sort = lib().sortInfo[p.get("sort")]?.label;
   if (sort) out.push("↓ " + sort);
   return out;
@@ -1044,7 +1062,7 @@ window.MangaVibe = {
   // your own: x-text="MangaVibe.ui.cardSub(s)"
   ui: {
     cardSub,       // a card's line under the title: "Reading · 3/10", "Unread · 4 books", "Completed"
-    updated: (s) => (s.updated_at ? "Updated " + ago(s.updated_at * 1000) : ""),  // a library card's last change
+    updated: (s) => (s.updated_at ? t("Updated {when}", { when: ago(s.updated_at * 1000) }) : ""),  // a library card's last change
     ago,           // ago(ms): "today", "3 days ago", "2 months ago"
     status: (st) => STATUS_LABELS[st] || st,   // reading_status -> "Plan to read"
     publication: (p) => PUB_LABELS[p] || p,     // publication_status -> "Releasing"
@@ -1054,8 +1072,10 @@ window.MangaVibe = {
     editionText,   // an edition: "Kanzenban · 18 volumes (regular: 27)"
     icon,          // icon("star") -> the icon's <svg> as HTML (for x-html)
     libraryUrl,    // libraryUrl({ genre: "Isekai" }) -> "#/?genre=Isekai"
-    fileSize: (n) => (n >= 1073741824 ? (n / 1073741824).toFixed(1) + " GB"  // bytes -> "1.2 GB", "340.5 MB"
-      : n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.ceil(n / 1024) + " KB"),
+    fileSize: (n) => {  // bytes -> "1.2 GB", "340.5 MB" (in the page's language: "1,2 GB")
+      const one = (x) => fmtNum(x, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      return n >= 1073741824 ? one(n / 1073741824) + " GB" : n >= 1048576 ? one(n / 1048576) + " MB" : fmtNum(Math.ceil(n / 1024)) + " KB";
+    },
     number: (v) => (v === null || v === undefined ? "–" : v),  // a volume or chapter number, "–" when none
     text: formatText,  // a description as HTML (for x-html): paragraphs, line breaks, links; escaped
   },
@@ -1276,7 +1296,7 @@ function continueController() {
     },
     async load() {
       if (Alpine.store("app").view !== "continue") return;
-      document.title = "Continue reading";
+      document.title = t("Continue reading");
       this.items = await api(`/api/continue-reading?${scopeParam()}`).catch(() => this.items);
     },
   };
@@ -1338,7 +1358,7 @@ function seriesController() {
       if (app.seriesBack) history.back();
       else location.replace("#/" + (app.query ? "?" + app.query : ""));
     },
-    get backLabel() { return Alpine.store("app").seriesBack ? "Back" : "Library"; },
+    get backLabel() { return Alpine.store("app").seriesBack ? t("Back") : t("Library"); },
     // the plugins' labels on the books (e.g. "Translated 12/40") stay live while the page is open:
     // asked every 3 s, every 30 s after a minute without a change; a load (e.g. after a plugin
     // button) makes it quick again. Nothing is asked while the tab is hidden or no plugin labels books.
@@ -1370,56 +1390,59 @@ function seriesController() {
     },
     get facts() {
       const s = this.s;
-      return [s.start_year, s.average_score && `★ ${s.average_score}%`, PUB_LABELS[s.publication_status], kindOf(s)].filter(Boolean);
+      return [s.start_year, s.average_score && `★ ${pct(s.average_score)}`, PUB_LABELS[s.publication_status], kindOf(s)].filter(Boolean);
     },
     get details() {
       const s = this.s;
       return [
-        ["Author", (s.creators || []).map((a) => a.name + (a.roles.length ? ` (${a.roles.join(", ")})` : "")).join("\n")],
-        ["Year", s.start_year], ["Type", kindOf(s)], ["Status", PUB_LABELS[s.publication_status]],
-        ["Length", [s.volumes_total && `${s.volumes_total} volumes`, s.chapters_total && `${s.chapters_total} chapters`].filter(Boolean).join(" · ")],
-        ["You have", haveText(s.collection)],
-        ["Edition", editionText(s.collection)],
-        ["Score", s.average_score && `${s.average_score}%`],
-        ["In library", `${s.book_count} books · ${s.unread_count} unread`],
+        [t("Author"), (s.creators || []).map((a) => a.name + (a.roles.length ? ` (${a.roles.join(", ")})` : "")).join("\n")],
+        [t("Year"), s.start_year], [t("Type"), kindOf(s)], [t("Status"), PUB_LABELS[s.publication_status]],
+        [t("Length"), [s.volumes_total && tn("{n} volume", "{n} volumes", s.volumes_total),
+                       s.chapters_total && tn("{n} chapter", "{n} chapters", s.chapters_total)].filter(Boolean).join(" · ")],
+        [t("You have"), haveText(s.collection)],
+        [t("Edition"), editionText(s.collection)],
+        [t("Score"), s.average_score && pct(s.average_score)],
+        [t("In library"), tn("{n} book", "{n} books", s.book_count) + " · " + t("{n} unread", { n: s.unread_count })],
         // what plugins add, e.g. libraries: which library it shows in
         ...collectPlugins("series-info", s).flat(),
-        ...s.plugin_fields.map((f) => [f.label, typeof f.value === "object" ? JSON.stringify(f.value) : f.value]),
-        ["Folder", s.folder_path],
+        ...s.plugin_fields.map((f) => [t(f.label), typeof f.value === "object" ? JSON.stringify(f.value) : f.value]),
+        [t("Folder"), s.folder_path],
       ].filter(([, v]) => v);
     },
-    get genres() { return this.s.tags.filter((t) => t.kind === "genre"); },
-    get tagList() { return this.s.tags.filter((t) => t.kind !== "genre"); },  // the other tags (spoiler: t.spoiler)
+    get genres() { return this.s.tags.filter((tag) => tag.kind === "genre"); },
+    get tagList() { return this.s.tags.filter((tag) => tag.kind !== "genre"); },  // the other tags (spoiler: tag.spoiler)
     get matchLabel() {
       const s = this.s;
-      return { auto: `Matched automatically · ${s.match_confidence ?? "?"}%`, manual: "Matched by you",
-        failed: "No confident match", ignored: "Not matched (your choice)", unmatched: "Looking for metadata…" }[s.match_status] || "";
+      return { auto: t("Matched automatically · {score}", { score: s.match_confidence != null ? pct(s.match_confidence) : "?" }),
+        manual: t("Matched by you"), failed: t("No confident match"), ignored: t("Not matched (your choice)"),
+        unmatched: t("Looking for metadata…") }[s.match_status] || "";
     },
     tagUrl(name) { return libraryUrl({ genre: name }); },
 
     async patch(body, reloadAfter = false) {
       await api(`/api/series/${this.s.id}`, { method: "PATCH", body });
       Alpine.store("app").libraryDirty++;
-      reloadAfter ? this.reload() : toast("Saved");
+      reloadAfter ? this.reload() : toast(t("Saved"));
     },
     // the reading status picked by hand (reading, completed, plan_to_read, on_hold, dropped); "" = automatic
     setStatus(v) { this.patch(v ? { reading_status: v } : { clear_reading_status: true }); },
     statusLabels: STATUS_LABELS,
     /* ---- the reading mode ---- */
-    readerModes: [["", "Automatic", ""], ["paged", "Pages", "One page at a time, the next one on the right"],
-      ["vertical", "Vertical", "Webtoons, long strips"]],
+    readerModes: [["", t("Automatic"), ""], ["paged", t("Pages"), t("One page at a time, the next one on the right")],
+      ["vertical", t("Vertical"), t("Webtoons, long strips")]],
     get readerModeLabel() {
-      const names = { paged: "Pages", vertical: "Vertical" };
-      return this.s?.reader_mode ? names[this.s.reader_mode] : `Automatic: ${names[this.s?.direction?.mode] || "Pages"}`;
+      const names = { paged: t("Pages"), vertical: t("Vertical") };
+      return this.s?.reader_mode ? names[this.s.reader_mode]
+        : t("Automatic: {mode}", { mode: names[this.s?.direction?.mode] || names.paged });
     },
     /* what "Automatic" comes to for this series, and why */
     get autoHint() {
       const d = this.s?.direction;
       if (!d) return "";
-      const names = { paged: "Pages", vertical: "Vertical" };
+      const names = { paged: t("Pages"), vertical: t("Vertical") };
       // with a mode set by hand, "Automatic" would be what the library etc. say: not known here
-      return d.source === "series" ? "Its default (e.g. its library's), else Settings → Reader"
-        : `${names[d.mode]} · ${d.why}`;
+      return d.source === "series" ? t("Its default (e.g. its library's), else Settings → Reader")
+        : `${names[d.mode]} · ${t(d.why)}`;
     },
     async setReadingMode(v) {  // "paged", "vertical", or "" for automatic
       await api(`/api/series/${this.s.id}`, { method: "PATCH", body: { reader_mode: v || "default" } });
@@ -1427,7 +1450,7 @@ function seriesController() {
       // what it comes to now (Automatic is worked out on the server)
       const fresh = await api(`/api/series/${this.s.id}`).catch(() => null);
       if (fresh) this.s.direction = fresh.direction;
-      toast(`Reading mode: ${this.readerModeLabel}`);
+      toast(t("Reading mode: {mode}", { mode: this.readerModeLabel }));
     },
     async toggleFavorite() {  // flip at once, save in the background; nothing else on the page changes
       const on = !this.s.favorite;
@@ -1443,7 +1466,7 @@ function seriesController() {
     refreshing: false,
     async refreshMetadata() {
       this.refreshing = true;
-      try { await api(`/api/series/${this.s.id}/refresh`, { method: "POST" }); toast("Metadata refreshed"); this.reload(); }
+      try { await api(`/api/series/${this.s.id}/refresh`, { method: "POST" }); toast(t("Metadata refreshed")); this.reload(); }
       catch (e) { toast(e.message, 6000, "error"); }
       finally { this.refreshing = false; }
     },
@@ -1469,15 +1492,15 @@ function seriesController() {
       this.choiceBusy = false;
       this.reload();  // shows what was saved (or puts the old value back), and any status change
     },
-    setTab(t) { location.replace(`#/series/${this.s.id}${t ? "?tab=" + t : ""}`); },  // "" or "files"
+    setTab(tab) { location.replace(`#/series/${this.s.id}${tab ? "?tab=" + tab : ""}`); },  // "" or "files"
 
     bookState(b) {
       if (b.error) return "";
-      return (b.completed ? "Read" : b.page ? `Page ${b.page + 1} of ${b.page_count}` : `${b.page_count} pages`)
-        + (b.duplicate ? " · duplicate" : "");
+      return (b.completed ? t("Read") : b.page ? t("Page {page} of {pages}", { page: b.page + 1, pages: b.page_count })
+        : tn("{n} page", "{n} pages", b.page_count)) + (b.duplicate ? " · " + t("duplicate") : "");
     },
     async markAll(read) {  // every book read (true) or unread (false, asks first)
-      if (!read && !confirm("Clear progress for every book in this series? It will also be removed from Continue reading.")) return;
+      if (!read && !confirm(t("Clear progress for every book in this series? It will also be removed from Continue reading."))) return;
       await api(`/api/series/${this.s.id}/${read ? "mark-read" : "mark-unread"}`, { method: "POST" });
       Alpine.store("app").libraryDirty++;
       this.reload();
@@ -1522,12 +1545,12 @@ function seriesController() {
         hidden: f.hidden,
       };
       if (body.chapter === null && chapterChanged && num(f.chapter_end) !== null) {
-        toast("Enter the first chapter of the range");
+        toast(t("Enter the first chapter of the range"));
         return false;
       }
       try {
         await api(`/api/books/${b.id}`, { method: "PATCH", body });
-        toast("Saved. The list is re-ordered.");
+        toast(t("Saved. The list is re-ordered."));
         Alpine.store("app").libraryDirty++;
         this.reload();
         return true;
@@ -1535,7 +1558,7 @@ function seriesController() {
     },
     async resetNumbers(b) {  // back to the numbers from the file name
       await api(`/api/books/${b.id}`, { method: "PATCH", body: { reset: true } });
-      toast("Back to the numbers from the file name");
+      toast(t("Back to the numbers from the file name"));
       this.reload();
     },
 
@@ -1543,7 +1566,7 @@ function seriesController() {
     get path() { return this.s.host_path || this.s.folder_path; },  // on the NAS when known, else in Docker
     async copyPath() {  // true when copied
       if (await copyText(this.path)) return true;
-      toast("Couldn't copy. Select the path and copy it by hand.", 5000, "error");
+      toast(t("Couldn't copy. Select the path and copy it by hand."), 5000, "error");
       return false;
     },
 
@@ -1554,13 +1577,14 @@ function seriesController() {
       try {
         const r = await api(`/api/series/${this.s.id}/rescan`, { method: "POST" });
         if (r.removed) {
-          toast("The series folder is gone, so the series was removed from the library");
+          toast(t("The series folder is gone, so the series was removed from the library"));
           Alpine.store("app").libraryDirty++;
           refreshAttentionCount();
           location.hash = "#/";
           return;
         }
-        toast(`Rescanned: ${r.books} files` + (r.errors ? `, ${r.errors} with errors` : ""));
+        const files = tn("{n} file", "{n} files", r.books);
+        toast(r.errors ? t("Rescanned: {files}, {errors} with errors", { files, errors: r.errors }) : t("Rescanned: {files}", { files }));
         Alpine.store("app").libraryDirty++;
         refreshAttentionCount();
         this.reload();
@@ -1575,7 +1599,7 @@ function seriesController() {
       const title = this.s.title;
       try {
         await api(`/api/series/${this.s.id}`, { method: "DELETE" });
-        toast(`Deleted: ${title}`);
+        toast(t("Deleted: {title}", { title }));
         Alpine.store("app").libraryDirty++;
         refreshAttentionCount();
         location.hash = "#/";
@@ -1638,7 +1662,7 @@ function fixMatch() {
       this.busy = c.provider_id;  // which "Use" shows the spinner
       try {
         await api(`/api/series/${this.s.id}/match`, { method: "POST", body: { provider: this.provider, provider_id: c.provider_id } });
-        this.done("Matched: " + c.title);
+        this.done(t("Matched: {title}", { title: c.title }));
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.busy = false; }
     },
     async applyUrl() {
@@ -1646,7 +1670,7 @@ function fixMatch() {
       this.busy = "url";
       try {
         await api(`/api/series/${this.s.id}/match`, { method: "POST", body: { url: this.url.trim() } });
-        this.done("Matched");
+        this.done(t("Matched"));
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.busy = false; }
     },
     async post(path, msg) {
@@ -2125,8 +2149,8 @@ function settingsView() {
       const file = e.target.files[0];
       e.target.value = "";  // the same file can be picked again
       if (!file || this.importing) return;
-      if (!confirm(`Import ${file.name}? It replaces this server's library data, reading progress, accounts and ` +
-                   "settings with the file's. The current database is copied to /data/backups first.")) return;
+      if (!confirm(t("Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first.",
+                     { file: file.name }))) return;
       this.importing = true;
       try {
         // the file itself as the body (not a form), so the server writes it straight to the data volume
@@ -2134,7 +2158,8 @@ function settingsView() {
                                                          headers: { "Content-Type": "application/zip" } });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
         const r = await res.json();
-        toast(`Imported ${r.series} series and ${r.books} books. Reloading…`, 4000);
+        toast(t("Imported {series} and {books}. Reloading…", { series: tn("{n} series", "{n} series", r.series),
+                                                               books: tn("{n} book", "{n} books", r.books) }), 4000);
         // everything changed (and with accounts, the login may have too): start again from the top
         setTimeout(() => { location.hash = "#/"; location.reload(); }, 1500);
       } catch (err) {
@@ -2504,8 +2529,8 @@ function editSeries() {
         publication_status: s.publication_status || "UNKNOWN", start_year: s.start_year ?? "",
         type: typeOf(s), volumes_total: s.volumes_total ?? "", chapters_total: s.chapters_total ?? "",
         authors: lines(s.authors.map((a) => a.name + (a.role ? ` (${a.role})` : ""))),
-        genres: s.tags.filter((t) => t.kind === "genre").map((t) => t.name).join(", "),
-        tags: s.tags.filter((t) => t.kind !== "genre").map((t) => t.name).join(", "),
+        genres: s.tags.filter((tag) => tag.kind === "genre").map((tag) => tag.name).join(", "),
+        tags: s.tags.filter((tag) => tag.kind !== "genre").map((tag) => tag.name).join(", "),
         links: lines(s.links.map((l) => `${l.site} | ${l.url}`)),
         collection_complete: s.collection?.manual ? "complete" : "auto",
         edition_volumes: String(s.edition_volumes || 0),
@@ -2562,15 +2587,15 @@ function editSeries() {
           location.hash = "#/";
           return;
         }
-        toast(metadata ? "Saved. Your changes are kept when metadata is refreshed."
-          : done.map((r) => r.message).filter(Boolean).join(" ") || "Saved");
+        toast(metadata ? t("Saved. Your changes are kept when metadata is refreshed.")
+          : done.map((r) => r.message).filter(Boolean).join(" ") || t("Saved"));
         this.done();
       } catch (e) { toast(e.message, 7000, "error"); } finally { this.saving = false; }
     },
     async unlockAll() {
-      if (!confirm("Let metadata refresh change all fields again? Your edits stay until the next refresh.")) return;
+      if (!confirm(t("Let metadata refresh change all fields again? Your edits stay until the next refresh."))) return;
       await api(`/api/series/${this.s.id}/metadata`, { method: "PUT", body: { unlock: this.s.locked_fields } });
-      toast("Unlocked");
+      toast(t("Unlocked"));
       this.start();
     },
     done() {
@@ -2585,8 +2610,8 @@ function editSeries() {
       const file = ev.target.files[0];
       this.clearFile();
       if (!file) return;
-      if (!file.type.startsWith("image/")) return toast("Please choose an image file");
-      if (file.size > 10 * 1024 * 1024) return toast("The image is larger than 10 MB");
+      if (!file.type.startsWith("image/")) return toast(t("Please choose an image file"));
+      if (file.size > 10 * 1024 * 1024) return toast(t("The image is larger than 10 MB"));
       this.file = file;
       this.preview = URL.createObjectURL(file);  // local preview only; the server checks the file again
     },
@@ -2604,7 +2629,7 @@ function editSeries() {
       try {
         const res = await fetch(`/api/series/${this.s.id}/poster/upload`, { method: "POST", body: form });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
-        toast("Poster changed");
+        toast(t("Poster changed"));
         this.done();
       } catch (e) { toast(e.message, 7000, "error"); } finally { this.uploading = false; }
     },
@@ -2620,7 +2645,7 @@ function editSeries() {
       const body = source === "page" ? { source, book_id: b.id, page: Math.max(1, +this.pageNo || 1) - 1 } : { source };
       try {
         await api(`/api/series/${this.s.id}/poster`, { method: "POST", body });
-        toast("Poster changed");
+        toast(t("Poster changed"));
         this.done();
       } catch (e) { toast(e.message, 7000, "error"); }
     },

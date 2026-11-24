@@ -13,7 +13,7 @@
               <div class="bar"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>{% endblock %}</div>
             {% block continue_text %}
             <div class="card-title" x-text="s.title"></div>
-            <div class="card-sub reading" x-text="`${s.continue.label} · p${s.continue.page + 1}/${s.continue.page_count}`"></div>
+            <div class="card-sub reading" x-text="s.continue.label + ' · ' + t('p{page}/{pages}', { page: s.continue.page + 1, pages: s.continue.page_count })"></div>
             {% endblock %}
 {% else %}
             <div class="poster">
@@ -21,15 +21,15 @@
               <img :src="s.poster" loading="lazy" alt="" draggable="false">
               <span class="pick" x-show="selecting" aria-hidden="true"></span>
               {% block badges %}
-              <span class="badge done" x-show="s.reading_status === 'completed'" title="Completed" aria-label="Completed">
+              <span class="badge done" x-show="s.reading_status === 'completed'" title="{{ t('Completed') }}" aria-label="{{ t('Completed') }}">
                 <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
-              <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="Dropped" aria-label="Dropped">
+              <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="{{ t('Dropped') }}" aria-label="{{ t('Dropped') }}">
                 <svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></span>
               <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"
-                    :title="s.unread_count + ' unread'"></span>
-              <span class="badge status" x-show="s.favorite" title="Favorite" aria-label="Favorite">
+                    :title="t('{n} unread', { n: s.unread_count })"></span>
+              <span class="badge status" x-show="s.favorite" title="{{ t('Favorite') }}" aria-label="{{ t('Favorite') }}">
                 <svg class="ic fill" aria-hidden="true"><use href="#i-star"/></svg></span>
-              <span class="badge missing" x-show="s.incomplete" title="Finished series with volumes or chapters missing">Incomplete</span>
+              <span class="badge missing" x-show="s.incomplete" title="{{ t('Finished series with volumes or chapters missing') }}">{{ t("Incomplete") }}</span>
               {% endblock %}
               {{ slot("card-badges") }}
               <div class="bar" x-show="s.reading_status === 'reading'"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
@@ -46,11 +46,11 @@
             <!-- list view only (library.css): what the poster's badges say, and the details -->
             <div class="card-meta">
               <span class="flags" x-show="s.favorite || s.incomplete">
-                <svg class="ic fill fav" x-show="s.favorite" aria-label="Favorite"><use href="#i-star"/></svg>
-                <span class="missing" x-show="s.incomplete" title="Finished series with volumes or chapters missing">Incomplete</span>
+                <svg class="ic fill fav" x-show="s.favorite" aria-label="{{ t('Favorite') }}"><use href="#i-star"/></svg>
+                <span class="missing" x-show="s.incomplete" title="{{ t('Finished series with volumes or chapters missing') }}">{{ t("Incomplete") }}</span>
               </span>
-              <span class="unread" x-text="s.unread_count && s.unread_count < s.book_count ? `${s.unread_count} unread` : ''"></span>
-              <span class="latest" x-text="s.latest ? 'Latest: ' + s.latest : ''"></span>
+              <span class="unread" x-text="s.unread_count && s.unread_count < s.book_count ? t('{n} unread', { n: s.unread_count }) : ''"></span>
+              <span class="latest" x-text="s.latest ? t('Latest: {book}', { book: s.latest }) : ''"></span>
               <span class="updated" x-text="MangaVibe.ui.updated(s)"></span>
             </div>
             {% endblock %}

@@ -4,42 +4,42 @@
     <div>
       <template x-if="s">
         <div>
-          <div class="sheet-head"><b x-text="'Fix match · ' + s.folder_name"></b><button class="btn small" @click="close()">Close</button></div>
+          <div class="sheet-head"><b x-text="t('Fix match · {folder}', { folder: s.folder_name })"></b><button class="btn small" @click="close()">{{ t("Close") }}</button></div>
           <div class="tabs small">
             <template x-for="p in $store.app.providers" :key="p.id">
-              <button :class="{ active: provider === p.id }" @click="setProvider(p.id)" x-text="p.name + (p.available ? '' : ' (offline)')"></button>
+              <button :class="{ active: provider === p.id }" @click="setProvider(p.id)" x-text="p.available ? p.name : t('{name} (offline)', { name: p.name })"></button>
             </template>
           </div>
-          <div class="row"><input x-model="q" style="flex:1" @keydown.enter="search()"><button class="btn primary" @click="search()">Search</button></div>
-          <p class="muted" x-show="searching" x-text="'Searching ' + $store.app.providerName(provider) + '…'"></p>
+          <div class="row"><input x-model="q" style="flex:1" @keydown.enter="search()"><button class="btn primary" @click="search()">{{ t("Search") }}</button></div>
+          <p class="muted" x-show="searching" x-text="t('Searching {source}…', { source: $store.app.providerName(provider) })"></p>
           <p class="err" x-show="error" x-text="error"></p>
-          <p class="muted" x-show="results && !results.length && !searching">No results. Try a different spelling or the English/Japanese title.</p>
+          <p class="muted" x-show="results && !results.length && !searching">{{ t("No results. Try a different spelling or the English/Japanese title.") }}</p>
           <template x-for="c in results || []" :key="c.provider_id">
             <div class="cand">
               <img :src="c.cover_url || ''" loading="lazy" alt="">
               <div class="info"><b x-text="c.title"></b>
                 <div class="muted" x-show="c.other_titles.length" x-text="c.other_titles.join(' · ')"></div>
                 <div><span x-text="[c.year, c.format, c.status].filter(Boolean).join(' · ')"></span> ·
-                  <span class="score" :class="scoreCls(c.score)" x-text="c.score + '%'"></span></div>
+                  <span class="score" :class="scoreCls(c.score)" x-text="pct(c.score)"></span></div>
                 <a class="link-btn" x-show="c.url" :href="c.url" target="_blank" rel="noopener"><span
-                   x-text="'Open on ' + $store.app.providerName(provider)"></span> <svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
+                   x-text="t('Open on {source}', { source: $store.app.providerName(provider) })"></span> <svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>
               </div>
               <button class="btn small primary" :class="{ busy: busy === c.provider_id }" :disabled="!!busy"
-                      @click="use(c)" x-text="busy === c.provider_id ? 'Matching…' : 'Use'"></button>
+                      @click="use(c)" x-text="busy === c.provider_id ? t('Matching…') : t('Use')"></button>
             </div>
           </template>
-          <h3>Or paste a link</h3>
-          <div class="row"><input x-model="url" style="flex:1" placeholder="https://anilist.co/manga/… or https://www.mangaupdates.com/series/…">
+          <h3>{{ t("Or paste a link") }}</h3>
+          <div class="row"><input x-model="url" style="flex:1" placeholder="https://anilist.co/manga/… {{ t('or') }} https://www.mangaupdates.com/series/…">
             <button class="btn" :class="{ busy: busy === 'url' }" :disabled="!!busy" @click="applyUrl()"
-                    x-text="busy === 'url' ? 'Matching…' : 'Apply'"></button></div>
-          <h3>Other</h3>
+                    x-text="busy === 'url' ? t('Matching…') : t('Apply')"></button></div>
+          <h3>{{ t("Other") }}</h3>
           <div class="row">
-            <button class="btn small" @click="post('auto-match', 'Queued for automatic matching')">Try automatic match again</button>
-            <button class="btn small" @click="post('unmatch', 'Metadata removed')">Unmatch (use folder name)</button>
-            <button class="btn small" @click="post('ignore-match', &quot;This series won't be matched&quot;)">Don't match this series</button>
+            <button class="btn small" @click="post('auto-match', t('Queued for automatic matching'))">{{ t("Try automatic match again") }}</button>
+            <button class="btn small" @click="post('unmatch', t('Metadata removed'))">{{ t("Unmatch (use folder name)") }}</button>
+            <button class="btn small" @click="post('ignore-match', t('This series won\'t be matched'))">{{ t("Don't match this series") }}</button>
           </div>
         </div>
       </template>
-      <p class="muted" x-show="!s">Loading…</p>
+      <p class="muted" x-show="!s">{{ t("Loading…") }}</p>
     </div>
   </div>

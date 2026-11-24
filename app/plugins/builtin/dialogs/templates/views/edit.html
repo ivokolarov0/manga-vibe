@@ -4,60 +4,60 @@
     <div class="edit-dialog">
       <template x-if="s">
         <div>
-          <div class="sheet-head"><b x-text="'Edit · ' + s.title"></b><button class="btn small" @click="close()">Close</button></div>
+          <div class="sheet-head"><b x-text="t('Edit · {title}', { title: s.title })"></b><button class="btn small" @click="close()">{{ t("Close") }}</button></div>
           <div class="tabs small">
-            <button :class="{ active: tab === 'info' }" @click="tab = 'info'">Info</button>
-            <button :class="{ active: tab === 'poster' }" @click="tab = 'poster'">Poster</button>
+            <button :class="{ active: tab === 'info' }" @click="tab = 'info'">{{ t("Info") }}</button>
+            <button :class="{ active: tab === 'poster' }" @click="tab = 'poster'">{{ t("Poster") }}</button>
           </div>
 
           <!-- info -->
           <form class="edit-form" x-show="tab === 'info'" @submit.prevent="save()">
             <!-- plugins' fields, saved with the rest (e.g. Library) -->
             {{ slot("series-edit") }}
-            <label class="wide">English title
+            <label class="wide">{{ t("English title") }}
               <input x-model="f.title_english" maxlength="300"></label>
-            <label>Romaji title
+            <label>{{ t("Romaji title") }}
               <input x-model="f.title_romaji" maxlength="300"></label>
-            <label>Native title
+            <label>{{ t("Native title") }}
               <input x-model="f.title_native" maxlength="300"></label>
-            <label class="wide">Other titles <small>one per line</small>
+            <label class="wide">{{ t("Other titles") }} <small>{{ t("one per line") }}</small>
               <textarea rows="3" x-model="f.synonyms"></textarea></label>
-            <label class="wide">Description
+            <label class="wide">{{ t("Description") }}
               <textarea rows="7" x-model="f.description" maxlength="20000"></textarea></label>
-            <label>Status
+            <label>{{ t("Status") }}
               <select x-model="f.publication_status">
                 <template x-for="[k, v] in Object.entries(pubLabels)" :key="k"><option :value="k" :selected="k === f.publication_status" x-text="v"></option></template>
               </select></label>
-            <label>Type
+            <label>{{ t("Type") }}
               <select x-model="f.type">
-                <option value="">Unknown</option><option value="manga">Manga</option><option value="manhwa">Manhwa</option>
-                <option value="manhua">Manhua</option><option value="one_shot">One-shot</option><option value="novel">Novel</option>
+                <option value="">{{ t("Unknown") }}</option><option value="manga">{{ t("Manga") }}</option><option value="manhwa">{{ t("Manhwa") }}</option>
+                <option value="manhua">{{ t("Manhua") }}</option><option value="one_shot">{{ t("One-shot") }}</option><option value="novel">{{ t("Novel") }}</option>
               </select></label>
-            <label>Year
+            <label>{{ t("Year") }}
               <input type="number" min="1900" max="2100" x-model="f.start_year"></label>
-            <label>Volumes
+            <label>{{ t("Volumes") }}
               <input type="number" min="0" x-model="f.volumes_total"></label>
-            <label>Chapters
+            <label>{{ t("Chapters") }}
               <input type="number" min="0" x-model="f.chapters_total"></label>
-            <label title="Complete: count the collection as complete whatever the numbers say, e.g. for omnibus editions">Collection
+            <label title="{{ t('Complete: count the collection as complete whatever the numbers say, e.g. for omnibus editions') }}">{{ t("Collection") }}
               <select x-model="f.collection_complete">
-                <option value="auto">Automatic</option><option value="complete">Complete</option>
+                <option value="auto">{{ t("Automatic") }}</option><option value="complete">{{ t("Complete") }}</option>
               </select></label>
-            <label title="Which edition your files are from (regular, kanzenban, omnibus...). Automatic: worked out from the pages per volume and the editions MangaUpdates lists">Edition
+            <label title="{{ t('Which edition your files are from (regular, kanzenban, omnibus...). Automatic: worked out from the pages per volume and the editions MangaUpdates lists') }}">{{ t("Edition") }}
               <select x-model="f.edition_volumes">
                 <template x-for="[v, label] in editions" :key="v"><option :value="v" x-text="label" :selected="v === f.edition_volumes"></option></template>
               </select></label>
-            <label class="wide">Authors <small>one per line: Name (Role)</small>
+            <label class="wide">{{ t("Authors") }} <small>{{ t("one per line: Name (Role)") }}</small>
               <textarea rows="3" x-model="f.authors"></textarea></label>
-            <label class="wide">Genres <small>comma separated</small>
+            <label class="wide">{{ t("Genres") }} <small>{{ t("comma separated") }}</small>
               <input x-model="f.genres"></label>
-            <label class="wide">Tags <small>comma separated</small>
+            <label class="wide">{{ t("Tags") }} <small>{{ t("comma separated") }}</small>
               <textarea rows="2" x-model="f.tags"></textarea></label>
-            <label class="wide">Links <small>one per line: Site | https://…</small>
+            <label class="wide">{{ t("Links") }} <small>{{ t("one per line: Site | https://…") }}</small>
               <textarea rows="3" x-model="f.links"></textarea></label>
             <div class="btn-row wide">
-              <button class="btn primary" type="submit" :disabled="saving" x-text="saving ? 'Saving…' : 'Save'"></button>
-              <button class="btn" type="button" @click="close()">Cancel</button>
+              <button class="btn primary" type="submit" :disabled="saving" x-text="saving ? t('Saving…') : t('Save')"></button>
+              <button class="btn" type="button" @click="close()">{{ t("Cancel") }}</button>
             </div>
           </form>
 
@@ -65,41 +65,43 @@
           <div class="poster-edit" x-show="tab === 'poster'">
             <div class="poster-now">
               <img :src="preview || s.poster_large" alt="">
-              <small class="muted" x-text="preview ? 'Preview (not saved yet)' : ({ upload: 'Uploaded by you', page: 'A page from a book', provider: 'Cover from ' + $store.app.providerName(s.metadata_source?.provider), first_page: 'Automatic: first page' }[s.poster_source] || '')"></small>
+              <small class="muted" x-text="preview ? t('Preview (not saved yet)') : ({ upload: t('Uploaded by you'), page: t('A page from a book'),
+                provider: t('Cover from {source}', { source: $store.app.providerName(s.metadata_source?.provider) }),
+                first_page: t('Automatic: first page') }[s.poster_source] || '')"></small>
             </div>
             <div class="poster-options">
               <section>
-                <h3>Upload an image</h3>
-                <p class="muted">JPEG, PNG, WebP, GIF or AVIF, up to 10 MB. The image is checked and saved as a new JPEG.</p>
+                <h3>{{ t("Upload an image") }}</h3>
+                <p class="muted">{{ t("JPEG, PNG, WebP, GIF or AVIF, up to 10 MB. The image is checked and saved as a new JPEG.") }}</p>
                 <input type="file" x-ref="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/jxl,.jxl" @change="pickFile($event)">
                 <div class="btn-row" x-show="file">
-                  <button class="btn primary" :disabled="uploading" @click="upload()" x-text="uploading ? 'Uploading…' : 'Use this image'"></button>
-                  <button class="btn" @click="clearFile()">Cancel</button>
+                  <button class="btn primary" :disabled="uploading" @click="upload()" x-text="uploading ? t('Uploading…') : t('Use this image')"></button>
+                  <button class="btn" @click="clearFile()">{{ t("Cancel") }}</button>
                 </div>
               </section>
               <section x-show="books.length">
-                <h3>Use a page from a book</h3>
+                <h3>{{ t("Use a page from a book") }}</h3>
                 <div class="page-pick">
                   <select x-model="pageBook">
                     <template x-for="b in books" :key="b.id"><option :value="b.id" :selected="b.id === +pageBook" x-text="b.label"></option></template>
                   </select>
-                  <label>Page <input type="number" min="1" :max="pageBookObj?.page_count || 1" x-model="pageNo"></label>
+                  <label>{{ t("Page") }} <input type="number" min="1" :max="pageBookObj?.page_count || 1" x-model="pageNo"></label>
                 </div>
                 <img class="page-preview" :src="pagePreview" alt="" loading="lazy">
-                <button class="btn" @click="choose('page')">Use this page</button>
+                <button class="btn" @click="choose('page')">{{ t("Use this page") }}</button>
               </section>
               <section>
-                <h3>Other</h3>
+                <h3>{{ t("Other") }}</h3>
                 <div class="btn-row">
                   <button class="btn" x-show="s.metadata_source" @click="choose('provider')"
-                          x-text="'Cover from ' + $store.app.providerName(s.metadata_source?.provider)"></button>
-                  <button class="btn" @click="choose('first_page')">Automatic (first page)</button>
+                          x-text="t('Cover from {source}', { source: $store.app.providerName(s.metadata_source?.provider) })"></button>
+                  <button class="btn" @click="choose('first_page')">{{ t("Automatic (first page)") }}</button>
                 </div>
               </section>
             </div>
           </div>
         </div>
       </template>
-      <p class="muted" x-show="!s">Loading…</p>
+      <p class="muted" x-show="!s">{{ t("Loading…") }}</p>
     </div>
   </div>

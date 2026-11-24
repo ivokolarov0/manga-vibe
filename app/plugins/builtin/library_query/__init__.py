@@ -10,20 +10,23 @@ links store them), and see docs/PLUGINS.md, "The library-query job".
 """
 from sqlalchemy import String, and_, cast, exists, func, or_
 
-from app.plugins.sdk import Series, SeriesTag, Tag
+from app.plugins.sdk import N_, Series, SeriesTag, Tag
 from app.plugins import Plugin
 from app.plugins.query import flag, number, values
 
-READING = [("unread", "Unread"), ("reading", "Reading"), ("completed", "Completed"), ("on_hold", "On hold"),
-           ("dropped", "Dropped"), ("plan_to_read", "Plan to read")]
-PUBLICATION = [("RELEASING", "Releasing"), ("FINISHED", "Finished"), ("HIATUS", "Hiatus"),
-               ("CANCELLED", "Cancelled"), ("NOT_YET_RELEASED", "Not yet released"), ("UNKNOWN", "Unknown status")]
-METADATA = [("matched", "Has metadata"), ("attention", "Needs attention"), ("unmatched", "No metadata")]
-FORMAT = [("manga", "Manga"), ("manhwa", "Manhwa"), ("manhua", "Manhua"), ("one_shot", "One-shot"),
-          ("novel", "Novel")]
+# The labels stay English in the schema (assistants read it too); N_() marks them, and the page shows them
+# in its language (t() in app.js, issue #263)
+READING = [("unread", N_("Unread")), ("reading", N_("Reading")), ("completed", N_("Completed")),
+           ("on_hold", N_("On hold")), ("dropped", N_("Dropped")), ("plan_to_read", N_("Plan to read"))]
+PUBLICATION = [("RELEASING", N_("Releasing")), ("FINISHED", N_("Finished")), ("HIATUS", N_("Hiatus")),
+               ("CANCELLED", N_("Cancelled")), ("NOT_YET_RELEASED", N_("Not yet released")),
+               ("UNKNOWN", N_("Unknown status"))]
+METADATA = [("matched", N_("Has metadata")), ("attention", N_("Needs attention")), ("unmatched", N_("No metadata"))]
+FORMAT = [("manga", N_("Manga")), ("manhwa", N_("Manhwa")), ("manhua", N_("Manhua")), ("one_shot", N_("One-shot")),
+          ("novel", N_("Novel"))]
 # finished series only: are all volumes/chapters here? (best effort, see collection() in app/api/common.py)
-COLLECTION = [("complete", "Complete collection"), ("incomplete", "Incomplete collection"),
-              ("unknown", "Can't tell if complete")]
+COLLECTION = [("complete", N_("Complete collection")), ("incomplete", N_("Incomplete collection")),
+              ("unknown", N_("Can't tell if complete"))]
 
 FORMATS = {  # filter value -> SQL condition (AniList format + country of origin)
     "manga": lambda: and_(or_(Series.format.is_(None), Series.format == "MANGA"),
@@ -35,14 +38,14 @@ FORMATS = {  # filter value -> SQL condition (AniList format + country of origin
 }
 MATCH = {"matched": ["auto", "manual"], "attention": ["failed"], "unmatched": ["unmatched", "ignored"]}
 HAVE = ("complete", "incomplete", "unknown")
-LENGTH_UNITS = [("chapters", "Chapters", Series.chapters_total), ("volumes", "Volumes", Series.volumes_total)]
+LENGTH_UNITS = [("chapters", N_("Chapters"), Series.chapters_total), ("volumes", N_("Volumes"), Series.volumes_total)]
 
-OLDEST = ["Oldest first", "Newest first"]
+OLDEST = [N_("Oldest first"), N_("Newest first")]
 # key, label, the order it starts in, the order buttons' labels [ascending, descending]
-SORTS = [("title", "Title", "asc", ["A → Z", "Z → A"]), ("added", "Recently added", "desc", OLDEST),
-         ("updated", "Recently updated", "desc", OLDEST), ("read", "Recently read", "desc", OLDEST),
-         ("score", "Score", "desc", ["Lowest first", "Highest first"]), ("year", "Year", "desc", OLDEST),
-         ("unread", "Unread count", "desc", ["Fewest first", "Most first"])]
+SORTS = [("title", N_("Title"), "asc", ["A → Z", "Z → A"]), ("added", N_("Recently added"), "desc", OLDEST),
+         ("updated", N_("Recently updated"), "desc", OLDEST), ("read", N_("Recently read"), "desc", OLDEST),
+         ("score", N_("Score"), "desc", [N_("Lowest first"), N_("Highest first")]), ("year", N_("Year"), "desc", OLDEST),
+         ("unread", N_("Unread count"), "desc", [N_("Fewest first"), N_("Most first")])]
 
 
 def choice(key, label, options):
@@ -51,24 +54,24 @@ def choice(key, label, options):
 
 SCHEMA = {
     "filters": [
-        {"key": "q", "label": "Search", "kind": "text", "params": ["q"]},
-        choice("read", "Reading status", READING),
-        choice("pub", "Publication", PUBLICATION),
-        choice("match", "Metadata", METADATA),
-        choice("format", "Format", FORMAT),
-        choice("have", "Collection", COLLECTION),
-        {"key": "length", "label": "Length", "kind": "length",
+        {"key": "q", "label": N_("Search"), "kind": "text", "params": ["q"]},
+        choice("read", N_("Reading status"), READING),
+        choice("pub", N_("Publication"), PUBLICATION),
+        choice("match", N_("Metadata"), METADATA),
+        choice("format", N_("Format"), FORMAT),
+        choice("have", N_("Collection"), COLLECTION),
+        {"key": "length", "label": N_("Length"), "kind": "length",
          "units": [[u, label] for u, label, _ in LENGTH_UNITS],
          "params": [p for u, _, _ in LENGTH_UNITS for p in (f"{u}_min", f"{u}_max")] + ["length_unknown"]},
-        {"key": "genres", "label": "Genres & tags", "kind": "tags", "params": ["genre", "exclude"]},
+        {"key": "genres", "label": N_("Genres & tags"), "kind": "tags", "params": ["genre", "exclude"]},
         # the series page links each author name here (author=A&author=B: by both); the filter sheet
         # lists the names from `source`
-        {"key": "author", "label": "Author", "kind": "names", "params": ["author"], "source": "/api/authors"},
-        {"key": "fav", "label": "Favorites", "kind": "toggle", "params": ["fav"]},
-        {"key": "letter", "label": "Starts with", "kind": "letter", "params": ["letter"]},
+        {"key": "author", "label": N_("Author"), "kind": "names", "params": ["author"], "source": "/api/authors"},
+        {"key": "fav", "label": N_("Favorites"), "kind": "toggle", "params": ["fav"]},
+        {"key": "letter", "label": N_("Starts with"), "kind": "letter", "params": ["letter"]},
         # only through links and assistants for now: the sheets don't show them
-        {"key": "year", "label": "Year", "kind": "range", "params": ["year_min", "year_max"], "hidden": True},
-        {"key": "score", "label": "Score", "kind": "range", "params": ["score_min"], "hidden": True},
+        {"key": "year", "label": N_("Year"), "kind": "range", "params": ["year_min", "year_max"], "hidden": True},
+        {"key": "score", "label": N_("Score"), "kind": "range", "params": ["score_min"], "hidden": True},
     ],
     "sorts": [{"key": k, "label": label, "order": order, "order_labels": labels} for k, label, order, labels in SORTS],
     "default_sort": "title",
