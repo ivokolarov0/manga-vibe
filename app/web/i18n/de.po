@@ -165,6 +165,10 @@ msgstr "Treffer automatisch annehmen ab"
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
 msgstr "Zurück, Vollbild und die Optionen liegen auf dieser Seite, in Daumennähe"
 
+#: app/plugins/web.py
+msgid "Backup"
+msgstr "Sicherung"
+
 #: app/contracts/__init__.py
 msgid "Book labels"
 msgstr "Buchbezeichnungen"
@@ -1329,7 +1333,7 @@ msgstr "Plugin-Quellen"
 msgid "Plugin sources refreshed"
 msgstr "Plugin-Quellen aktualisiert"
 
-#: app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/web.py app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "Plugins"
 

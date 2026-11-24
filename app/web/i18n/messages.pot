@@ -163,6 +163,10 @@ msgstr ""
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
 msgstr ""
 
+#: app/plugins/web.py
+msgid "Backup"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "Book labels"
 msgstr ""
@@ -1327,7 +1331,7 @@ msgstr ""
 msgid "Plugin sources refreshed"
 msgstr ""
 
-#: app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/web.py app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr ""
 

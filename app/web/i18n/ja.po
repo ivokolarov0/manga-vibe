@@ -164,6 +164,10 @@ msgstr "自動で採用する一致度"
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
 msgstr "戻る・全画面・オプションのボタンを、親指の届くこちら側に置きます"
 
+#: app/plugins/web.py
+msgid "Backup"
+msgstr "バックアップ"
+
 #: app/contracts/__init__.py
 msgid "Book labels"
 msgstr "本の名前"
@@ -1324,7 +1328,7 @@ msgstr "プラグインのソース"
 msgid "Plugin sources refreshed"
 msgstr "プラグインのソースを更新しました"
 
-#: app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/web.py app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "プラグイン"
 

@@ -294,6 +294,7 @@ flowchart LR
 | It starts but has a problem | **Settings → Updates → Go back to an earlier version** and pick one. The version you left isn't offered again until a newer one is out. |
 | The newer version changed the database | MangaVibe asks first: put back the copy of the database it made before that update (changes since then are lost), or keep the newer one. |
 | A version needs a new Docker image | The message tells you so. Your library, progress and settings are kept. Steps: [Windows](docs/install/windows.md#when-a-version-needs-a-new-image) · [Mac](docs/install/mac.md#when-a-version-needs-a-new-image) · [Linux](docs/install/linux.md#when-a-version-needs-a-new-image) · [Synology](docs/install/synology.md#when-a-version-needs-a-new-image) · [Docker Compose and others](docs/install/docker.md#when-a-version-needs-a-new-image) |
+| You want a backup, or to move to another server | **Settings → Backup → Export** downloads one file with the library's metadata and edits, everyone's progress, the accounts, the posters and all settings (not the manga files). **Import** on the other server puts it all back. It keeps a copy of the database it replaces in `/data/backups`. |
 
 ---
 

@@ -26,9 +26,9 @@ def test_the_built_in_ones(client):
     assert 'id="settings-link"' in page and 'data-slot="topbar"' in page  # the top bar, with Settings
     assert 'x-data="editSeries()"' in page and 'data-slot="series-edit"' in page
     assert 'x-data="fixMatch()"' in page
-    for section in ("library", "display", "reader", "app", "metadata", "plugins", "updates"):
+    for section in ("library", "display", "reader", "app", "metadata", "plugins", "updates", "backup"):
         assert f"section === '{section}'" in page, section
-    assert settings_menu(page) == ["library", "display", "app", "reader", "metadata", "plugins", "updates"]
+    assert settings_menu(page) == ["library", "display", "app", "reader", "metadata", "plugins", "updates", "backup"]
     for pid in ("nav", "edit-dialog", "fix-match-dialog", "settings-display", "settings-updates"):
         assert info(client, pid)["warnings"] == [], pid
 

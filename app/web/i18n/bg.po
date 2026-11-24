@@ -165,6 +165,10 @@ msgstr "Автоматично приемане на съвпадение от"
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
 msgstr "Назад, цял екран и бутонът с опции са от тази страна, под палеца"
 
+#: app/plugins/web.py
+msgid "Backup"
+msgstr "Резервно копие"
+
 #: app/contracts/__init__.py
 msgid "Book labels"
 msgstr "Имена на книгите"
@@ -1329,7 +1333,7 @@ msgstr "Източници на добавки"
 msgid "Plugin sources refreshed"
 msgstr "Източниците на добавки са обновени"
 
-#: app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/web.py app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "Добавки"
 

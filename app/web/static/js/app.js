@@ -2119,6 +2119,29 @@ function settingsView() {
                      { version: v.short, current: cur }))) return;
       installUpdate(v.sha, { rollback: true, label: v.short });
     },
+    // ---- Settings → Backup (app/backup.py): the export is a plain download link
+    backupTokens: "false", importing: false,
+    async importBackup(e) {
+      const file = e.target.files[0];
+      e.target.value = "";  // the same file can be picked again
+      if (!file || this.importing) return;
+      if (!confirm(`Import ${file.name}? It replaces this server's library data, reading progress, accounts and ` +
+                   "settings with the file's. The current database is copied to /data/backups first.")) return;
+      this.importing = true;
+      try {
+        // the file itself as the body (not a form), so the server writes it straight to the data volume
+        const res = await fetch("/api/backup/import", { method: "POST", body: file,
+                                                         headers: { "Content-Type": "application/zip" } });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
+        const r = await res.json();
+        toast(`Imported ${r.series} series and ${r.books} books. Reloading…`, 4000);
+        // everything changed (and with accounts, the login may have too): start again from the top
+        setTimeout(() => { location.hash = "#/"; location.reload(); }, 1500);
+      } catch (err) {
+        toast(err.message, 10000, "error");
+        this.importing = false;
+      }
+    },
     async loadProviders() { this.providers = await api("/api/metadata/providers").catch(() => this.providers); },
     // the plugins doing one of p's exclusive jobs now, which switching p on replaces (Plugin API 15)
     replacedBy(p) {
