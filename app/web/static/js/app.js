@@ -1820,6 +1820,10 @@ const SETTING_ROWS = {
       options: [["paged", t("Pages")], ["vertical", t("Vertical")]] },
     { key: "reader_fit", label: t("Fit"),
       options: [["screen", t("Fit screen")], ["width", t("Fit width")], ["height", t("Fit height")], ["original", t("Original")]] },
+    // also in the reading options (the image reader's "Two pages" panel)
+    { key: "reader_spread", label: t("Two pages"),
+      hint: t("Pages side by side, like an open book (in Pages mode). The cover and double-page pictures show alone. On wide screens: one page at a time while the screen is upright or narrow"),
+      options: [["off", t("Off")], ["auto", t("On wide screens")], ["on", t("Always")]] },
     // no fullscreen in the Android app: it already fills the screen between the phone's bars
     { key: "auto_fullscreen", label: t("Fullscreen on first tap"), options: ON_OFF, show: () => !Alpine.store("app").inApp,
       hint: t("Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F") },

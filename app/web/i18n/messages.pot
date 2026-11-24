@@ -219,6 +219,10 @@ msgstr ""
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+msgid "Always"
+msgstr ""
+
 #: app/web/static/js/common.js
 msgid "Always visible"
 msgstr ""
@@ -1579,6 +1583,10 @@ msgstr ""
 msgid "Left back, right forward"
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Left to right"
+msgstr ""
+
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js app/web/templates/sheets/library.html
 msgid "Length"
 msgstr ""
@@ -2291,7 +2299,7 @@ msgstr ""
 msgid "Numbers, symbols and other scripts"
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
 msgid "Off"
 msgstr ""
 
@@ -2303,12 +2311,16 @@ msgstr ""
 msgid "Oldest first"
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "On hold"
+msgstr ""
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+msgid "On wide screens"
 msgstr ""
 
 #: app/web/templates/settings/backup.html
@@ -2509,6 +2521,10 @@ msgstr ""
 msgid "Page look"
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Page order"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Page width"
 msgstr ""
@@ -2523,6 +2539,10 @@ msgstr ""
 
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Pages"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Pages side by side, like an open book (in Pages mode). The cover and double-page pictures show alone. On wide screens: one page at a time while the screen is upright or narrow"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -2925,6 +2945,10 @@ msgstr ""
 msgid "Right"
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Right to left"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Romaji"
 msgstr ""
@@ -3211,6 +3235,10 @@ msgstr ""
 
 #: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Updates"
+msgstr ""
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Shift the pairs by one page"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -3543,6 +3571,10 @@ msgstr ""
 msgid "the running version"
 msgstr ""
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "The screen is upright or narrow now, so one page shows at a time."
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "The series and chapter at the top. When there's room: it stays while the page leaves space above it, so it covers none of the picture"
 msgstr ""
@@ -3789,6 +3821,10 @@ msgstr ""
 
 #: app/plugins/builtin/attention_lists/__init__.py
 msgid "Two or more files with the same chapter number. Both are kept."
+msgstr ""
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+msgid "Two pages"
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js

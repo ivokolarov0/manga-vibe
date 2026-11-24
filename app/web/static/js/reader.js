@@ -10,7 +10,8 @@
 
 const Reader = (() => {
 
-const R = { book: null, page: 0, mode: "paged", saveTimer: null, wake: null, firstTap: true,
+// page: the page being read (two side by side: the second, read up to there); from: the first on screen
+const R = { book: null, page: 0, from: 0, mode: "paged", saveTimer: null, wake: null, firstTap: true,
   cameFromApp: false, hideTimer: null, sliding: false, hovering: false, drawer: false,
   ov: null,    // plugin overlays (see "plugin overlays" below)
   img: null,   // the reader:images plugin showing the book (its registered reader)
@@ -281,8 +282,9 @@ function imageCtl(book) {
     page: R.page,          // where to start, from 0
     mode: R.mode,          // "paged" or "vertical"
     settings,              // the reader settings (Settings → Reader): reader_fit, preload, reader_tap_layout...
-    // the reader shows page i now: the numbers, progress (saved a moment later) and the overlays follow
-    shown(i) { if (mine()) pageShown(i); },
+    // the reader shows page i now: the numbers, progress (saved a moment later) and the overlays follow.
+    // Two pages side by side: i is the last of them (read up to there), from the first.
+    shown(i, from = i) { if (mine()) pageShown(i, from); },
     end() { if (mine()) showEndCard(); },  // forward from the last page: the end card (again: the next book)
     // back from the first page: a toast naming the previous book; back again while it shows opens that
     // book on its last page (the page number is clamped to the book's last)
@@ -364,7 +366,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   if (book.reader || PLUGIN_FORMATS.includes(book.format)) return openPluginReader(el, book, startPage);
   Object.assign(R, { book, mode: book.reader_mode === "vertical" ? "vertical" : "paged",
     page: startPage !== null ? +startPage : (book.completed ? 0 : book.page) });
-  R.page = Math.max(0, Math.min(R.page, book.page_count - 1));
+  R.page = R.from = Math.max(0, Math.min(R.page, book.page_count - 1));
   // drop ?page= so a reload resumes from saved progress (replaceState fires no hashchange)
   history.replaceState(history.state, "", `#/read/${book.id}`);
   document.title = `${book.label} · ${book.series_title}`;
@@ -526,9 +528,10 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   androidApp?.readerState(true, settings.reader_volume_keys !== false);  // keeps the screen on, takes the volume keys
 }
 
-/* the image reader shows page i: the numbers, progress and overlays follow */
-function pageShown(i) {
+/* the image reader shows page i (two side by side: pages from..i): the numbers, progress and overlays follow */
+function pageShown(i, from = i) {
   R.page = Math.max(0, Math.min(+i, R.book.page_count - 1));
+  R.from = Math.max(0, Math.min(+from, R.page));
   $("#reader .endcard")?.remove();
   updatePageUi();
   saveProgress();
@@ -570,19 +573,26 @@ function watchPointer() {
   });
 }
 
+/* the pages on screen, in book order (two side by side, or one) */
+function screenPages() {
+  return Array.from({ length: R.page - R.from + 1 }, (_, k) => R.from + k);
+}
+
 function updatePageUi() {
-  $("#r-num").textContent = R.page + 1;
+  // two pages: "4–5"
+  const num = R.from < R.page ? `${R.from + 1}–${R.page + 1}` : String(R.page + 1);
+  $("#r-num").textContent = num;
   // filled part of the slider track (the browser only colours it natively in some engines)
   $("#r-slider").style.setProperty("--fill", `${R.book.page_count > 1 ? (R.page / (R.book.page_count - 1)) * 100 : 100}%`);
   $("#r-slider").value = R.page + 1;
   $("#r-page").value = R.page;
-  $("#r-page-label").textContent = `${R.page + 1} / ${R.book.page_count}`;
+  $("#r-page-label").textContent = `${num} / ${R.book.page_count}`;
   // thin bar at the very bottom: how far into this book you are
   for (const seg of $("#r-progress .rp-track").children) {
     const i = +seg.dataset.p;
-    seg.className = i < R.page ? "read" : i === R.page ? "read cur" : "";
+    seg.className = i < R.from ? "read" : i <= R.page ? "read cur" : "";
   }
-  $("#rp-cur").textContent = R.page + 1;
+  $("#rp-cur").textContent = num;
 }
 
 function showEndCard() {
@@ -808,19 +818,20 @@ async function ovAction(a) {
   if (R.ov) ovForget();
 }
 
-/* pages whose overlay is wanted now: the page being read and the next one (vertical: also the previous) */
+/* pages whose overlay is wanted now: the pages being read and the next one (vertical: also the previous) */
 function ovWanted(i) {
-  return R.mode === "vertical" ? Math.abs(i - R.page) <= 1 : i === R.page || i === R.page + 1;
+  return R.mode === "vertical" ? Math.abs(i - R.page) <= 1 : i >= R.from && i <= R.page + 1;
 }
 
 function ovShow() {
   if (!R.ov) return;
   ovStatus();
   if (!R.ov.on.length) return;
-  for (let i = R.page - 1; i <= R.page + 1; i++) {
+  for (let i = R.from - 1; i <= R.page + 1; i++) {
     if (i >= 0 && i < R.book.page_count && ovWanted(i)) ovLoad(i);
   }
-  ovDraw(R.page);  // the layer may still show the previous page (one picture that changes its page)
+  // the layer may still show the previous page (one picture that changes its page)
+  for (const i of screenPages()) ovDraw(i);
 }
 
 async function ovLoad(i) {
@@ -837,7 +848,7 @@ async function ovLoad(i) {
   const done = layers.every((l) => !l.pending);
   ov.pages.set(i, { layers, done });
   ovDraw(i);
-  if (i === R.page) ovStatus();
+  if (i >= R.from && i <= R.page) ovStatus();
   if (!done) {
     clearTimeout(ov.timers.get(i));
     ov.timers.set(i, setTimeout(() => {
@@ -946,24 +957,34 @@ function ovFollow(el, layer) {
   follow();
 }
 
-/* the small line at the top: what the overlay of the current page is doing */
+/* the overlays of the pages on screen, in order (undefined: not loaded yet) */
+function screenEntries() {
+  return R.ov?.on.length ? screenPages().map((i) => R.ov.pages.get(i)) : [];
+}
+
+/* the text of the pages on screen, or "" until all of them are there */
+function screenText(entries) {
+  return entries.length && entries.every((e) => e?.done) ? entries.map(pageText).filter(Boolean).join("\n\n") : "";
+}
+
+/* the small line at the top: what the overlay of the current page (or pages) is doing */
 function ovStatus() {
   const el = $("#r-ov-status");
   if (!el) return;
-  const entry = R.ov?.on.length ? R.ov.pages.get(R.page) : null;
-  const msg = entry ? entry.layers.map((l) => l.message || (l.pending ? t("Working…") : "")).filter(Boolean)[0] : "";
+  const entries = screenEntries(), loaded = entries.filter(Boolean);
+  const msg = loaded.flatMap((e) => e.layers.map((l) => l.message || (l.pending ? t("Working…") : ""))).filter(Boolean)[0];
   el.hidden = !msg;
   el.textContent = msg || "";
-  el.classList.toggle("busy", !!entry && !entry.done);
+  el.classList.toggle("busy", loaded.some((e) => !e.done));
   // the plugins' quiet line about the page: in the top bar, so it only shows with the controls
   const note = $("#r-ov-note");
   if (note) {
-    const text = entry ? entry.layers.map((l) => l.note).filter(Boolean).join(" · ") : "";
+    const text = [...new Set(loaded.flatMap((e) => e.layers.map((l) => l.note)).filter(Boolean))].join(" · ");
     note.hidden = !text;
     note.textContent = text;
   }
   // screen readers announce the page's text once it's there (not while read aloud speaks it already)
-  const live = $("#r-live"), said = entry?.done && !S.on ? pageText(entry) : "";
+  const live = $("#r-live"), said = !S.on ? screenText(entries) : "";
   if (live && live.textContent !== said) live.textContent = said;
   sayUpdate();
 }
@@ -1084,14 +1105,14 @@ function sayUpdate() {
     return;
   }
   if (S.blocked) return;
-  const key = `${R.book.id}:${R.page}`;
+  const key = `${R.book.id}:${screenPages().join("-")}`;  // two pages side by side: both, in order
   if (S.key === key) return;
   sayStop();                 // another page: the old one stops at once
-  const entry = R.ov.pages.get(R.page);
-  if (!entry?.done) return;  // still being worked on: called again when it's there
+  const entries = screenEntries();
+  if (!entries.every((e) => e?.done)) return;  // still being worked on: called again when it's there
   S.key = key;
-  const text = pageText(entry);
-  const problem = entry.layers.map((l) => l.message).filter(Boolean).join(". ");
+  const text = screenText(entries);
+  const problem = [...new Set(entries.flatMap((e) => e.layers.map((l) => l.message)).filter(Boolean))].join(". ");
   if (text) speak(text, () => sayDone(key));
   else if (problem) speak(problem, () => {});  // e.g. "set the server": said, and the page stays
   else sayDone(key);         // nothing to read on this page

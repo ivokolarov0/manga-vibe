@@ -39,6 +39,25 @@
         -webkit-user-drag: none;
       }
 
+      /* two pages side by side (#276): the box zooms, pans and slides with both; positioned, so the
+         overlay layers next to its pictures sit over them. Manga: the first page on the right. */
+      & .spread {
+        position: relative;
+        display: flex;
+        flex: none;
+        align-items: center;
+        transform-origin: center center;
+        will-change: transform;
+
+        &.rtl {
+          flex-direction: row-reverse;
+        }
+
+        & img {
+          will-change: auto;
+        }
+      }
+
       /* the page can be moved: show a hand; while holding the button, a closed hand */
       &.can-pan {
         cursor: grab;
@@ -78,6 +97,15 @@
     & .fit-height .stage img {
       width: auto;
       height: 100dvh;
+    }
+
+    /* a pair shares the width */
+    & .fit-screen .stage .spread.pair img {
+      max-width: 50vw;
+    }
+
+    & .fit-width .stage .spread.pair img {
+      width: 50vw;
     }
 
     & .vertical {

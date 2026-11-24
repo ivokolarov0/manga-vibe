@@ -38,6 +38,9 @@ def get_book(book_id: int, db=Depends(get_db)):
     p = db.query(Progress).filter_by(book_id=b.id, user_id=users.current_id()).one_or_none()
     return {**book_dict(b, p), "series_title": display_title(s, title_lang(db)),
             "reader_mode": reading_direction(db, s)[0],  # the series' own, or worked out (app/direction.py)
+            # two pages side by side (#276): printed right to left (Japanese manga, and when it isn't known)
+            # or left to right (Korean and Chinese books). The reader can swap it per series.
+            "right_to_left": (s.country_of_origin or "JP").upper() == "JP",
             "next": {"id": nxt.id, "label": book_dict(nxt)["label"]} if nxt else None,
             "prev": {"id": prev.id, "label": book_dict(prev)["label"]} if prev else None,
             # reader toggles for plugins that draw over pages, and their buttons for this book
