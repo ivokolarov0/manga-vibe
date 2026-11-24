@@ -7,21 +7,117 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: app/web/templates/dialogs/folder-picker.html
+msgid "(already a library)"
+msgstr "(вече е библиотека)"
+
+#: app/web/static/js/app.js
+msgid "(built into the image)"
+msgstr "(вградена в образа)"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "(moved here; its folder's is {library})"
+msgstr "(преместена тук; на папката ѝ е {library})"
+
 #: app/web/templates/shell/toasts.html
 msgid "A new MangaVibe version needs a new Docker image"
 msgstr "Новата версия на MangaVibe изисква нов Docker образ"
+
+#: app/web/static/js/app.js
+msgid "A new version is available"
+msgstr "Има нова версия"
 
 #: app/web/templates/shell/toasts.html
 msgid "A new version of MangaVibe is available"
 msgstr "Има нова версия на MangaVibe"
 
 #: app/web/static/js/app.js
+msgid "A scan is already running. Try again when it has finished."
+msgstr "Вече тече сканиране. Опитайте отново, когато приключи."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "A scan is running"
+msgstr "Тече сканиране"
+
+#: app/web/templates/settings/plugins.html
+msgid "A source is a list of plugins (a plugins.json file). Add one by its GitHub repo (owner/name) or the file's address."
+msgstr "Източникът е списък с добавки (файл plugins.json). Добавете го чрез хранилището му в GitHub (owner/name) или адреса на файла."
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "A text book (a light novel). Add a reader for text books in Settings → Plugins to read it (e.g. Light novel reader)."
+msgstr "Текстова книга (лека новела). Добавете четец за текстови книги в Настройки → Добавки, за да я четете (напр. Light novel reader)."
+
+#: app/web/static/js/app.js
 msgid "A white outline around the letters, so they stay readable over the art"
 msgstr "Бял контур около буквите, за да се четат върху рисунката"
+
+#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
+msgid "Account"
+msgstr "Акаунт"
+
+#: app/plugins/builtin/accounts/menu.html
+msgid "Account: {name}"
+msgstr "Акаунт: {name}"
+
+#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html
+msgid "Accounts"
+msgstr "Акаунти"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Accounts are on. Make the first account: an admin, who manages the app and the other accounts. It keeps everything read so far."
+msgstr "Акаунтите са включени. Създайте първия акаунт: администратор, който управлява приложението и другите акаунти. Той запазва всичко прочетено досега."
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "Add"
+msgstr "Добави"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Add a folder"
+msgstr "Добавяне на папка"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Add a library"
+msgstr "Добавяне на библиотека"
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "Add a library folder"
+msgstr "Добавяне на папка с библиотека"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "Add an account"
+msgstr "Добавяне на акаунт"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Add folder"
+msgstr "Добави папка"
+
+#: app/web/templates/settings/plugins.html
+msgid "add one"
+msgstr "добавете такъв"
+
+#: app/web/templates/settings/plugins.html
+msgid "Add source"
+msgstr "Добави източник"
+
+#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
+msgid "Admin"
+msgstr "Администратор"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html app/web/templates/settings/plugins.html
+msgid "All"
+msgstr "Всички"
+
+#: app/web/static/js/app.js
+msgid "Allow them and install it?"
+msgstr "Да се разрешат ли и да се инсталира?"
 
 #: app/web/static/js/common.js
 msgid "Always visible"
 msgstr "Винаги видима"
+
+#: app/web/static/js/app.js
+msgid "an earlier update"
+msgstr "предишно обновяване"
 
 #: app/web/templates/shell/toasts.html
 msgid "and {n} more"
@@ -33,13 +129,37 @@ msgstr[1] "и още {n}"
 msgid "Android app"
 msgstr "Приложение за Android"
 
+#: app/web/static/js/app.js
+msgid "AniList/MangaUpdates not reachable; retrying at {time}"
+msgstr "AniList/MangaUpdates не отговарят; нов опит в {time}"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "App version"
 msgstr "Версия на приложението"
 
+#: app/plugins/__init__.py
+msgid "Appearance"
+msgstr "Външен вид"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
+msgid "Ask for the passwords again"
+msgstr "Поискай паролите отново"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Asked for when the library is opened. Its series are hidden everywhere until then."
+msgstr "Иска се при отваряне на библиотеката. Дотогава поредиците ѝ са скрити навсякъде."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Asks GitHub ({repo}) for its newest release and shows a message when one is out"
+msgstr "Пита GitHub ({repo}) за най-новата версия и показва съобщение, когато излезе"
+
 #: app/web/static/js/app.js
 msgid "Auto"
 msgstr "Автоматично"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Auto-accept a match from"
+msgstr "Автоматично приемане на съвпадение от"
 
 #: app/web/static/js/app.js
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
@@ -49,6 +169,10 @@ msgstr "Назад, цял екран и бутонът с опции са от 
 msgid "Backup"
 msgstr "Резервно копие"
 
+#: app/contracts/__init__.py
+msgid "Book labels"
+msgstr "Имена на книгите"
+
 #: app/web/static/js/app.js
 msgid "Bottom"
 msgstr "Долу"
@@ -56,6 +180,30 @@ msgstr "Долу"
 #: app/web/static/js/app.js
 msgid "Browser's language"
 msgstr "Езикът на браузъра"
+
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Built in"
+msgstr "Вградени"
+
+#: app/web/static/js/app.js
+msgid "Built into the Docker image, no download"
+msgstr "Вградена в Docker образа, без изтегляне"
+
+#: app/web/static/js/app.js
+msgid "Built-in version (from the Docker image)"
+msgstr "Вградена версия (от Docker образа)"
+
+#: app/web/templates/settings/plugin.html
+msgid "Can't run: {why}"
+msgstr "Не може да работи: {why}"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/web/templates/dialogs/folder-picker.html
+msgid "Cancel"
+msgstr "Отказ"
+
+#: app/web/static/js/app.js
+msgid "Cancel to see the other choice."
+msgstr "Отказ, за да видите другия вариант."
 
 #: app/web/static/js/app.js
 msgid "Card size"
@@ -65,9 +213,41 @@ msgstr "Размер на картите"
 msgid "Card width"
 msgstr "Ширина на картите"
 
+#: app/web/templates/settings/plugins.html
+msgid "Category"
+msgstr "Категория"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Change or remove…"
+msgstr "Смяна или премахване…"
+
+#: app/plugins/builtin/accounts/menu.html
+msgid "Change password…"
+msgstr "Смяна на паролата…"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Change server"
 msgstr "Смяна на сървъра"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Change your password"
+msgstr "Смяна на паролата ви"
+
+#: app/web/templates/settings/plugin.html
+msgid "Check for updates"
+msgstr "Провери за обновления"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Check for updates every day"
+msgstr "Проверявай за обновления всеки ден"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Check now"
+msgstr "Провери сега"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Checking…"
+msgstr "Проверява се…"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear"
@@ -77,9 +257,17 @@ msgstr "Изчисти"
 msgid "Clear the search"
 msgstr "Изчисти търсенето"
 
+#: app/web/static/js/app.js
+msgid "Cleared: the series page shows the path inside Docker"
+msgstr "Изчистено: страницата на поредицата показва пътя в Docker"
+
 #: app/web/templates/shell/toasts.html
 msgid "Close"
 msgstr "Затвори"
+
+#: app/web/templates/settings/plugins.html
+msgid "Come with MangaVibe"
+msgstr "Идват с MangaVibe"
 
 #: app/web/static/js/app.js
 msgid "Contained"
@@ -88,6 +276,14 @@ msgstr "Ограничена"
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Continue"
 msgstr "Продължи"
+
+#: app/contracts/__init__.py
+msgid "Continue reading page"
+msgstr "Страница Продължи четенето"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
+msgid "Current password"
+msgstr "Текуща парола"
 
 #: app/web/static/js/app.js
 msgid "Dark"
@@ -101,13 +297,49 @@ msgstr "По-тъмните страници са по-щадящи за очи�
 msgid "Default reading mode"
 msgstr "Режим на четене по подразбиране"
 
+#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html
+msgid "Delete"
+msgstr "Изтрий"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Delete the account “{name}”?"
+msgstr "Да се изтрие ли акаунтът „{name}“?"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Delete the library “{name}”?"
+msgstr "Да се изтрие ли библиотеката „{name}“?"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Deleted. Its series are in {library} now."
+msgstr "Изтрита. Поредиците ѝ вече са в {library}."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Disabled"
+msgstr "Изключен"
+
 #: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-display.html
 msgid "Display"
 msgstr "Изглед"
 
+#: app/web/templates/settings/plugin.html
+msgid "Does: {jobs}"
+msgstr "Върши: {jobs}"
+
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html
+msgid "Don't match"
+msgstr "Без съвпадение"
+
 #: app/web/templates/shell/banners.html
 msgid "Don't show again"
 msgstr "Не показвай отново"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Don't skip"
+msgstr "Не пропускай"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "down"
+msgstr "недостъпен"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Download"
@@ -118,12 +350,80 @@ msgid "Download newest"
 msgstr "Изтегли най-новата"
 
 #: app/web/static/js/app.js
+msgid "Downloaded from GitHub"
+msgstr "Изтегля се от GitHub"
+
+#: app/contracts/__init__.py
+msgid "Draws the pages in the reader: paged or vertical, zoom, swipes, the fit"
+msgstr "Рисува страниците в четеца: по страници или вертикално, мащаб, плъзгане, побиране"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Duplicates"
+msgstr "Дубликати"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Each library shows its own series, picked with the tabs on the home screen. A folder's series show in its library (Settings → Library folders); one series can be moved to another with Edit, or several at once by holding a card. Files never move."
+msgstr "Всяка библиотека показва своите поредици, избрана с разделите на началния екран. Поредиците на дадена папка са в нейната библиотека (Настройки → Папки на библиотеката); една поредица се мести в друга чрез Редактиране, а няколко наведнъж – със задържане на карта. Файловете никога не се местят."
+
+#: app/web/templates/settings/plugin.html
+msgid "Earlier versions"
+msgstr "По-стари версии"
+
+#: app/contracts/__init__.py
+msgid "Edit dialog"
+msgstr "Прозорец за редактиране"
+
+#: app/web/static/js/app.js
 msgid "English"
 msgstr "Английски"
+
+#: app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
+msgid "Errors"
+msgstr "Грешки"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Every library is locked. Tap a tab above to unlock it."
+msgstr "Всички библиотеки са заключени. Докоснете раздел горе, за да отключите."
+
+#: app/web/templates/settings/plugins.html
+msgid "Every plugin loaded."
+msgstr "Всички добавки са заредени."
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "Everyone logs in. Each account has its own reading progress, favorites, Continue reading, saved searches and Settings → Reader. Admins also manage the app: settings, folders, metadata, plugins, deleting, and these accounts."
+msgstr "Всеки влиза с акаунт. Всеки акаунт има свой напредък, любими, Продължи четенето, запазени търсения и Настройки → Четец. Администраторите управляват и приложението: настройки, папки, метаданни, добавки, изтриване и тези акаунти."
+
+#: app/web/templates/settings/plugins.html
+msgid "Failed to load"
+msgstr "Не се заредиха"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Fallback"
+msgstr "Резервен"
 
 #: app/web/static/js/app.js
 msgid "Falls back to the next one if missing"
 msgstr "Ако липсва, се ползва следващото"
+
+#: app/web/static/js/app.js
+msgid "File hidden from reading (it stays on disk)"
+msgstr "Файлът е скрит от четене (остава на диска)"
+
+#: app/contracts/__init__.py
+msgid "File name parser"
+msgstr "Разчитане на имената на файловете"
+
+#: app/web/static/js/app.js
+msgid "File shown again"
+msgstr "Файлът се показва отново"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Files alone are not enough for it. See {url}"
+msgstr "Само файловете не стигат. Вижте {url}"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Find metadata automatically"
+msgstr "Автоматично търсене на метаданни"
 
 #: app/web/static/js/app.js
 msgid "Fit"
@@ -141,11 +441,43 @@ msgstr "По екрана"
 msgid "Fit width"
 msgstr "По ширина"
 
+#: app/contracts/__init__.py
+msgid "Fix match dialog"
+msgstr "Прозорец за поправка на съвпадението"
+
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/attention_lists/templates/attention/same.html
+msgid "Fix match…"
+msgstr "Поправи съвпадението…"
+
+#: app/web/static/js/app.js
+msgid "Folder added. Scanning…"
+msgstr "Папката е добавена. Сканира се…"
+
+#: app/web/static/js/app.js
+msgid "Folder removed"
+msgstr "Папката е премахната"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "For example Manga, Comics, Manhwa. Then point a folder at it, or move series to it. Just a set of filters (e.g. only Isekai)? Filter the home screen and use “Save search”."
+msgstr "Например Манга, Комикси, Манхва. После насочете папка към нея или преместете поредици в нея. Само набор от филтри (напр. само Isekai)? Филтрирайте началния екран и използвайте „Запази търсенето“."
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "For its series that don't set their own"
+msgstr "За поредиците ѝ, които нямат собствен"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "For new series after each scan"
+msgstr "За нови поредици след всяко сканиране"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Forgot it? Start MangaVibe once with {setting}. The app has no accounts, so this keeps the library from others using it; anyone who can open the files or the database still can."
+msgstr "Забравихте ли я? Стартирайте MangaVibe веднъж с {setting}. Приложението няма акаунти, така че това пази библиотеката от другите, които го ползват; всеки, който може да отвори файловете или базата данни, все пак може."
+
 #: app/web/static/js/app.js
 msgid "From card size"
 msgstr "Според размера на картите"
 
-#: app/web/templates/shell/toasts.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/shell/toasts.html
 msgid "Full release notes"
 msgstr "Всички промени"
 
@@ -161,6 +493,50 @@ msgstr "Цял екран при първо докосване"
 msgid "Fullscreen, the screen stays on, volume buttons turn pages"
 msgstr "Цял екран, екранът не изгасва, бутоните за звук обръщат страниците"
 
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Gaps in the chapter numbers. Often fine (volumes may cover them)."
+msgstr "Пропуски в номерата на главите. Често е наред (томовете може да ги покриват)."
+
+#: app/web/templates/settings/plugins.html
+msgid "Get plugins"
+msgstr "Още добавки"
+
+#: app/web/templates/settings/plugins.html
+msgid "GitHub token"
+msgstr "GitHub токен"
+
+#: app/web/templates/settings/plugins.html
+msgid "GitHub token for private plugins"
+msgstr "GitHub токен за частни добавки"
+
+#: app/web/static/js/app.js
+msgid "GitHub token removed"
+msgstr "GitHub токенът е премахнат"
+
+#: app/web/static/js/app.js
+msgid "GitHub token saved"
+msgstr "GitHub токенът е запазен"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Go back"
+msgstr "Върни се"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Go back to an earlier version"
+msgstr "Връщане към по-стара версия"
+
+#: app/web/static/js/app.js
+msgid "Go back to {plugin} {version}? It's the copy kept when you updated it."
+msgstr "Да се върне ли {plugin} {version}? Това е копието, запазено при обновяването."
+
+#: app/web/templates/settings/plugin.html
+msgid "Go back to {version}"
+msgstr "Върни {version}"
+
+#: app/web/static/js/app.js
+msgid "Go back to {version}? MangaVibe restarts with it. {current} won't be offered again until a newer version is out."
+msgstr "Връщане към {version}? MangaVibe ще се рестартира с нея. {current} няма да се предлага отново, докато не излезе по-нова версия."
+
 #: app/web/templates/shell/toasts.html
 msgid "Going back failed"
 msgstr "Връщането не успя"
@@ -168,6 +544,10 @@ msgstr "Връщането не успя"
 #: app/web/templates/shell/toasts.html
 msgid "Going back to an earlier version…"
 msgstr "Връщане към по-стара версия…"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "gone"
+msgstr "няма я"
 
 #: app/web/static/js/app.js
 msgid "Grid"
@@ -178,20 +558,88 @@ msgid "Grid columns"
 msgstr "Колони"
 
 #: app/web/static/js/app.js
+msgid "Hidden from this list. “Show ignored” brings it back."
+msgstr "Скрито от този списък. „Покажи игнорираните“ го връща."
+
+#: app/web/static/js/app.js
 msgid "Hide controls after"
 msgstr "Скрий контролите след"
+
+#: app/web/templates/settings/attention.html
+msgid "Hide ignored rows"
+msgstr "Скрий игнорираните"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Hide this one"
+msgstr "Скрий този"
 
 #: app/web/static/js/common.js
 msgid "Hide with the controls"
 msgstr "Скривай с контролите"
 
+#: app/contracts/__init__.py
+msgid "How a series looks in the library grid, its list view and Continue reading"
+msgstr "Как изглежда поредица в решетката на библиотеката, в списъка и в Продължи четенето"
+
+#: app/web/static/js/app.js
+msgid "Idle. New series are matched automatically after each scan."
+msgstr "Няма работа. Новите поредици се търсят автоматично след всяко сканиране."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
+msgid "If a new version has a problem. The version you leave isn't offered again until a newer one is out."
+msgstr "Ако новата версия има проблем. Версията, която напуснете, няма да се предлага отново, докато не излезе по-нова."
+
+#: app/plugins/builtin/attention_lists/templates/attention/files.html app/plugins/builtin/attention_lists/templates/attention/gaps.html app/web/templates/settings/attention-plain.html
+msgid "Ignore"
+msgstr "Игнорирай"
+
+#: app/plugins/builtin/attention_lists/templates/attention/files.html
+msgid "Ignore all {n}"
+msgstr "Игнорирай всички {n}"
+
+#: app/contracts/__init__.py
+msgid "Image reader"
+msgstr "Четец на изображения"
+
 #: app/web/static/js/app.js
 msgid "In the reader: volume down goes to the next page, volume up goes back"
 msgstr "В четеца: намаляване на звука отива на следващата страница, усилване се връща назад"
 
+#: app/web/templates/settings/plugins.html
+msgid "In use"
+msgstr "Използва се"
+
+#: app/web/templates/settings/plugins.html
+msgid "In use: {name}"
+msgstr "Използва се: {name}"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Include adult titles"
+msgstr "Включи заглавия за възрастни"
+
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Install"
+msgstr "Инсталирай"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Install the app"
 msgstr "Инсталиране на приложението"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin} from {url}?"
+msgstr "Да се инсталира ли {plugin} от {url}?"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin} {version} from {url}?"
+msgstr "Да се инсталира ли {plugin} {version} от {url}?"
+
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Installed"
+msgstr "Инсталирани"
+
+#: app/web/templates/settings/plugins.html
+msgid "Installed v{version}"
+msgstr "Инсталирана v{version}"
 
 #: app/web/static/js/app.js
 msgid "Inverted"
@@ -204,6 +652,18 @@ msgstr "Обърнати прави белите страници черни с 
 #: app/web/static/js/app.js
 msgid "Inverted, warm"
 msgstr "Обърнати, топли"
+
+#: app/web/static/js/app.js
+msgid "It's listed by {source}, not by MangaVibe."
+msgstr "Предлага я {source}, а не MangaVibe."
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Its reading progress, favorites and saved searches are deleted too. The series and files stay."
+msgstr "Напредъкът, любимите и запазените му търсения също се изтриват. Поредиците и файловете остават."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Its series show in {library} now"
+msgstr "Поредиците ѝ вече се показват в {library}"
 
 #: app/web/static/js/app.js
 msgid "Just for you"
@@ -226,12 +686,28 @@ msgid "Just for you. Missing words are shown in English"
 msgstr "Само за вас. Липсващите думи се показват на английски"
 
 #: app/web/static/js/app.js
+msgid "Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
+msgstr "Да се запази ли по-новата база данни? {version} може да не разбере добавеното от по-новите версии и части от нея може да не работят. Ново обновяване оправя това."
+
+#: app/web/static/js/app.js
 msgid "Language"
 msgstr "Език"
 
 #: app/web/static/js/app.js
 msgid "Large"
 msgstr "Големи"
+
+#: app/web/static/js/app.js
+msgid "Last checked {when}"
+msgstr "Последна проверка: {when}"
+
+#: app/web/static/js/app.js
+msgid "last checked {when}"
+msgstr "последна проверка: {when}"
+
+#: app/web/static/js/app.js
+msgid "Last scan finished {when}"
+msgstr "Последното сканиране приключи {when}"
 
 #: app/web/templates/shell/toasts.html
 msgid "Later"
@@ -257,17 +733,33 @@ msgstr "Ляво назад, дясно напред"
 msgid "Less"
 msgstr "По-малък"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+msgid "Libraries"
+msgstr "Библиотеки"
+
+#: app/plugins/__init__.py app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Library"
 msgstr "Библиотека"
 
-#: app/plugins/builtin/settings_pages/__init__.py
+#: app/contracts/__init__.py
+msgid "Library filters and sorting"
+msgstr "Филтри и подредба на библиотеката"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Library folders"
 msgstr "Папки на библиотеката"
+
+#: app/plugins/builtin/libraries/folder_row.html
+msgid "Library for the series in {folder}"
+msgstr "Библиотека за поредиците в {folder}"
 
 #: app/web/static/js/app.js
 msgid "Library listing"
 msgstr "Показване на библиотеката"
+
+#: app/contracts/__init__.py
+msgid "Library page"
+msgstr "Страница на библиотеката"
 
 #: app/web/static/js/app.js
 msgid "Library view"
@@ -277,21 +769,109 @@ msgstr "Изглед на библиотеката"
 msgid "Light"
 msgstr "Светла"
 
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Light novels (text EPUBs) are listed here until a reader for text books is added in Plugins."
+msgstr "Леките новели (текстови EPUB) са тук, докато не се добави четец за текстови книги в Добавки."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Like its folder"
+msgstr "Като папката ѝ"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Like its folder: {library}"
+msgstr "Като папката ѝ: {library}"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Like Settings → Reader"
+msgstr "Като Настройки → Четец"
+
 #: app/web/static/js/app.js
 msgid "List"
 msgstr "Списък"
+
+#: app/contracts/__init__.py
+msgid "Lists of things in the library worth a look, in Settings → Needs attention"
+msgstr "Списъци с неща в библиотеката, които заслужават внимание, в Настройки → Нуждае се от внимание"
 
 #: app/web/static/js/app.js
 msgid "Load more while scrolling, or show numbered pages"
 msgstr "Зареждай още при превъртане или показвай номерирани страници"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/web/templates/settings/plugins.html
+msgid "Loading the plugin sources…"
+msgstr "Зареждане на източниците на добавки…"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
+msgid "Loading…"
+msgstr "Зареждане…"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+msgid "Lock now"
+msgstr "Заключи сега"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
+msgid "locked"
+msgstr "заключена"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Locked"
+msgstr "Заключена"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Locked. The password is needed again."
+msgstr "Заключено. Паролата отново е нужна."
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
+msgid "Locked: asks for the password"
+msgstr "Заключена: иска парола"
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Locked: they disappear until it is unlocked"
+msgstr "Заключена: изчезват, докато не се отключи"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Log in"
+msgstr "Вход"
+
+#: app/plugins/builtin/accounts/menu.html
+msgid "Log out"
+msgstr "Изход"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Look again"
+msgstr "Провери отново"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Lower = fewer series in Needs attention, more wrong matches"
+msgstr "По-ниско = по-малко поредици в Нуждае се от внимание, повече грешни съвпадения"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Main"
 msgstr "Основна навигация"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Make the admin account"
+msgstr "Създай администраторски акаунт"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Manage in Plugins"
+msgstr "Управление в Добавки"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "Manages the app and the accounts"
+msgstr "Управлява приложението и акаунтите"
 
 #: app/web/templates/shell/banners.html
 msgid "MangaVibe for Android"
 msgstr "MangaVibe за Android"
+
+#: app/web/static/js/app.js
+msgid "MangaVibe needs {jobs}. To switch {plugin} off, switch on another plugin that does it."
+msgstr "MangaVibe има нужда от {jobs}. За да изключите {plugin}, включете друга добавка, която върши това."
+
+#: app/web/templates/settings/plugins.html
+msgid "MangaVibe's own plugins"
+msgstr "Собствените добавки на MangaVibe"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "MangaVibe: Library"
@@ -301,19 +881,47 @@ msgstr "MangaVibe: Библиотека"
 msgid "Match device"
 msgstr "Като устройството"
 
+#: app/web/static/js/app.js
+msgid "Matched: {title}"
+msgstr "Съвпадение: {title}"
+
 #: app/web/templates/ui/macros.html
 msgid "Matching metadata: {done} of {n} series"
 msgid_plural "Matching metadata: {done} of {n} series"
 msgstr[0] "Търсене на метаданни: {done} от {n} поредица"
 msgstr[1] "Търсене на метаданни: {done} от {n} поредици"
 
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html
+msgid "Matching…"
+msgstr "Свързване…"
+
 #: app/web/static/js/app.js
 msgid "Medium"
 msgstr "Средни"
 
-#: app/plugins/builtin/settings_pages/__init__.py
+#: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Metadata"
 msgstr "Метаданни"
+
+#: app/contracts/__init__.py
+msgid "Metadata matcher"
+msgstr "Търсене на съвпадения за метаданни"
+
+#: app/plugins/builtin/attention_lists/templates/attention/gaps.html
+msgid "Missing chapter {chapters}"
+msgstr "Липсва глава {chapters}"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Missing chapters"
+msgstr "Липсващи глави"
+
+#: app/plugins/builtin/attention_lists/templates/attention/gaps.html
+msgid "Missing chapters {chapters}"
+msgstr "Липсват глави {chapters}"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Missing metadata"
+msgstr "Липсващи метаданни"
 
 #: app/web/static/js/app.js
 msgid "More"
@@ -327,35 +935,221 @@ msgstr "Повече = по-плавно, но с повече данни"
 msgid "More makes faint lines and small text stand out"
 msgstr "По-голям прави бледите линии и дребния текст по-ясни"
 
+#: app/web/templates/settings/plugins.html
+msgid "More plugins come from other sources: {link}."
+msgstr "Още добавки идват от други източници: {link}."
+
 #: app/web/static/js/app.js
 msgid "Most"
 msgstr "Най-голям"
+
+#: app/plugins/builtin/libraries/select_menu.html
+msgid "Move to library…"
+msgstr "Премести в библиотека…"
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Move {n} series to"
+msgid_plural "Move {n} series to"
+msgstr[0] "Преместване на {n} поредица в"
+msgstr[1] "Преместване на {n} поредици в"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Moved {n} series to their folders' libraries"
+msgid_plural "Moved {n} series to their folders' libraries"
+msgstr[0] "{n} поредица е преместена в библиотеката на папката си"
+msgstr[1] "{n} поредици са преместени в библиотеките на папките си"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Moved {n} series to {library}"
+msgid_plural "Moved {n} series to {library}"
+msgstr[0] "{n} поредица е преместена в {library}"
+msgstr[1] "{n} поредици са преместени в {library}"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html
+msgid "Name"
+msgstr "Име"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Name of the new library, e.g. Comics"
+msgstr "Име на новата библиотека, напр. Комикси"
+
+#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html
+msgid "Name of {name}"
+msgstr "Име на {name}"
+
+#: app/contracts/__init__.py
+msgid "Named library filters and sort, kept in the jobs:saved-searches setting"
+msgstr "Именувани филтри и подредба на библиотеката, пазени в настройката jobs:saved-searches"
 
 #: app/web/static/js/app.js
 msgid "Native"
 msgstr "Оригинално"
 
+#: app/contracts/__init__.py
+msgid "Navigation"
+msgstr "Навигация"
+
 #: app/web/static/js/app.js
 msgid "Navigation bar"
 msgstr "Лента за навигация"
+
+#: app/web/templates/settings/plugins.html
+msgid "needs attention"
+msgstr "нуждае се от внимание"
 
 #: app/web/templates/views/settings.html
 msgid "Needs attention"
 msgstr "Нуждае се от внимание"
 
+#: app/contracts/__init__.py
+msgid "Needs attention lists"
+msgstr "Списъци Нуждае се от внимание"
+
+#: app/web/templates/settings/plugin.html
+msgid "Needs: {jobs}"
+msgstr "Нуждае се от: {jobs}"
+
 #: app/web/static/js/common.js
 msgid "Never"
 msgstr "Никога"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+msgid "New library"
+msgstr "Нова библиотека"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
+msgid "New password"
+msgstr "Нова парола"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
+msgid "New password again"
+msgstr "Новата парола отново"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "New password for {name} (at least 4 characters)"
+msgstr "Нова парола за {name} (поне 4 знака)"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "New password…"
+msgstr "Нова парола…"
+
+#: app/web/templates/settings/plugins.html
+msgid "New plugin source"
+msgstr "Нов източник на добавки"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "New version: {version}"
+msgstr "Нова версия: {version}"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "No"
+msgstr "Не"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "No confident match was found online. Pick the right one, or open Fix match."
+msgstr "Не е намерено сигурно съвпадение онлайн. Изберете правилното или отворете Поправи съвпадението."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "No earlier version found."
+msgstr "Не е намерена по-стара версия."
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "No folders inside."
+msgstr "Няма папки вътре."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "No folders: only series moved here by hand"
+msgstr "Без папки: само ръчно преместени поредици"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "No metadata sources are enabled. Turn one on in Plugins."
+msgstr "Няма включени източници на метаданни. Включете един в Добавки."
+
+#: app/web/static/js/app.js
+msgid "No other release found"
+msgstr "Не е намерена друга версия"
+
+#: app/web/templates/settings/plugins.html
+msgid "No plugin from the sources matches."
+msgstr "Никоя добавка от източниците не отговаря."
+
+#: app/web/templates/settings/plugins.html
+msgid "No plugins installed."
+msgstr "Няма инсталирани добавки."
+
+#: app/web/templates/settings/plugins.html
+msgid "No plugins match."
+msgstr "Никоя добавка не отговаря."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "No series or files are deleted: its folders and the series moved to it show in another library."
+msgstr "Не се изтриват поредици или файлове: папките ѝ и преместените в нея поредици ще се показват в друга библиотека."
+
+#: app/web/templates/settings/plugins.html
+msgid "None"
+msgstr "Нито една"
+
+#: app/web/templates/settings/plugins.html
+msgid "None in use"
+msgstr "Не се използва нито една"
 
 #: app/web/static/js/app.js
 msgid "Normal"
 msgstr "Нормално"
 
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Not a duplicate"
+msgstr "Не е дубликат"
+
+#: app/plugins/builtin/attention_lists/templates/attention/same.html
+msgid "Not a problem"
+msgstr "Не е проблем"
+
+#: app/web/static/js/app.js
+msgid "Not checked yet"
+msgstr "Още не е проверявано"
+
+#: app/web/static/js/app.js
+msgid "not checked yet"
+msgstr "още не е проверявано"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "not found, check the volume mount"
+msgstr "не е намерена, проверете монтирането на тома"
+
+#: app/web/templates/settings/plugin.html
+msgid "Not running: {why}"
+msgstr "Не работи: {why}"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Not supported"
+msgstr "Не се поддържат"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Notes"
+msgstr "Бележки"
+
+#: app/web/templates/settings/attention.html
+msgid "Nothing here. All good."
+msgstr "Тук няма нищо. Всичко е наред."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Nothing in {library} yet. Move series here with Edit, or select several (hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders."
+msgstr "В {library} още няма нищо. Преместете поредици тук чрез Редактиране или изберете няколко (задръжте карта) и използвайте ⋯ → Премести в библиотека. Цяла папка: Настройки → Папки на библиотеката."
+
+#: app/web/static/js/app.js
+msgid "Nothing was changed"
+msgstr "Нищо не е променено"
+
+#: app/web/static/js/app.js
+msgid "Nothing was installed"
+msgstr "Нищо не е инсталирано"
+
 #: app/web/templates/ui/macros.html
 msgid "Now: {title}"
 msgstr "Сега: {title}"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/plugins.html
 msgid "Off"
 msgstr "Изкл."
 
@@ -363,7 +1157,7 @@ msgstr "Изкл."
 msgid "Off (swipe only)"
 msgstr "Изкл. (само плъзгане)"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr "Вкл."
 
@@ -374,6 +1168,30 @@ msgstr "С една ръка"
 #: app/web/static/js/app.js
 msgid "One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu"
 msgstr "С една ръка: почти цялата страница обръща напред, тясна ивица по ръба връща назад, средата отваря менюто"
+
+#: app/web/templates/settings/plugins.html
+msgid "Only add sources you trust: a plugin runs inside MangaVibe with full access to its data."
+msgstr "Добавяйте само източници, на които имате доверие: добавката работи в MangaVibe с пълен достъп до данните му."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Only folders mounted in the container are visible (e.g. /library2)."
+msgstr "Виждат се само папки, монтирани в контейнера (напр. /library2)."
+
+#: app/web/templates/settings/plugins.html
+msgid "Only needed when a plugin updates from a private repo. A fine-grained token with read-only Contents access is enough."
+msgstr "Нужен е само ако добавка се обновява от частно хранилище. Стига fine-grained токен с достъп само за четене до Contents."
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Only where they show: their files stay in their folders, and a rescan keeps them there."
+msgstr "Само къде се показват: файловете им остават в папките си и повторното сканиране ги оставя там."
+
+#: app/plugins/builtin/libraries/attention_note.html
+msgid "Only {library}, the library picked on the home screen"
+msgstr "Само {library}, библиотеката, избрана на началния екран"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
+msgid "Open"
+msgstr "Отвори"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html app/web/templates/shell/banners.html
 msgid "Open app"
@@ -391,9 +1209,21 @@ msgstr "Отворете изтегления MangaVibe.apk и разрешет�
 msgid "Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead"
 msgstr "Отваря приложението и го свързва с този сървър. Ако не е инсталирано, вместо това се изтегля"
 
+#: app/plugins/builtin/libraries/settings.html
+msgid "Optional: keeps this library private from others using the app"
+msgstr "По желание: пази тази библиотека от другите, които ползват приложението"
+
 #: app/web/static/js/app.js
 msgid "Original"
 msgstr "Оригинален размер"
+
+#: app/plugins/__init__.py
+msgid "Other"
+msgstr "Други"
+
+#: app/web/templates/settings/plugin.html
+msgid "Other versions…"
+msgstr "Други версии…"
 
 #: app/web/static/js/app.js
 msgid "Overlay box background"
@@ -402,6 +1232,10 @@ msgstr "Фон на изскачащите полета"
 #: app/web/static/js/app.js
 msgid "Overlay text outline"
 msgstr "Контур на текста в полетата"
+
+#: app/web/templates/settings/plugins.html
+msgid "owner/repo or https://…/plugins.json"
+msgstr "owner/repo или https://…/plugins.json"
 
 #: app/web/static/js/app.js
 msgid "Page brightness"
@@ -419,7 +1253,7 @@ msgstr "Контраст на страницата"
 msgid "Page width"
 msgstr "Ширина на страницата"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/libraries/settings.html app/web/static/js/app.js
 msgid "Pages"
 msgstr "Страници"
 
@@ -435,9 +1269,49 @@ msgstr "Страници: по една, следващата е вдясно (�
 msgid "Paginated"
 msgstr "По страници"
 
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
+msgid "Password"
+msgstr "Парола"
+
+#: app/plugins/builtin/accounts/login.html
+msgid "Password again"
+msgstr "Паролата отново"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Password changed. Your other devices need it now."
+msgstr "Паролата е сменена. Другите ви устройства вече се нуждаят от нея."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Password removed"
+msgstr "Паролата е премахната"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Password saved. This browser stays unlocked until “Lock now” or a new tab."
+msgstr "Паролата е запазена. Този браузър остава отключен до „Заключи сега“ или нов раздел."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Path outside Docker"
+msgstr "Път извън Docker"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Path outside Docker for {name}"
+msgstr "Път извън Docker за {name}"
+
 #: app/web/static/js/app.js
 msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
 msgstr "Телефони и таблети; след заключване на телефона следващото докосване връща на цял екран. С мишка ползвайте бутона за цял екран или F"
+
+#: app/web/templates/settings/plugins.html
+msgid "Pick one"
+msgstr "Изберете една"
+
+#: app/web/templates/settings/plugins.html
+msgid "Pick one or none"
+msgstr "Изберете една или нито една"
+
+#: app/contracts/__init__.py
+msgid "Picking the right metadata for a series, drawn with fixMatch()"
+msgstr "Избор на правилните метаданни за поредица, рисуван с fixMatch()"
 
 #: app/web/static/js/app.js
 msgid "Plugin"
@@ -447,21 +1321,133 @@ msgstr "Добавка"
 msgid "Plugin boxes over the page, e.g. translations. Lower shows the art underneath"
 msgstr "Полета от добавки върху страницата, например преводи. По-ниско показва рисунката отдолу"
 
-#: app/plugins/web.py app/web/static/js/app.js app/web/templates/shell/banners.html
+#: app/web/templates/settings/plugins.html
+msgid "Plugin categories"
+msgstr "Категории добавки"
+
+#: app/web/templates/settings/plugins.html
+msgid "Plugin sources"
+msgstr "Източници на добавки"
+
+#: app/web/static/js/app.js
+msgid "Plugin sources refreshed"
+msgstr "Източниците на добавки са обновени"
+
+#: app/plugins/web.py app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "Добавки"
+
+#: app/web/templates/settings/plugins.html
+msgid "Plugins (a .py file or a folder) go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css"
+msgstr "Добавките (файл .py или папка) отиват в docker/mangavibe/plugins; вашият CSS – в docker/mangavibe/custom.css"
+
+#: app/web/templates/settings/plugins.html
+msgid "Plugins and custom styles"
+msgstr "Добавки и собствени стилове"
+
+#: app/web/static/js/app.js
+msgid "Plugins from this source run inside MangaVibe with full access to its data. Only add sources you trust. Add it?"
+msgstr "Добавките от този източник работят в MangaVibe с пълен достъп до данните му. Добавяйте само източници, на които имате доверие. Да се добави ли?"
+
+#: app/web/static/js/app.js
+msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
+msgstr "Да се върне ли копието на базата данни от {when}? Напредъкът, настройките и другите промени оттогава ще се загубят."
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Re-read this series' folder after fixing the files on disk"
+msgstr "Прочети отново папката на поредицата, след като поправите файловете на диска"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
 msgstr "Четете в приложението MangaVibe вместо в браузъра: цял екран без ленти на браузъра, екранът не изгасва, докато четете, а бутоните за звук обръщат страниците. То показва същия MangaVibe, така че библиотеката, напредъкът и настройките ви са същите."
 
-#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+#: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
 msgstr "Четец"
 
 #: app/web/static/js/app.js
 msgid "Reading hand"
 msgstr "Ръка за четене"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Reading mode"
+msgstr "Режим на четене"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Reading mode for {name}"
+msgstr "Режим на четене за {name}"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Ready to install"
+msgstr "Готова за инсталиране"
+
+#: app/web/templates/settings/plugins.html
+msgid "Refresh"
+msgstr "Обнови"
+
+#: app/web/templates/settings/plugin.html
+msgid "Release to install"
+msgstr "Версия за инсталиране"
+
+#: app/web/templates/settings/plugins.html
+msgid "Reload plugins"
+msgstr "Презареди добавките"
+
+#: app/web/static/js/app.js
+msgid "Reload the page to see the change ({error})"
+msgstr "Презаредете страницата, за да видите промяната ({error})"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/templates/settings/plugins.html
+msgid "Remove"
+msgstr "Премахни"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Remove password"
+msgstr "Премахни паролата"
+
+#: app/web/static/js/app.js
+msgid "Remove the source {name}? Plugins you installed from it stay."
+msgstr "Да се премахне ли източникът {name}? Инсталираните от него добавки остават."
+
+#: app/web/static/js/app.js
+msgid "Remove “{name}” ({path}) from MangaVibe?"
+msgstr "Да се премахне ли „{name}“ ({path}) от MangaVibe?"
+
+#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
+msgid "Renamed to {name}"
+msgstr "Преименувано на {name}"
+
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Required"
+msgstr "Задължителна"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Rescan"
+msgstr "Сканирай отново"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Rescan all"
+msgstr "Сканирай всичко отново"
+
+#: app/web/static/js/app.js
+msgid "Rescanned: {files}"
+msgstr "Сканирано отново: {files}"
+
+#: app/web/static/js/app.js
+msgid "Rescanned: {files}, {errors} with errors"
+msgstr "Сканирано отново: {files}, {errors} с грешки"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Rescanning…"
+msgstr "Сканира се…"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/files.html app/plugins/builtin/attention_lists/templates/attention/gaps.html app/plugins/builtin/attention_lists/templates/attention/same.html app/web/templates/settings/attention-plain.html
+msgid "Restore"
+msgstr "Възстанови"
+
+#: app/web/static/js/app.js
+msgid "Restored"
+msgstr "Възстановено"
 
 #: app/web/static/js/app.js
 msgid "Right"
@@ -471,17 +1457,97 @@ msgstr "Дясна"
 msgid "Romaji"
 msgstr "Ромаджи"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Running version"
+msgstr "Работеща версия"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Runs by itself every 6 hours and on start."
+msgstr "Пуска се само на всеки 6 часа и при стартиране."
+
 #: app/web/templates/shell/banners.html
 msgid "Safe mode"
 msgstr "Безопасен режим"
 
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Same match"
+msgstr "Едно и също съвпадение"
+
 #: app/web/static/js/app.js
+msgid "Same {ids}"
+msgstr "Едно и също {ids}"
+
+#: app/plugins/builtin/accounts/login.html app/web/templates/settings/plugins.html
+msgid "Save"
+msgstr "Запази"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Save password"
+msgstr "Запази паролата"
+
+#: app/plugins/builtin/libraries/libraries.js app/web/static/js/app.js
 msgid "Saved"
 msgstr "Запазено"
+
+#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+msgid "Saved (type to replace)"
+msgstr "Запазен (пишете, за да го смените)"
+
+#: app/contracts/__init__.py
+msgid "Saved searches"
+msgstr "Запазени търсения"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Saved. It shows in its folder's library now."
+msgstr "Запазено. Вече се показва в библиотеката на папката си."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Saved. It shows in {library} now."
+msgstr "Запазено. Вече се показва в {library}."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Saved. It's in {library} now, which is locked."
+msgstr "Запазено. Вече е в {library}, която е заключена."
+
+#: app/web/templates/settings/plugins.html
+msgid "Saved. Updates from private repos use it."
+msgstr "Запазен. Обновленията от частни хранилища го ползват."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Scan"
+msgstr "Сканирай"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Scan for new files"
+msgstr "Търсене на нови файлове"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "Scan only this folder"
+msgstr "Сканирай само тази папка"
+
+#: app/web/static/js/app.js
+msgid "Scanning {done}/{total}: {current}"
+msgstr "Сканиране {done}/{total}: {current}"
+
+#: app/web/static/js/app.js
+msgid "Scanning {done}/{total}…"
+msgstr "Сканиране {done}/{total}…"
+
+#: app/web/static/js/app.js
+msgid "Scanning…"
+msgstr "Сканиране…"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Search"
 msgstr "Търсене"
+
+#: app/web/templates/settings/plugins.html
+msgid "Search plugins"
+msgstr "Търсене на добавки"
+
+#: app/web/templates/settings/plugins.html
+msgid "Search the plugin sources"
+msgstr "Търсене в източниците на добавки"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Search your library"
@@ -495,6 +1561,14 @@ msgstr "Вижте {url}"
 msgid "See-through"
 msgstr "Прозрачен"
 
+#: app/contracts/__init__.py
+msgid "Series cards"
+msgstr "Карти на поредиците"
+
+#: app/contracts/__init__.py
+msgid "Series page"
+msgstr "Страница на поредицата"
+
 #: app/web/static/js/app.js
 msgid "Series page full width as well"
 msgstr "И страницата на поредицата на цяла ширина"
@@ -506,6 +1580,14 @@ msgstr "Поредици на страница"
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Server"
 msgstr "Сървър"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Set a password…"
+msgstr "Задай парола…"
+
+#: app/web/templates/settings/plugins.html
+msgid "Set by GITHUB_TOKEN. A token saved here is used instead."
+msgstr "Зададен чрез GITHUB_TOKEN. Запазен тук токен се ползва вместо него."
 
 #: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
 msgid "Settings"
@@ -519,7 +1601,65 @@ msgstr "Настройки ({n} се нуждаят от внимание)"
 msgid "Settings, {n} need attention"
 msgstr "Настройки, {n} се нуждаят от внимание"
 
-#: app/web/templates/shell/toasts.html
+#: app/contracts/__init__.py
+msgid "Settings: Display"
+msgstr "Настройки: Изглед"
+
+#: app/contracts/__init__.py
+msgid "Settings: Library folders"
+msgstr "Настройки: Папки на библиотеката"
+
+#: app/contracts/__init__.py
+msgid "Settings: Metadata"
+msgstr "Настройки: Метаданни"
+
+#: app/contracts/__init__.py
+msgid "Settings: Reader"
+msgstr "Настройки: Четец"
+
+#: app/contracts/__init__.py
+msgid "Settings: Updates"
+msgstr "Настройки: Обновления"
+
+#: app/web/templates/settings/plugins.html
+msgid "Show"
+msgstr "Покажи"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "Show again"
+msgstr "Покажи отново"
+
+#: app/web/templates/settings/plugins.html
+msgid "Show all"
+msgstr "Покажи всички"
+
+#: app/plugins/builtin/libraries/attention_note.html
+msgid "show all libraries"
+msgstr "покажи всички библиотеки"
+
+#: app/web/templates/settings/plugin.html
+msgid "Show it again"
+msgstr "Покажи я отново"
+
+#: app/web/templates/settings/plugin.html
+msgid "Show the {category} plugins"
+msgstr "Покажи добавките от {category}"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Show versions"
+msgstr "Покажи версиите"
+
+#: app/plugins/builtin/attention_lists/templates/attention/files.html
+msgid "Show {n} file"
+msgid_plural "Show {n} files"
+msgstr[0] "Покажи {n} файл"
+msgstr[1] "Покажи {n} файла"
+
+#: app/web/templates/settings/attention.html
+msgid "Show {n} ignored"
+msgstr "Покажи игнорираните ({n})"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/shell/toasts.html
 msgid "Skip this version"
 msgstr "Пропусни тази версия"
 
@@ -531,9 +1671,77 @@ msgstr "Малки"
 msgid "Solid"
 msgstr "Плътен"
 
+#: app/web/templates/settings/plugins.html
+msgid "Source"
+msgstr "Източник"
+
+#: app/web/static/js/app.js
+msgid "Source added"
+msgstr "Източникът е добавен"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Sources"
+msgstr "Източници"
+
+#: app/web/templates/settings/plugins.html
+msgid "Sources & setup"
+msgstr "Източници и настройка"
+
+#: app/web/static/js/app.js
+msgid "Starting…"
+msgstr "Стартиране…"
+
+#: app/web/static/js/app.js
+msgid "Still on the server, no download"
+msgstr "Още е на сървъра, без изтегляне"
+
+#: app/web/static/js/app.js
+msgid "Switch it on?"
+msgstr "Да се включи ли?"
+
+#: app/web/templates/settings/plugin.html
+msgid "Switch the plugin on to change its settings."
+msgstr "Включете добавката, за да промените настройките ѝ."
+
+#: app/plugins/__init__.py
+msgid "System"
+msgstr "Система"
+
 #: app/web/static/js/app.js
 msgid "Tap zones"
 msgstr "Зони за докосване"
+
+#: app/contracts/__init__.py
+msgid "The Display page of Settings"
+msgstr "Страницата Изглед в Настройки"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "the first one: has the reading from before accounts"
+msgstr "първият: има прочетеното отпреди акаунтите"
+
+#: app/contracts/__init__.py
+msgid "The Library folders page of Settings"
+msgstr "Страницата Папки на библиотеката в Настройки"
+
+#: app/contracts/__init__.py
+msgid "The library: its filters' buttons, the cards, paging and multi-select, from MangaVibe.library"
+msgstr "Библиотеката: бутоните за филтри, картите, страниците и множествения избор, от MangaVibe.library"
+
+#: app/contracts/__init__.py
+msgid "The Metadata page of Settings"
+msgstr "Страницата Метаданни в Настройки"
+
+#: app/web/static/js/app.js
+msgid "The new version did not start. MangaVibe went back to the previous one; see the container log."
+msgstr "Новата версия не тръгна. MangaVibe се върна към предишната; вижте лога на контейнера."
+
+#: app/plugins/builtin/libraries/account_row.html
+msgid "The ones this account sees; the others are hidden from it everywhere"
+msgstr "Тези, които акаунтът вижда; останалите са скрити от него навсякъде"
+
+#: app/contracts/__init__.py
+msgid "The page a series opens on, drawn from MangaVibe.series"
+msgstr "Страницата, на която се отваря поредица, рисувана от MangaVibe.series"
 
 #: app/web/static/js/app.js
 msgid "The page of a series also uses the whole screen"
@@ -543,13 +1751,73 @@ msgstr "Страницата на поредица също заема цели�
 msgid "The page reloads by itself when the new version is running."
 msgstr "Страницата ще се презареди сама, когато новата версия заработи."
 
+#: app/contracts/__init__.py
+msgid "The Reader page of Settings"
+msgstr "Страницата Четец в Настройки"
+
+#: app/web/static/js/app.js
+msgid "the running version"
+msgstr "работещата версия"
+
 #: app/web/static/js/app.js
 msgid "The series and chapter at the top. When there's room: it stays while the page leaves space above it, so it covers none of the picture"
 msgstr "Поредицата и главата горе. Когато има място: остава, докато страницата оставя място над себе си, така че не закрива нищо от рисунката"
 
 #: app/web/static/js/app.js
+msgid "The series folder is gone, so the series was removed from the library"
+msgstr "Папката на поредицата я няма, затова поредицата е премахната от библиотеката"
+
+#: app/contracts/__init__.py
+msgid "The series in progress, from MangaVibe.continue"
+msgstr "Започнатите поредици, от MangaVibe.continue"
+
+#: app/contracts/__init__.py
+msgid "The series' Edit dialog (info and poster), drawn with editSeries()"
+msgstr "Прозорецът за редактиране на поредица (данни и корица), рисуван с editSeries()"
+
+#: app/web/templates/settings/plugins.html
+msgid "The sources list no plugins yet."
+msgstr "Източниците още нямат добавки."
+
+#: app/contracts/__init__.py
+msgid "The top bar and Library / Continue (a bar, or a sidebar); it must keep the Settings button"
+msgstr "Горната лента и Библиотека / Продължи (лента или странична лента); трябва да запази бутона Настройки"
+
+#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
+msgid "The two new passwords are different"
+msgstr "Двете нови пароли са различни"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "The two passwords are different"
+msgstr "Двете пароли са различни"
+
+#: app/web/templates/settings/plugins.html
+msgid "The update check failed"
+msgstr "Проверката за обновления не успя"
+
+#: app/contracts/__init__.py
+msgid "The Updates page of Settings"
+msgstr "Страницата Обновления в Настройки"
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Their folder's library"
+msgstr "Библиотеката на папката им"
+
+#: app/web/static/js/app.js
 msgid "Theme"
 msgstr "Тема"
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "These are the folders inside the MangaVibe container. To see another folder here, first mount it into the container as a volume, then restart it."
+msgstr "Това са папките в контейнера на MangaVibe. За да видите друга папка тук, първо я монтирайте в контейнера като том, после го рестартирайте."
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "These files could not be opened. The message says why."
+msgstr "Тези файлове не можаха да се отворят. Съобщението казва защо."
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."
+msgstr "Тези поредици са свързани с един и същ запис онлайн. Често една папка е разделена на две или едно съвпадение е грешно."
 
 #: app/web/static/js/app.js
 msgid "Thick"
@@ -558,6 +1826,38 @@ msgstr "Дебел"
 #: app/web/static/js/app.js
 msgid "Thin"
 msgstr "Тънък"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "This is the only library. Add another one first."
+msgstr "Това е единствената библиотека. Първо добавете друга."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "This library"
+msgstr "Тази библиотека"
+
+#: app/plugins/builtin/libraries/unlock_dialog.html
+msgid "This library is locked. Its series show again in this browser after the password, until “Lock now” or a new tab."
+msgstr "Тази библиотека е заключена. Поредиците ѝ се показват отново в този браузър след паролата, до „Заключи сега“ или нов раздел."
+
+#: app/web/templates/settings/plugin.html
+msgid "This plugin is not installed."
+msgstr "Тази добавка не е инсталирана."
+
+#: app/web/static/js/app.js
+msgid "This version"
+msgstr "Тази версия"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "This version did not start, so MangaVibe went back"
+msgstr "Тази версия не тръгна, затова MangaVibe се върна"
+
+#: app/web/static/js/app.js
+msgid "This version is skipped. You'll be told about the next one."
+msgstr "Тази версия е пропусната. Ще разберете за следващата."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "This version needs a new Docker image"
+msgstr "Тази версия изисква нов Docker образ"
 
 #: app/web/static/js/app.js
 msgid "Title language"
@@ -571,33 +1871,137 @@ msgstr "Горе"
 msgid "Top bar"
 msgstr "Горна лента"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Tried in this order. Fallbacks are used when the main source has no match or is down."
+msgstr "Пробват се в този ред. Резервните се ползват, когато основният няма съвпадение или е недостъпен."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Try again"
+msgstr "Опитай отново"
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Two or more files with the same chapter number. Both are kept."
+msgstr "Два или повече файла с един и същ номер на глава. Пазят се и двата."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Type the new password"
+msgstr "Въведете новата парола"
+
+#: app/plugins/builtin/libraries/move_dialog.html
+msgid "Undo a move: each follows its folder again"
+msgstr "Отмяна на преместване: всяка отново следва папката си"
+
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
+msgid "Unlock"
+msgstr "Отключи"
+
+#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
+msgid "unlocked"
+msgstr "отключена"
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "Up"
+msgstr "Нагоре"
+
+#: app/web/static/js/app.js
+msgid "Up to date. New versions come from {url}"
+msgstr "Актуална. Новите версии идват от {url}"
+
+#: app/web/templates/settings/plugins.html
+msgid "Update"
+msgstr "Обновление"
+
+#: app/web/templates/settings/plugins.html
+msgid "Update check failed"
+msgstr "Проверката не успя"
+
 #: app/web/templates/shell/toasts.html
 msgid "Update failed"
 msgstr "Обновяването не успя"
 
-#: app/web/templates/shell/toasts.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/shell/toasts.html
 msgid "Update now"
 msgstr "Обнови сега"
 
-#: app/plugins/builtin/settings_pages/__init__.py
+#: app/web/templates/settings/plugin.html
+msgid "Update to {version}"
+msgstr "Обнови до {version}"
+
+#: app/web/templates/settings/plugins.html
+msgid "Update {version}"
+msgstr "Обновление {version}"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "Updates"
 msgstr "Обновления"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Updates work only in the MangaVibe Docker image. Here, update with git."
+msgstr "Обновленията работят само в Docker образа на MangaVibe. Тук обновявайте с git."
 
 #: app/web/templates/shell/toasts.html
 msgid "Updating MangaVibe…"
 msgstr "MangaVibe се обновява…"
 
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html app/web/templates/settings/plugins.html
+msgid "Use"
+msgstr "Използвай"
+
+#: app/web/templates/dialogs/folder-picker.html
+msgid "Use this folder"
+msgstr "Използвай тази папка"
+
+#: app/web/templates/settings/plugins.html
+msgid "Use {plugin} for {job}"
+msgstr "Използвай {plugin} за {job}"
+
+#: app/web/templates/settings/plugin.html
+msgid "Uses:"
+msgstr "Използва:"
+
+#: app/web/static/js/app.js
+msgid "Version {version} is available"
+msgstr "Има версия {version}"
+
+#: app/web/static/js/app.js
+msgid "Version {version} is available (you have {current})"
+msgstr "Има версия {version} (вие имате {current})"
+
 #: app/web/static/js/app.js
 msgid "Vertical"
 msgstr "Вертикално"
+
+#: app/plugins/builtin/libraries/settings.html
+msgid "Vertical (webtoons)"
+msgstr "Вертикално (уебтуни)"
 
 #: app/web/static/js/app.js
 msgid "Volume buttons turn pages"
 msgstr "Бутоните за звук обръщат страниците"
 
+#: app/contracts/__init__.py
+msgid "Volume, chapter and revision from a book's file name"
+msgstr "Том, глава и редакция от името на файла на книгата"
+
 #: app/web/static/js/app.js
 msgid "Warm"
 msgstr "Топли"
+
+#: app/contracts/__init__.py
+msgid "What a book is called in the lists, the reader and Continue (Vol 3, Ch 12-14)"
+msgstr "Как се казва книга в списъците, четеца и Продължи (Том 3, Гл. 12-14)"
+
+#: app/contracts/__init__.py
+msgid "What the library can be filtered and sorted by, and how"
+msgstr "По какво и как може да се филтрира и подрежда библиотеката"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "What {path} is on your NAS or computer, e.g. {example1} or {example2}. The series page shows and copies it."
+msgstr "Какво е {path} на вашия NAS или компютър, напр. {example1} или {example2}. Страницата на поредицата го показва и копира."
+
+#: app/web/templates/settings/plugin.html
+msgid "What's new"
+msgstr "Какво ново"
 
 #: app/web/static/js/app.js
 msgid "When nothing is touched. Turning the page or a tap in the middle hides them at once"
@@ -611,13 +2015,171 @@ msgstr "Когато има място"
 msgid "Where Library and Continue sit (with the Sidebar plugin: on phones only)"
 msgstr "Къде са Библиотека и Продължи (с добавката Странична лента: само на телефони)"
 
+#: app/plugins/builtin/libraries/folder_row.html
+msgid "Where this folder's series show. Series moved to another library by hand stay there."
+msgstr "Къде се показват поредиците на тази папка. Ръчно преместените в друга библиотека остават там."
+
+#: app/plugins/builtin/libraries/edit_field.html
+msgid "Which library it shows in. The files stay in their folder."
+msgstr "В коя библиотека се показва. Файловете остават в папката си."
+
+#: app/contracts/__init__.py
+msgid "Which provider result is the series, from its folder name"
+msgstr "Кой резултат от източника е поредицата, по името на папката ѝ"
+
+#: app/web/templates/settings/plugins.html
+msgid "Without {job}"
+msgstr "Без {job}"
+
 #: app/web/templates/shell/toasts.html
 msgid "Working…"
 msgstr "Работи се…"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "Yes"
+msgstr "Да"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "you"
+msgstr "вие"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js
+msgid "You have the newest version"
+msgstr "Имате най-новата версия"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "You skipped this version"
+msgstr "Пропуснахте тази версия"
+
+#: app/web/static/js/app.js
+msgid "You skipped version {version}. A newer one will show here"
+msgstr "Пропуснахте версия {version}. По-новата ще се появи тук"
+
+#: app/plugins/builtin/attention_lists/templates/attention/matches.html
+msgid "Your copy · folder: {folder}"
+msgstr "Вашето копие · папка: {folder}"
+
+#: app/web/static/js/app.js
+msgid "Your files are not touched. Its {n} series and their reading progress are removed from the app."
+msgid_plural "Your files are not touched. Its {n} series and their reading progress are removed from the app."
+msgstr[0] "Файловете ви не се пипат. Нейната {n} поредица и напредъкът в нея се премахват от приложението."
+msgstr[1] "Файловете ви не се пипат. Нейните {n} поредици и напредъкът в тях се премахват от приложението."
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+msgid "Your library, progress and settings are kept. The app restarts by itself."
+msgstr "Библиотеката, напредъкът и настройките се запазват. Приложението се рестартира само."
+
 #: app/web/templates/shell/banners.html
 msgid "Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble."
 msgstr "Вашите добавки не са заредени, само вградените. Изключете тази, която създава проблеми."
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{account} doesn't see {library} now"
+msgstr "{account} вече не вижда {library}"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{account} sees {library} now"
+msgstr "{account} вече вижда {library}"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{library} is locked"
+msgstr "{library} е заключена"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{library} is locked. Tap its tab above to unlock it."
+msgstr "{library} е заключена. Докоснете раздела ѝ горе, за да я отключите."
+
+#: app/web/static/js/app.js
+msgid "{matched} matched, {failed} need attention"
+msgstr "{matched} намерени, {failed} се нуждаят от внимание"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "{name} added. Move series to it with Edit, or several at once: hold a card to select them. A whole folder: Settings → Library folders."
+msgstr "{name} е добавена. Преместете поредици в нея чрез Редактиране или няколко наведнъж: задръжте карта, за да ги изберете. Цяла папка: Настройки → Папки на библиотеката."
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "{name} can log in now."
+msgstr "{name} вече може да влиза."
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "{name} is an admin"
+msgstr "{name} е администратор"
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "{name} is an admin now"
+msgstr "{name} вече е администратор"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "{name} is deleted"
+msgstr "{name} е изтрит"
+
+#: app/web/templates/settings/plugins.html
+msgid "{name} is no longer built in and is switched off. To keep using it, install it from {url} and switch it on again."
+msgstr "{name} вече не е вградена и е изключена. За да я ползвате, инсталирайте я от {url} и я включете отново."
+
+#: app/plugins/builtin/accounts/settings.html
+msgid "{name} isn't an admin any more"
+msgstr "{name} вече не е администратор"
+
+#: app/web/templates/settings/plugins.html
+msgid "{name} on"
+msgstr "{name} включена"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "{name}'s password is changed; they're logged out everywhere."
+msgstr "Паролата на {name} е сменена; излязъл е навсякъде."
+
+#: app/plugins/builtin/attention_lists/templates/attention/same.html
+msgid "{n} book"
+msgid_plural "{n} books"
+msgstr[0] "{n} книга"
+msgstr[1] "{n} книги"
+
+#: app/web/static/js/app.js
+msgid "{n} error"
+msgid_plural "{n} errors"
+msgstr[0] "{n} грешка"
+msgstr[1] "{n} грешки"
+
+#: app/plugins/builtin/attention_lists/templates/attention/files.html app/web/static/js/app.js
+msgid "{n} file"
+msgid_plural "{n} files"
+msgstr[0] "{n} файл"
+msgstr[1] "{n} файла"
+
+#: app/web/static/js/app.js
+msgid "{n} file hidden from this list"
+msgid_plural "{n} files hidden from this list"
+msgstr[0] "{n} файл е скрит от този списък"
+msgstr[1] "{n} файла са скрити от този списък"
+
+#: app/web/static/js/app.js
+msgid "{n} new book"
+msgid_plural "{n} new books"
+msgstr[0] "{n} нова книга"
+msgstr[1] "{n} нови книги"
+
+#: app/web/templates/settings/plugins.html
+msgid "{n} not installed yet"
+msgstr "{n} още не са инсталирани"
+
+#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
+msgid "{n} page"
+msgid_plural "{n} pages"
+msgstr[0] "{n} страница"
+msgstr[1] "{n} страници"
+
+#: app/web/templates/settings/plugins.html
+msgid "{n} plugin"
+msgid_plural "{n} plugins"
+msgstr[0] "{n} добавка"
+msgstr[1] "{n} добавки"
+
+#: app/web/templates/settings/plugins.html
+msgid "{n} plugin failed to load"
+msgid_plural "{n} plugins failed to load"
+msgstr[0] "{n} добавка не се зареди"
+msgstr[1] "{n} добавки не се заредиха"
 
 #: app/web/static/js/app.js
 msgid "{n} px"
@@ -628,3 +2190,39 @@ msgid "{n} second"
 msgid_plural "{n} seconds"
 msgstr[0] "{n} секунда"
 msgstr[1] "{n} секунди"
+
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
+msgid "{n} series"
+msgid_plural "{n} series"
+msgstr[0] "{n} поредица"
+msgstr[1] "{n} поредици"
+
+#: app/web/templates/settings/plugins.html
+msgid "{n} update available"
+msgid_plural "{n} updates available"
+msgstr[0] "{n} обновление"
+msgstr[1] "{n} обновления"
+
+#: app/web/static/js/app.js
+msgid "{plugin} asks for these permissions:"
+msgstr "{plugin} иска тези разрешения:"
+
+#: app/web/static/js/app.js
+msgid "{plugin} is up to date"
+msgstr "{plugin} е актуална"
+
+#: app/web/static/js/app.js
+msgid "{plugin} replaces {other} ({job})."
+msgstr "{plugin} заменя {other} ({job})."
+
+#: app/web/static/js/app.js
+msgid "{plugin} {version} asks for new permissions:"
+msgstr "{plugin} {version} иска нови разрешения:"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+msgid "{value} (default)"
+msgstr "{value} (по подразбиране)"
+
+#: app/web/static/js/app.js
+msgid "{version} is older than your database: newer versions have changed it since."
+msgstr "{version} е по-стара от базата данни: по-новите версии вече са я променили."

@@ -5,19 +5,19 @@
                   <div class="att-card-head">
                     <span class="chip" x-text="sharedLabel(g)"></span>
                     <button class="btn small push" @click="ignore(g.key, !g.ignored)"
-                            x-text="g.ignored ? 'Restore' : 'Not a problem'"></button>
+                            x-text="g.ignored ? t('Restore') : t('Not a problem')"></button>
                   </div>
                   <div class="att-rows">
                     <template x-for="m in g.members" :key="m.series_id">
                       <div class="att-row">
                         <div class="what">
                           <a :href="'#/series/' + m.series_id"><b x-text="m.series"></b></a>
-                          <span class="muted" x-text="[m.library, `${m.books} ${m.books === 1 ? 'book' : 'books'}`].filter(Boolean).join(' · ')"></span>
+                          <span class="muted" x-text="[m.library, tn('{n} book', '{n} books', m.books)].filter(Boolean).join(' · ')"></span>
                           <span class="muted break folder" x-text="m.folder"></span>
                         </div>
                         <div class="btn-row">
-                          <a class="btn small" :href="'#/series/' + m.series_id">Open</a>
-                          <button class="btn small" @click="fix(m)">Fix match…</button>
+                          <a class="btn small" :href="'#/series/' + m.series_id">{{ t("Open") }}</a>
+                          <button class="btn small" @click="fix(m)">{{ t("Fix match…") }}</button>
                         </div>
                       </div>
                     </template>

@@ -1,4 +1,4 @@
 <!-- follows the library picked on the home screen -->
-<p class="muted" x-show="$store.libraries.picked && $store.libraries.list.length > 1">Only
-  <b x-text="$store.libraries.name($store.libraries.picked)"></b>, the library picked on the home screen
-  (<button class="link-btn" @click="$store.libraries.set(0)">show all libraries</button>).</p>
+<p class="muted" x-show="$store.libraries.picked && $store.libraries.list.length > 1">
+  <span x-html="th('Only {library}, the library picked on the home screen', { library: '<b>' + esc($store.libraries.name($store.libraries.picked)) + '</b>' })"></span>
+  (<button class="link-btn" @click="$store.libraries.set(0)" x-text="t('show all libraries')"></button>).</p>

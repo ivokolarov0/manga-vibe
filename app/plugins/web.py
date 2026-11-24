@@ -68,8 +68,24 @@ class PageLoader(BaseLoader):
 templates = Environment(loader=PageLoader(TEMPLATES_DIR), autoescape=select_autoescape(["html"]),
                         undefined=StrictUndefined, trim_blocks=True, lstrip_blocks=True,
                         keep_trailing_newline=True, auto_reload=True)
-# t(text) and tn(singular, plural, n) in every template: the text in the page's language (app/i18n.py, #263)
-templates.globals.update(t=i18n.t, tn=i18n.tn)
+def _markup(text: str, values: dict) -> Markup:
+    """A translated text for a template: escaped, with its {name} placeholders filled; a value that's markup
+    (e.g. '<code>…</code>'|safe) goes in as it is, anything else escaped."""
+    return Markup(i18n.fill(str(html_lib.escape(text, quote=True)),
+                            {k: Markup.escape(v) for k, v in values.items()}))
+
+
+def _t(msgid, **values):
+    return _markup(i18n.catalog(i18n.current()).gettext(msgid), values)
+
+
+def _tn(singular, plural, n, **values):
+    return _markup(i18n.catalog(i18n.current()).ngettext(singular, plural, n), {"n": n, **values})
+
+
+# t(text) and tn(singular, plural, n) in every template: the text in the page's language (app/i18n.py, #263).
+# t(text, name=markup|safe) puts markup (e.g. a <code>) into a {name} of the sentence
+templates.globals.update(t=_t, tn=_tn)
 
 # The views a plugin can replace (Plugin API 17): name -> the job, its template in the plugin's
 # templates/ folder, the slots it must keep (other plugins put things there) and what they're for.
@@ -158,7 +174,8 @@ def render_index(safe: bool = False, template: str = "page.html") -> str:
     return templates.get_template(template).render(
         slot=slot_function(plugins), safe=safe, view=view, plugin_scripts=Markup(scripts),
         settings_pages=settings_pages(plugins), attention_views=attention_views(lists),
-        attention_lists=[{k: spec[k] for k in ("key", "label", "help", "alert")} for _, spec in lists],
+        attention_lists=[{"key": spec["key"], "label": i18n.t(spec["label"]), "help": i18n.t(spec["help"]),
+                          "alert": spec["alert"]} for _, spec in lists],
         lang=i18n.current(), i18n={**i18n.catalog(i18n.current()).to_json(), "languages": i18n.languages()})
 
 

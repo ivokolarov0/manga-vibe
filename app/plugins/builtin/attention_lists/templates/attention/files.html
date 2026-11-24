@@ -1,24 +1,25 @@
-{#- Errors and Not supported: the files, grouped by series (attentionView's groups(kind)). -#}
+{#- Errors and Not supported: the files, grouped by series (attentionView's groups(kind)). An error is shown
+    in the page's language when it's one the app knows (t() of any other text is that text). -#}
             <div class="att-list">
               <template x-for="g in groups(kind)" :key="g.series_id">
                 <div class="att-card">
                   <div class="att-card-head">
                     <a :href="'#/series/' + g.series_id"><b x-text="g.series"></b></a>
-                    <span class="muted" x-text="`${g.files.length} ${g.files.length === 1 ? 'file' : 'files'}`"></span>
+                    <span class="muted" x-text="tn('{n} file', '{n} files', g.files.length)"></span>
                     <button class="btn small push" x-show="g.files.length > 1 && g.files.some((f) => !f.ignored)"
-                            @click="ignoreAll(g)" x-text="`Ignore all ${g.files.length}`"></button>
+                            @click="ignoreAll(g)" x-text="t('Ignore all {n}', { n: g.files.length })"></button>
                   </div>
-                  <div class="err" x-show="g.sameError" x-text="g.files[0].error"></div>
+                  <div class="err" x-show="g.sameError" x-text="t(g.files[0].error)"></div>
                   <details :open="g.files.length <= 4">
-                    <summary class="muted" x-show="g.files.length > 4" x-text="`Show ${g.files.length} files`"></summary>
+                    <summary class="muted" x-show="g.files.length > 4" x-text="tn('Show {n} file', 'Show {n} files', g.files.length)"></summary>
                     <div class="att-rows">
                       <template x-for="f in g.files" :key="f.key">
                         <div class="att-row" :class="{ ignored: f.ignored }">
                           <div class="what">
                             <span class="name" x-text="f.file"></span>
-                            <span class="err" x-show="!g.sameError" x-text="f.error"></span>
+                            <span class="err" x-show="!g.sameError" x-text="t(f.error)"></span>
                           </div>
-                          <button class="btn small" @click="ignore(f.key, !f.ignored)" x-text="f.ignored ? 'Restore' : 'Ignore'"></button>
+                          <button class="btn small" @click="ignore(f.key, !f.ignored)" x-text="f.ignored ? t('Restore') : t('Ignore')"></button>
                         </div>
                       </template>
                     </div>

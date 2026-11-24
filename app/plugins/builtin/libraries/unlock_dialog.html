@@ -3,14 +3,13 @@
      x-dialog="close()">
   <div class="small-dialog unlock-dialog"><form @submit.prevent="submit()">
     <div class="sheet-head"><b><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg> <span x-text="name"></span></b>
-      <button class="btn small" type="button" @click="close()">Cancel</button></div>
-    <p class="muted">This library is locked. Its series show again in this browser after the password,
-      until “Lock now” or a new tab.</p>
+      <button class="btn small" type="button" @click="close()" x-text="t('Cancel')"></button></div>
+    <p class="muted" x-text="t('This library is locked. Its series show again in this browser after the password, until “Lock now” or a new tab.')"></p>
     <input type="password" x-ref="pw" x-model="password" autocomplete="current-password" maxlength="200"
-           aria-label="Password" placeholder="Password">
+           :aria-label="t('Password')" :placeholder="t('Password')">
     <p class="err" x-show="error" x-text="error"></p>
     <div class="btn-row">
-      <button class="btn primary" type="submit" :class="{ busy: busy }" :disabled="busy || !password">Unlock</button>
+      <button class="btn primary" type="submit" :class="{ busy: busy }" :disabled="busy || !password" x-text="t('Unlock')"></button>
     </div>
   </form></div>
 </div>

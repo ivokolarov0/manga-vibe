@@ -49,6 +49,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from app import config
+from app.i18n import N_
 
 log = logging.getLogger("mangavibe.plugins")
 API_VERSION = 27
@@ -57,13 +58,13 @@ BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the ap
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
 
 # Where a plugin is listed in Settings -> Plugins (Plugin.category), in the order shown there
-CATEGORIES = {
-    "metadata": "Metadata",      # metadata providers (is_provider)
-    "reader": "Reader",          # draws on pages, buttons in the reader
-    "library": "Library",        # lists, series pages, fields and actions, libraries, searches
-    "system": "System",          # accounts, access, middleware, maintenance
-    "appearance": "Appearance",  # themes: CSS only
-    "other": "Other",
+CATEGORIES = {  # the labels are shown in the page's language (catLabel in app.js)
+    "metadata": N_("Metadata"),      # metadata providers (is_provider)
+    "reader": N_("Reader"),          # draws on pages, buttons in the reader
+    "library": N_("Library"),        # lists, series pages, fields and actions, libraries, searches
+    "system": N_("System"),          # accounts, access, middleware, maintenance
+    "appearance": N_("Appearance"),  # themes: CSS only
+    "other": N_("Other"),
 }
 
 

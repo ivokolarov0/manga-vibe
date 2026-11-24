@@ -5,14 +5,14 @@
           <div class="att-head">
             <h2 x-text="title"></h2>
             <button class="link-btn" x-show="ignoredCount || $store.app.showIgnored" @click="toggleIgnored()"
-                    x-text="$store.app.showIgnored ? 'Hide ignored rows' : `Show ${ignoredCount} ignored`"></button>
+                    x-text="$store.app.showIgnored ? t('Hide ignored rows') : t('Show {n} ignored', { n: ignoredCount })"></button>
           </div>
           <p class="muted" x-text="help"></p>
           <!-- what plugins say about these lists, e.g. "only Manga, the library picked on the home screen" -->
           {{ slot("attention-note") }}
           <div class="empty" x-show="a && !rows.length">
             <svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg>
-            <span>Nothing here. All good.</span>
+            <span>{{ t("Nothing here. All good.") }}</span>
           </div>
 
           <!-- the lists, each its plugin's template (or the plain one): rows is the open list's rows -->

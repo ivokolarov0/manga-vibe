@@ -372,14 +372,14 @@ async function refreshUpdate() {
 /* The version is older than the database (updater.NeedsDbChoice): put back the copy made before
    newer versions changed it, keep the newer database, or cancel. Returns "restore", "keep" or null. */
 function askDatabase(d, label) {
-  const older = `${label} is older than your database: newer versions have changed it since.`;
+  const older = t("{version} is older than your database: newer versions have changed it since.", { version: label });
   if (d.backup) {
-    const when = d.backup.date ? fmtDateTime(d.backup.date) : "an earlier update";
-    if (confirm(`${older}\n\nPut back the copy of the database made on ${when}? Reading progress, ` +
-                "settings and other changes made since then are lost.\n\nCancel to see the other choice.")) return "restore";
+    const when = d.backup.date ? fmtDateTime(d.backup.date) : t("an earlier update");
+    if (confirm(older + "\n\n" + t("Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost.", { when })
+                + "\n\n" + t("Cancel to see the other choice."))) return "restore";
   }
-  if (confirm(`${d.backup ? "Or keep" : `${older}\n\nKeep`} the newer database? ${label} may not understand ` +
-              "what newer versions added, and parts of it can break. Updating again fixes that.")) return "keep";
+  const keep = t("Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that.", { version: label });
+  if (confirm(d.backup ? keep : older + "\n\n" + keep)) return "keep";
   return null;
 }
 
@@ -388,13 +388,13 @@ function askDatabase(d, label) {
 async function installUpdate(sha, how = {}) {
   const app = Alpine.store("app");
   const ask = (d) => {
-    const db = askDatabase(d, how.label || "This version");
+    const db = askDatabase(d, how.label || t("This version"));
     if (db) return installUpdate(sha, { ...how, db });
     app.updating = null;
-    toast("Nothing was changed");
+    toast(t("Nothing was changed"));
     refreshUpdate();
   };
-  app.updating = { state: "installing", message: "Starting…", error: null };
+  app.updating = { state: "installing", message: t("Starting…"), error: null };
   app.updatingBack = !!how.rollback;
   try {
     await api(how.rollback ? "/api/update/rollback" : "/api/update/install",
@@ -420,7 +420,7 @@ async function installUpdate(sha, how = {}) {
     app.updating = { state: u.status.state, message: u.status.message, error: null };
   }
   app.updating = { state: "error", message: "",
-    error: "The new version did not start. MangaVibe went back to the previous one; see the container log." };
+    error: t("The new version did not start. MangaVibe went back to the previous one; see the container log.") };
   refreshUpdate();
 }
 
@@ -447,7 +447,7 @@ function updateToast() {
     },
     async skip() {
       this.$store.app.update = await api("/api/update/skip", { method: "POST", body: { sha: this.a.sha } });
-      toast("This version is skipped. You'll be told about the next one.", 5000);
+      toast(t("This version is skipped. You'll be told about the next one."), 5000);
     },
     install() { installUpdate(this.a.sha); },
     close() { this.$store.app.updating = null; },
@@ -1039,7 +1039,7 @@ window.MangaVibe = {
   toast,           // toast(text, ms = 3000, kind = "" | "error")
   // the page's language (Plugin API 27, #263): t(text, values) and tn(singular, plural, n, values) as in
   // common.js, and dates and numbers written its way. In markup, t() and tn() work as they are
-  t, tn, lang: LANG, fmtDate, fmtDateTime, fmtTime, fmtNum,
+  t, tn, th, lang: LANG, fmtDate, fmtDateTime, fmtTime, fmtNum,
   // what views and plugin markup can use to show things as the app does (Plugin API 17), e.g. a card of
   // your own: x-text="MangaVibe.ui.cardSub(s)"
   ui: {
@@ -1684,14 +1684,14 @@ function attentionView() {
     },
     async ignore(key, on = true) {
       await api("/api/attention/ignore", { method: "POST", body: { key, ignore: on, list: this.kind } });
-      toast(on ? "Hidden from this list. “Show ignored” brings it back." : "Restored");
+      toast(on ? t("Hidden from this list. “Show ignored” brings it back.") : t("Restored"));
       refreshAttentionCount();
     },
     async ignoreAll(g) {
       for (const f of g.files) {
         if (!f.ignored) await api("/api/attention/ignore", { method: "POST", body: { key: f.key, ignore: true, list: this.kind } });
       }
-      toast(`${g.files.length} files hidden from this list`);
+      toast(tn("{n} file hidden from this list", "{n} files hidden from this list", g.files.length));
       refreshAttentionCount();
     },
     toggleIgnored() {
@@ -1700,7 +1700,7 @@ function attentionView() {
     },
     async hideFile(f) {
       await api(`/api/books/${f.book_id}`, { method: "PATCH", body: { hidden: !f.hidden } });
-      toast(f.hidden ? "File shown again" : "File hidden from reading (it stays on disk)");
+      toast(f.hidden ? t("File shown again") : t("File hidden from reading (it stays on disk)"));
       this.afterChange();
     },
     matching: null,  // {series_id, provider_id} while a "Use" runs: a spinner on it, the row's buttons off
@@ -1709,14 +1709,14 @@ function attentionView() {
       this.matching = { series_id: x.series_id, provider_id: c.provider_id };
       try {
         await api(`/api/series/${x.series_id}/match`, { method: "POST", body: { provider: c.provider, provider_id: c.provider_id } });
-        toast("Matched: " + c.title);
+        toast(t("Matched: {title}", { title: c.title }));
         this.$store.app.libraryDirty++;
         await refreshAttentionCount();  // keep the spinner until the row is gone
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.matching = null; }
     },
     isMatching(x, c) { return this.matching?.series_id === x.series_id && (!c || this.matching.provider_id === c.provider_id); },
     fix(x) { this.$store.app.openFix(x.series_id, () => refreshAttentionCount()); },
-    sharedLabel(g) { return "Same " + g.shared.map((x) => `${ID_NAMES[x.field] || x.field} #${x.id}`).join(", "); },
+    sharedLabel(g) { return t("Same {ids}", { ids: g.shared.map((x) => `${ID_NAMES[x.field] || x.field} #${x.id}`).join(", ") }); },
     async dontMatch(x) {
       await api(`/api/series/${x.series_id}/ignore-match`, { method: "POST" });
       this.afterChange();
@@ -1727,8 +1727,9 @@ function attentionView() {
       this.rescanning = { ...this.rescanning, [seriesId]: true };
       try {
         const r = await api(`/api/series/${seriesId}/rescan`, { method: "POST" });
-        toast(r.removed ? "The series folder is gone, so the series was removed from the library"
-          : `Rescanned: ${r.books} files` + (r.errors ? `, ${r.errors} with errors` : ""));
+        toast(r.removed ? t("The series folder is gone, so the series was removed from the library")
+          : r.errors ? t("Rescanned: {files}, {errors} with errors", { files: tn("{n} file", "{n} files", r.books), errors: r.errors })
+            : t("Rescanned: {files}", { files: tn("{n} file", "{n} files", r.books) }));
         this.afterChange();
       } catch (e) { toast(e.message, 6000, "error"); } finally {
         const { [seriesId]: _, ...rest } = this.rescanning;
@@ -1756,7 +1757,6 @@ const SETTINGS_NAV = (window.MV_SETTINGS_PAGES || [{ key: "plugins", label: t("P
    Values are strings, like st's; save() turns them into numbers or booleans. The words in the page's
    language (t(), issue #263). */
 const ON_OFF = [["true", t("On")], ["false", t("Off")]];
-const pct = (n) => fmtNum(n / 100, { style: "percent" });
 const SETTING_ROWS = {
   display: [
     // the app's language: the browser's, or one picked (the page is drawn again in it)
@@ -1900,7 +1900,7 @@ function settingsView() {
       return Object.keys(this.pluginCats).filter((c) => this.avail.plugins.some((a) => a.category === c));
     },
     get availNew() { return this.avail.plugins.filter((a) => !a.installed).length; },
-    catLabel(c) { return this.pluginCats[c] || c; },
+    catLabel(c) { return t(this.pluginCats[c] || c); },  // the labels are marked N_() on the server
     catIcon(c) { return PLUGIN_CAT_ICONS[c] || "blocks"; },
     hasUpdate(p) { return !!(p.update.available && !p.update.skipped); },
     get pluginUpdates() { return this.plugins.filter((p) => this.hasUpdate(p)).length; },
@@ -1939,7 +1939,7 @@ function settingsView() {
         job.plugins.forEach((id) => grouped.add(id));
         if (!list.some((p) => job.plugins.includes(p.id))) continue;
         const members = this.plugins.filter((p) => job.plugins.includes(p.id)).sort((a, b) => a.name.localeCompare(b.name));
-        rows.push({ choice: true, id: `job:${job.key}`, name: job.label, job, members,
+        rows.push({ choice: true, id: `job:${job.key}`, name: t(job.label), job, members,
                     current: members.find((p) => p.enabled && !p.blocked) || null,
                     builtin: members.every((p) => p.builtin), update: members.some((p) => this.hasUpdate(p)) });
       }
@@ -2045,14 +2045,14 @@ function settingsView() {
       const r = await api(lib ? `/api/libraries/${lib.id}/scan` : "/api/scan", { method: "POST" })
         .catch((e) => { toast(e.message, 6000); return null; });
       if (!r) return;
-      if (!r.started) toast("A scan is already running. Try again when it has finished.", 5000);
+      if (!r.started) toast(t("A scan is already running. Try again when it has finished."), 5000);
       this.stop(); this.pollScan();
     },
     // progress for one folder's row while that folder is being scanned
     libScanText(l) {
       const st = this.scan;
       if (!st.running || (st.library_id != null ? st.library_id !== l.id : st.library !== l.name)) return "";
-      return st.library_id != null ? `Scanning ${st.done}/${st.total}…` : "Scanning…";
+      return st.library_id != null ? t("Scanning {done}/{total}…", { done: st.done, total: st.total }) : t("Scanning…");
     },
     async setLibraryHostPath(l, v) {
       v = v.trim();
@@ -2060,30 +2060,29 @@ function settingsView() {
       try {
         await api(`/api/libraries/${l.id}`, { method: "PATCH", body: { host_path: v } });
         l.host_path = v || null;
-        toast(v ? "Saved" : "Cleared: the series page shows the path inside Docker");
+        toast(v ? t("Saved") : t("Cleared: the series page shows the path inside Docker"));
       } catch (e) { toast(e.message, 6000, "error"); }
     },
     async removeLibrary(l) {
-      if (!confirm(`Remove "${l.name}" (${l.root_path}) from MangaVibe?
-
-Your files are not touched. `
-        + `Its ${l.series} series and their reading progress are removed from the app.`)) return;
+      if (!confirm(t("Remove “{name}” ({path}) from MangaVibe?", { name: l.name, path: l.root_path }) + "\n\n"
+        + tn("Your files are not touched. Its {n} series and their reading progress are removed from the app.",
+             "Your files are not touched. Its {n} series and their reading progress are removed from the app.", l.series))) return;
       try { await api(`/api/libraries/${l.id}`, { method: "DELETE" }); }
       catch (e) { return toast(e.message, 6000, "error"); }  // e.g. its library is locked
-      toast("Folder removed");
+      toast(t("Folder removed"));
       await emitPlugins("folders-changed");  // e.g. its library goes too when nothing else is in it
       this.load();
     },
     checking: false,
     get upd() { return this.$store.app.update; },
     versionText(v) {
-      if (!v?.sha) return "Built-in version (from the Docker image)";
+      if (!v?.sha) return t("Built-in version (from the Docker image)");
       return v.short + (v.date ? ` · ${fmtDate(v.date)}` : "")
-        + (v.message ? ` · ${v.message}` : "") + (v.builtin ? " (built into the image)" : "");
+        + (v.message ? ` · ${v.message}` : "") + (v.builtin ? " " + t("(built into the image)") : "");
     },
     get checkedText() {
       const at = this.upd?.status?.checked_at;
-      return at ? `Last checked ${fmtDateTime(at * 1000)}` : "Not checked yet";
+      return at ? t("Last checked {when}", { when: fmtDateTime(at * 1000) }) : t("Not checked yet");
     },
     async checkUpdate() {
       this.checking = true;
@@ -2091,7 +2090,7 @@ Your files are not touched. `
         this.$store.app.update = await api("/api/update/check", { method: "POST" });
         const u = this.$store.app.update;
         if (u.status.error) toast(u.status.error, 6000, "error");
-        else toast(u.available ? "A new version is available" : "You have the newest version");
+        else toast(u.available ? t("A new version is available") : t("You have the newest version"));
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.checking = false; }
     },
     async skipUpdate() {
@@ -2110,14 +2109,14 @@ Your files are not touched. `
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.loadingOlder = false; }
     },
     olderText(v) {
-      const where = v.builtin ? "Built into the Docker image, no download"
-        : v.on_disk ? "Still on the server, no download" : "Downloaded from GitHub";
+      const where = v.builtin ? t("Built into the Docker image, no download")
+        : v.on_disk ? t("Still on the server, no download") : t("Downloaded from GitHub");
       return [v.date && fmtDate(v.date), v.message, where].filter(Boolean).join(" · ");
     },
     goBack(v) {
-      const cur = this.upd?.current?.short || "the running version";
-      if (!confirm(`Go back to ${v.short}? MangaVibe restarts with it. ${cur} won't be offered again ` +
-                   "until a newer version is out.")) return;
+      const cur = this.upd?.current?.short || t("the running version");
+      if (!confirm(t("Go back to {version}? MangaVibe restarts with it. {current} won't be offered again until a newer version is out.",
+                     { version: v.short, current: cur }))) return;
       installUpdate(v.sha, { rollback: true, label: v.short });
     },
     // ---- Settings → Backup (app/backup.py): the export is a plain download link
@@ -2156,12 +2155,13 @@ Your files are not touched. `
       }
       return out;
     },
-    jobLabel(key) { return this.pluginJobs.find((j) => j.key === key)?.label || key; },
+    jobLabel(key) { return t(this.pluginJobs.find((j) => j.key === key)?.label || key); },
     jobsText(p) { return Object.keys(p.provides || {}).map((k) => this.jobLabel(k)).join(", "); },
     // the only plugin doing a job MangaVibe needs: it can't be switched off until another one does it
     requiredText(p) {
       const jobs = (p.required_for || []).map((k) => this.jobLabel(k)).join(", ");
-      return jobs && `MangaVibe needs ${jobs}. To switch ${p.name} off, switch on another plugin that does it.`;
+      return jobs && t("MangaVibe needs {jobs}. To switch {plugin} off, switch on another plugin that does it.",
+                       { jobs, plugin: p.name });
     },
     // the "pick one" rows (computePluginView) that are open, by job key
     choiceOpen: {},
@@ -2179,8 +2179,8 @@ Your files are not touched. `
     async togglePlugin(p, picked = null) {
       // picked from a row, it's clear what it replaces there: only ask about the other jobs it takes over
       const replaced = p.enabled ? this.replacedBy(p).filter(([, job]) => job.key !== picked) : [];
-      if (replaced.length && !confirm(replaced.map(([q, job]) => `${p.name} replaces ${q.name} (${job.label}).`)
-          .join("\n") + " Switch it on?")) return (p.enabled = false);
+      if (replaced.length && !confirm(replaced.map(([q, job]) => t("{plugin} replaces {other} ({job}).",
+          { plugin: p.name, other: q.name, job: t(job.label) })).join("\n") + " " + t("Switch it on?"))) return (p.enabled = false);
       let r;
       try { r = await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } }); }
       catch (e) {  // e.g. Libraries while one has a password, or the only plugin doing a job the app needs
@@ -2203,7 +2203,7 @@ Your files are not touched. `
         for (const id of r.ui_started || []) if (shown(id)) await addPluginUi(id);
       } catch (e) {
         if (e.status === 401) return location.reload();  // e.g. Accounts: from now on, logging in first
-        toast(`Reload the page to see the change (${e.message})`, 6000, "error");
+        toast(t("Reload the page to see the change ({error})", { error: e.message }), 6000, "error");
       }
       const changed = [...(r.started || []), ...(r.stopped || [])].map((id) => this.plugins.find((x) => x.id === id));
       if (changed.some((x) => x?.provider)) this.loadProviders();
@@ -2236,16 +2236,16 @@ Your files are not touched. `
       try {
         const fresh = await api(`/api/plugins/${p.id}/settings`, { method: "PUT", body: { [f.key]: f.value } });
         Object.assign(p, fresh);
-        toast("Saved");
+        toast(t("Saved"));
       } catch (e) { toast(e.message, 6000, "error"); }
     },
     pluginUpdateText(p) {
       const u = p.update;
       if (u.error) return u.error;
-      const when = u.checked_at ? ` · last checked ${fmtDateTime(u.checked_at * 1000)}` : " · not checked yet";
-      if (u.skipped) return `You skipped version ${u.latest}. A newer one will show here` + when;
-      if (u.available) return `Version ${u.latest} is available (you have ${p.version})` + when;
-      return `Up to date. New versions come from github.com/${u.repo}` + when;
+      const when = " · " + (u.checked_at ? t("last checked {when}", { when: fmtDateTime(u.checked_at * 1000) }) : t("not checked yet"));
+      if (u.skipped) return t("You skipped version {version}. A newer one will show here", { version: u.latest }) + when;
+      if (u.available) return t("Version {version} is available (you have {current})", { version: u.latest, current: p.version }) + when;
+      return t("Up to date. New versions come from {url}", { url: `github.com/${u.repo}` }) + when;
     },
     async skipPluginUpdate(p, on) {
       try {
@@ -2257,7 +2257,8 @@ Your files are not touched. `
       try {
         Object.assign(p, await api(`/api/plugins/${p.id}/updates/check`, { method: "POST" }));
         if (p.update.error) toast(p.update.error, 6000, "error");
-        else toast(p.update.available ? `Version ${p.update.latest} is available` : `${p.name} is up to date`);
+        else toast(p.update.available ? t("Version {version} is available", { version: p.update.latest })
+          : t("{plugin} is up to date", { plugin: p.name }));
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.busyAction = ""; }
     },
     async saveGitHubToken(clear) {
@@ -2266,16 +2267,17 @@ Your files are not touched. `
       try {
         const r = await api("/api/plugins/github-token", { method: "PUT", body: { token } });
         this.ghTokenFrom = r.github_token; this.ghToken = "";
-        toast(clear ? "GitHub token removed" : "GitHub token saved");
+        toast(clear ? t("GitHub token removed") : t("GitHub token saved"));
       } catch (e) { toast(e.message, 6000, "error"); }
     },
     installPluginUpdate(p) {
-      if (!confirm(`Install ${p.name} ${p.update.latest} from github.com/${p.update.repo}?`)) return;
+      if (!confirm(t("Install {plugin} {version} from {url}?", { plugin: p.name, version: p.update.latest,
+                                                                url: `github.com/${p.update.repo}` }))) return;
       this.putInPluginVersion(p, "install", null, p.update.latest);
     },
     // going back: a copy in plugins/.backup (no download), or any release picked from the list
     restorePluginVersion(p, version) {
-      if (!confirm(`Go back to ${p.name} ${version}? It's the copy kept when you updated it.`)) return;
+      if (!confirm(t("Go back to {plugin} {version}? It's the copy kept when you updated it.", { plugin: p.name, version }))) return;
       this.putInPluginVersion(p, "restore", version, version);
     },
     pluginReleases: {},  // plugin id -> its releases on GitHub, once "Other versions" was pressed
@@ -2286,12 +2288,13 @@ Your files are not touched. `
         const r = await api(`/api/plugins/${p.id}/updates/releases`);
         this.pluginReleases[p.id] = r.releases.filter((x) => x.version.replace(/^v/, "") !== p.version.replace(/^v/, ""));
         this.pluginPick[p.id] = this.pluginReleases[p.id][0]?.version || "";
-        if (!this.pluginReleases[p.id].length) toast("No other release found");
+        if (!this.pluginReleases[p.id].length) toast(t("No other release found"));
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.busyAction = ""; }
     },
     installPluginRelease(p) {
       const version = this.pluginPick[p.id];
-      if (!version || !confirm(`Install ${p.name} ${version} from github.com/${p.update.repo}?`)) return;
+      if (!version || !confirm(t("Install {plugin} {version} from {url}?", { plugin: p.name, version,
+                                                                          url: `github.com/${p.update.repo}` }))) return;
       this.putInPluginVersion(p, "install", version, version);
     },
     async putInPluginVersion(p, what, version, label) {
@@ -2304,9 +2307,9 @@ Your files are not touched. `
           if (e.status !== 409 || !e.detail.permissions) throw e;
           // that version asks for permissions the installed one doesn't have
           const perms = e.detail.permissions;
-          if (!confirm(`${p.name} ${label} asks for new permissions:\n\n` +
+          if (!confirm(t("{plugin} {version} asks for new permissions:", { plugin: p.name, version: label }) + "\n\n" +
                        perms.map((x) => `• ${x}`).join("\n") +
-                       "\n\nAllow them and install it?")) { toast("Nothing was installed"); return; }
+                       "\n\n" + t("Allow them and install it?"))) { toast(t("Nothing was installed")); return; }
           r = await send(perms);
         }
         this.setPlugins(r);
@@ -2334,7 +2337,7 @@ Your files are not touched. `
         this.avail = { loaded: true, ...await api(`/api/plugins/available${refresh ? "?refresh=1" : ""}`) };
         if (refresh) {
           const bad = this.avail.sources.filter((s) => s.error);
-          toast(bad.length ? `${bad[0].name}: ${bad[0].error}` : "Plugin sources refreshed", bad.length ? 8000 : 3000,
+          toast(bad.length ? `${bad[0].name}: ${bad[0].error}` : t("Plugin sources refreshed"), bad.length ? 8000 : 3000,
                 bad.length ? "error" : "");
         }
       } catch (e) {
@@ -2345,24 +2348,23 @@ Your files are not touched. `
     async addSource() {
       const url = this.newSource.trim();
       if (!url) return;
-      if (!confirm("Plugins from this source run inside MangaVibe with full access to its data. " +
-                   "Only add sources you trust. Add it?")) return;
+      if (!confirm(t("Plugins from this source run inside MangaVibe with full access to its data. Only add sources you trust. Add it?"))) return;
       this.availBusy = true;
       try {
         this.avail = { loaded: true, ...await api("/api/plugins/sources", { method: "POST", body: { url } }) };
         this.newSource = "";
-        toast("Source added");
+        toast(t("Source added"));
       } catch (e) { toast(e.message, 8000, "error"); } finally { this.availBusy = false; }
     },
     async removeSource(s) {
-      if (!confirm(`Remove the source ${s.name}? Plugins you installed from it stay.`)) return;
+      if (!confirm(t("Remove the source {name}? Plugins you installed from it stay.", { name: s.name }))) return;
       try {
         this.avail = { loaded: true, ...await api("/api/plugins/sources/remove", { method: "POST", body: { url: s.url } }) };
       } catch (e) { toast(e.message, 6000, "error"); }
     },
     async installAvailable(a) {
-      if (!confirm(`Install ${a.name} from github.com/${a.repo}?` +
-                   (a.official ? "" : `\n\nIt's listed by ${a.sourceName}, not by MangaVibe.`))) return;
+      if (!confirm(t("Install {plugin} from {url}?", { plugin: a.name, url: `github.com/${a.repo}` }) +
+                   (a.official ? "" : "\n\n" + t("It's listed by {source}, not by MangaVibe.", { source: a.sourceName })))) return;
       this.availInstalling = a.source + " " + a.id;
       const send = (accept) => api("/api/plugins/available/install",
                                    { method: "POST", body: { source: a.source, id: a.id, accept_permissions: accept } });
@@ -2371,8 +2373,8 @@ Your files are not touched. `
         try { r = await send([]); } catch (e) {
           if (e.status !== 409 || !e.detail.permissions) throw e;
           const perms = e.detail.permissions;
-          if (!confirm(`${a.name} asks for these permissions:\n\n` + perms.map((x) => `• ${x}`).join("\n") +
-                       "\n\nAllow them and install it?")) { toast("Nothing was installed"); return; }
+          if (!confirm(t("{plugin} asks for these permissions:", { plugin: a.name }) + "\n\n" + perms.map((x) => `• ${x}`).join("\n") +
+                       "\n\n" + t("Allow them and install it?"))) { toast(t("Nothing was installed")); return; }
           r = await send(perms);
         }
         const p = r.plugins.find((x) => x.id === a.id);
@@ -2409,9 +2411,10 @@ Your files are not touched. `
       const finished = this.scan.running && !st.running;
       this.scan = st;
       if (finished) this.libs = await api("/api/libraries").catch(() => this.libs);  // new series counts
-      this.scanText = st.running ? `Scanning ${st.done}/${st.total}: ${st.current || ""}`
-        : st.finished_at ? `Last scan finished ${fmtDateTime(st.finished_at)}`
-          + (st.new_books ? ` · ${st.new_books} new books` : "") + (st.errors ? ` · ${st.errors} errors` : "") : "";
+      this.scanText = st.running ? t("Scanning {done}/{total}: {current}", { done: st.done, total: st.total, current: st.current || "" })
+        : st.finished_at ? [t("Last scan finished {when}", { when: fmtDateTime(st.finished_at) }),
+                            st.new_books && tn("{n} new book", "{n} new books", st.new_books),
+                            st.errors && tn("{n} error", "{n} errors", st.errors)].filter(Boolean).join(" · ") : "";
       if (st.running) { this.$store.app.libraryDirty++; this.timers.push(setTimeout(() => this.pollScan(), 1000)); }
     },
     async pollMeta() {
@@ -2419,10 +2422,10 @@ Your files are not touched. `
       if (!st || this.$store.app.view !== "settings") return;
       this.$store.app.meta = st;  // the progress bar (Metadata, Missing metadata)
       const parts = [];
-      if (st.matched || st.failed) parts.push(`${st.matched} matched, ${st.failed} need attention`);
-      if (st.providers_down_until) parts.push(`AniList/MangaUpdates not reachable; retrying at ${fmtTime(st.providers_down_until)}`);
+      if (st.matched || st.failed) parts.push(t("{matched} matched, {failed} need attention", { matched: st.matched, failed: st.failed }));
+      if (st.providers_down_until) parts.push(t("AniList/MangaUpdates not reachable; retrying at {time}", { time: fmtTime(st.providers_down_until) }));
       this.metaText = parts.join(" · ") || (st.current || st.queued ? ""
-        : "Idle. New series are matched automatically after each scan.");
+        : t("Idle. New series are matched automatically after each scan."));
       if (st.current || st.queued) { this.$store.app.libraryDirty++; this.timers.push(setTimeout(() => this.pollMeta(), 2000)); }
     },
   };
@@ -2460,7 +2463,7 @@ function folderPicker() {
       this.busy = true;
       try {
         await api("/api/libraries", { method: "POST", body: { root_path: this.path } });
-        toast("Folder added. Scanning…", 5000);
+        toast(t("Folder added. Scanning…"), 5000);
         this.close();
         await emitPlugins("folders-changed");  // e.g. libraries: the one named like the folder
         window.dispatchEvent(new Event("libraries-changed"));

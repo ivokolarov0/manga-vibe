@@ -135,9 +135,11 @@ by default the browser's), from gettext `.po` files: `app/web/i18n/<lang>.po`, o
 translation is simply shown in English.
 
 - **In markup** (your `html`, your view templates): `t('Sync now')` and `tn('{n} chapter', '{n} chapters', n)`
-  work in Alpine expressions, e.g. `<button x-text="t('Sync now')">`. In a view template (Jinja) use
-  `{{ t("Sync now") }}`: it's drawn in the page's language on the server.
-- **In your `js`**: `MangaVibe.t(text, values)`, `MangaVibe.tn(singular, plural, n, values)`, `MangaVibe.lang`
+  work in Alpine expressions, e.g. `<button x-text="t('Sync now')">`. A sentence with markup in it:
+  `x-html="th('Only {name} is shown', { name: '<b>' + esc(name) + '</b>' })"` (the text is escaped, the values
+  go in as HTML). In a view template (Jinja) use `{{ t("Sync now") }}`: it's drawn in the page's language on
+  the server; `{{ t("Path of {path}", path='<code>…</code>'|safe) }}` puts markup into a sentence.
+- **In your `js`**: `MangaVibe.t(text, values)`, `MangaVibe.tn(singular, plural, n, values)`, `MangaVibe.th`, `MangaVibe.lang`
   (e.g. `"bg"`), and `MangaVibe.fmtDate`, `fmtDateTime`, `fmtTime`, `fmtNum`, which write dates and numbers
   the language's way (`Intl`).
 - **In Python**: `from app.plugins.sdk import N_, t, tn`. Mark a label that's defined once and shown later

@@ -35,6 +35,12 @@ function t(msgid, values) {
   const v = I18N.messages[msgid];
   return fillText(typeof v === "string" ? v : msgid, values);
 }
+// for x-html: the text escaped, with values that are HTML put into its {name}s as they are (escape what
+// came from elsewhere with esc()), e.g. th(text, { name: `<b>${esc(name)}</b>` })
+function th(msgid, html) {
+  const v = I18N.messages[msgid];
+  return fillText(esc(typeof v === "string" ? v : msgid), html);
+}
 function tn(singular, plural, n, values) {
   const forms = I18N.messages[singular];
   const s = Array.isArray(forms) && forms[pluralIndex(n)] ? forms[pluralIndex(n)] : (Number(n) === 1 ? singular : plural);
@@ -45,6 +51,7 @@ const fmtDate = (d, opts) => new Date(d).toLocaleDateString(LANG, opts);
 const fmtDateTime = (d, opts) => new Date(d).toLocaleString(LANG, opts);
 const fmtTime = (d, opts) => new Date(d).toLocaleTimeString(LANG, opts);
 const fmtNum = (n, opts) => new Intl.NumberFormat(LANG, opts).format(n);
+const pct = (n) => fmtNum(n / 100, { style: "percent" });  // pct(85): "85%", "85 %"
 // a language's own name for itself ("Deutsch", "日本語"), for the language picker
 function languageName(code) {
   try {
