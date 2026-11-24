@@ -125,6 +125,11 @@ the code) and one `<lang>.po` per language (`bg`, `de`, `ja` so far). English is
 - **After adding or changing texts, run `python -m app.i18n`**: it writes `messages.pot` and adds the new
   texts, empty, to each `.po` (and drops the ones the code no longer has). `tests/test_i18n.py` fails until
   you do, and when a translation loses a placeholder.
+- **Text written straight in fails a test**: `tests/test_no_hardcoded_text.py` looks at the templates and the
+  built-in plugins' markup (text between tags; title, aria-label, placeholder and alt; quoted words in
+  x-text, x-html and bound :title / :aria-label / :placeholder / :alt) and at toast(), confirm() and
+  prompt() in the scripts. A word that must stay as it is everywhere (a name, a symbol) goes in its
+  `ALLOWED`.
 - **Translating**: fill in the `msgstr` lines of a `.po` file, by hand or with a gettext editor such as
   Poedit. An empty one is shown in English. **A new language**: `python -m app.i18n new fr`, then set its
   `Plural-Forms` header (Poedit and the gettext manual list them) and translate; it shows up in Settings →

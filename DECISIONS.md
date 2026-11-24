@@ -1256,6 +1256,12 @@ Plugin API version, and the app works after every one.
   `raise`: `HTTPException(404, "…")` texts are found by the extractor, which reads Python with `ast` (so
   text split over lines is one msgid, and comments don't count). Messages with values are `t()` with
   placeholders. The client no longer looks at an error's words (Fix match checks the 503 status).
+- **Step 3, a test against text written straight in** (tests/test_no_hardcoded_text.py): pattern checks, not
+  a full HTML/JS parser. They look where people read text (between tags, the attributes a screen reader or
+  a tooltip shows, the Alpine bindings that set text, and toast / confirm / prompt), and count a quoted
+  value as text only when it starts with a capital letter or holds two words, so values like 'files' and
+  class names pass. Text a script puts into `textContent` or `innerHTML` some other way isn't checked:
+  those few places are covered by review and by the reader's markup going through `esc(t(…))`.
 - **Step 2c, the reader**: reader.js builds its markup as strings, so every translated text that goes into
   `innerHTML` is escaped (`esc(t(…))`); the image reader (a plugin) uses `MangaVibe.t` and its own
   `escHtml`. Messages only for developers (`console.error`) stay English.
