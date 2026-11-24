@@ -11,7 +11,8 @@ from sqlalchemy import and_, func
 
 from app.api import filters
 from app.i18n import t
-from app.api.common import (READING_STATUSES, book_dict, continue_target, emit_reading_events, get_or_404, now,
+from app.api.common import (READING_STATUSES, book_dict, continue_target, continue_targets, emit_reading_events,
+                            get_or_404, now,
                             latest_labels, series_card, series_counts, status_of, title_lang,
                             visible_books_query)
 from app.api.common import load_states, my_progress, retry_on_conflict
@@ -423,9 +424,10 @@ def continue_reading(request: Request, limit: int = 30, db=Depends(get_db)):
     load_states(db, rows)
     lang = title_lang(db)
     counts = series_counts(db, [s.id for s in rows])
+    targets = continue_targets(db, [s.id for s in rows])
     out = []
     for s in rows:
-        book, page = continue_target(db, s.id)
+        book, page = targets[s.id]
         if book is None:
             continue
         card = series_card(s, counts[s.id], lang)

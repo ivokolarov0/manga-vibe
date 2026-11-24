@@ -1,17 +1,20 @@
 """MangaVibe entry point: `uvicorn app.main:app`."""
+import hashlib
 import logging
 import mimetypes
 import re
 import threading
 import time
 from contextlib import asynccontextmanager
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exception_handlers import http_exception_handler
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.datastructures import Headers
 
 from app import config, db as database, i18n, plugin_updates, updater
 from app.api import attention, backup, books, edit, series, system, update
@@ -116,6 +119,40 @@ class UploadSizeLimit:
         await send({"type": "http.response.body", "body": body})
 
 
+class CrossSiteGuard:
+    """Refuses changes (POST, PUT, PATCH, DELETE) that another website's page sends. Without accounts
+    nothing else stops them: any page open in a browser on the home network could otherwise post to
+    MangaVibe, e.g. add a plugin source and install a plugin from it, or import a backup over the
+    database (a fetch() in "no-cors" mode needs no permission, and a body without a Content-Type is
+    read as JSON). The browser says where a request comes from (Sec-Fetch-Site; older browsers: Origin).
+    Requests without either, from scripts, the Android app's own code or the server itself, pass."""
+
+    SAFE = {"GET", "HEAD", "OPTIONS"}
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["method"] not in self.SAFE and not scope.get("mangavibe.internal"):
+            headers = Headers(scope=scope)
+            site = headers.get("sec-fetch-site")
+            if site == "cross-site" or (site is None and self.foreign_origin(headers)):
+                detail = {"message": "Refused: this request came from another website"}
+                return await JSONResponse({"detail": detail}, status_code=403)(scope, receive, send)
+        return await self.app(scope, receive, send)
+
+    @staticmethod
+    def foreign_origin(headers) -> bool:
+        """Whether the Origin header names another site than the one asked (a browser without
+        Sec-Fetch-Site). Behind a reverse proxy the address asked can be in X-Forwarded-Host."""
+        origin = headers.get("origin")
+        if not origin:
+            return False
+        host = urlsplit(origin).netloc.lower()
+        asked = {h.strip().lower() for h in (headers.get("host", ""), *headers.get("x-forwarded-host", "").split(","))}
+        return origin == "null" or host not in asked
+
+
 class RememberAddress:
     """Plugins build links back to the app (e.g. a login callback) from the address in use.
     A plain ASGI middleware: @app.middleware("http") wrapped every response (every thumbnail and
@@ -184,6 +221,8 @@ app.add_middleware(UploadSizeLimit, limit=MAX_UPLOAD + 64 * 1024)  # + room for 
 app.add_middleware(RememberAddress)
 # the plugins' own guards (Plugin.middleware), e.g. libraries: a locked library's series, books and pages
 app.add_middleware(plugin_web.PluginMiddleware)
+# before everything else (but compression): a change another website sends goes no further
+app.add_middleware(CrossSiteGuard)
 # Outermost, so it compresses the final response. The JS/CSS ship unminified; gzip makes them
 # ~75% smaller over the wire. Page images are on Starlette's skip list (already compressed).
 # Level 6 instead of the default 9: nearly the same size, much less CPU on a small NAS.
@@ -228,7 +267,19 @@ def custom_css(request: Request):
             parts.append(f"/* plugin: {p.id} */\n{p.css.strip()}")
     if config.CUSTOM_CSS.exists() and not safe:
         parts.append("/* custom.css */\n" + config.CUSTOM_CSS.read_text(encoding="utf-8", errors="replace"))
-    return Response("\n\n".join(parts), media_type="text/css", headers={"Cache-Control": "no-cache"})
+    return checked_text(request, "\n\n".join(parts), "text/css")
+
+
+def checked_text(request: Request, body: str, media_type: str) -> Response:
+    """A script or style made by the server (plugins', custom.css). The browser checks it again on every
+    load (no-cache), and gets 304 Not Modified without the body while it hasn't changed: a page load used
+    to download every plugin's script again."""
+    etag = '"' + hashlib.sha1(body.encode()).hexdigest()[:20] + '"'
+    headers = {"Cache-Control": "no-cache", "ETag": etag}
+    sent = {t.strip().removeprefix("W/") for t in request.headers.get("if-none-match", "").split(",")}
+    if etag in sent:  # a proxy that compresses may have made it weak (W/"...")
+        return Response(status_code=304, headers=headers)
+    return Response(body, media_type=media_type, headers=headers)
 
 
 @app.get("/manifest.json")
@@ -254,18 +305,18 @@ def index(request: Request, safe: str = ""):
 
 
 @app.get("/plugins/{plugin_id}.js")
-def plugin_script(plugin_id: str):
+def plugin_script(plugin_id: str, request: Request):
     # a switched-on plugin's, or a built-in fallback's even while another does its job (web.fallback_scripts)
     p = plugins.get(plugin_id) or next((b for b in plugin_web.fallback_scripts() if b.id == plugin_id), None)
     if p is None or not p.js:
         raise HTTPException(404, "No such plugin script")
-    return Response(p.js, media_type="text/javascript", headers={"Cache-Control": "no-cache"})
+    return checked_text(request, p.js, "text/javascript")
 
 
 @app.get("/plugins/{plugin_id}.css")
-def plugin_style(plugin_id: str):
+def plugin_style(plugin_id: str, request: Request):
     """One plugin's CSS, for a plugin switched on after the page loaded (it's in /custom.css too)."""
     p = plugins.get(plugin_id)
     if p is None or not p.css:
         raise HTTPException(404, "No such plugin style")
-    return Response(p.css, media_type="text/css", headers={"Cache-Control": "no-cache"})
+    return checked_text(request, p.css, "text/css")

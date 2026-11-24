@@ -662,6 +662,10 @@ class PluginManager:
         # exclusive job -> the plugin the owner switched on for it last (jobs_chosen): it wins if two are on
         self.chosen: dict[str, str] = {}
         self._blocked_key, self._blocked = None, {}
+        # what enabled(), provider_of() and builtin_for() found, for the plugins, switches and jobs of
+        # _blocked_key: they're asked for every book label (a long series' list asked thousands of times)
+        self._found = (None, {})
+        self._builtin_paths: dict[Path, bool] = {}  # is_builtin(): a path's parents are slow to walk
         self.base_url = "http://localhost:8080"  # updated from each request (see main.py)
         self._queue = queue.Queue()
         self._worker = None
@@ -790,15 +794,32 @@ class PluginManager:
     def is_builtin(self, plugin_id) -> bool:
         """True for the plugins that come with the app (app/plugins/builtin/)."""
         path = self.paths.get(plugin_id)
-        return path is not None and BUILTIN in path.parents
+        if path is None:
+            return False
+        found = self._builtin_paths.get(path)
+        if found is None:
+            found = self._builtin_paths[path] = BUILTIN in path.parents
+        return found
 
     def categories_of(self, plugin) -> list[str]:
         return self.categories.get(plugin.id) or categories_of(plugin)
 
     def enabled(self):
         """The plugins that run: switched on, and not blocked (see blocked)."""
-        blocked = self.blocked
-        return [p for pid, p in self.plugins.items() if pid not in self.disabled and pid not in blocked]
+        found = self._memo()
+        if "enabled" not in found:
+            blocked = self.blocked
+            found["enabled"] = [p for pid, p in self.plugins.items() if pid not in self.disabled and pid not in blocked]
+        return list(found["enabled"])
+
+    def _memo(self) -> dict:
+        """A dict for what was worked out from the current plugins, switches and jobs (`blocked`'s key),
+        emptied whenever they change. A thread still holding the old one only fills that one."""
+        self.blocked  # noqa: B018 - works out the key again when something changed
+        key = self._blocked_key
+        if self._found[0] is not key:
+            self._found = (key, {})
+        return self._found[1]
 
     def switched_on(self):
         """The plugins switched on, including blocked ones."""
@@ -852,14 +873,20 @@ class PluginManager:
 
     def provider_of(self, job):
         """The running plugin doing this job, or None. For a shared job, the first of them."""
-        return next((p for p in self.enabled() if job in plugin_jobs(p, "provides")), None)
+        found = self._memo()
+        if ("provider", job) not in found:
+            found[("provider", job)] = next((p for p in self.enabled() if job in plugin_jobs(p, "provides")), None)
+        return found[("provider", job)]
 
     def builtin_for(self, job):
         """The built-in plugin for this job, on or off: what the app falls back to when the plugin doing
         it fails (the hub's rule, issue #202). None if no built-in plugin does it. Of several (the top bar and
         the sidebar), the one on by default: the others are alternatives the owner picks."""
-        found = [p for pid, p in self.plugins.items() if self.is_builtin(pid) and job in plugin_jobs(p, "provides")]
-        return next((p for p in found if p.enabled_by_default), found[0] if found else None)
+        memo = self._memo()
+        if ("builtin", job) not in memo:
+            found = [p for pid, p in self.plugins.items() if self.is_builtin(pid) and job in plugin_jobs(p, "provides")]
+            memo[("builtin", job)] = next((p for p in found if p.enabled_by_default), found[0] if found else None)
+        return memo[("builtin", job)]
 
     def doing(self, job):
         """Who to ask for this job, in order: the running plugin doing it, then the built-in one as the
