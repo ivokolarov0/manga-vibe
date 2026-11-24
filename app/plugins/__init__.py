@@ -50,6 +50,7 @@ from pathlib import Path
 
 from app import config
 from app.i18n import N_
+from app.i18n import forget as _forget_translations
 
 log = logging.getLogger("mangavibe.plugins")
 API_VERSION = 27
@@ -682,6 +683,7 @@ class PluginManager:
             event.set()
 
     def set_enabled(self, plugin_id, enabled: bool):
+        _forget_translations()  # a plugin's i18n/<lang>.po counts while it's on
         if enabled:
             self.disabled.discard(plugin_id)
         else:
@@ -692,6 +694,7 @@ class PluginManager:
     def load(self, folders=None):
         with self._load_lock:
             self._load(folders)
+        _forget_translations()
 
     def _load(self, folders=None):
         for p in self.plugins.values():  # the old plugin objects are about to be replaced
@@ -921,6 +924,7 @@ class PluginManager:
         isn't enabled_by_default starts off (plugins_known remembers which were seen)."""
         from app.db import get_setting, set_setting
         self.disabled = set(get_setting(db, "plugins_disabled", []) or [])
+        _forget_translations()
         chosen = get_setting(db, "jobs_chosen", {}) or {}
         self.chosen = {k: v for k, v in chosen.items() if isinstance(k, str) and isinstance(v, str)} \
             if isinstance(chosen, dict) else {}

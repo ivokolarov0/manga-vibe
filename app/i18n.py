@@ -23,6 +23,7 @@ browser's languages (Accept-Language) that the app has, else English.
 import gettext as gettext_lib
 import re
 import sys
+import time
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
@@ -34,7 +35,7 @@ I18N_DIR = config.WEB_DIR / "i18n"
 POT = I18N_DIR / "messages.pot"
 DEFAULT_PLURAL = "nplurals=2; plural=(n != 1);"
 
-_lang: ContextVar[str] = ContextVar("mangavibe_lang", default=SOURCE)
+_lang: ContextVar["str | Lazy"] = ContextVar("mangavibe_lang", default=SOURCE)
 PLACEHOLDER = re.compile(r"\{(\w+)\}")
 
 
@@ -189,23 +190,45 @@ class Catalog:
 
 # --- the languages there are, and their catalogs ------------------------------------------------
 
-_cache: dict[tuple, Catalog] = {}
+_cache: dict[tuple, Catalog | None] = {}  # (path, mtime) -> its texts; None: the file can't be read
+_ENGLISH = Catalog(SOURCE)  # no texts: every msgid is shown as it is
+RECHECK_SECONDS = 1.0  # how often catalog() looks at the files again (a plugin switched on, a .po changed)
+# lang -> (when the files were last looked at, what they were: paths and mtimes, the catalog made of them)
+_catalogs: dict[str, tuple[float, tuple, Catalog]] = {}
+_languages: tuple = (None, [])  # (I18N_DIR's mtime, languages()) - the folder changes when a .po is added
+
+
+def _stamp(path: Path):
+    try:
+        return path.stat().st_mtime_ns
+    except OSError:
+        return None
 
 
 def _load(lang: str, path: Path) -> Catalog | None:
-    try:
-        key = (str(path), path.stat().st_mtime_ns)
-    except OSError:
+    """A .po file's texts, read again only when it changed. A file that can't be read is logged once
+    (until it changes) and gives None."""
+    stamp = _stamp(path)
+    if stamp is None:
         return None
-    cat = _cache.get(key)
-    if cat is None:
-        cat = _cache[key] = Catalog.from_po(lang, path.read_text(encoding="utf-8"))
-    return cat
+    key = (str(path), stamp)
+    if key not in _cache:
+        try:
+            _cache[key] = Catalog.from_po(lang, path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            import logging
+            logging.getLogger("mangavibe.i18n").exception("Translations in %s could not be read", path)
+            _cache[key] = None
+    return _cache[key]
 
 
 def languages() -> list[str]:
     """The languages the app has: English, then one per .po file in app/web/i18n, by code."""
-    return [SOURCE] + sorted(p.stem for p in I18N_DIR.glob("*.po") if p.stem != SOURCE)
+    global _languages
+    stamp = _stamp(I18N_DIR)
+    if stamp is None or _languages[0] != stamp:
+        _languages = (stamp, [SOURCE] + sorted(p.stem for p in I18N_DIR.glob("*.po") if p.stem != SOURCE))
+    return list(_languages[1])
 
 
 def plugin_po_files(lang: str) -> list[Path]:
@@ -224,16 +247,40 @@ def plugin_po_files(lang: str) -> list[Path]:
 
 def catalog(lang: str) -> Catalog:
     """A language's texts: the app's, then the plugins' for texts the app doesn't translate. A language
-    the app doesn't have is English (no texts: every msgid is shown as it is)."""
+    the app doesn't have is English (no texts: every msgid is shown as it is).
+
+    t() calls this for every text, so the result is kept: the files are looked at again at most once a
+    second, and the catalog is only made again when one of them changed (or a plugin was switched on
+    or off)."""
+    now = time.monotonic()
+    kept = _catalogs.get(lang)
+    if kept is not None and now - kept[0] < RECHECK_SECONDS:
+        return kept[2]
+    try:
+        plugin_files = plugin_po_files(lang)
+    except Exception:  # noqa: BLE001 - e.g. while the plugins load: the app's own texts
+        plugin_files = []
+    files = ([] if lang == SOURCE else [I18N_DIR / f"{lang}.po"]) + plugin_files
+    stamps = tuple((str(p), _stamp(p)) for p in files)
+    if kept is not None and kept[1] == stamps:
+        _catalogs[lang] = (now, stamps, kept[2])
+        return kept[2]
+    cat = _make_catalog(lang, plugin_files)
+    _catalogs[lang] = (now, stamps, cat)
+    return cat
+
+
+def forget():
+    """Make the catalogs again at the next t() (plugins were loaded, or switched on or off)."""
+    _catalogs.clear()
+
+
+def _make_catalog(lang: str, plugin_files) -> Catalog:
     base = _load(lang, I18N_DIR / f"{lang}.po") if lang != SOURCE else None
     if base is None:
-        base = Catalog(SOURCE) if lang == SOURCE else Catalog(lang)
-    extra = []
-    try:
-        extra = [c for c in (_load(lang, p) for p in plugin_po_files(lang)) if c is not None]
-    except Exception:  # noqa: BLE001 - a plugin's broken file must not break the page
-        import logging
-        logging.getLogger("mangavibe.i18n").exception("A plugin's translations could not be read")
+        base = _ENGLISH if lang == SOURCE else Catalog(lang)
+    # a plugin's broken file is left out (and logged once by _load): the others still count
+    extra = [c for c in (_load(lang, p) for p in plugin_files) if c is not None]
     if not extra:
         return base
     merged = Catalog(base.lang, {}, f"nplurals={base.nplurals}; plural={base.plural_expr};")
@@ -279,13 +326,27 @@ def pick_language(setting: str | None, accept: str | None) -> str:
 
 # --- translating --------------------------------------------------------------------------------
 
+class Lazy:
+    """A language worked out the first time it's needed (a request's: the person's setting needs the
+    database, and most requests, like saving progress, never translate anything). Then kept."""
+
+    def __init__(self, find):
+        self._find, self._lang = find, None
+
+    def get(self) -> str:
+        if self._lang is None:
+            self._lang = self._find()
+        return self._lang
+
+
 def current() -> str:
-    return _lang.get()
+    lang = _lang.get()
+    return lang.get() if isinstance(lang, Lazy) else lang
 
 
 @contextmanager
-def using(lang: str):
-    """Translate into this language inside (a page being drawn)."""
+def using(lang: "str | Lazy"):
+    """Translate into this language inside (a page being drawn), or a Lazy one (a request)."""
     token = _lang.set(lang)
     try:
         yield lang
