@@ -29,14 +29,14 @@
         <section class="plugins-section" x-show="section === 'plugins'" x-effect="pview = computePluginView()">
           <h2>Plugins</h2>
           <div class="tabs plugin-tabs" role="tablist" aria-label="Plugins">
-            <template x-for="[t, label] in [['installed', 'Installed'], ['get', 'Get plugins'], ['setup', 'Sources & setup']]" :key="t">
-              <button role="tab" :class="{ active: pf.tab === t }" :aria-selected="pf.tab === t"
-                      @click="setPluginFilter('tab', t)">
+            <template x-for="[tab, label] in [['installed', 'Installed'], ['get', 'Get plugins'], ['setup', 'Sources & setup']]" :key="tab">
+              <button role="tab" :class="{ active: pf.tab === tab }" :aria-selected="pf.tab === tab"
+                      @click="setPluginFilter('tab', tab)">
                 <span x-text="label"></span>
-                <span class="count" x-show="t === 'installed'" x-text="plugins.length"></span>
-                <span class="count new" x-show="t === 'get' && availNew" :title="`${availNew} not installed yet`" x-text="availNew"></span>
+                <span class="count" x-show="tab === 'installed'" x-text="plugins.length"></span>
+                <span class="count new" x-show="tab === 'get' && availNew" :title="`${availNew} not installed yet`" x-text="availNew"></span>
                 <!-- something needs a look on the Installed tab while another one is open -->
-                <span class="dot" x-show="t === 'installed' && pf.tab !== 'installed' && (pluginUpdates || pluginErrorCount)"
+                <span class="dot" x-show="tab === 'installed' && pf.tab !== 'installed' && (pluginUpdates || pluginErrorCount)"
                       aria-label="needs attention"></span>
               </button>
             </template>

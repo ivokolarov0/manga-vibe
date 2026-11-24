@@ -8,12 +8,12 @@
           <svg class="ic chev" aria-hidden="true"><use href="#i-chevron-down"/></svg>
         </button>
         <div class="settings-nav-list">
-          <h4>Settings</h4>
+          <h4>{{ t("Settings") }}</h4>
           <template x-for="[k, label, icon] in nav" :key="k">
             <button :class="{ active: section === k || (k === 'plugins' && section === 'plugin') }" @click="go(k)">
               <span class="ico" x-html="navIcon(icon)"></span><span x-text="label"></span></button>
           </template>
-          <h4 x-show="attNav.length">Needs attention</h4>
+          <h4 x-show="attNav.length">{{ t("Needs attention") }}</h4>
           <template x-for="[k, label] in attNav" :key="k">
             <button :class="{ active: section === 'att-' + k }" @click="go('att-' + k)">
               <span class="ico dot" aria-hidden="true"></span><span x-text="label"></span>

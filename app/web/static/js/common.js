@@ -5,6 +5,54 @@ const $ = (sel, root = document) => root.querySelector(sel);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+/* ---------------- the page's language (issue #263, app/i18n.py) ----------------
+   t(text), t(text, { name: value }) for a {name} in it, tn(singular, plural, n) (with {n}): the text in the
+   page's language (MV_I18N, put in the page by the server), else the English one. The texts are found
+   in the code by `python -m app.i18n`, so give t() and tn() the English text as a plain string ("…" or
+   '…', not a variable or a `template`). See app/i18n.py. */
+const I18N = window.MV_I18N || { lang: "en", nplurals: 2, plural: "n != 1", messages: {}, languages: ["en"] };
+const LANG = I18N.lang || "en";
+const pluralIndex = (() => {
+  // the .po file's Plural-Forms (checked on the server: only n, numbers and operators)
+  try {
+    if (/^[n0-9\s?:%<>=!&|()+\-*/]+$/.test(I18N.plural)) {
+      const f = new Function("n", `return Number(${I18N.plural});`);
+      // gettext rules count whole things; a fraction (1.5 seconds) takes the form of 2, as in English
+      // and German ("seconds") and in Slavic languages (1,5 секунди / секунды)
+      return (n) => {
+        n = Math.abs(Number(n) || 0);
+        const i = f(Number.isInteger(n) ? n : 2);
+        return i >= 0 && i < I18N.nplurals ? i : 0;
+      };
+    }
+  } catch { /* the English rule below */ }
+  return (n) => (Number(n) === 1 ? 0 : 1);
+})();
+function fillText(s, values) {
+  return values ? s.replace(/\{(\w+)\}/g, (m, k) => (k in values ? String(values[k]) : m)) : s;
+}
+function t(msgid, values) {
+  const v = I18N.messages[msgid];
+  return fillText(typeof v === "string" ? v : msgid, values);
+}
+function tn(singular, plural, n, values) {
+  const forms = I18N.messages[singular];
+  const s = Array.isArray(forms) && forms[pluralIndex(n)] ? forms[pluralIndex(n)] : (Number(n) === 1 ? singular : plural);
+  return fillText(s, { n, ...values });
+}
+// dates and numbers the way the page's language writes them
+const fmtDate = (d, opts) => new Date(d).toLocaleDateString(LANG, opts);
+const fmtDateTime = (d, opts) => new Date(d).toLocaleString(LANG, opts);
+const fmtTime = (d, opts) => new Date(d).toLocaleTimeString(LANG, opts);
+const fmtNum = (n, opts) => new Intl.NumberFormat(LANG, opts).format(n);
+// a language's own name for itself ("Deutsch", "日本語"), for the language picker
+function languageName(code) {
+  try {
+    const name = new Intl.DisplayNames([code], { type: "language" }).of(code);
+    return name.charAt(0).toLocaleUpperCase(code) + name.slice(1);
+  } catch { return code; }
+}
+
 // how long the library and the reader wait for the server before saying so (with "Try again")
 const LOAD_TIMEOUT = 30000;
 
@@ -142,11 +190,14 @@ const CARD_WIDTHS = [120, 140, 160, 180, 200, 240, 280, 320];
    Reader and the reading options both offer these. A saved time that isn't one of them (an older
    version's, say) is put in among them, so it still shows. Values are text, as a select keeps them. */
 const AUTOHIDE_STEPS = [0.5, 1, 1.5, 2, 2.5, 3, 5, 8, 15];
+// Settings → Reader → Top bar, also in the reader's options (reader.js): value -> words
+const TOP_BAR = { hide: t("Hide with the controls"), always: t("Always visible"), room: t("When there's room") };
+
 function autohideOptions(current) {
   const cur = +current, steps = [...AUTOHIDE_STEPS];
   if (cur > 0 && !steps.includes(cur)) steps.push(cur);
   steps.sort((a, b) => a - b);
-  return [...steps.map((n) => [String(n), `${n} second${n === 1 ? "" : "s"}`]), ["0", "Never"]];
+  return [...steps.map((n) => [String(n), tn("{n} second", "{n} seconds", n, { n: fmtNum(n) })]), ["0", t("Never")]];
 }
 
 /* App settings (theme, reader defaults, ...). One shared object; reload with loadSettings(). */

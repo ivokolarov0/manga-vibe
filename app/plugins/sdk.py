@@ -40,6 +40,9 @@ from app.api.filters import visible_series
 from app.metadata import editions, http
 from app.metadata.service import ID_FIELDS
 from app.metadata.text import clean_html, has_script, normalize_title
+# the app in other languages (Plugin API 27, issue #263): N_() marks a text (e.g. a Settings page's label)
+# that's translated where it's shown; t() / tn() translate into the language of the page being drawn
+from app.i18n import N_, t, tn
 
 __all__ = [
     "Book", "Library", "Link", "PluginSeriesData", "Series", "SeriesTag", "Shelf", "Tag",
@@ -49,4 +52,5 @@ __all__ = [
     "book_label", "chapter_gaps", "display_title", "numberings", "poster_version", "title_lang",
     "get_or_404", "visible_series",
     "editions", "http", "ID_FIELDS", "clean_html", "has_script",
+    "N_", "t", "tn",
 ]

@@ -1,0 +1,623 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: MangaVibe\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: app/web/templates/shell/toasts.html
+msgid "A new MangaVibe version needs a new Docker image"
+msgstr "新しいバージョンの MangaVibe には新しい Docker イメージが必要です"
+
+#: app/web/templates/shell/toasts.html
+msgid "A new version of MangaVibe is available"
+msgstr "MangaVibe の新しいバージョンがあります"
+
+#: app/web/static/js/app.js
+msgid "A white outline around the letters, so they stay readable over the art"
+msgstr "文字に白いふちを付けて、絵の上でも読みやすくします"
+
+#: app/web/static/js/common.js
+msgid "Always visible"
+msgstr "常に表示"
+
+#: app/web/templates/shell/toasts.html
+msgid "and {n} more"
+msgid_plural "and {n} more"
+msgstr[0] "ほか {n} 件"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Android app"
+msgstr "Android アプリ"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "App version"
+msgstr "アプリのバージョン"
+
+#: app/web/static/js/app.js
+msgid "Auto"
+msgstr "自動"
+
+#: app/web/static/js/app.js
+msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
+msgstr "戻る・全画面・オプションのボタンを、親指の届くこちら側に置きます"
+
+#: app/web/static/js/app.js
+msgid "Bottom"
+msgstr "下"
+
+#: app/web/static/js/app.js
+msgid "Browser's language"
+msgstr "ブラウザの言語"
+
+#: app/web/static/js/app.js
+msgid "Card size"
+msgstr "カードの大きさ"
+
+#: app/web/static/js/app.js
+msgid "Card width"
+msgstr "カードの幅"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Change server"
+msgstr "サーバーを変更"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Clear"
+msgstr "クリア"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Clear the search"
+msgstr "検索をクリア"
+
+#: app/web/templates/shell/toasts.html
+msgid "Close"
+msgstr "閉じる"
+
+#: app/web/static/js/app.js
+msgid "Contained"
+msgstr "制限あり"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Continue"
+msgstr "続きを読む"
+
+#: app/web/static/js/app.js
+msgid "Dark"
+msgstr "ダーク"
+
+#: app/web/static/js/app.js
+msgid "Darker pages are easier on the eyes, e.g. at night"
+msgstr "暗めのページは夜などに目にやさしくなります"
+
+#: app/web/static/js/app.js
+msgid "Default reading mode"
+msgstr "標準の読み方"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Display"
+msgstr "表示"
+
+#: app/web/templates/shell/banners.html
+msgid "Don't show again"
+msgstr "今後表示しない"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Download"
+msgstr "ダウンロード"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Download newest"
+msgstr "最新版をダウンロード"
+
+#: app/web/static/js/app.js
+msgid "English"
+msgstr "英語"
+
+#: app/web/static/js/app.js
+msgid "Falls back to the next one if missing"
+msgstr "ない場合は次のものを使います"
+
+#: app/web/static/js/app.js
+msgid "Fit"
+msgstr "サイズ合わせ"
+
+#: app/web/static/js/app.js
+msgid "Fit height"
+msgstr "高さに合わせる"
+
+#: app/web/static/js/app.js
+msgid "Fit screen"
+msgstr "画面に合わせる"
+
+#: app/web/static/js/app.js
+msgid "Fit width"
+msgstr "幅に合わせる"
+
+#: app/web/static/js/app.js
+msgid "From card size"
+msgstr "カードの大きさに合わせる"
+
+#: app/web/templates/shell/toasts.html
+msgid "Full release notes"
+msgstr "リリースノートを見る"
+
+#: app/web/static/js/app.js
+msgid "Full width"
+msgstr "全幅"
+
+#: app/web/static/js/app.js
+msgid "Fullscreen on first tap"
+msgstr "最初のタップで全画面"
+
+#: app/web/templates/shell/banners.html
+msgid "Fullscreen, the screen stays on, volume buttons turn pages"
+msgstr "全画面、画面は消えず、音量ボタンでページをめくれます"
+
+#: app/web/templates/shell/toasts.html
+msgid "Going back failed"
+msgstr "元に戻せませんでした"
+
+#: app/web/templates/shell/toasts.html
+msgid "Going back to an earlier version…"
+msgstr "以前のバージョンに戻しています…"
+
+#: app/web/static/js/app.js
+msgid "Grid"
+msgstr "グリッド"
+
+#: app/web/static/js/app.js
+msgid "Grid columns"
+msgstr "列の数"
+
+#: app/web/static/js/app.js
+msgid "Hide controls after"
+msgstr "操作ボタンを隠すまで"
+
+#: app/web/static/js/common.js
+msgid "Hide with the controls"
+msgstr "操作ボタンと一緒に隠す"
+
+#: app/web/static/js/app.js
+msgid "In the reader: volume down goes to the next page, volume up goes back"
+msgstr "リーダーで音量下げは次のページ、音量上げは前のページへ"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Install the app"
+msgstr "アプリをインストール"
+
+#: app/web/static/js/app.js
+msgid "Inverted"
+msgstr "反転"
+
+#: app/web/static/js/app.js
+msgid "Inverted turns white pages black with white lines. Warm takes out the blue light"
+msgstr "反転は白いページを黒地に白い線にします。暖色はブルーライトを抑えます"
+
+#: app/web/static/js/app.js
+msgid "Inverted, warm"
+msgstr "反転・暖色"
+
+#: app/web/static/js/app.js
+msgid "Just for you"
+msgstr "あなただけの設定"
+
+#: app/web/static/js/app.js
+msgid "Just for you, on wide screens. Cards are at least this wide and grow a little to fill the row"
+msgstr "あなただけの設定（広い画面）。カードは少なくともこの幅で、行を埋めるように少し広がります"
+
+#: app/web/static/js/app.js
+msgid "Just for you. Auto fits as many cards as the screen has room for; narrow screens show fewer than picked"
+msgstr "あなただけの設定。自動では画面に入るだけのカードを並べます。狭い画面では選んだ数より少なくなります"
+
+#: app/web/static/js/app.js
+msgid "Just for you. Full width lets the Library and Continue grids use the whole screen, however wide"
+msgstr "あなただけの設定。全幅にすると、ライブラリと続きを読むが画面の幅いっぱいに広がります"
+
+#: app/web/static/js/app.js
+msgid "Just for you. Missing words are shown in English"
+msgstr "あなただけの設定。翻訳がない言葉は英語で表示されます"
+
+#: app/web/static/js/app.js
+msgid "Language"
+msgstr "言語"
+
+#: app/web/static/js/app.js
+msgid "Large"
+msgstr "大"
+
+#: app/web/templates/shell/toasts.html
+msgid "Later"
+msgstr "あとで"
+
+#: app/web/static/js/app.js
+msgid "Lazy load"
+msgstr "スクロールで読み込む"
+
+#: app/web/templates/shell/banners.html
+msgid "Leave"
+msgstr "終了"
+
+#: app/web/static/js/app.js
+msgid "Left"
+msgstr "左"
+
+#: app/web/static/js/app.js
+msgid "Left back, right forward"
+msgstr "左で戻る、右で進む"
+
+#: app/web/static/js/app.js
+msgid "Less"
+msgstr "低め"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Library"
+msgstr "ライブラリ"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Library folders"
+msgstr "ライブラリのフォルダ"
+
+#: app/web/static/js/app.js
+msgid "Library listing"
+msgstr "ライブラリの一覧"
+
+#: app/web/static/js/app.js
+msgid "Library view"
+msgstr "ライブラリの表示"
+
+#: app/web/static/js/app.js
+msgid "Light"
+msgstr "ライト"
+
+#: app/web/static/js/app.js
+msgid "List"
+msgstr "リスト"
+
+#: app/web/static/js/app.js
+msgid "Load more while scrolling, or show numbered pages"
+msgstr "スクロールで続きを読み込むか、ページ番号で表示します"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Main"
+msgstr "メインナビゲーション"
+
+#: app/web/templates/shell/banners.html
+msgid "MangaVibe for Android"
+msgstr "Android 版 MangaVibe"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "MangaVibe: Library"
+msgstr "MangaVibe：ライブラリ"
+
+#: app/web/static/js/app.js
+msgid "Match device"
+msgstr "端末に合わせる"
+
+#: app/web/templates/ui/macros.html
+msgid "Matching metadata: {done} of {n} series"
+msgid_plural "Matching metadata: {done} of {n} series"
+msgstr[0] "メタデータを照合中：{n} シリーズ中 {done}"
+
+#: app/web/static/js/app.js
+msgid "Medium"
+msgstr "中"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Metadata"
+msgstr "メタデータ"
+
+#: app/web/static/js/app.js
+msgid "More"
+msgstr "高め"
+
+#: app/web/static/js/app.js
+msgid "More = smoother, uses more data"
+msgstr "多いほどスムーズですが、データ量が増えます"
+
+#: app/web/static/js/app.js
+msgid "More makes faint lines and small text stand out"
+msgstr "高めにすると薄い線や小さな文字が見やすくなります"
+
+#: app/web/static/js/app.js
+msgid "Most"
+msgstr "最大"
+
+#: app/web/static/js/app.js
+msgid "Native"
+msgstr "原題"
+
+#: app/web/static/js/app.js
+msgid "Navigation bar"
+msgstr "ナビゲーションバー"
+
+#: app/web/templates/views/settings.html
+msgid "Needs attention"
+msgstr "要確認"
+
+#: app/web/static/js/common.js
+msgid "Never"
+msgstr "隠さない"
+
+#: app/web/static/js/app.js
+msgid "Normal"
+msgstr "標準"
+
+#: app/web/templates/ui/macros.html
+msgid "Now: {title}"
+msgstr "処理中：{title}"
+
+#: app/web/static/js/app.js
+msgid "Off"
+msgstr "オフ"
+
+#: app/web/static/js/app.js
+msgid "Off (swipe only)"
+msgstr "オフ（スワイプのみ）"
+
+#: app/web/static/js/app.js
+msgid "On"
+msgstr "オン"
+
+#: app/web/static/js/app.js
+msgid "One-handed"
+msgstr "片手"
+
+#: app/web/static/js/app.js
+msgid "One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu"
+msgstr "片手：ページのほとんどで進み、端の細い部分で戻り、中央でメニューを開きます"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html app/web/templates/shell/banners.html
+msgid "Open app"
+msgstr "アプリを開く"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Open in the app"
+msgstr "アプリで開く"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Open the downloaded MangaVibe.apk and allow installing apps from your browser when Android asks. Then come back here and tap Open app"
+msgstr "ダウンロードした MangaVibe.apk を開き、Android に聞かれたらブラウザからのインストールを許可してください。その後ここに戻って「アプリを開く」をタップします"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead"
+msgstr "アプリを開いてこのサーバーに接続します。インストールされていない場合はアプリをダウンロードします"
+
+#: app/web/static/js/app.js
+msgid "Original"
+msgstr "原寸"
+
+#: app/web/static/js/app.js
+msgid "Overlay box background"
+msgstr "オーバーレイの背景"
+
+#: app/web/static/js/app.js
+msgid "Overlay text outline"
+msgstr "オーバーレイ文字のふち"
+
+#: app/web/static/js/app.js
+msgid "Page brightness"
+msgstr "ページの明るさ"
+
+#: app/web/static/js/app.js
+msgid "Page colours"
+msgstr "ページの色"
+
+#: app/web/static/js/app.js
+msgid "Page contrast"
+msgstr "ページのコントラスト"
+
+#: app/web/static/js/app.js
+msgid "Page width"
+msgstr "ページの幅"
+
+#: app/web/static/js/app.js
+msgid "Pages"
+msgstr "ページ"
+
+#: app/web/static/js/app.js
+msgid "Pages to preload"
+msgstr "先読みするページ数"
+
+#: app/web/static/js/app.js
+msgid "Pages: one at a time, the next one on the right (→, a tap on the right, a swipe to the left). For series whose library has no mode of its own (Settings → Libraries); each series can be set by hand"
+msgstr "ページ：1 ページずつ、次のページは右（→、右側をタップ、左へスワイプ）。独自の読み方がないライブラリのシリーズに使います（設定 → ライブラリ）。シリーズごとにも設定できます"
+
+#: app/web/static/js/app.js
+msgid "Paginated"
+msgstr "ページ番号"
+
+#: app/web/static/js/app.js
+msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
+msgstr "スマートフォンとタブレット向け。ロック後も次のタップで全画面に戻ります。マウスでは全画面ボタンか F キーを使います"
+
+#: app/web/static/js/app.js
+msgid "Plugin"
+msgstr "プラグイン"
+
+#: app/web/static/js/app.js
+msgid "Plugin boxes over the page, e.g. translations. Lower shows the art underneath"
+msgstr "ページ上のプラグインの枠（翻訳など）。低いほど下の絵が見えます"
+
+#: app/web/static/js/app.js app/web/templates/shell/banners.html
+msgid "Plugins"
+msgstr "プラグイン"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
+msgstr "ブラウザの代わりに MangaVibe アプリで読めます。ブラウザのバーのない全画面で、読んでいる間は画面が消えず、音量ボタンでページをめくれます。同じ MangaVibe を表示するので、ライブラリ・進み具合・設定はそのままです。"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Reader"
+msgstr "リーダー"
+
+#: app/web/static/js/app.js
+msgid "Reading hand"
+msgstr "利き手"
+
+#: app/web/static/js/app.js
+msgid "Right"
+msgstr "右"
+
+#: app/web/static/js/app.js
+msgid "Romaji"
+msgstr "ローマ字"
+
+#: app/web/templates/shell/banners.html
+msgid "Safe mode"
+msgstr "セーフモード"
+
+#: app/web/static/js/app.js
+msgid "Saved"
+msgstr "保存しました"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Search"
+msgstr "検索"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Search your library"
+msgstr "ライブラリを検索"
+
+#: app/web/templates/shell/toasts.html
+msgid "See {url}"
+msgstr "{url} を参照"
+
+#: app/web/static/js/app.js
+msgid "See-through"
+msgstr "透明"
+
+#: app/web/static/js/app.js
+msgid "Series page full width as well"
+msgstr "シリーズのページも全幅にする"
+
+#: app/web/static/js/app.js
+msgid "Series per page"
+msgstr "1 ページのシリーズ数"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Server"
+msgstr "サーバー"
+
+#: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
+msgid "Settings"
+msgstr "設定"
+
+#: app/web/templates/ui/macros.html
+msgid "Settings ({n} need attention)"
+msgstr "設定（要確認 {n} 件）"
+
+#: app/web/templates/ui/macros.html
+msgid "Settings, {n} need attention"
+msgstr "設定、要確認 {n} 件"
+
+#: app/web/templates/shell/toasts.html
+msgid "Skip this version"
+msgstr "このバージョンをスキップ"
+
+#: app/web/static/js/app.js
+msgid "Small"
+msgstr "小"
+
+#: app/web/static/js/app.js
+msgid "Solid"
+msgstr "不透明"
+
+#: app/web/static/js/app.js
+msgid "Tap zones"
+msgstr "タップ領域"
+
+#: app/web/static/js/app.js
+msgid "The page of a series also uses the whole screen"
+msgstr "シリーズのページも画面全体を使います"
+
+#: app/web/templates/shell/toasts.html
+msgid "The page reloads by itself when the new version is running."
+msgstr "新しいバージョンが動き出すと、ページは自動で再読み込みされます。"
+
+#: app/web/static/js/app.js
+msgid "The series and chapter at the top. When there's room: it stays while the page leaves space above it, so it covers none of the picture"
+msgstr "上部のシリーズ名と章。「余白があるとき」は、ページの上に余白がある間だけ表示し、絵を隠しません"
+
+#: app/web/static/js/app.js
+msgid "Theme"
+msgstr "テーマ"
+
+#: app/web/static/js/app.js
+msgid "Thick"
+msgstr "太い"
+
+#: app/web/static/js/app.js
+msgid "Thin"
+msgstr "細い"
+
+#: app/web/static/js/app.js
+msgid "Title language"
+msgstr "タイトルの言語"
+
+#: app/web/static/js/app.js
+msgid "Top"
+msgstr "上"
+
+#: app/web/static/js/app.js
+msgid "Top bar"
+msgstr "上部バー"
+
+#: app/web/templates/shell/toasts.html
+msgid "Update failed"
+msgstr "更新に失敗しました"
+
+#: app/web/templates/shell/toasts.html
+msgid "Update now"
+msgstr "今すぐ更新"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Updates"
+msgstr "更新"
+
+#: app/web/templates/shell/toasts.html
+msgid "Updating MangaVibe…"
+msgstr "MangaVibe を更新しています…"
+
+#: app/web/static/js/app.js
+msgid "Vertical"
+msgstr "縦スクロール"
+
+#: app/web/static/js/app.js
+msgid "Volume buttons turn pages"
+msgstr "音量ボタンでページをめくる"
+
+#: app/web/static/js/app.js
+msgid "Warm"
+msgstr "暖色"
+
+#: app/web/static/js/app.js
+msgid "When nothing is touched. Turning the page or a tap in the middle hides them at once"
+msgstr "何も操作しないとき。ページをめくるか中央をタップするとすぐに隠れます"
+
+#: app/web/static/js/common.js
+msgid "When there's room"
+msgstr "余白があるとき"
+
+#: app/web/static/js/app.js
+msgid "Where Library and Continue sit (with the Sidebar plugin: on phones only)"
+msgstr "ライブラリと続きを読むの位置（サイドバープラグインがある場合はスマートフォンのみ）"
+
+#: app/web/templates/shell/toasts.html
+msgid "Working…"
+msgstr "処理中…"
+
+#: app/web/templates/shell/banners.html
+msgid "Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble."
+msgstr "自分で入れたプラグインは読み込まれておらず、組み込みのものだけです。問題のあるプラグインをオフにしてください。"
+
+#: app/web/static/js/app.js
+msgid "{n} px"
+msgstr "{n} px"
+
+#: app/web/static/js/common.js
+msgid "{n} second"
+msgid_plural "{n} seconds"
+msgstr[0] "{n} 秒"

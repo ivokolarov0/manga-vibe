@@ -141,7 +141,7 @@ function cardSub(s) {
 }
 
 /* "today", "yesterday", "3 days ago", "2 months ago" for a time in ms */
-const RELATIVE = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+const RELATIVE = new Intl.RelativeTimeFormat(LANG, { numeric: "auto" });
 function ago(ms) {
   const days = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(ms).setHours(0, 0, 0, 0)) / 864e5);
   if (days < 7) return RELATIVE.format(-Math.max(days, 0), "day");
@@ -374,7 +374,7 @@ async function refreshUpdate() {
 function askDatabase(d, label) {
   const older = `${label} is older than your database: newer versions have changed it since.`;
   if (d.backup) {
-    const when = d.backup.date ? new Date(d.backup.date).toLocaleString() : "an earlier update";
+    const when = d.backup.date ? fmtDateTime(d.backup.date) : "an earlier update";
     if (confirm(`${older}\n\nPut back the copy of the database made on ${when}? Reading progress, ` +
                 "settings and other changes made since then are lost.\n\nCancel to see the other choice.")) return "restore";
   }
@@ -440,7 +440,7 @@ function updateToast() {
       const [sha, at] = this.dismissed.split("|");
       return !(sha === a.sha && Date.now() - +at < 86400000);
     },
-    get when() { return this.a?.date ? new Date(this.a.date).toLocaleDateString() : ""; },
+    get when() { return this.a?.date ? fmtDate(this.a.date) : ""; },
     later() {
       this.dismissed = `${this.a.sha}|${Date.now()}`;
       try { localStorage.setItem(DISMISS_KEY, this.dismissed); } catch {}
@@ -1037,6 +1037,9 @@ window.MangaVibe = {
   onStart(fn) { alpineStarted ? fn() : document.addEventListener("alpine:init", fn); },
   api,             // api(path, { method, body }) -> the JSON answer; throws Error(detail) on 4xx/5xx
   toast,           // toast(text, ms = 3000, kind = "" | "error")
+  // the page's language (Plugin API 27, #263): t(text, values) and tn(singular, plural, n, values) as in
+  // common.js, and dates and numbers written its way. In markup, t() and tn() work as they are
+  t, tn, lang: LANG, fmtDate, fmtDateTime, fmtTime, fmtNum,
   // what views and plugin markup can use to show things as the app does (Plugin API 17), e.g. a card of
   // your own: x-text="MangaVibe.ui.cardSub(s)"
   ui: {
@@ -1744,88 +1747,91 @@ function attentionView() {
 // add more from their scripts with MangaVibe.settingsPage (e.g. libraries: Libraries, first). The icon is the
 // name of one in the sprite (templates/shell/icons.html); a plugin may also give any character.
 const ANDROID = /Android/i.test(navigator.userAgent);
-const SETTINGS_NAV = (window.MV_SETTINGS_PAGES || [{ key: "plugins", label: "Plugins", icon: "blocks" }])
+const SETTINGS_NAV = (window.MV_SETTINGS_PAGES || [{ key: "plugins", label: t("Plugins"), icon: "blocks" }])
   .filter((p) => !p.android || ANDROID)  // e.g. the Android app's page: only on Android phones
   .map((p) => [p.key, p.label, p.icon, p.plugin || "", !!p.personal]);
 /* The plain settings of a page: a label, a hint and a dropdown, saved when changed. Each is
    { key, label, hint, options: [[value, text], ...], show(st) }; show (when there) decides whether
    it's there at all. choices(value) (when there) gives the options for the saved value instead.
-   Values are strings, like st's; save() turns them into numbers or booleans. */
-const ON_OFF = [["true", "On"], ["false", "Off"]];
+   Values are strings, like st's; save() turns them into numbers or booleans. The words in the page's
+   language (t(), issue #263). */
+const ON_OFF = [["true", t("On")], ["false", t("Off")]];
+const pct = (n) => fmtNum(n / 100, { style: "percent" });
 const SETTING_ROWS = {
   display: [
-    { key: "theme", label: "Theme", hint: "Just for you", personal: true,
-      options: [["dark", "Dark"], ["light", "Light"], ["auto", "Match device"]] },
-    { key: "card_size", label: "Card size", options: [["small", "Small"], ["medium", "Medium"], ["large", "Large"]] },
-    { key: "grid_columns", label: "Grid columns", personal: true,
-      hint: "Just for you. Auto fits as many cards as the screen has room for; narrow screens show fewer than picked",
-      options: [["auto", "Auto"], ...GRID_COLUMNS.map((n) => [String(n), String(n)])] },
+    // the app's language: the browser's, or one picked (the page is drawn again in it)
+    { key: "language", label: t("Language"), hint: t("Just for you. Missing words are shown in English"), personal: true,
+      options: [["auto", t("Browser's language")], ...(I18N.languages || ["en"]).map((c) => [c, languageName(c)])] },
+    { key: "theme", label: t("Theme"), hint: t("Just for you"), personal: true,
+      options: [["dark", t("Dark")], ["light", t("Light")], ["auto", t("Match device")]] },
+    { key: "card_size", label: t("Card size"), options: [["small", t("Small")], ["medium", t("Medium")], ["large", t("Large")]] },
+    { key: "grid_columns", label: t("Grid columns"), personal: true,
+      hint: t("Just for you. Auto fits as many cards as the screen has room for; narrow screens show fewer than picked"),
+      options: [["auto", t("Auto")], ...GRID_COLUMNS.map((n) => [String(n), fmtNum(n)])] },
     // with Auto columns: the cards are at least this wide and stretch to fill the row (CSS minmax)
-    { key: "card_width", label: "Card width", personal: true, sub: true,
-      hint: "Just for you, on wide screens. Cards are at least this wide and grow a little to fill the row",
-      options: [["auto", "From card size"], ...CARD_WIDTHS.map((n) => [String(n), `${n}px`])],
+    { key: "card_width", label: t("Card width"), personal: true, sub: true,
+      hint: t("Just for you, on wide screens. Cards are at least this wide and grow a little to fill the row"),
+      options: [["auto", t("From card size")], ...CARD_WIDTHS.map((n) => [String(n), t("{n} px", { n: fmtNum(n) })])],
       show: (st) => st.grid_columns === "auto" },
-    { key: "page_width", label: "Page width", personal: true,
-      hint: "Just for you. Full width lets the Library and Continue grids use the whole screen, however wide",
-      options: [["contained", "Contained"], ["full", "Full width"]] },
-    { key: "page_width_series", label: "Series page full width as well", personal: true, sub: true, check: true,
-      hint: "The page of a series also uses the whole screen", show: (st) => st.page_width === "full" },
-    { key: "nav_position", label: "Navigation bar", hint: "Where Library and Continue sit (with the Sidebar plugin: on phones only)",
-      options: [["bottom", "Bottom"], ["top", "Top"]] },
-    { key: "library_listing", label: "Library listing", hint: "Load more while scrolling, or show numbered pages",
-      options: [["lazy", "Lazy load"], ["paged", "Paginated"]] },
-    { key: "library_page_size", label: "Series per page", options: PAGE_SIZES.map((n) => [String(n), String(n)]),
+    { key: "page_width", label: t("Page width"), personal: true,
+      hint: t("Just for you. Full width lets the Library and Continue grids use the whole screen, however wide"),
+      options: [["contained", t("Contained")], ["full", t("Full width")]] },
+    { key: "page_width_series", label: t("Series page full width as well"), personal: true, sub: true, check: true,
+      hint: t("The page of a series also uses the whole screen"), show: (st) => st.page_width === "full" },
+    { key: "nav_position", label: t("Navigation bar"), hint: t("Where Library and Continue sit (with the Sidebar plugin: on phones only)"),
+      options: [["bottom", t("Bottom")], ["top", t("Top")]] },
+    { key: "library_listing", label: t("Library listing"), hint: t("Load more while scrolling, or show numbered pages"),
+      options: [["lazy", t("Lazy load")], ["paged", t("Paginated")]] },
+    { key: "library_page_size", label: t("Series per page"), options: PAGE_SIZES.map((n) => [String(n), fmtNum(n)]),
       show: (st) => st.library_listing === "paged" },
     // also the grid/list switch above the library (the library picks it up when shown again)
-    { key: "library_view", label: "Library view", hint: "Just for you", personal: true,
-      options: [["grid", "Grid"], ["list", "List"]] },
-    { key: "title_language", label: "Title language", hint: "Falls back to the next one if missing",
-      options: [["english", "English"], ["romaji", "Romaji"], ["native", "Native"]] },
+    { key: "library_view", label: t("Library view"), hint: t("Just for you"), personal: true,
+      options: [["grid", t("Grid")], ["list", t("List")]] },
+    { key: "title_language", label: t("Title language"), hint: t("Falls back to the next one if missing"),
+      options: [["english", t("English")], ["romaji", t("Romaji")], ["native", t("Native")]] },
   ],
   reader: [
-    { key: "reader_mode", label: "Default reading mode",
-      hint: "Pages: one at a time, the next one on the right (→, a tap on the right, a swipe to the left). " +
-        "For series whose library has no mode of its own (Settings → Libraries); each series can be set by hand",
-      options: [["paged", "Pages"], ["vertical", "Vertical"]] },
-    { key: "reader_fit", label: "Fit",
-      options: [["screen", "Fit screen"], ["width", "Fit width"], ["height", "Fit height"], ["original", "Original"]] },
+    { key: "reader_mode", label: t("Default reading mode"),
+      hint: t("Pages: one at a time, the next one on the right (→, a tap on the right, a swipe to the left). For series whose library has no mode of its own (Settings → Libraries); each series can be set by hand"),
+      options: [["paged", t("Pages")], ["vertical", t("Vertical")]] },
+    { key: "reader_fit", label: t("Fit"),
+      options: [["screen", t("Fit screen")], ["width", t("Fit width")], ["height", t("Fit height")], ["original", t("Original")]] },
     // no fullscreen in the Android app: it already fills the screen between the phone's bars
-    { key: "auto_fullscreen", label: "Fullscreen on first tap", options: ON_OFF, show: () => !Alpine.store("app").inApp,
-      hint: "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F" },
-    { key: "preload", label: "Pages to preload", hint: "More = smoother, uses more data",
-      options: ["2", "3", "4", "5", "8"].map((n) => [n, n]) },
-    { key: "reader_autohide", label: "Hide controls after",
-      hint: "When nothing is touched. Turning the page or a tap in the middle hides them at once",
+    { key: "auto_fullscreen", label: t("Fullscreen on first tap"), options: ON_OFF, show: () => !Alpine.store("app").inApp,
+      hint: t("Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F") },
+    { key: "preload", label: t("Pages to preload"), hint: t("More = smoother, uses more data"),
+      options: ["2", "3", "4", "5", "8"].map((n) => [n, fmtNum(+n)]) },
+    { key: "reader_autohide", label: t("Hide controls after"),
+      hint: t("When nothing is touched. Turning the page or a tap in the middle hides them at once"),
       // also in the reading options; choices(v): the options, with a saved time that isn't one of them
       options: autohideOptions(), choices: autohideOptions },
-    // the same choice (and words) in the reading options: TOP_BAR in reader.js
-    { key: "reader_top_bar", label: "Top bar",
-      hint: "The series and chapter at the top. When there's room: it stays while the page leaves space " +
-        "above it, so it covers none of the picture",
-      options: [["hide", "Hide with the controls"], ["always", "Always visible"], ["room", "When there's room"]] },
-    { key: "reader_drawer_side", label: "Reading hand",
-      hint: "Back, fullscreen and the options button sit on this side, within thumb reach",
-      options: [["right", "Right"], ["left", "Left"]] },
-    { key: "reader_tap_layout", label: "Tap zones",
-      hint: "One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu",
-      options: [["default", "Left back, right forward"], ["one-handed", "One-handed"], ["off", "Off (swipe only)"]] },
-    { key: "overlay_opacity", label: "Overlay box background",
-      hint: "Plugin boxes over the page, e.g. translations. Lower shows the art underneath",
-      options: [["100", "Solid"], ["75", "75%"], ["50", "50%"], ["25", "25%"], ["0", "See-through"]] },
-    { key: "overlay_outline", label: "Overlay text outline",
-      hint: "A white outline around the letters, so they stay readable over the art",
-      options: [["off", "Off"], ["thin", "Thin"], ["thick", "Thick"]] },
-    { key: "reader_brightness", label: "Page brightness", hint: "Darker pages are easier on the eyes, e.g. at night",
-      options: [["100", "Normal"], ["85", "85%"], ["70", "70%"], ["55", "55%"], ["40", "40%"]] },
-    { key: "reader_contrast", label: "Page contrast", hint: "More makes faint lines and small text stand out",
-      options: [["75", "Less"], ["100", "Normal"], ["125", "More"], ["150", "Most"]] },
-    { key: "reader_colors", label: "Page colours",
-      hint: "Inverted turns white pages black with white lines. Warm takes out the blue light",
-      options: [["normal", "Normal"], ["dark", "Inverted"], ["warm", "Warm"], ["dark-warm", "Inverted, warm"]] },
+    // the same choice (and words) in the reading options: TOP_BAR in common.js
+    { key: "reader_top_bar", label: t("Top bar"),
+      hint: t("The series and chapter at the top. When there's room: it stays while the page leaves space above it, so it covers none of the picture"),
+      options: Object.entries(TOP_BAR) },
+    { key: "reader_drawer_side", label: t("Reading hand"),
+      hint: t("Back, fullscreen and the options button sit on this side, within thumb reach"),
+      options: [["right", t("Right")], ["left", t("Left")]] },
+    { key: "reader_tap_layout", label: t("Tap zones"),
+      hint: t("One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu"),
+      options: [["default", t("Left back, right forward")], ["one-handed", t("One-handed")], ["off", t("Off (swipe only)")]] },
+    { key: "overlay_opacity", label: t("Overlay box background"),
+      hint: t("Plugin boxes over the page, e.g. translations. Lower shows the art underneath"),
+      options: [["100", t("Solid")], ["75", pct(75)], ["50", pct(50)], ["25", pct(25)], ["0", t("See-through")]] },
+    { key: "overlay_outline", label: t("Overlay text outline"),
+      hint: t("A white outline around the letters, so they stay readable over the art"),
+      options: [["off", t("Off")], ["thin", t("Thin")], ["thick", t("Thick")]] },
+    { key: "reader_brightness", label: t("Page brightness"), hint: t("Darker pages are easier on the eyes, e.g. at night"),
+      options: [["100", t("Normal")], ["85", pct(85)], ["70", pct(70)], ["55", pct(55)], ["40", pct(40)]] },
+    { key: "reader_contrast", label: t("Page contrast"), hint: t("More makes faint lines and small text stand out"),
+      options: [["75", t("Less")], ["100", t("Normal")], ["125", t("More")], ["150", t("Most")]] },
+    { key: "reader_colors", label: t("Page colours"),
+      hint: t("Inverted turns white pages black with white lines. Warm takes out the blue light"),
+      options: [["normal", t("Normal")], ["dark", t("Inverted")], ["warm", t("Warm")], ["dark-warm", t("Inverted, warm")]] },
   ],
   app: [
-    { key: "reader_volume_keys", label: "Volume buttons turn pages",
-      hint: "In the reader: volume down goes to the next page, volume up goes back", options: ON_OFF },
+    { key: "reader_volume_keys", label: t("Volume buttons turn pages"),
+      hint: t("In the reader: volume down goes to the next page, volume up goes back"), options: ON_OFF },
   ],
 };
 // Settings pages that are each person's own (with accounts, everyone sees them; the rest is for admins) are
@@ -1953,11 +1959,11 @@ function settingsView() {
     // phones: the nav is one "current page ▾" button that opens a menu
     navOpen: false,
     get current() {
-      if (this.section === "plugin") return ["blocks", this.plugin?.name || "Plugin"];
+      if (this.section === "plugin") return ["blocks", this.plugin?.name || t("Plugin")];
       const n = this.nav.find(([k]) => k === this.section);
       if (n) return [n[2], n[1]];
       const a = ATT_TABS.find(([k]) => "att-" + k === this.section);
-      return a ? ["alert", a[1]] : ["settings", "Settings"];
+      return a ? ["alert", a[1]] : ["settings", t("Settings")];
     },
     // problems worth a look (the red counts), shown on the closed menu button
     get attAlerts() {
@@ -1984,7 +1990,7 @@ function settingsView() {
     },
     async load() {
       if (this.$store.app.view !== "settings") return;
-      document.title = "Settings";
+      document.title = t("Settings");
       // selects compare strings, so keep every value as text here; save() converts back
       const strings = () => Object.fromEntries(Object.entries(settings).map(([k, v]) => [k, String(v)]));
       if (!this.$store.app.admin) {  // accounts: only their own pages (Reader)
@@ -2028,10 +2034,12 @@ function settingsView() {
       if (v === "true" || v === "false") v = v === "true";
       else if (typeof v === "string" && /^\d+(\.\d+)?$/.test(v)) v = +v;  // e.g. 0.5 seconds
       await api("/api/settings", { method: "PUT", body: { [key]: v } });
+      // the page is drawn in its language on the server: draw it again, staying where we are
+      if (key === "language") { location.reload(); return; }
       if (key === "theme") setTheme(v);
       await loadSettings();
       if (["title_language", "library_listing", "library_page_size", "grid_columns"].includes(key)) this.$store.app.libraryDirty++;
-      toast("Saved");
+      toast(t("Saved"));
     },
     async rescan(lib) {
       const r = await api(lib ? `/api/libraries/${lib.id}/scan` : "/api/scan", { method: "POST" })
@@ -2070,12 +2078,12 @@ Your files are not touched. `
     get upd() { return this.$store.app.update; },
     versionText(v) {
       if (!v?.sha) return "Built-in version (from the Docker image)";
-      return v.short + (v.date ? ` · ${new Date(v.date).toLocaleDateString()}` : "")
+      return v.short + (v.date ? ` · ${fmtDate(v.date)}` : "")
         + (v.message ? ` · ${v.message}` : "") + (v.builtin ? " (built into the image)" : "");
     },
     get checkedText() {
       const at = this.upd?.status?.checked_at;
-      return at ? `Last checked ${new Date(at * 1000).toLocaleString()}` : "Not checked yet";
+      return at ? `Last checked ${fmtDateTime(at * 1000)}` : "Not checked yet";
     },
     async checkUpdate() {
       this.checking = true;
@@ -2104,7 +2112,7 @@ Your files are not touched. `
     olderText(v) {
       const where = v.builtin ? "Built into the Docker image, no download"
         : v.on_disk ? "Still on the server, no download" : "Downloaded from GitHub";
-      return [v.date && new Date(v.date).toLocaleDateString(), v.message, where].filter(Boolean).join(" · ");
+      return [v.date && fmtDate(v.date), v.message, where].filter(Boolean).join(" · ");
     },
     goBack(v) {
       const cur = this.upd?.current?.short || "the running version";
@@ -2211,7 +2219,7 @@ Your files are not touched. `
     pluginUpdateText(p) {
       const u = p.update;
       if (u.error) return u.error;
-      const when = u.checked_at ? ` · last checked ${new Date(u.checked_at * 1000).toLocaleString()}` : " · not checked yet";
+      const when = u.checked_at ? ` · last checked ${fmtDateTime(u.checked_at * 1000)}` : " · not checked yet";
       if (u.skipped) return `You skipped version ${u.latest}. A newer one will show here` + when;
       if (u.available) return `Version ${u.latest} is available (you have ${p.version})` + when;
       return `Up to date. New versions come from github.com/${u.repo}` + when;
@@ -2379,7 +2387,7 @@ Your files are not touched. `
       this.scan = st;
       if (finished) this.libs = await api("/api/libraries").catch(() => this.libs);  // new series counts
       this.scanText = st.running ? `Scanning ${st.done}/${st.total}: ${st.current || ""}`
-        : st.finished_at ? `Last scan finished ${new Date(st.finished_at).toLocaleString()}`
+        : st.finished_at ? `Last scan finished ${fmtDateTime(st.finished_at)}`
           + (st.new_books ? ` · ${st.new_books} new books` : "") + (st.errors ? ` · ${st.errors} errors` : "") : "";
       if (st.running) { this.$store.app.libraryDirty++; this.timers.push(setTimeout(() => this.pollScan(), 1000)); }
     },
@@ -2389,7 +2397,7 @@ Your files are not touched. `
       this.$store.app.meta = st;  // the progress bar (Metadata, Missing metadata)
       const parts = [];
       if (st.matched || st.failed) parts.push(`${st.matched} matched, ${st.failed} need attention`);
-      if (st.providers_down_until) parts.push(`AniList/MangaUpdates not reachable; retrying at ${new Date(st.providers_down_until).toLocaleTimeString()}`);
+      if (st.providers_down_until) parts.push(`AniList/MangaUpdates not reachable; retrying at ${fmtTime(st.providers_down_until)}`);
       this.metaText = parts.join(" · ") || (st.current || st.queued ? ""
         : "Idle. New series are matched automatically after each scan.");
       if (st.current || st.queued) { this.$store.app.libraryDirty++; this.timers.push(setTimeout(() => this.pollMeta(), 2000)); }

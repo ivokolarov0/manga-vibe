@@ -101,6 +101,29 @@ Jinja only joins the files; everything that moves is Alpine. The two don't clash
   changes, so an edit shows on the next page load.
 - A new template has to be included somewhere: a test fails on a file nobody uses.
 
+## Languages
+
+Every text the page shows goes through `t()` (issue #263, `app/i18n.py`), so the app can be shown in other
+languages. The translations are gettext files in `app/web/i18n/`: `messages.pot` (the template, made from
+the code) and one `<lang>.po` per language (`bg`, `de`, `ja` so far). English is the code itself.
+
+- **Templates**: `{{ t("Saved") }}`, `{{ t("See {url}", url=link) }}`, `{{ tn("{n} book", "{n} books", count) }}`.
+  The page is drawn in the person's language on the server.
+- **Alpine expressions and scripts**: `t('Saved')`, `t('Now: {title}', { title })`, `tn(…)` (`common.js`);
+  dates and numbers with `fmtDate`, `fmtDateTime`, `fmtTime`, `fmtNum`. Don't call a variable `t`
+  (`x-for="t in tags"`): it would hide `t()` inside it; a test checks the templates.
+- **Python** (e.g. a Settings page's label): `N_("Display")` marks it, `t()` translates it where it's shown.
+- Give `t()` the English text itself as one plain string ("…" or '…'): `python -m app.i18n` finds the texts
+  by reading the code, so a variable, a `template ${string}` or `"a" + "b"` isn't found. Put changing parts
+  in `{name}` placeholders instead of joining sentences, so a translator can move them.
+- **After adding or changing texts, run `python -m app.i18n`**: it writes `messages.pot` and adds the new
+  texts, empty, to each `.po` (and drops the ones the code no longer has). `tests/test_i18n.py` fails until
+  you do, and when a translation loses a placeholder.
+- **Translating**: fill in the `msgstr` lines of a `.po` file, by hand or with a gettext editor such as
+  Poedit. An empty one is shown in English. **A new language**: `python -m app.i18n new fr`, then set its
+  `Plural-Forms` header (Poedit and the gettext manual list them) and translate; it shows up in Settings →
+  Display → Language by itself.
+
 ## New features and remote control
 
 Everything a person can do should stay possible through

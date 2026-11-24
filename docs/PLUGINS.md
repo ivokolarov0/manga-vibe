@@ -125,6 +125,30 @@ class Hello(Plugin):
 | **Tools for assistants and voice control** (MCP) | `mcp_tools = [McpTool(...)]` and `run_mcp_tool(ctx, name, args)` on the server, `MangaVibe.screenCommand()` in the page (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
 | **A reader of its own** for books the page reader can't show (light novels) | `reads = ["epub-text"]`, `ctx.text_sections(book)` on the server, `MangaVibe.registerReader()` in the page (see [A reader of its own](#a-reader-of-its-own)). Plugin API 14 |
 | **Do a part of the app, replacing the built-in one** (e.g. the filters, a page) | `provides = {"<job>": 1}`, and `requires` for what it needs another plugin to do (see [Jobs](#jobs-replacing-a-part-of-the-app)). Plugin API 15 |
+| **Speak the reader's language** | `t("…")` in markup, `MangaVibe.t()` in scripts, `N_()` / `t()` from `app.plugins.sdk` in Python, and `i18n/<lang>.po` files next to its `__init__.py` (see [Translations](#translations)). Plugin API 27 |
+
+## Translations
+
+Plugin API 27 (issue #263). The app is shown in each person's language (Settings → Display → Language;
+by default the browser's), from gettext `.po` files: `app/web/i18n/<lang>.po`, one per language, with
+`app/web/i18n/messages.pot` as the template. The English text is the key (`msgid`), so a text that has no
+translation is simply shown in English.
+
+- **In markup** (your `html`, your view templates): `t('Sync now')` and `tn('{n} chapter', '{n} chapters', n)`
+  work in Alpine expressions, e.g. `<button x-text="t('Sync now')">`. In a view template (Jinja) use
+  `{{ t("Sync now") }}`: it's drawn in the page's language on the server.
+- **In your `js`**: `MangaVibe.t(text, values)`, `MangaVibe.tn(singular, plural, n, values)`, `MangaVibe.lang`
+  (e.g. `"bg"`), and `MangaVibe.fmtDate`, `fmtDateTime`, `fmtTime`, `fmtNum`, which write dates and numbers
+  the language's way (`Intl`).
+- **In Python**: `from app.plugins.sdk import N_, t, tn`. Mark a label that's defined once and shown later
+  with `N_("Sync")` (e.g. a `settings_pages` label: the page translates it); `t()` translates while a page is
+  drawn.
+- **Placeholders** are `{name}`: `t("Synced {count} series", { count })` (Python: `t("…", count=3)`). `tn()`
+  gives `{n}`. Give `t()` the English text as a plain string, not a variable: the texts are found in the code.
+- **Your own translations**: a folder plugin ships `i18n/<lang>.po` next to its `__init__.py`, the same
+  format as the app's (`msgid` = your English text, `msgstr` = the translation, and a `Plural-Forms` header
+  for `tn()`). They're used while your plugin is on, for texts the app's own files don't translate (the
+  app's own words can't be changed). Start one by copying a language's header from `app/web/i18n/`.
 
 ## Categories
 
@@ -1197,11 +1221,12 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   | titles and numbers | `display_title(series, lang)`, `title_lang(db)`, `book_label(book)`, `numberings(db, series)`, `chapter_gaps`, `poster_version(series)` |
   | your own API | `get_or_404(db, Model, id)`, `visible_series(db, request)` (the series the person asking may see) |
   | metadata | `http` (also `ctx.http`), `clean_html`, `has_script`, `editions`, `ID_FIELDS` |
+  | languages | `N_`, `t`, `tn` (see [Translations](#translations)) |
 
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 24 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 27 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

@@ -8,7 +8,7 @@
     - safe: true in safe mode (/?safe=1), when only the built-in plugins are in the page.
     The blocks below are where a plugin will replace a part of the page (issue #202). -#}
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="{{ lang }}" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -76,7 +76,8 @@
   {{ slot("sheets") }}
 
   <!-- Settings' menu: the running plugins' settings_pages and the core's (app/plugins/web.py settings_pages) -->
-  <script>window.MV_SETTINGS_PAGES = {{ settings_pages | tojson }};
+  <script>window.MV_I18N = {{ i18n | tojson }};  // the page's language and its texts, for t() (js/common.js, app/i18n.py)
+    window.MV_SETTINGS_PAGES = {{ settings_pages | tojson }};
     window.MV_ATTENTION_LISTS = {{ attention_lists | tojson }};  // the Needs attention lists (#219)</script>
   <script src="/static/js/common.js"></script>
   <script src="/static/js/reader.js"></script>

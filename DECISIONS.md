@@ -1207,3 +1207,27 @@ Plugin API version, and the app works after every one.
   point, and for 600 ms after the bars hide (a click that turned the page) a movement doesn't bring
   them back.
 - **JS, not CSS**: `:hover` can't tell how far the pointer moved, and the bars are shown by `showUi()`.
+
+### Other languages (issue #263, Plugin API 27)
+
+- **gettext `.po` files** (the owner's choice), not JSON: translators' tools (Poedit, Weblate) read them,
+  they carry plural rules, and the English text as the key means a missing translation is just English.
+  `messages.pot` is the template; `bg`, `de` and `ja` are the first languages.
+- **Read by the app itself** (`app/i18n.py`), no Babel and no compiled `.mo` files: a small reader, one
+  less dependency and no build step. Plural rules come from each file's `Plural-Forms`: on the server
+  through Python's `gettext.c2py`, in the browser as a function made from the same expression, which is
+  checked to hold only `n`, numbers and operators first. A fraction (1.5 seconds) takes the form of 2.
+- **One helper everywhere: `t()` and `tn()`**, in Jinja, in Alpine expressions and in scripts, with
+  `{name}` placeholders (not `%(name)s`) so the same text works on both sides. `N_()` marks Python texts
+  that are translated later. `python -m app.i18n` finds the texts by reading the code, so they must be
+  plain strings; it also brings the `.po` files up to date, and a test fails until it has been run.
+- **Templates are translated on the server** (the page is drawn per request anyway); texts that change in
+  the browser are translated there from the language's texts, which the page carries (`MV_I18N`). So
+  changing the language reloads the page instead of swapping texts in place.
+- **The language is a personal setting** (`language`: `auto` or a code), like the theme. `auto` takes the
+  first language of the browser's `Accept-Language` that the app has, else English.
+- **Plugins** ship `i18n/<lang>.po` next to their `__init__.py`. Their texts are added for words the
+  app's files don't translate; they can't change the app's own words.
+- **Step by step**: this first step has the machinery, the picker, and the top bar, banners, toasts and
+  Settings → Display / Reader / Android app translated. The rest of the page moves to `t()` in the next
+  steps, then a test that fails on text written straight into a template.

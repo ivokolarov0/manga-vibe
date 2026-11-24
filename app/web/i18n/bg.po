@@ -1,0 +1,626 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: MangaVibe\n"
+"Language: bg\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: app/web/templates/shell/toasts.html
+msgid "A new MangaVibe version needs a new Docker image"
+msgstr "Новата версия на MangaVibe изисква нов Docker образ"
+
+#: app/web/templates/shell/toasts.html
+msgid "A new version of MangaVibe is available"
+msgstr "Има нова версия на MangaVibe"
+
+#: app/web/static/js/app.js
+msgid "A white outline around the letters, so they stay readable over the art"
+msgstr "Бял контур около буквите, за да се четат върху рисунката"
+
+#: app/web/static/js/common.js
+msgid "Always visible"
+msgstr "Винаги видима"
+
+#: app/web/templates/shell/toasts.html
+msgid "and {n} more"
+msgid_plural "and {n} more"
+msgstr[0] "и още {n}"
+msgstr[1] "и още {n}"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Android app"
+msgstr "Приложение за Android"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "App version"
+msgstr "Версия на приложението"
+
+#: app/web/static/js/app.js
+msgid "Auto"
+msgstr "Автоматично"
+
+#: app/web/static/js/app.js
+msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
+msgstr "Назад, цял екран и бутонът с опции са от тази страна, под палеца"
+
+#: app/web/static/js/app.js
+msgid "Bottom"
+msgstr "Долу"
+
+#: app/web/static/js/app.js
+msgid "Browser's language"
+msgstr "Езикът на браузъра"
+
+#: app/web/static/js/app.js
+msgid "Card size"
+msgstr "Размер на картите"
+
+#: app/web/static/js/app.js
+msgid "Card width"
+msgstr "Ширина на картите"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Change server"
+msgstr "Смяна на сървъра"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Clear"
+msgstr "Изчисти"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Clear the search"
+msgstr "Изчисти търсенето"
+
+#: app/web/templates/shell/toasts.html
+msgid "Close"
+msgstr "Затвори"
+
+#: app/web/static/js/app.js
+msgid "Contained"
+msgstr "Ограничена"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Continue"
+msgstr "Продължи"
+
+#: app/web/static/js/app.js
+msgid "Dark"
+msgstr "Тъмна"
+
+#: app/web/static/js/app.js
+msgid "Darker pages are easier on the eyes, e.g. at night"
+msgstr "По-тъмните страници са по-щадящи за очите, например вечер"
+
+#: app/web/static/js/app.js
+msgid "Default reading mode"
+msgstr "Режим на четене по подразбиране"
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Display"
+msgstr "Изглед"
+
+#: app/web/templates/shell/banners.html
+msgid "Don't show again"
+msgstr "Не показвай отново"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Download"
+msgstr "Изтегли"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Download newest"
+msgstr "Изтегли най-новата"
+
+#: app/web/static/js/app.js
+msgid "English"
+msgstr "Английски"
+
+#: app/web/static/js/app.js
+msgid "Falls back to the next one if missing"
+msgstr "Ако липсва, се ползва следващото"
+
+#: app/web/static/js/app.js
+msgid "Fit"
+msgstr "Мащаб"
+
+#: app/web/static/js/app.js
+msgid "Fit height"
+msgstr "По височина"
+
+#: app/web/static/js/app.js
+msgid "Fit screen"
+msgstr "По екрана"
+
+#: app/web/static/js/app.js
+msgid "Fit width"
+msgstr "По ширина"
+
+#: app/web/static/js/app.js
+msgid "From card size"
+msgstr "Според размера на картите"
+
+#: app/web/templates/shell/toasts.html
+msgid "Full release notes"
+msgstr "Всички промени"
+
+#: app/web/static/js/app.js
+msgid "Full width"
+msgstr "Цяла ширина"
+
+#: app/web/static/js/app.js
+msgid "Fullscreen on first tap"
+msgstr "Цял екран при първо докосване"
+
+#: app/web/templates/shell/banners.html
+msgid "Fullscreen, the screen stays on, volume buttons turn pages"
+msgstr "Цял екран, екранът не изгасва, бутоните за звук обръщат страниците"
+
+#: app/web/templates/shell/toasts.html
+msgid "Going back failed"
+msgstr "Връщането не успя"
+
+#: app/web/templates/shell/toasts.html
+msgid "Going back to an earlier version…"
+msgstr "Връщане към по-стара версия…"
+
+#: app/web/static/js/app.js
+msgid "Grid"
+msgstr "Решетка"
+
+#: app/web/static/js/app.js
+msgid "Grid columns"
+msgstr "Колони"
+
+#: app/web/static/js/app.js
+msgid "Hide controls after"
+msgstr "Скрий контролите след"
+
+#: app/web/static/js/common.js
+msgid "Hide with the controls"
+msgstr "Скривай с контролите"
+
+#: app/web/static/js/app.js
+msgid "In the reader: volume down goes to the next page, volume up goes back"
+msgstr "В четеца: намаляване на звука отива на следващата страница, усилване се връща назад"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Install the app"
+msgstr "Инсталиране на приложението"
+
+#: app/web/static/js/app.js
+msgid "Inverted"
+msgstr "Обърнати"
+
+#: app/web/static/js/app.js
+msgid "Inverted turns white pages black with white lines. Warm takes out the blue light"
+msgstr "Обърнати прави белите страници черни с бели линии. Топли маха синята светлина"
+
+#: app/web/static/js/app.js
+msgid "Inverted, warm"
+msgstr "Обърнати, топли"
+
+#: app/web/static/js/app.js
+msgid "Just for you"
+msgstr "Само за вас"
+
+#: app/web/static/js/app.js
+msgid "Just for you, on wide screens. Cards are at least this wide and grow a little to fill the row"
+msgstr "Само за вас, на широки екрани. Картите са поне толкова широки и се разширяват малко, за да запълнят реда"
+
+#: app/web/static/js/app.js
+msgid "Just for you. Auto fits as many cards as the screen has room for; narrow screens show fewer than picked"
+msgstr "Само за вас. Автоматично събира толкова карти, колкото има място; на тесни екрани се показват по-малко от избраните"
+
+#: app/web/static/js/app.js
+msgid "Just for you. Full width lets the Library and Continue grids use the whole screen, however wide"
+msgstr "Само за вас. При цяла ширина Библиотеката и Продължи заемат целия екран, колкото и широк да е"
+
+#: app/web/static/js/app.js
+msgid "Just for you. Missing words are shown in English"
+msgstr "Само за вас. Липсващите думи се показват на английски"
+
+#: app/web/static/js/app.js
+msgid "Language"
+msgstr "Език"
+
+#: app/web/static/js/app.js
+msgid "Large"
+msgstr "Големи"
+
+#: app/web/templates/shell/toasts.html
+msgid "Later"
+msgstr "По-късно"
+
+#: app/web/static/js/app.js
+msgid "Lazy load"
+msgstr "Зареждане при превъртане"
+
+#: app/web/templates/shell/banners.html
+msgid "Leave"
+msgstr "Изход"
+
+#: app/web/static/js/app.js
+msgid "Left"
+msgstr "Лява"
+
+#: app/web/static/js/app.js
+msgid "Left back, right forward"
+msgstr "Ляво назад, дясно напред"
+
+#: app/web/static/js/app.js
+msgid "Less"
+msgstr "По-малък"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Library"
+msgstr "Библиотека"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Library folders"
+msgstr "Папки на библиотеката"
+
+#: app/web/static/js/app.js
+msgid "Library listing"
+msgstr "Показване на библиотеката"
+
+#: app/web/static/js/app.js
+msgid "Library view"
+msgstr "Изглед на библиотеката"
+
+#: app/web/static/js/app.js
+msgid "Light"
+msgstr "Светла"
+
+#: app/web/static/js/app.js
+msgid "List"
+msgstr "Списък"
+
+#: app/web/static/js/app.js
+msgid "Load more while scrolling, or show numbered pages"
+msgstr "Зареждай още при превъртане или показвай номерирани страници"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Main"
+msgstr "Основна навигация"
+
+#: app/web/templates/shell/banners.html
+msgid "MangaVibe for Android"
+msgstr "MangaVibe за Android"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "MangaVibe: Library"
+msgstr "MangaVibe: Библиотека"
+
+#: app/web/static/js/app.js
+msgid "Match device"
+msgstr "Като устройството"
+
+#: app/web/templates/ui/macros.html
+msgid "Matching metadata: {done} of {n} series"
+msgid_plural "Matching metadata: {done} of {n} series"
+msgstr[0] "Търсене на метаданни: {done} от {n} поредица"
+msgstr[1] "Търсене на метаданни: {done} от {n} поредици"
+
+#: app/web/static/js/app.js
+msgid "Medium"
+msgstr "Средни"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Metadata"
+msgstr "Метаданни"
+
+#: app/web/static/js/app.js
+msgid "More"
+msgstr "По-голям"
+
+#: app/web/static/js/app.js
+msgid "More = smoother, uses more data"
+msgstr "Повече = по-плавно, но с повече данни"
+
+#: app/web/static/js/app.js
+msgid "More makes faint lines and small text stand out"
+msgstr "По-голям прави бледите линии и дребния текст по-ясни"
+
+#: app/web/static/js/app.js
+msgid "Most"
+msgstr "Най-голям"
+
+#: app/web/static/js/app.js
+msgid "Native"
+msgstr "Оригинално"
+
+#: app/web/static/js/app.js
+msgid "Navigation bar"
+msgstr "Лента за навигация"
+
+#: app/web/templates/views/settings.html
+msgid "Needs attention"
+msgstr "Нуждае се от внимание"
+
+#: app/web/static/js/common.js
+msgid "Never"
+msgstr "Никога"
+
+#: app/web/static/js/app.js
+msgid "Normal"
+msgstr "Нормално"
+
+#: app/web/templates/ui/macros.html
+msgid "Now: {title}"
+msgstr "Сега: {title}"
+
+#: app/web/static/js/app.js
+msgid "Off"
+msgstr "Изкл."
+
+#: app/web/static/js/app.js
+msgid "Off (swipe only)"
+msgstr "Изкл. (само плъзгане)"
+
+#: app/web/static/js/app.js
+msgid "On"
+msgstr "Вкл."
+
+#: app/web/static/js/app.js
+msgid "One-handed"
+msgstr "С една ръка"
+
+#: app/web/static/js/app.js
+msgid "One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu"
+msgstr "С една ръка: почти цялата страница обръща напред, тясна ивица по ръба връща назад, средата отваря менюто"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html app/web/templates/shell/banners.html
+msgid "Open app"
+msgstr "Отвори приложението"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Open in the app"
+msgstr "Отваряне в приложението"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Open the downloaded MangaVibe.apk and allow installing apps from your browser when Android asks. Then come back here and tap Open app"
+msgstr "Отворете изтегления MangaVibe.apk и разрешете инсталиране на приложения от браузъра, когато Android попита. После се върнете тук и докоснете Отвори приложението"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead"
+msgstr "Отваря приложението и го свързва с този сървър. Ако не е инсталирано, вместо това се изтегля"
+
+#: app/web/static/js/app.js
+msgid "Original"
+msgstr "Оригинален размер"
+
+#: app/web/static/js/app.js
+msgid "Overlay box background"
+msgstr "Фон на изскачащите полета"
+
+#: app/web/static/js/app.js
+msgid "Overlay text outline"
+msgstr "Контур на текста в полетата"
+
+#: app/web/static/js/app.js
+msgid "Page brightness"
+msgstr "Яркост на страницата"
+
+#: app/web/static/js/app.js
+msgid "Page colours"
+msgstr "Цветове на страницата"
+
+#: app/web/static/js/app.js
+msgid "Page contrast"
+msgstr "Контраст на страницата"
+
+#: app/web/static/js/app.js
+msgid "Page width"
+msgstr "Ширина на страницата"
+
+#: app/web/static/js/app.js
+msgid "Pages"
+msgstr "Страници"
+
+#: app/web/static/js/app.js
+msgid "Pages to preload"
+msgstr "Страници за предварително зареждане"
+
+#: app/web/static/js/app.js
+msgid "Pages: one at a time, the next one on the right (→, a tap on the right, a swipe to the left). For series whose library has no mode of its own (Settings → Libraries); each series can be set by hand"
+msgstr "Страници: по една, следващата е вдясно (→, докосване вдясно, плъзгане наляво). За поредици, чиято библиотека няма собствен режим (Настройки → Библиотеки); всяка поредица може да се настрои ръчно"
+
+#: app/web/static/js/app.js
+msgid "Paginated"
+msgstr "По страници"
+
+#: app/web/static/js/app.js
+msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
+msgstr "Телефони и таблети; след заключване на телефона следващото докосване връща на цял екран. С мишка ползвайте бутона за цял екран или F"
+
+#: app/web/static/js/app.js
+msgid "Plugin"
+msgstr "Добавка"
+
+#: app/web/static/js/app.js
+msgid "Plugin boxes over the page, e.g. translations. Lower shows the art underneath"
+msgstr "Полета от добавки върху страницата, например преводи. По-ниско показва рисунката отдолу"
+
+#: app/web/static/js/app.js app/web/templates/shell/banners.html
+msgid "Plugins"
+msgstr "Добавки"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
+msgstr "Четете в приложението MangaVibe вместо в браузъра: цял екран без ленти на браузъра, екранът не изгасва, докато четете, а бутоните за звук обръщат страниците. То показва същия MangaVibe, така че библиотеката, напредъкът и настройките ви са същите."
+
+#: app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Reader"
+msgstr "Четец"
+
+#: app/web/static/js/app.js
+msgid "Reading hand"
+msgstr "Ръка за четене"
+
+#: app/web/static/js/app.js
+msgid "Right"
+msgstr "Дясна"
+
+#: app/web/static/js/app.js
+msgid "Romaji"
+msgstr "Ромаджи"
+
+#: app/web/templates/shell/banners.html
+msgid "Safe mode"
+msgstr "Безопасен режим"
+
+#: app/web/static/js/app.js
+msgid "Saved"
+msgstr "Запазено"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Search"
+msgstr "Търсене"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+msgid "Search your library"
+msgstr "Търсене в библиотеката"
+
+#: app/web/templates/shell/toasts.html
+msgid "See {url}"
+msgstr "Вижте {url}"
+
+#: app/web/static/js/app.js
+msgid "See-through"
+msgstr "Прозрачен"
+
+#: app/web/static/js/app.js
+msgid "Series page full width as well"
+msgstr "И страницата на поредицата на цяла ширина"
+
+#: app/web/static/js/app.js
+msgid "Series per page"
+msgstr "Поредици на страница"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
+msgid "Server"
+msgstr "Сървър"
+
+#: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
+msgid "Settings"
+msgstr "Настройки"
+
+#: app/web/templates/ui/macros.html
+msgid "Settings ({n} need attention)"
+msgstr "Настройки ({n} се нуждаят от внимание)"
+
+#: app/web/templates/ui/macros.html
+msgid "Settings, {n} need attention"
+msgstr "Настройки, {n} се нуждаят от внимание"
+
+#: app/web/templates/shell/toasts.html
+msgid "Skip this version"
+msgstr "Пропусни тази версия"
+
+#: app/web/static/js/app.js
+msgid "Small"
+msgstr "Малки"
+
+#: app/web/static/js/app.js
+msgid "Solid"
+msgstr "Плътен"
+
+#: app/web/static/js/app.js
+msgid "Tap zones"
+msgstr "Зони за докосване"
+
+#: app/web/static/js/app.js
+msgid "The page of a series also uses the whole screen"
+msgstr "Страницата на поредица също заема целия екран"
+
+#: app/web/templates/shell/toasts.html
+msgid "The page reloads by itself when the new version is running."
+msgstr "Страницата ще се презареди сама, когато новата версия заработи."
+
+#: app/web/static/js/app.js
+msgid "The series and chapter at the top. When there's room: it stays while the page leaves space above it, so it covers none of the picture"
+msgstr "Поредицата и главата горе. Когато има място: остава, докато страницата оставя място над себе си, така че не закрива нищо от рисунката"
+
+#: app/web/static/js/app.js
+msgid "Theme"
+msgstr "Тема"
+
+#: app/web/static/js/app.js
+msgid "Thick"
+msgstr "Дебел"
+
+#: app/web/static/js/app.js
+msgid "Thin"
+msgstr "Тънък"
+
+#: app/web/static/js/app.js
+msgid "Title language"
+msgstr "Език на заглавията"
+
+#: app/web/static/js/app.js
+msgid "Top"
+msgstr "Горе"
+
+#: app/web/static/js/app.js
+msgid "Top bar"
+msgstr "Горна лента"
+
+#: app/web/templates/shell/toasts.html
+msgid "Update failed"
+msgstr "Обновяването не успя"
+
+#: app/web/templates/shell/toasts.html
+msgid "Update now"
+msgstr "Обнови сега"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Updates"
+msgstr "Обновления"
+
+#: app/web/templates/shell/toasts.html
+msgid "Updating MangaVibe…"
+msgstr "MangaVibe се обновява…"
+
+#: app/web/static/js/app.js
+msgid "Vertical"
+msgstr "Вертикално"
+
+#: app/web/static/js/app.js
+msgid "Volume buttons turn pages"
+msgstr "Бутоните за звук обръщат страниците"
+
+#: app/web/static/js/app.js
+msgid "Warm"
+msgstr "Топли"
+
+#: app/web/static/js/app.js
+msgid "When nothing is touched. Turning the page or a tap in the middle hides them at once"
+msgstr "Когато нищо не се докосва. Обръщане на страница или докосване в средата ги скрива веднага"
+
+#: app/web/static/js/common.js
+msgid "When there's room"
+msgstr "Когато има място"
+
+#: app/web/static/js/app.js
+msgid "Where Library and Continue sit (with the Sidebar plugin: on phones only)"
+msgstr "Къде са Библиотека и Продължи (с добавката Странична лента: само на телефони)"
+
+#: app/web/templates/shell/toasts.html
+msgid "Working…"
+msgstr "Работи се…"
+
+#: app/web/templates/shell/banners.html
+msgid "Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble."
+msgstr "Вашите добавки не са заредени, само вградените. Изключете тази, която създава проблеми."
+
+#: app/web/static/js/app.js
+msgid "{n} px"
+msgstr "{n} px"
+
+#: app/web/static/js/common.js
+msgid "{n} second"
+msgid_plural "{n} seconds"
+msgstr[0] "{n} секунда"
+msgstr[1] "{n} секунди"
