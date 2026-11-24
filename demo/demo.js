@@ -28,8 +28,8 @@
       <p><b>Not a real install:</b> there is no server here. Some of what you see is only acted out for the
         demo (plugin switches, settings, progress), so it can behave a little differently from MangaVibe
         on your own server.</p>
-      <a href="https://github.com/ivokolarov0/manga-vibe#-install" target="_blank" rel="noopener">Get MangaVibe →</a>
-      · <a href="docs/" target="_blank" rel="noopener">Docs →</a>
+      <a href="docs/#install" target="_blank" rel="noopener">Get MangaVibe →</a>
+      · <a href="docs/" target="_blank" rel="noopener">Website →</a>
       · <a href="plugins/" target="_blank" rel="noopener">Write a plugin →</a>
     </div>`;
   const pill = badge.querySelector(".mv-demo-pill"), card = badge.querySelector(".mv-demo-card");

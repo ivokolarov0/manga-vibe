@@ -300,8 +300,8 @@ flowchart LR
 
 ## 📚 More
 
-All of these are also on the **[docs site](https://ivokolarov0.github.io/manga-vibe/docs/)**, with a
-sidebar to find your way around.
+The **[website](https://ivokolarov0.github.io/manga-vibe/docs/)** has the install guides, the phone
+app and help on one page, and a section for developers.
 
 | | |
 |---|---|
