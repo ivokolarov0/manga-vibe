@@ -1116,6 +1116,9 @@ window.MangaVibe = {
     app.listScope = { ...app.listScope, [pluginId]: { ...params } };
     window.refreshAttentionCount?.();
   },
+  // what every plugin adds to the lists' API calls, as URLSearchParams (e.g. shelf=3), for a call of
+  // your own that should see the same series (Plugin API 28)
+  listScope: () => new URLSearchParams(scopeEntries()),
   // what the lists show changed on the server (e.g. a library was unlocked): they reload
   listsChanged() {
     Alpine.store("app").listsDirty++;

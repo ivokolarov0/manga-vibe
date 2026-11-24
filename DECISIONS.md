@@ -1299,3 +1299,25 @@ Plugin API version, and the app works after every one.
 - **A page of the core's** (Settings → Backup, like Plugins), not a plugin's section: restoring has to
   work whatever the plugins do. Admins only. Export is a plain download link; import sends the file as
   the request body (not a form), written straight to the data volume.
+
+### Random manga as a built-in plugin (Plugin API 28, issue #275)
+
+- **A built-in plugin, not core**: `app/plugins/builtin/random_manga/`, using only the SDK and the query
+  API. Buttons in the existing `library-tools`, `nav-items` and `series-actions` slots; switched off,
+  nothing is left on the page.
+- **Picked on the server**, with `ORDER BY random()` over the same series the library grid starts from
+  (not missing, `visible_series()`), so locked libraries are never picked. The status filter is
+  `ListQuery.reading_status()`, the status the app shows (a manual one, else worked out from progress),
+  each person's own.
+- **From the library shown**: the page sends the lists' scope (`MangaVibe.listScope()`, new in Plugin
+  API 28, e.g. the libraries plugin's `shelf=3`). Not the library page's filters: a random pick is for
+  "anything", and Pick another works the same from any series page.
+- **Pick another** shows only on the page the last pick opened. `current` is never picked again;
+  `recent` (the last 50 picks, kept in the page) are avoided while anything else is left, so rerolling
+  doesn't bounce between two series.
+- **Settings are the owner's**, like every plugin setting, and on by default (Yes/No dropdowns: plugin
+  settings have no switch). Nothing left gives a message saying why, not a silent nothing.
+- **Room on phones**: the library page's tools (Filter, Sort, Letter, Saved) were already 8px wider than a
+  400px phone; the row now scrolls sideways like the quick filters, and Random is only its icon there.
+  The Sidebar's entry is in its column only: the phone bar has no room for a fourth tab. The bar now
+  styles `button.nav-entry` like its links, as docs/PLUGINS.md already said it did.

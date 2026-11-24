@@ -1,0 +1,27 @@
+/* Random manga (built-in plugin). Plugin CSS is loaded after the built-in styles, outside their layers
+   (see css/main.css), so a theme's custom.css still comes last and wins. */
+
+/* the library page's button: only its icon on phones, so the row of tools still fits */
+.random-tool {
+  @media (max-width: 499px) {
+    padding: 0 11px;
+
+    & span {
+      display: none;
+    }
+  }
+}
+
+/* the Sidebar's entry: in its column only. In the bar on phones (at the bottom, or tabs under the top bar)
+   a fourth entry has no room, and the library page's button is there */
+@media (max-width: 899px) {
+  #bottomnav .random-nav {
+    display: none;
+  }
+}
+
+.random-tool:disabled,
+.random-nav:disabled,
+.random-again:disabled {
+  opacity: 0.6;
+}

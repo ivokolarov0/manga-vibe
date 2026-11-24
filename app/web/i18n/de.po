@@ -189,6 +189,10 @@ msgid_plural "Added {n} series to favorites"
 msgstr[0] "{n} Serie zu Favoriten hinzugefügt"
 msgstr[1] "{n} Serien zu Favoriten hinzugefügt"
 
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Adds a Random series button to the library page, the Sidebar and the picked series' page"
+msgstr "Fügt der Bibliothek, der Seitenleiste und der Seite der gezogenen Serie eine Schaltfläche „Zufällige Serie“ hinzu"
+
 #: app/plugins/builtin/libraries/__init__.py
 msgid "Adds the library tabs, Settings → Libraries and the library pickers"
 msgstr "Fügt die Bibliotheks-Tabs, Einstellungen → Bibliotheken und die Bibliotheksauswahl hinzu"
@@ -418,6 +422,10 @@ msgstr "Nennt Bücher nach ihren Nummern (Bd. 3, Kap. 12-14, Extra 2) statt nach
 #: app/plugins/builtin/libraries/__init__.py
 msgid "Can hide a library's series behind a password; connects to nothing"
 msgstr "Kann die Serien einer Bibliothek hinter einem Passwort verbergen; verbindet sich mit nichts"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Can't decide what to read next? A button on the library page opens a series picked at random, and Pick another picks again. Built in."
+msgstr "Du weißt nicht, was du als Nächstes lesen sollst? Eine Schaltfläche in der Bibliothek öffnet eine zufällig gezogene Serie, und „Andere ziehen“ zieht noch einmal. Eingebaut."
 
 #: app/api/system.py
 msgid "Can't open this folder: {error}"
@@ -797,6 +805,14 @@ msgstr "Nicht zuordnen"
 msgid "Don't match this series"
 msgstr "Diese Serie nicht zuordnen"
 
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Don't pick series whose reading status is Completed."
+msgstr "Keine Serien mit dem Lesestatus „Gelesen“ ziehen."
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Don't pick series whose reading status is Dropped."
+msgstr "Keine Serien mit dem Lesestatus „Abgebrochen“ ziehen."
+
 #: app/web/templates/shell/banners.html
 msgid "Don't show again"
 msgstr "Nicht mehr anzeigen"
@@ -968,6 +984,14 @@ msgstr "Alle melden sich an; jedes Konto hat eigenen Fortschritt, Favoriten, ges
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18."
 msgstr "Beispiel: eine Zip mit den Kapiteln 10 bis 18 → Kapitel 10, bis Kapitel 18."
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Exclude dropped manga"
+msgstr "Abgebrochene Manga auslassen"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Exclude read manga"
+msgstr "Gelesene Manga auslassen"
 
 #: app/web/static/js/reader.js
 msgid "Exit fullscreen"
@@ -2277,6 +2301,22 @@ msgstr "Noch nichts optimiert"
 msgid "Nothing saved yet"
 msgstr "Noch nichts gespeichert"
 
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Nothing to pick: every series here is dropped."
+msgstr "Nichts zu ziehen: Jede Serie hier ist abgebrochen."
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Nothing to pick: every series here is read or dropped."
+msgstr "Nichts zu ziehen: Jede Serie hier ist gelesen oder abgebrochen."
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Nothing to pick: every series here is read."
+msgstr "Nichts zu ziehen: Jede Serie hier ist gelesen."
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Nothing to pick: there are no series here."
+msgstr "Nichts zu ziehen: Hier gibt es keine Serien."
+
 #: app/web/static/js/app.js
 msgid "Nothing was changed"
 msgstr "Nichts wurde geändert"
@@ -2400,6 +2440,14 @@ msgstr "Nur {library}, die auf dem Startbildschirm gewählte Bibliothek"
 #: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
 msgid "Open"
 msgstr "Öffnen"
+
+#: app/plugins/builtin/random_manga/nav.html app/plugins/builtin/random_manga/tool.html
+msgid "Open a series picked at random"
+msgstr "Eine zufällig gezogene Serie öffnen"
+
+#: app/plugins/builtin/random_manga/series_action.html
+msgid "Open another series picked at random"
+msgstr "Eine andere zufällig gezogene Serie öffnen"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html app/web/templates/shell/banners.html
 msgid "Open app"
@@ -2595,6 +2643,10 @@ msgstr "Pro Seite"
 msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
 msgstr "Handys und Tablets; nach dem Sperren führt das nächste Tippen zurück ins Vollbild. Mit der Maus: die Vollbild-Taste oder F"
 
+#: app/plugins/builtin/random_manga/series_action.html
+msgid "Pick another"
+msgstr "Andere ziehen"
+
 #: app/plugins/builtin/saved_searches/sheet.html
 msgid "Pick filters (for example the tag Isekai) and a sort, then save them here. A saved search works in every library."
 msgstr "Wähle Filter (zum Beispiel den Tag Isekai) und eine Sortierung und speichere sie hier. Eine gespeicherte Suche funktioniert in jeder Bibliothek."
@@ -2731,6 +2783,18 @@ msgstr "Qualität"
 msgid "Queued for automatic matching"
 msgstr "Zur automatischen Zuordnung eingereiht"
 
+#: app/plugins/builtin/random_manga/nav.html app/plugins/builtin/random_manga/tool.html
+msgid "Random"
+msgstr "Zufall"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Random manga"
+msgstr "Zufälliger Manga"
+
+#: app/plugins/builtin/random_manga/tool.html
+msgid "Random series"
+msgstr "Zufällige Serie"
+
 #: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
 msgid "Re-read this series' folder after fixing the files on disk"
 msgstr "Den Ordner dieser Serie neu einlesen, nachdem die Dateien auf der Festplatte korrigiert wurden"
@@ -2802,6 +2866,10 @@ msgstr "Liest die Nummern der Bücher; verbindet sich mit nichts"
 #: app/plugins/builtin/title_matcher/__init__.py
 msgid "Reads series folder names; connects to nothing (the providers do)"
 msgstr "Liest die Ordnernamen der Serien; verbindet sich mit nichts (das tun die Quellen)"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Reads the library and your reading status; keeps nothing and connects to nothing"
+msgstr "Liest die Bibliothek und deinen Lesestatus; speichert nichts und verbindet sich mit nichts"
 
 #: app/plugins/builtin/filename_parser/__init__.py
 msgid "Reads volume, chapter and revision from file names (Vol 3, c012-014, c012v2, 第1巻). Built in."
@@ -3704,6 +3772,10 @@ msgstr "Das ist ein Textbuch (eine Light Novel). Füge unter Einstellungen → P
 #: app/plugins/builtin/libraries/api.py app/plugins/builtin/libraries/libraries.js
 msgid "This is the only library. Add another one first."
 msgstr "Das ist die einzige Bibliothek. Füge zuerst eine weitere hinzu."
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "This is the only series left to pick."
+msgstr "Das ist die einzige Serie, die noch gezogen werden kann."
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "This is the path inside Docker. To see the one on your NAS, set {setting} for its library folder."

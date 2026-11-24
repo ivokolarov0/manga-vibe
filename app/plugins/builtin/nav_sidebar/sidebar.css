@@ -39,11 +39,12 @@
   display: none;
 }
 
-/* an entry that's a button (it does something rather than open a page): looks like the links */
+/* an entry that's a button (it does something rather than open a page): looks like the links (the bar's
+   sizes are layout.css's, the column's below) */
 #bottomnav.sidebar button.nav-entry {
   background: none;
   border: 0;
-  font: inherit;
+  font-family: inherit;
   text-align: left;
   cursor: pointer;
 }

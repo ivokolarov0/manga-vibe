@@ -72,12 +72,17 @@
     }
   }
 
+  /* with plugins' buttons (Saved, Random) the row can be wider than a phone: it scrolls sideways, like
+     the quick filters, instead of widening the page */
   .lib-tools {
     display: flex;
     gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
 
   .tool {
+    flex: none;
     display: inline-flex;
     align-items: center;
     gap: 7px;
