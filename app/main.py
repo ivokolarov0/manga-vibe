@@ -18,6 +18,7 @@ from starlette.datastructures import Headers
 
 from app import config, db as database, i18n, plugin_updates, updater
 from app.api import attention, backup, books, edit, series, system, update
+from app.lanes import QuickLane
 from app.metadata import worker as metadata_worker
 from app.plugins import manager as plugins, web as plugin_web
 from app.posters import MAX_UPLOAD
@@ -171,7 +172,7 @@ class RememberAddress:
 class Language:
     """Every request runs in the language of the person asking (app/i18n.py, issue #263): their Settings →
     Display → Language, else the browser's. So what the server says (book labels, error messages, plugin
-    descriptions) can use t(). Innermost, after the accounts plugin knows who is asking. Not for the
+    descriptions) can use t(). Inside the guards, after the accounts plugin knows who is asking. Not for the
     server's own calls on someone's behalf (an assistant: it gets the app's words, English), nor for
     files (static files, page images and thumbnails have no words)."""
 
@@ -216,7 +217,9 @@ async def translated_error(request: Request, exc: StarletteHTTPException):
     return await http_exception_handler(request, StarletteHTTPException(exc.status_code, detail, exc.headers))
 
 
-app.add_middleware(Language)  # innermost: added first
+# innermost: once the guards let a request through, the quick ones queue for a slot (app/lanes.py)
+app.add_middleware(QuickLane)
+app.add_middleware(Language)
 app.add_middleware(UploadSizeLimit, limit=MAX_UPLOAD + 64 * 1024)  # + room for the multipart headers
 app.add_middleware(RememberAddress)
 # the plugins' own guards (Plugin.middleware), e.g. libraries: a locked library's series, books and pages
