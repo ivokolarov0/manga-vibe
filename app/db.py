@@ -188,8 +188,15 @@ def init_db():
         cur.close()
 
     SessionLocal.configure(bind=engine)
-    Base.metadata.create_all(engine)
-    with engine.begin() as conn:
+    migrate(engine)
+    log.info("%s database at %s", "Created" if first else "Opened", config.DB_PATH)
+
+
+def migrate(eng):
+    """Bring a database up to date: the tables from the models, then the migrations it hasn't had.
+    Also used on an imported database before it replaces this one (app/backup.py)."""
+    Base.metadata.create_all(eng)
+    with eng.begin() as conn:
         conn.execute(text("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER)"))
         row = conn.execute(text("SELECT version FROM schema_version")).fetchone()
         if row is None:
@@ -200,7 +207,6 @@ def init_db():
                 log.info("Running database migration %d", i + 1)
                 MIGRATIONS[i](conn)
                 conn.execute(text("UPDATE schema_version SET version=:v"), {"v": i + 1})
-    log.info("%s database at %s", "Created" if first else "Opened", config.DB_PATH)
 
 
 def get_setting(db, key, default=None):

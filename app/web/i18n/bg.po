@@ -45,6 +45,10 @@ msgstr "Автоматично"
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
 msgstr "Назад, цял екран и бутонът с опции са от тази страна, под палеца"
 
+#: app/plugins/web.py
+msgid "Backup"
+msgstr "Резервно копие"
+
 #: app/web/static/js/app.js
 msgid "Bottom"
 msgstr "Долу"
@@ -443,7 +447,7 @@ msgstr "Добавка"
 msgid "Plugin boxes over the page, e.g. translations. Lower shows the art underneath"
 msgstr "Полета от добавки върху страницата, например преводи. По-ниско показва рисунката отдолу"
 
-#: app/web/static/js/app.js app/web/templates/shell/banners.html
+#: app/plugins/web.py app/web/static/js/app.js app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "Добавки"
 
