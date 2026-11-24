@@ -44,7 +44,9 @@ def test_switched_off(client):
         client.put("/api/plugins/saved-searches", json={"enabled": False})
         page = client.get("/").text
         assert "savedSearchesSheet" not in page and "saved-searches.js" not in page
-        assert '<div class="plugin-slot" data-slot="library-tools"></div>' in page  # empty, kept for later
+        # its markup gone, the slot kept for later (other plugins' markup, e.g. Random manga, stays)
+        assert 'data-plugin="saved-searches"' not in page
+        assert '<div class="plugin-slot" data-slot="library-tools">' in page
         assert client.get("/plugins/saved-searches.js").status_code == 404
         assert client.get("/plugins/saved-searches.css").status_code == 404
         assert client.get("/api/plugins/saved-searches/ui").status_code == 404

@@ -188,6 +188,10 @@ msgid "Added {n} series to favorites"
 msgid_plural "Added {n} series to favorites"
 msgstr[0] "{n} シリーズをお気に入りに追加しました"
 
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Adds a Random series button to the library page, the Sidebar and the picked series' page"
+msgstr "ライブラリ、サイドバー、選ばれたシリーズのページに「ランダムなシリーズ」ボタンを追加します"
+
 #: app/plugins/builtin/libraries/__init__.py
 msgid "Adds the library tabs, Settings → Libraries and the library pickers"
 msgstr "ライブラリのタブ、設定 → ライブラリ、ライブラリの選択を追加します"
@@ -412,6 +416,10 @@ msgstr "本をファイル名ではなく番号（3 巻、12-14 話、番外編 
 #: app/plugins/builtin/libraries/__init__.py
 msgid "Can hide a library's series behind a password; connects to nothing"
 msgstr "ライブラリのシリーズをパスワードで隠せます。外部には接続しません"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Can't decide what to read next? A button on the library page opens a series picked at random, and Pick another picks again. Built in."
+msgstr "次に何を読むか迷ったら。ライブラリのボタンでランダムに選んだシリーズを開き、「別のを選ぶ」でもう一度選びます。組み込み。"
 
 #: app/api/system.py
 msgid "Can't open this folder: {error}"
@@ -788,6 +796,14 @@ msgstr "照合しない"
 msgid "Don't match this series"
 msgstr "このシリーズは照合しない"
 
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Don't pick series whose reading status is Completed."
+msgstr "読書状況が「読了」のシリーズは選びません。"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Don't pick series whose reading status is Dropped."
+msgstr "読書状況が「中断」のシリーズは選びません。"
+
 #: app/web/templates/shell/banners.html
 msgid "Don't show again"
 msgstr "今後表示しない"
@@ -959,6 +975,14 @@ msgstr "全員がログインします。アカウントごとに進み具合、
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18."
 msgstr "例：10〜18 話を含む zip → 話 10、終わりの話 18。"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Exclude dropped manga"
+msgstr "中断したマンガを除く"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Exclude read manga"
+msgstr "読了したマンガを除く"
 
 #: app/web/static/js/reader.js
 msgid "Exit fullscreen"
@@ -2258,6 +2282,22 @@ msgstr "まだ何も最適化していません"
 msgid "Nothing saved yet"
 msgstr "まだ何も保存していません"
 
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Nothing to pick: every series here is dropped."
+msgstr "選べるものがありません: ここのシリーズはすべて中断しています。"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Nothing to pick: every series here is read or dropped."
+msgstr "選べるものがありません: ここのシリーズはすべて読了か中断です。"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Nothing to pick: every series here is read."
+msgstr "選べるものがありません: ここのシリーズはすべて読了です。"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Nothing to pick: there are no series here."
+msgstr "選べるものがありません: ここにはシリーズがありません。"
+
 #: app/web/static/js/app.js
 msgid "Nothing was changed"
 msgstr "何も変更されていません"
@@ -2377,6 +2417,14 @@ msgstr "ホーム画面で選んだライブラリ {library} のみ"
 #: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
 msgid "Open"
 msgstr "開く"
+
+#: app/plugins/builtin/random_manga/nav.html app/plugins/builtin/random_manga/tool.html
+msgid "Open a series picked at random"
+msgstr "ランダムに選んだシリーズを開く"
+
+#: app/plugins/builtin/random_manga/series_action.html
+msgid "Open another series picked at random"
+msgstr "ランダムに別のシリーズを選んで開く"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html app/web/templates/shell/banners.html
 msgid "Open app"
@@ -2563,6 +2611,10 @@ msgstr "1 ページの件数"
 msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
 msgstr "スマートフォンとタブレット向け。ロック後も次のタップで全画面に戻ります。マウスでは全画面ボタンか F キーを使います"
 
+#: app/plugins/builtin/random_manga/series_action.html
+msgid "Pick another"
+msgstr "別のを選ぶ"
+
 #: app/plugins/builtin/saved_searches/sheet.html
 msgid "Pick filters (for example the tag Isekai) and a sort, then save them here. A saved search works in every library."
 msgstr "絞り込み（例：タグ「異世界」）と並べ替えを選んでここに保存します。保存した検索はどのライブラリでも使えます。"
@@ -2699,6 +2751,18 @@ msgstr "画質"
 msgid "Queued for automatic matching"
 msgstr "自動照合の待ち行列に追加しました"
 
+#: app/plugins/builtin/random_manga/nav.html app/plugins/builtin/random_manga/tool.html
+msgid "Random"
+msgstr "ランダム"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Random manga"
+msgstr "ランダムマンガ"
+
+#: app/plugins/builtin/random_manga/tool.html
+msgid "Random series"
+msgstr "ランダムなシリーズ"
+
 #: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
 msgid "Re-read this series' folder after fixing the files on disk"
 msgstr "ディスク上のファイルを直したあと、このシリーズのフォルダを読み直します"
@@ -2770,6 +2834,10 @@ msgstr "本の番号を読みます。外部には接続しません"
 #: app/plugins/builtin/title_matcher/__init__.py
 msgid "Reads series folder names; connects to nothing (the providers do)"
 msgstr "シリーズのフォルダ名を読みます。外部には接続しません（ソースが接続します）"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "Reads the library and your reading status; keeps nothing and connects to nothing"
+msgstr "ライブラリと読書状況を読み取ります。何も保存せず、どこにも接続しません"
 
 #: app/plugins/builtin/filename_parser/__init__.py
 msgid "Reads volume, chapter and revision from file names (Vol 3, c012-014, c012v2, 第1巻). Built in."
@@ -3653,6 +3721,10 @@ msgstr "テキストの本（ライトノベル）です。読むには 設定 �
 #: app/plugins/builtin/libraries/api.py app/plugins/builtin/libraries/libraries.js
 msgid "This is the only library. Add another one first."
 msgstr "ライブラリはこれだけです。先に別のライブラリを追加してください。"
+
+#: app/plugins/builtin/random_manga/__init__.py
+msgid "This is the only series left to pick."
+msgstr "選べるシリーズはこれだけです。"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "This is the path inside Docker. To see the one on your NAS, set {setting} for its library folder."

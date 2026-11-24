@@ -552,6 +552,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `showLibrary(params)` | show the library page with these filters |
 | `on(pluginId, event, fn)` | listen to the app (events below); only while your plugin is on |
 | `setListScope(pluginId, params)` | query parameters for every list's API call (grid, tags, Continue, Needs attention), e.g. `{ shelf: 3 }`, for your `series_filter()` to read. The lists reload. Taken away when the plugin is switched off |
+| `listScope()` | what every plugin adds to the lists' API calls (above), as `URLSearchParams`, e.g. `shelf=3`: send it with a call of your own that should see the same series (the built-in Random manga plugin picks from the library shown). Plugin API 28 |
 | `listsChanged()` | the same lists show something else now (e.g. a library was unlocked): they reload |
 | `settingsPage(pluginId, key, label, icon, at)` | a page of your own in Settings at `#/settings/<key>`, at place `at` in the menu (0: first). `icon` is the name of a built-in icon (`"users"`, see Icons below) or any character, e.g. an emoji. Call it in `start`; it goes away when the plugin is switched off |
 | `denied(error, retry)` | used by the app when the server answered 403: the `denied` event gets the answer's `detail` |

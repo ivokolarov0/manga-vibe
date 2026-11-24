@@ -203,7 +203,8 @@
     padding-bottom: var(--safe-bottom);
     border-top: 1px solid var(--border);
 
-    & a {
+    /* its entries: links, and buttons a plugin adds (button.nav-entry, e.g. Random manga's) */
+    & :is(a, button.nav-entry) {
       display: grid;
       flex: 1;
       justify-items: center;
@@ -269,7 +270,7 @@
       border-top: 0;
       border-bottom: 1px solid var(--border);
 
-      & a {
+      & :is(a, button.nav-entry) {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -292,7 +293,7 @@
       @media (min-width: 700px) {
         padding: 0 max(8px, (100% - var(--page-max)) / 2 + 8px);
 
-        & a {
+        & :is(a, button.nav-entry) {
           flex: none;
         }
       }

@@ -113,6 +113,22 @@ off in **Settings → Plugins** and the series page shows nothing extra.
 
 ---
 
+## Random manga (built in)
+
+For when you can't decide what to read next. **Random** on the library page (next to Filter and Sort; on
+phones just its shuffle icon), or in the **Sidebar**'s column on wide screens, opens a series picked at random from the
+library shown: the library you picked, never a locked one. Its page then has **Pick another**, to pick
+again without going back. A series picked lately comes up again only once the others are used up.
+
+- **Exclude read manga** (on by default): series whose reading status is *Completed* are left out.
+- **Exclude dropped manga** (on by default): series whose reading status is *Dropped* are left out.
+
+The reading status is the one the series page shows: the one you picked, or else worked out from what
+you've read. When the settings leave nothing to pick, it says so. Each person picks by their own
+reading status. Switch the plugin off in **Settings → Plugins** and its buttons go away.
+
+---
+
 ## Install a plugin
 
 ```mermaid
