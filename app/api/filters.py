@@ -4,8 +4,9 @@ never a locked one), and the SQL pieces the library filters use. The filters the
 app/plugins/query.py."""
 from sqlalchemy import and_, case, func, or_, select
 
-from app.api.common import TITLE_FIELDS, collection_of, my_progress_join, my_state, numberings
-from app.models import Book, Progress, Series
+from app import users
+from app.api.common import TITLE_FIELDS, collection_of, my_state, numberings
+from app.models import Series, SeriesRead, SeriesTotal
 from app.plugins import manager as plugins
 
 
@@ -17,17 +18,16 @@ def collections(db, series):
 
 
 def reading_aggregates():
-    """Per-series counts of visible books, used for reading status, unread count and sorting."""
-    visible = and_(Book.missing_since.is_(None), Book.hidden.is_(False))
-    done = case((Progress.completed.is_(True), 1), else_=0)
-    return (select(Book.series_id.label("sid"),
-                   func.count(Book.id).label("total"),
-                   func.sum(done).label("done"),
-                   func.sum(case((and_(Progress.completed.is_not(True), Progress.page > 0), 1), else_=0)).label("started"),
-                   func.sum(case((func.coalesce(Book.override_extra, Book.extra).is_(False), 1), else_=0)).label("total_main"),
-                   func.sum(case((and_(func.coalesce(Book.override_extra, Book.extra).is_(False), Progress.completed.is_(True)), 1), else_=0)).label("done_main"))
-            .outerjoin(Progress, my_progress_join())  # the current user's reading
-            .where(visible).group_by(Book.series_id).subquery())
+    """Per-series counts of visible books (sid, total, done, started, total_main, done_main), used for
+    reading status, unread count and sorting: the stored ones (SeriesTotal, and the current user's
+    SeriesRead, kept by the database's triggers), not a count of every book."""
+    mine = and_(SeriesRead.series_id == SeriesTotal.series_id, SeriesRead.user_id == users.current_id())
+    return (select(SeriesTotal.series_id.label("sid"), SeriesTotal.total.label("total"),
+                   func.coalesce(SeriesRead.done, 0).label("done"),
+                   func.coalesce(SeriesRead.started, 0).label("started"),
+                   SeriesTotal.main.label("total_main"),
+                   func.coalesce(SeriesRead.done_main, 0).label("done_main"))
+            .outerjoin(SeriesRead, mine).subquery())
 
 
 def title_expr(lang):

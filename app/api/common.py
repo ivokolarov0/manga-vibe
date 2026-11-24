@@ -13,7 +13,7 @@ from app import users
 from app.db import get_setting
 from app.i18n import N_, t
 from app.metadata import editions
-from app.models import Book, Library, Progress, Series, SeriesState
+from app.models import Book, Library, Progress, Series, SeriesRead, SeriesState, SeriesTotal
 
 
 # ---- the current user's own (app/users.py) in SQL
@@ -92,23 +92,16 @@ def series_counts(db, series_ids):
     """{series_id: (total, completed, in_progress, completed_non_extra, total_non_extra)}"""
     if not series_ids:
         return {}
-    rows = (db.query(Book.series_id, func.coalesce(Book.override_extra, Book.extra), Progress.completed, Progress.page)
-            .outerjoin(Progress, my_progress_join())
-            .filter(Book.series_id.in_(series_ids), Book.missing_since.is_(None),
-                    Book.hidden.is_(False))
-            .all())
+    # the stored counts (kept by the database's triggers, app/db.py): one row per series. Fetching a row
+    # per book was slow, and far slower while other requests ran: Python's sqlite3 lets go of the GIL
+    # for every row, and waits to get it back each time.
+    mine = and_(SeriesRead.series_id == SeriesTotal.series_id, SeriesRead.user_id == users.current_id())
+    rows = (db.query(SeriesTotal.series_id, SeriesTotal.total, SeriesRead.done, SeriesRead.started,
+                     SeriesRead.done_main, SeriesTotal.main)
+            .outerjoin(SeriesRead, mine).filter(SeriesTotal.series_id.in_(series_ids)).all())
     out = {sid: [0, 0, 0, 0, 0] for sid in series_ids}
-    for sid, extra, completed, page in rows:
-        c = out[sid]
-        c[0] += 1
-        if completed:
-            c[1] += 1
-        elif page:
-            c[2] += 1
-        if not extra:
-            c[4] += 1
-            if completed:
-                c[3] += 1
+    for sid, *counts in rows:
+        out[sid] = [n or 0 for n in counts]
     return out
 
 

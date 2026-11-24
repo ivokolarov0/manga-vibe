@@ -266,6 +266,29 @@ class Progress(Base):
     book: Mapped[Book] = relationship(back_populates="progress")
 
 
+class SeriesTotal(Base):
+    """How many visible books a series has (total) and how many of them aren't extras (main). Kept by
+    SQLite triggers on book (app/db.py READING_COUNT_TRIGGERS), never written by the app: lists read
+    these instead of counting every book of every series."""
+    __tablename__ = "series_total"
+    series_id: Mapped[int] = mapped_column(ForeignKey("series.id", ondelete="CASCADE"), primary_key=True)
+    total: Mapped[int] = mapped_column(Integer, default=0)
+    main: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class SeriesRead(Base):
+    """One user's reading of a series' visible books: read (done), started but not read (started), and
+    read among the ones that aren't extras (done_main). Kept by SQLite triggers on progress and book,
+    like SeriesTotal; the reading status, unread count and their filters and sorts come from these."""
+    __tablename__ = "series_read"
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    series_id: Mapped[int] = mapped_column(ForeignKey("series.id", ondelete="CASCADE"), primary_key=True,
+                                           index=True)
+    done: Mapped[int] = mapped_column(Integer, default=0)
+    started: Mapped[int] = mapped_column(Integer, default=0)
+    done_main: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class Setting(Base):
     __tablename__ = "setting"
     key: Mapped[str] = mapped_column(String, primary_key=True)
