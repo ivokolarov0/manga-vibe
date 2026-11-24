@@ -69,8 +69,28 @@ def _run():
             _pause(kind, sid)
 
 
+busy = threading.Lock()  # held while a job runs; an import (app/backup.py) waits for it
+
+
+def clear():
+    """Forget everything queued (an import replaced the database: the ids point at other series)."""
+    with _lock:
+        while True:
+            try:
+                _q.get_nowait()
+            except queue.Empty:
+                break
+        _pending.clear()
+    status["queued"] = 0
+
+
 def _handle(kind, sid):
     """Do one queued job. "down" when no provider could be reached."""
+    with busy:
+        return _handle_now(kind, sid)
+
+
+def _handle_now(kind, sid):
     db = SessionLocal()
     try:
         s = db.get(Series, sid)

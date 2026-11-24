@@ -41,6 +41,9 @@
 
         {{ view("settings-updates") }}
 
+{# Backup is the core's too: export and import must work whatever the plugins do #}
+{% include "settings/backup.html" %}
+
 {% include "settings/attention.html" %}
       </div>
     </section>

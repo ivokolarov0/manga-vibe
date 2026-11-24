@@ -27,6 +27,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from app import config, i18n
+from app.i18n import N_  # written as N_( so `python -m app.i18n` finds the texts
 from app.plugins import Context, manager, plugin_jobs
 
 log = logging.getLogger("mangavibe.plugins")
@@ -188,8 +189,10 @@ def attention_views(lists):
     return draw
 
 
-# Settings' own page, the core's: Plugins (how a broken plugin is switched off), in the middle of the menu
-CORE_SETTINGS_PAGES = [{"key": "plugins", "label": i18n.N_("Plugins"), "icon": "blocks", "order": 50}]
+# Settings' own pages, the core's: Plugins (how a broken plugin is switched off), in the middle of the menu,
+# and Backup (export and import, app/backup.py) at the end: both work whatever the plugins do
+CORE_SETTINGS_PAGES = [{"key": "plugins", "label": N_("Plugins"), "icon": "blocks", "order": 50},
+                       {"key": "backup", "label": N_("Backup"), "icon": "upload", "order": 70}]
 
 
 def settings_pages(plugins) -> list[dict]:

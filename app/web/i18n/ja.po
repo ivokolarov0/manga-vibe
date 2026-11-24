@@ -44,6 +44,10 @@ msgstr "自動"
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
 msgstr "戻る・全画面・オプションのボタンを、親指の届くこちら側に置きます"
 
+#: app/plugins/web.py
+msgid "Backup"
+msgstr "バックアップ"
+
 #: app/web/static/js/app.js
 msgid "Bottom"
 msgstr "下"
@@ -441,7 +445,7 @@ msgstr "プラグイン"
 msgid "Plugin boxes over the page, e.g. translations. Lower shows the art underneath"
 msgstr "ページ上のプラグインの枠（翻訳など）。低いほど下の絵が見えます"
 
-#: app/web/static/js/app.js app/web/templates/shell/banners.html
+#: app/plugins/web.py app/web/static/js/app.js app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "プラグイン"
 

@@ -1231,3 +1231,37 @@ Plugin API version, and the app works after every one.
 - **Step by step**: this first step has the machinery, the picker, and the top bar, banners, toasts and
   Settings → Display / Reader / Android app translated. The rest of the page moves to `t()` in the next
   steps, then a test that fails on text written straight into a template.
+
+### Export and import (issue #262)
+
+- **One .zip**: `manifest.json` (app, file format, schema = migrations the database has had, version,
+  date, counts), a copy of `mangavibe.db` made with SQLite's backup API (consistent while the app
+  writes), `covers/` (an uploaded poster exists nowhere else) and `custom.css`. The whole database
+  rather than a JSON dump of chosen tables: it already holds the library data, every user's progress,
+  the accounts and all settings, plugins' included, and its migrations already know how to bring an
+  old one up to date. Caches and the manga files stay out; so do plugins installed into
+  `/data/plugins` (code, not data: their settings go along, install them again).
+- **Versions**: a file whose format or schema is newer than this app is refused ("Update MangaVibe
+  first"), checked in the manifest and again in the database itself. An older one is migrated on its
+  own copy (`db.migrate()`, the code `init_db()` uses) before anything is replaced.
+- **Import replaces everything**, after a confirm. No merge: matching users, series and books between
+  two databases by name and path is a feature of its own, and "replace" is what moving or restoring
+  needs. The database being replaced is copied to `/data/backups/before-import-<date>.db` first (the
+  newest 3 are kept).
+- **No restart**: the file's database is copied over the running one with SQLite's backup API and
+  the connections are dropped, then plugins are loaded again. A restart only exists in the Docker image
+  (`updater.restart()`), not in development or on Android. While it runs, the scanner's lock is held
+  and the metadata worker waits (`worker.busy`) and its queue is emptied: their ids would point at
+  the other database's series.
+- **Books are matched by path.** Every book is marked to be read again (`mtime = -1`), the thumbnail
+  and page caches are emptied (kept by book id, which now means other books), this server's
+  `LIBRARY_PATHS` are added and a scan starts. Progress of a book that isn't there is kept like any
+  missing file's: hidden, removed after 30 days; a library folder that's missing as a whole is left
+  alone, so it can be mounted and scanned.
+- **Tokens are left out by default** (the GitHub token and plugin settings marked `secret`; the copy
+  is VACUUMed so they aren't left in free pages). "Include tokens" puts them in. Password hashes
+  (accounts, locked libraries) and the keys that sign logins always go along: without them nobody
+  could log in after an import.
+- **A page of the core's** (Settings → Backup, like Plugins), not a plugin's section: restoring has to
+  work whatever the plugins do. Admins only. Export is a plain download link; import sends the file as
+  the request body (not a form), written straight to the data volume.

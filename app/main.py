@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, HTMLResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app import config, db as database, i18n, plugin_updates, updater
-from app.api import attention, books, edit, series, system, update
+from app.api import attention, backup, books, edit, series, system, update
 from app.metadata import worker as metadata_worker
 from app.plugins import manager as plugins, web as plugin_web
 from app.posters import MAX_UPLOAD
@@ -145,6 +145,7 @@ app.include_router(books.router)
 app.include_router(attention.router)
 app.include_router(edit.router)
 app.include_router(update.router)
+app.include_router(backup.router)
 # a plugin's own API (Plugin.router), e.g. the built-in saved searches
 app.mount("/api/plugins/{plugin_id}/api", plugin_web.PluginApi())
 

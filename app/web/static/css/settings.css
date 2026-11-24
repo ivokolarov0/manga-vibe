@@ -433,6 +433,11 @@
   }
 
   /* Settings > Plugins: one row per plugin */
+  /* a file picker that looks like a button (Settings → Backup → Import) */
+  .file-btn:not(.disabled) {
+    cursor: pointer;
+  }
+
   .setting-row .label small.plugin-status {
     color: var(--accent);
   }
