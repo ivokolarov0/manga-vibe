@@ -11,7 +11,8 @@ The file is a .zip:
 The manga files are not in it, nor the caches (thumbnails, resized pages: made again) or the plugins
 installed into /data/plugins (their settings are in the database; install them again).
 
-Tokens (the GitHub token, plugin settings marked secret) are left out unless asked for. Password hashes
+Tokens (the GitHub token, plugin settings marked secret) are left out unless asked for; so are all the
+settings of a plugin that isn't loaded (which of them are secret isn't known). Password hashes
 (accounts, locked libraries) and the keys that sign logins always go along: without them nobody could log
 in after an import.
 
@@ -36,6 +37,7 @@ from pathlib import Path
 from sqlalchemy import create_engine, text
 
 from app import config
+from app.i18n import N_
 
 log = logging.getLogger("mangavibe")
 
@@ -45,15 +47,24 @@ DB_NAME = "mangavibe.db"
 COVERS = "covers/"
 CSS_NAME = "custom.css"
 KEEP_SAFETY_COPIES = 3
-_SAFE_NAME = re.compile(r"^[\w.-]+$")
+_SAFE_NAME = re.compile(r"^(?!\.\.?$)[\w.-]+$")  # a plain file name: not "." or ".."
 
 
-class ImportRefused(Exception):
+class _Message(Exception):
+    """An error for the owner: an English text marked with N_() (in messages.pot) and its {values}, so
+    app/api/backup.py says it in the language of the person asking."""
+
+    def __init__(self, text, **values):
+        super().__init__(text.format(**values) if values else text)
+        self.text, self.values = text, values
+
+
+class ImportRefused(_Message):
     """The file can't be imported; the message says why, for the owner."""
 
 
-class Busy(Exception):
-    """A scan is running: try again when it has finished."""
+class Busy(_Message):
+    """A scan, or a plugin's work, is running: try again when it has finished."""
 
 
 def backups_dir() -> Path:
@@ -110,11 +121,18 @@ def _secret_keys():
 
 
 def _strip_tokens(path):
-    """Take the tokens out of an exported copy (and VACUUM, so they aren't left in free pages)."""
+    """Take the tokens out of an exported copy (and VACUUM, so they aren't left in free pages). The
+    settings of a plugin that isn't loaded (it failed to load, or was removed) go entirely: which of
+    them are secret is only known from the plugin itself."""
     from app.plugin_updates import TOKEN_KEY
+    from app.plugins import manager as plugins
+    loaded = {f"plugin:{pid}" for pid in plugins.plugins}
     conn = sqlite3.connect(path)
     try:
         conn.execute("DELETE FROM setting WHERE key = ?", (TOKEN_KEY,))
+        for (key,) in conn.execute("SELECT key FROM setting WHERE key LIKE 'plugin:%'").fetchall():
+            if key not in loaded:
+                conn.execute("DELETE FROM setting WHERE key = ?", (key,))
         for key, secret in _secret_keys().items():
             row = conn.execute("SELECT value FROM setting WHERE key = ?", (key,)).fetchone()
             try:
@@ -176,14 +194,21 @@ def _manifest(z: zipfile.ZipFile) -> dict:
     except (KeyError, ValueError):
         m = None
     if not isinstance(m, dict) or m.get("app") != "MangaVibe" or DB_NAME not in z.namelist():
-        raise ImportRefused("This isn't a MangaVibe export: pick a file made by Settings → Backup → Export.")
-    newer = (f"This file comes from a newer MangaVibe ({m.get('version') or 'unknown version'}) than this "
-             "one. Update MangaVibe first, then import it.")
+        raise ImportRefused(N_("This isn't a MangaVibe export: pick a file made by Settings → Backup → Export."))
     if not isinstance(m.get("format"), int) or m["format"] > FORMAT:
-        raise ImportRefused(newer)
+        raise _newer(m)
     if not isinstance(m.get("schema"), int) or m["schema"] > _schema_now():
-        raise ImportRefused(newer)
+        raise _newer(m)
     return m
+
+
+def _newer(manifest: dict) -> ImportRefused:
+    version = manifest.get("version")
+    if not version:
+        return ImportRefused(N_("This file comes from a newer MangaVibe than this one. Update MangaVibe first, "
+                                "then import it."))
+    return ImportRefused(N_("This file comes from a newer MangaVibe ({version}) than this one. Update MangaVibe "
+                            "first, then import it."), version=str(version))
 
 
 def _check_db(path: Path, manifest: dict):
@@ -192,17 +217,16 @@ def _check_db(path: Path, manifest: dict):
         conn = sqlite3.connect(path)
         try:
             if conn.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
-                raise ImportRefused("The database in this file is damaged.")
+                raise ImportRefused(N_("The database in this file is damaged."))
             row = conn.execute("SELECT version FROM schema_version").fetchone()
         finally:
             conn.close()
     except sqlite3.Error as e:
-        raise ImportRefused(f"The database in this file can't be read ({e}).")
+        raise ImportRefused(N_("The database in this file can't be read ({error})."), error=str(e))
     if row is None or not isinstance(row[0], int):
-        raise ImportRefused("The database in this file has no version.")
+        raise ImportRefused(N_("The database in this file has no version."))
     if row[0] > _schema_now():
-        raise ImportRefused(f"This file comes from a newer MangaVibe ({manifest.get('version') or 'unknown version'}) "
-                            "than this one. Update MangaVibe first, then import it.")
+        raise _newer(manifest)
 
 
 def _migrate_copy(path: Path):
@@ -229,18 +253,49 @@ def safety_copy() -> Path:
     return dest
 
 
-def _restore_files(z: zipfile.ZipFile):
-    """The posters (the old ones go: series ids now mean the file's series) and custom.css."""
-    covers = [n for n in z.namelist() if n.startswith(COVERS) and _SAFE_NAME.match(n[len(COVERS):])]
+def _unpack_files(z: zipfile.ZipFile, work: Path) -> Path:
+    """The file's posters and custom.css, unpacked into work/new before anything on the server
+    changes (a bad entry or a full disk stops the import here, with nothing replaced)."""
+    new = work / "new"
+    (new / "covers").mkdir(parents=True)
+    for n in z.namelist():
+        name = n[len(COVERS):]
+        if n.startswith(COVERS) and _SAFE_NAME.match(name):
+            with z.open(n) as src, open(new / "covers" / name, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+    if CSS_NAME in z.namelist():
+        (new / CSS_NAME).write_bytes(z.read(CSS_NAME))
+    return new
+
+
+def _swap_files(new: Path, old: Path):
+    """Put the posters and custom.css from `new` in place; this server's go to `old`, for _put_back().
+    The old posters go: series ids now mean the file's series. No custom.css in the file: none after."""
+    (old / "covers").mkdir(parents=True)
     config.COVERS_DIR.mkdir(parents=True, exist_ok=True)
-    for f in config.COVERS_DIR.iterdir():
+    for f in list(config.COVERS_DIR.iterdir()):
+        if f.is_file():
+            shutil.move(f, old / "covers" / f.name)
+    if config.CUSTOM_CSS.is_file():
+        shutil.move(config.CUSTOM_CSS, old / CSS_NAME)
+    for f in (new / "covers").iterdir():
+        shutil.move(f, config.COVERS_DIR / f.name)
+    if (new / CSS_NAME).is_file():
+        shutil.move(new / CSS_NAME, config.CUSTOM_CSS)
+
+
+def _put_back(old: Path):
+    """Undo _swap_files() (as far as it got): this server's posters and custom.css again."""
+    if not (old / "covers").is_dir():
+        return
+    for f in list(config.COVERS_DIR.iterdir()):
         if f.is_file():
             f.unlink(missing_ok=True)
-    for n in covers:
-        with z.open(n) as src, open(config.COVERS_DIR / n[len(COVERS):], "wb") as dst:
-            shutil.copyfileobj(src, dst)
-    if CSS_NAME in z.namelist():
-        config.CUSTOM_CSS.write_bytes(z.read(CSS_NAME))
+    for f in (old / "covers").iterdir():
+        shutil.move(f, config.COVERS_DIR / f.name)
+    config.CUSTOM_CSS.unlink(missing_ok=True)
+    if (old / CSS_NAME).is_file():
+        shutil.move(old / CSS_NAME, config.CUSTOM_CSS)
 
 
 def _clear_caches():
@@ -260,7 +315,7 @@ def import_from(src: Path) -> dict:
     try:
         z = zipfile.ZipFile(src)
     except (zipfile.BadZipFile, OSError):
-        raise ImportRefused("This isn't a MangaVibe export (not a .zip file).")
+        raise ImportRefused(N_("This isn't a MangaVibe export (not a .zip file)."))
     with z, _work_dir() as work:
         manifest = _manifest(z)
         copy = work / DB_NAME
@@ -268,27 +323,47 @@ def import_from(src: Path) -> dict:
             shutil.copyfileobj(f, out)
         _check_db(copy, manifest)
         _migrate_copy(copy)
+        new = _unpack_files(z, work)
 
         if not walker._lock.acquire(timeout=5):  # no scan writes the old ids into the new database
-            raise Busy("A library scan is running. Try again when it has finished.")
+            raise Busy(N_("A library scan is running. Try again when it has finished."))
         try:
-            with worker.busy:  # nor a metadata match
-                saved = safety_copy()
-                database.engine.dispose()
-                _copy_db(copy, Path(database.engine.url.database))
-                database.engine.dispose()  # no connection keeps what it read of the old one
-                worker.clear()
-                _restore_files(z)
-                _clear_caches()
-                with database.SessionLocal() as db:
-                    # read every file again: thumbnails, and this server's file dates
-                    db.execute(text("UPDATE book SET mtime = -1"))
-                    db.commit()
-                    walker.ensure_libraries(db, config.LIBRARY_PATHS)  # this server's folders
-                    plugins.load()
-                    plugins.load_switches(db)
-                    plugins.start(db)
-                    counts = _counts(Path(database.engine.url.database))
+            # nor a metadata match, a plugin's queued event or job, or a plugin's own thread
+            with worker.busy, plugins.busy:
+                try:
+                    if not plugins.stop_all_threads(timeout=60):
+                        raise Busy(N_("A plugin is still busy. Try again in a minute."))
+                    live = Path(database.engine.url.database)
+                    saved = safety_copy()
+                    try:
+                        database.engine.dispose()
+                        _copy_db(copy, live)
+                        database.engine.dispose()  # no connection keeps what it read of the old one
+                        worker.clear()
+                        plugins.drop_queued()
+                        _swap_files(new, work / "old")
+                        with database.SessionLocal() as db:
+                            # read every file again: thumbnails, and this server's file dates
+                            db.execute(text("UPDATE book SET mtime = -1"))
+                            db.commit()
+                            walker.ensure_libraries(db, config.LIBRARY_PATHS)  # this server's folders
+                        counts = _counts(live)
+                    except BaseException:
+                        # half done: this server's database, posters and custom.css again
+                        log.exception("The import failed; putting back the database from before it (%s)", saved)
+                        database.engine.dispose()
+                        _copy_db(saved, live)
+                        database.engine.dispose()
+                        worker.clear()
+                        _put_back(work / "old")
+                        raise
+                    _clear_caches()  # thumbnails and pages are made again; nothing to put back
+                finally:
+                    # the plugins start again on whichever database is in place now (their threads were stopped)
+                    with database.SessionLocal() as db:
+                        plugins.load()
+                        plugins.load_switches(db)
+                        plugins.start(db)
         finally:
             walker._lock.release()
     log.info("Imported an export from %s (MangaVibe %s); the database before it is in %s",

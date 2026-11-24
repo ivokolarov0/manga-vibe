@@ -51,6 +51,10 @@ msgstr "+{n} 件"
 msgid "A day"
 msgstr "1 日"
 
+#: app/backup.py
+msgid "A library scan is running. Try again when it has finished."
+msgstr "ライブラリをスキャン中です。終わってからもう一度お試しください。"
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "A month"
 msgstr "1 か月"
@@ -74,6 +78,10 @@ msgstr "その間に新しいバージョンが出ました。ページを再読
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "A page from a book"
 msgstr "本のページ"
+
+#: app/backup.py
+msgid "A plugin is still busy. Try again in a minute."
+msgstr "プラグインがまだ処理中です。1 分後にもう一度お試しください。"
 
 #: app/web/static/js/app.js
 msgid "A scan is already running. Try again when it has finished."
@@ -808,6 +816,10 @@ msgstr "最新版をダウンロード"
 msgid "Downloaded from GitHub"
 msgstr "GitHub からダウンロード"
 
+#: app/web/static/js/app.js
+msgid "Downloading {file}"
+msgstr "{file} をダウンロードしています"
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "Downloads covers from AniList's image server (s4.anilist.co) and keeps them on the server; with Covers: Loaded from AniList, your browser loads them from there instead"
 msgstr "AniList の画像サーバー（s4.anilist.co）から表紙をダウンロードしてサーバーに保存します。表紙：AniList から読み込む の場合はブラウザがそこから直接読み込みます"
@@ -1372,11 +1384,11 @@ msgstr "{file} をインポートしますか？このサーバーのライブ�
 msgid "Imported {series} and {books}. Reloading…"
 msgstr "{series}、{books} をインポートしました。再読み込み中…"
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js
 msgid "Importing…"
 msgstr "インポート中…"
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js
 msgid "Import…"
 msgstr "インポート…"
 
@@ -2643,6 +2655,10 @@ msgstr "表紙"
 msgid "Poster changed"
 msgstr "表紙を変更しました"
 
+#: app/web/templates/settings/backup.html
+msgid "Preparing…"
+msgstr "準備中…"
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Preview (not saved yet)"
 msgstr "プレビュー（未保存）"
@@ -3394,6 +3410,18 @@ msgstr "それは MangaVibe 自身のデータフォルダで、マンガのフ�
 msgid "The current password is wrong"
 msgstr "現在のパスワードが違います"
 
+#: app/backup.py
+msgid "The database in this file can't be read ({error})."
+msgstr "このファイルのデータベースを読み込めません（{error}）。"
+
+#: app/backup.py
+msgid "The database in this file has no version."
+msgstr "このファイルのデータベースにはバージョンがありません。"
+
+#: app/backup.py
+msgid "The database in this file is damaged."
+msgstr "このファイルのデータベースは壊れています。"
+
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
 msgstr "設定の表示ページ"
@@ -3421,6 +3449,10 @@ msgstr "GitHub トークンとプラグインの秘密の設定（API キー、�
 #: app/web/static/js/app.js
 msgid "The image is larger than 10 MB"
 msgstr "画像が 10 MB を超えています"
+
+#: app/web/static/js/app.js
+msgid "The import failed"
+msgstr "インポートに失敗しました"
 
 #: app/api/books.py
 msgid "The last chapter must be after the first one"
@@ -3518,6 +3550,10 @@ msgstr "シリーズの編集ダイアログ（情報と表紙、editSeries() �
 msgid "The series' Edit dialog: titles, description, numbers, tags, links and the poster. Built in."
 msgstr "シリーズの編集ダイアログ：タイトル、あらすじ、番号、タグ、リンク、表紙。組み込み。"
 
+#: app/web/static/js/app.js
+msgid "The server couldn't be reached"
+msgstr "サーバーに接続できません"
+
 #: app/web/static/js/common.js
 msgid "The server is taking too long to answer"
 msgstr "サーバーの応答に時間がかかりすぎています"
@@ -3598,6 +3634,18 @@ msgstr "細い"
 msgid "This can't be undone."
 msgstr "元に戻せません。"
 
+#: app/api/backup.py
+msgid "This export isn't there anymore: export again."
+msgstr "このエクスポートはもうありません。もう一度エクスポートしてください。"
+
+#: app/backup.py
+msgid "This file comes from a newer MangaVibe ({version}) than this one. Update MangaVibe first, then import it."
+msgstr "このファイルはこれより新しい MangaVibe（{version}）で作られました。先に MangaVibe を更新してからインポートしてください。"
+
+#: app/backup.py
+msgid "This file comes from a newer MangaVibe than this one. Update MangaVibe first, then import it."
+msgstr "このファイルはこれより新しい MangaVibe で作られました。先に MangaVibe を更新してからインポートしてください。"
+
 #: app/web/static/js/reader.js
 msgid "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."
 msgstr "テキストの本（ライトノベル）です。読むには 設定 → プラグイン でテキスト用のリーダーを追加してください。"
@@ -3609,6 +3657,14 @@ msgstr "ライブラリはこれだけです。先に別のライブラリを追
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "This is the path inside Docker. To see the one on your NAS, set {setting} for its library folder."
 msgstr "これは Docker 内のパスです。NAS 上のパスを表示するには、ライブラリのフォルダに {setting} を設定してください。"
+
+#: app/backup.py
+msgid "This isn't a MangaVibe export (not a .zip file)."
+msgstr "MangaVibe のエクスポートではありません（.zip ファイルではありません）。"
+
+#: app/backup.py
+msgid "This isn't a MangaVibe export: pick a file made by Settings → Backup → Export."
+msgstr "MangaVibe のエクスポートではありません。設定 → バックアップ → エクスポートで作ったファイルを選んでください。"
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "This library"
@@ -3885,6 +3941,10 @@ msgstr "アップロードした画像"
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Uploading…"
 msgstr "アップロード中…"
+
+#: app/web/static/js/app.js
+msgid "Uploading… {percent}%"
+msgstr "アップロード中… {percent}%"
 
 #: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/web/templates/settings/plugins.html
 msgid "Use"

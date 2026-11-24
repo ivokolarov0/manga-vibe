@@ -44,6 +44,7 @@ import logging
 import queue
 import sys
 import threading
+import time
 import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -624,17 +625,21 @@ class Context:
 
         def run():
             from app.db import SessionLocal
-            with SessionLocal() as db:
-                ctx = Context(self.plugin, db)
-                ctx._stop = stop
-                try:
-                    fn(ctx, *args)
-                    db.commit()
-                except Exception:
-                    db.rollback()
-                    log.error("Plugin %s failed in its thread:\n%s", self.plugin.id, traceback.format_exc())
+            try:
+                with SessionLocal() as db:
+                    ctx = Context(self.plugin, db)
+                    ctx._stop = stop
+                    try:
+                        fn(ctx, *args)
+                        db.commit()
+                    except Exception:
+                        db.rollback()
+                        log.error("Plugin %s failed in its thread:\n%s", self.plugin.id, traceback.format_exc())
+            finally:
+                manager._threads.discard(threading.current_thread())
 
         t = threading.Thread(target=run, daemon=True, name=f"plugin-{self.plugin.id}")
+        manager._threads.add(t)
         t.start()
         return t
 
@@ -661,6 +666,11 @@ class PluginManager:
         self._worker = None
         self._lock = threading.Lock()
         self._stops: dict[int, threading.Event] = {}  # id(plugin object) -> its threads' stop signal
+        self._threads: set[threading.Thread] = set()  # the running ctx.run_in_thread() threads
+        # held while a queued event or job runs, and bumped by drop_queued(): an import (app/backup.py)
+        # waits for the one running, and the one taken from the queue meanwhile is dropped
+        self.busy = threading.Lock()
+        self._generation = 0
         self._load_lock = threading.RLock()  # load() empties and refills the dicts: see installed()
 
     def installed(self) -> dict[str, tuple[str, bool]]:
@@ -680,6 +690,29 @@ class PluginManager:
             event = self._stops.pop(id(plugin), None)
         if event:
             event.set()
+
+    def stop_all_threads(self, timeout=30.0) -> bool:
+        """Tell every plugin's threads to finish and wait for them (an import is about to replace the
+        database: their ids would point at other rows). False if one still runs after `timeout` s."""
+        for p in list(self.plugins.values()):
+            self.stop_threads(p)
+        deadline = time.monotonic() + timeout
+        for t in list(self._threads):
+            if t is not threading.current_thread():
+                t.join(max(0.0, deadline - time.monotonic()))
+        return not any(t.is_alive() and t is not threading.current_thread() for t in list(self._threads))
+
+    def drop_queued(self):
+        """Forget the queued events and run_in_background() jobs: they hold ids of the database an
+        import replaced. Call it holding `busy`."""
+        with self._lock:
+            self._generation += 1
+        while True:
+            try:
+                self._queue.get_nowait()
+            except queue.Empty:
+                break
+            self._queue.task_done()
 
     def set_enabled(self, plugin_id, enabled: bool):
         if enabled:
@@ -1049,7 +1082,8 @@ class PluginManager:
             if self._worker is None or not self._worker.is_alive():
                 self._worker = threading.Thread(target=self._work, daemon=True, name="plugin-events")
                 self._worker.start()
-        self._queue.put(item)
+            generation = self._generation
+        self._queue.put((generation, item))
 
     def wait_idle(self):
         """Block until every queued event and job has run (used by tests)."""
@@ -1057,12 +1091,15 @@ class PluginManager:
 
     def _work(self):
         while True:
-            item = self._queue.get()
+            generation, item = self._queue.get()
             try:
-                if item[0] == "event":
-                    self._run_event(item[1], item[2])
-                else:
-                    self._run_job(*item[1:])
+                with self.busy:
+                    if generation != self._generation:
+                        continue  # queued before an import: its ids now mean other rows
+                    if item[0] == "event":
+                        self._run_event(item[1], item[2])
+                    else:
+                        self._run_job(*item[1:])
             except Exception:
                 log.error("Plugin worker failed:\n%s", traceback.format_exc())
             finally:

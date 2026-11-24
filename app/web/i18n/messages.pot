@@ -49,6 +49,10 @@ msgstr ""
 msgid "A day"
 msgstr ""
 
+#: app/backup.py
+msgid "A library scan is running. Try again when it has finished."
+msgstr ""
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "A month"
 msgstr ""
@@ -71,6 +75,10 @@ msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "A page from a book"
+msgstr ""
+
+#: app/backup.py
+msgid "A plugin is still busy. Try again in a minute."
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -811,6 +819,10 @@ msgstr ""
 msgid "Downloaded from GitHub"
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "Downloading {file}"
+msgstr ""
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "Downloads covers from AniList's image server (s4.anilist.co) and keeps them on the server; with Covers: Loaded from AniList, your browser loads them from there instead"
 msgstr ""
@@ -1375,11 +1387,11 @@ msgstr ""
 msgid "Imported {series} and {books}. Reloading…"
 msgstr ""
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js
 msgid "Importing…"
 msgstr ""
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js
 msgid "Import…"
 msgstr ""
 
@@ -2653,6 +2665,10 @@ msgstr ""
 msgid "Poster changed"
 msgstr ""
 
+#: app/web/templates/settings/backup.html
+msgid "Preparing…"
+msgstr ""
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Preview (not saved yet)"
 msgstr ""
@@ -3411,6 +3427,18 @@ msgstr ""
 msgid "The current password is wrong"
 msgstr ""
 
+#: app/backup.py
+msgid "The database in this file can't be read ({error})."
+msgstr ""
+
+#: app/backup.py
+msgid "The database in this file has no version."
+msgstr ""
+
+#: app/backup.py
+msgid "The database in this file is damaged."
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
 msgstr ""
@@ -3437,6 +3465,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "The image is larger than 10 MB"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "The import failed"
 msgstr ""
 
 #: app/api/books.py
@@ -3535,6 +3567,10 @@ msgstr ""
 msgid "The series' Edit dialog: titles, description, numbers, tags, links and the poster. Built in."
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "The server couldn't be reached"
+msgstr ""
+
 #: app/web/static/js/common.js
 msgid "The server is taking too long to answer"
 msgstr ""
@@ -3615,6 +3651,18 @@ msgstr ""
 msgid "This can't be undone."
 msgstr ""
 
+#: app/api/backup.py
+msgid "This export isn't there anymore: export again."
+msgstr ""
+
+#: app/backup.py
+msgid "This file comes from a newer MangaVibe ({version}) than this one. Update MangaVibe first, then import it."
+msgstr ""
+
+#: app/backup.py
+msgid "This file comes from a newer MangaVibe than this one. Update MangaVibe first, then import it."
+msgstr ""
+
 #: app/web/static/js/reader.js
 msgid "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."
 msgstr ""
@@ -3625,6 +3673,14 @@ msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "This is the path inside Docker. To see the one on your NAS, set {setting} for its library folder."
+msgstr ""
+
+#: app/backup.py
+msgid "This isn't a MangaVibe export (not a .zip file)."
+msgstr ""
+
+#: app/backup.py
+msgid "This isn't a MangaVibe export: pick a file made by Settings → Backup → Export."
 msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
@@ -3901,6 +3957,10 @@ msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Uploading…"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Uploading… {percent}%"
 msgstr ""
 
 #: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/web/templates/settings/plugins.html

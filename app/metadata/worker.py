@@ -64,17 +64,23 @@ def _run():
         kind, sid = _q.get()
         with _lock:
             _pending.discard((kind, sid))
+            generation = _generation
         status["queued"] = _q.qsize()
-        if _handle(kind, sid) == "down":
+        if _handle(kind, sid, generation) == "down":
             _pause(kind, sid)
 
 
 busy = threading.Lock()  # held while a job runs; an import (app/backup.py) waits for it
+# bumped by clear(): a job taken from the queue before it (and waiting for `busy` while an import ran)
+# holds an id of the old database, so it's dropped
+_generation = 0
 
 
 def clear():
     """Forget everything queued (an import replaced the database: the ids point at other series)."""
+    global _generation
     with _lock:
+        _generation += 1
         while True:
             try:
                 _q.get_nowait()
@@ -84,9 +90,11 @@ def clear():
     status["queued"] = 0
 
 
-def _handle(kind, sid):
+def _handle(kind, sid, generation=None):
     """Do one queued job. "down" when no provider could be reached."""
     with busy:
+        if generation is not None and generation != _generation:
+            return None  # queued before an import: the id now means another series
         return _handle_now(kind, sid)
 
 

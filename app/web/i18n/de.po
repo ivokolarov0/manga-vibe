@@ -51,6 +51,10 @@ msgstr "+{n} weitere"
 msgid "A day"
 msgstr "Einem Tag"
 
+#: app/backup.py
+msgid "A library scan is running. Try again when it has finished."
+msgstr "Die Bibliothek wird gerade durchsucht. Versuche es noch einmal, wenn das fertig ist."
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "A month"
 msgstr "Einem Monat"
@@ -74,6 +78,10 @@ msgstr "Inzwischen ist eine neuere Version erschienen. Lade die Seite neu."
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "A page from a book"
 msgstr "Eine Seite aus einem Buch"
+
+#: app/backup.py
+msgid "A plugin is still busy. Try again in a minute."
+msgstr "Ein Plugin arbeitet noch. Versuche es in einer Minute noch einmal."
 
 #: app/web/static/js/app.js
 msgid "A scan is already running. Try again when it has finished."
@@ -813,6 +821,10 @@ msgstr "Neueste herunterladen"
 msgid "Downloaded from GitHub"
 msgstr "Wird von GitHub geladen"
 
+#: app/web/static/js/app.js
+msgid "Downloading {file}"
+msgstr "{file} wird heruntergeladen"
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "Downloads covers from AniList's image server (s4.anilist.co) and keeps them on the server; with Covers: Loaded from AniList, your browser loads them from there instead"
 msgstr "Lädt Cover vom Bildserver von AniList (s4.anilist.co) und behält sie auf dem Server; mit Cover: Von AniList geladen lädt dein Browser sie stattdessen von dort"
@@ -1377,11 +1389,11 @@ msgstr "{file} importieren? Bibliotheksdaten, Lesefortschritt, Konten und Einste
 msgid "Imported {series} and {books}. Reloading…"
 msgstr "{series} und {books} importiert. Wird neu geladen…"
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js
 msgid "Importing…"
 msgstr "Wird importiert…"
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js
 msgid "Import…"
 msgstr "Importieren…"
 
@@ -2655,6 +2667,10 @@ msgstr "Cover"
 msgid "Poster changed"
 msgstr "Cover geändert"
 
+#: app/web/templates/settings/backup.html
+msgid "Preparing…"
+msgstr "Wird vorbereitet…"
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Preview (not saved yet)"
 msgstr "Vorschau (noch nicht gespeichert)"
@@ -3413,6 +3429,18 @@ msgstr "Das ist der Datenordner von MangaVibe selbst, kein Manga-Ordner"
 msgid "The current password is wrong"
 msgstr "Das aktuelle Passwort ist falsch"
 
+#: app/backup.py
+msgid "The database in this file can't be read ({error})."
+msgstr "Die Datenbank in dieser Datei kann nicht gelesen werden ({error})."
+
+#: app/backup.py
+msgid "The database in this file has no version."
+msgstr "Die Datenbank in dieser Datei hat keine Version."
+
+#: app/backup.py
+msgid "The database in this file is damaged."
+msgstr "Die Datenbank in dieser Datei ist beschädigt."
+
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
 msgstr "Die Seite Anzeige in den Einstellungen"
@@ -3440,6 +3468,10 @@ msgstr "Der GitHub-Token und die geheimen Einstellungen der Plugins (API-Schlüs
 #: app/web/static/js/app.js
 msgid "The image is larger than 10 MB"
 msgstr "Das Bild ist größer als 10 MB"
+
+#: app/web/static/js/app.js
+msgid "The import failed"
+msgstr "Der Import ist fehlgeschlagen"
 
 #: app/api/books.py
 msgid "The last chapter must be after the first one"
@@ -3537,6 +3569,10 @@ msgstr "Der Bearbeiten-Dialog einer Serie (Infos und Cover), gezeichnet mit edit
 msgid "The series' Edit dialog: titles, description, numbers, tags, links and the poster. Built in."
 msgstr "Der Bearbeiten-Dialog einer Serie: Titel, Beschreibung, Nummern, Tags, Links und das Cover. Eingebaut."
 
+#: app/web/static/js/app.js
+msgid "The server couldn't be reached"
+msgstr "Der Server ist nicht erreichbar"
+
 #: app/web/static/js/common.js
 msgid "The server is taking too long to answer"
 msgstr "Der Server antwortet zu langsam"
@@ -3617,6 +3653,18 @@ msgstr "Dünn"
 msgid "This can't be undone."
 msgstr "Das lässt sich nicht rückgängig machen."
 
+#: app/api/backup.py
+msgid "This export isn't there anymore: export again."
+msgstr "Dieser Export ist nicht mehr da: exportiere noch einmal."
+
+#: app/backup.py
+msgid "This file comes from a newer MangaVibe ({version}) than this one. Update MangaVibe first, then import it."
+msgstr "Diese Datei stammt aus einem neueren MangaVibe ({version}) als diesem. Aktualisiere zuerst MangaVibe und importiere sie dann."
+
+#: app/backup.py
+msgid "This file comes from a newer MangaVibe than this one. Update MangaVibe first, then import it."
+msgstr "Diese Datei stammt aus einem neueren MangaVibe als diesem. Aktualisiere zuerst MangaVibe und importiere sie dann."
+
 #: app/web/static/js/reader.js
 msgid "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."
 msgstr "Das ist ein Textbuch (eine Light Novel). Füge unter Einstellungen → Plugins einen Reader für Textbücher hinzu, um es zu lesen."
@@ -3628,6 +3676,14 @@ msgstr "Das ist die einzige Bibliothek. Füge zuerst eine weitere hinzu."
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "This is the path inside Docker. To see the one on your NAS, set {setting} for its library folder."
 msgstr "Das ist der Pfad in Docker. Um den auf deinem NAS zu sehen, setze {setting} für ihren Bibliotheksordner."
+
+#: app/backup.py
+msgid "This isn't a MangaVibe export (not a .zip file)."
+msgstr "Das ist kein MangaVibe-Export (keine .zip-Datei)."
+
+#: app/backup.py
+msgid "This isn't a MangaVibe export: pick a file made by Settings → Backup → Export."
+msgstr "Das ist kein MangaVibe-Export: Wähle eine Datei, die mit Einstellungen → Sicherung → Exportieren erstellt wurde."
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "This library"
@@ -3904,6 +3960,10 @@ msgstr "Von dir hochgeladen"
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Uploading…"
 msgstr "Wird hochgeladen…"
+
+#: app/web/static/js/app.js
+msgid "Uploading… {percent}%"
+msgstr "Wird hochgeladen… {percent} %"
 
 #: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/web/templates/settings/plugins.html
 msgid "Use"
