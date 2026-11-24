@@ -146,7 +146,10 @@ class Language:
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http" or scope.get("mangavibe.internal") or self.SKIP.match(scope["path"]):
             return await self.app(scope, receive, send)
-        with i18n.using(request_language(Request(scope))):
+        # worked out when something is translated, not for every request (saving progress, polling a
+        # scan's status, a plugin's script): finding the person's setting opens the database
+        request = Request(scope)
+        with i18n.using(i18n.Lazy(lambda: request_language(request))):
             return await self.app(scope, receive, send)
 
 

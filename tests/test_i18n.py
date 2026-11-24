@@ -1,11 +1,20 @@
 """The app in other languages (issue #263, app/i18n.py): .po files, t() / tn(), the page's language."""
 import json
+import os
 import re
 
 import pytest
 
 from app import i18n
 from app.plugins import web
+
+
+@pytest.fixture(autouse=True)
+def fresh_catalogs():
+    """catalog() keeps what it made for a second: a test that changes the files starts afresh."""
+    i18n.forget()
+    yield
+    i18n.forget()
 
 
 def po_files():
@@ -162,6 +171,43 @@ def test_a_plugins_own_file_adds_texts_but_does_not_change_the_apps(tmp_path, mo
     assert cat.gettext("Settings") == "Настройки"
     # English has no file of its own: a plugin's English texts are its msgids anyway
     assert i18n.catalog("en").gettext("Hello from a plugin") == "Hello from a plugin"
+
+
+def test_catalogs_are_kept_and_made_again_when_a_file_changes(tmp_path, monkeypatch):
+    po = tmp_path / "de.po"
+    po.write_text('msgid "Hello from a plugin"\nmsgstr "Hallo"\n', encoding="utf-8")
+    monkeypatch.setattr(i18n, "plugin_po_files", lambda lang: [po] if lang == "de" else [])
+    first = i18n.catalog("de")
+    assert i18n.catalog("de") is first  # t() doesn't make it again for every text
+    assert i18n.catalog("en") is i18n.catalog("en")
+    po.write_text('msgid "Hello from a plugin"\nmsgstr "Servus"\n', encoding="utf-8")
+    os.utime(po, ns=(po.stat().st_atime_ns, po.stat().st_mtime_ns + 10**9))
+    monkeypatch.setattr(i18n, "RECHECK_SECONDS", 0)  # (the files are looked at again each second)
+    assert i18n.catalog("de").gettext("Hello from a plugin") == "Servus"
+
+
+def test_a_plugins_broken_file_is_logged_once_and_the_others_still_count(tmp_path, monkeypatch, caplog):
+    good, bad = tmp_path / "good.po", tmp_path / "bad.po"
+    good.write_text('msgid "Hello from a plugin"\nmsgstr "Hallo"\n', encoding="utf-8")
+    bad.write_text('msgid "broken\n', encoding="utf-8")
+    monkeypatch.setattr(i18n, "plugin_po_files", lambda lang: [bad, good] if lang == "de" else [])
+    monkeypatch.setattr(i18n, "RECHECK_SECONDS", 0)
+    with caplog.at_level("ERROR", logger="mangavibe.i18n"):
+        for _ in range(5):
+            i18n.forget()
+            assert i18n.catalog("de").gettext("Hello from a plugin") == "Hallo"
+    assert len([r for r in caplog.records if "could not be read" in r.getMessage()]) == 1
+
+
+def test_a_request_that_translates_nothing_doesnt_look_up_the_language(client, monkeypatch):
+    from app import main
+    asked = []
+    real = main.request_language
+    monkeypatch.setattr(main, "request_language", lambda request: asked.append(1) or real(request))
+    assert client.get("/api/scan/status").status_code == 200
+    assert asked == []
+    r = client.get("/api/series/999999", headers={"Accept-Language": "de"})  # a 404's message is translated
+    assert r.status_code == 404 and asked == [1]
 
 
 # --- the page -----------------------------------------------------------------------------------
