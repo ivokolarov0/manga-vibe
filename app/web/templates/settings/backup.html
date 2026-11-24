@@ -6,17 +6,21 @@
             <select x-model="backupTokens"><option value="false">{{ t("Off") }}</option><option value="true">{{ t("On") }}</option></select></label>
           <div class="setting-row">
             <div class="label"><span>{{ t("Export") }}</span><small>{{ t("Downloads {file}", file='mangavibe-backup-<span x-text="new Date().toISOString().slice(0, 10)"></span>.zip'|safe) }}</small></div>
-            <a class="btn small primary" :href="`/api/backup/export?tokens=${backupTokens}`" download>
-              <svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>{{ t("Export") }}</a>
+            <button type="button" class="btn small primary" :class="{ busy: exporting }" :disabled="exporting || importing"
+                    :aria-busy="exporting" @click="exportBackup()">
+              <svg class="ic" aria-hidden="true" x-show="!exporting"><use href="#i-download"/></svg>
+              <span x-text="exporting ? t('Preparing…') : t('Export')"></span></button>
           </div>
           <div class="setting-row">
             <div class="label">
               <span>{{ t("Import") }}</span>
               <small>{{ t("Replaces everything on this server with the file: library data, progress, accounts and settings. The current database is copied to /data/backups first. Files from older versions are updated; files from a newer version need MangaVibe updated first.") }}</small>
             </div>
-            <label class="btn small file-btn" :class="{ disabled: importing }" :aria-disabled="importing">
-              <input type="file" accept=".zip,application/zip" hidden :disabled="importing" @change="importBackup($event)">
-              <svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg><span x-text="importing ? t('Importing…') : t('Import…')"></span>
+            <label class="btn small file-btn" :class="{ disabled: importing || exporting, busy: importing }"
+                   :aria-disabled="importing || exporting" :aria-busy="importing">
+              <input type="file" accept=".zip,application/zip" hidden :disabled="importing || exporting" @change="importBackup($event)">
+              <svg class="ic" aria-hidden="true" x-show="!importing"><use href="#i-upload"/></svg>
+              <span x-text="importText()"></span>
             </label>
           </div>
         </section>

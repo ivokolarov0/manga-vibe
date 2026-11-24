@@ -51,6 +51,10 @@ msgstr "+ още {n}"
 msgid "A day"
 msgstr "Ден"
 
+#: app/backup.py
+msgid "A library scan is running. Try again when it has finished."
+msgstr "Библиотеката се сканира в момента. Опитайте отново, когато сканирането приключи."
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "A month"
 msgstr "Месец"
@@ -74,6 +78,10 @@ msgstr "Междувременно излезе по-нова версия. Пр
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "A page from a book"
 msgstr "Страница от книга"
+
+#: app/backup.py
+msgid "A plugin is still busy. Try again in a minute."
+msgstr "Добавка все още работи. Опитайте отново след минута."
 
 #: app/web/static/js/app.js
 msgid "A scan is already running. Try again when it has finished."
@@ -813,6 +821,10 @@ msgstr "Изтегли най-новата"
 msgid "Downloaded from GitHub"
 msgstr "Изтегля се от GitHub"
 
+#: app/web/static/js/app.js
+msgid "Downloading {file}"
+msgstr "Изтегля се {file}"
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "Downloads covers from AniList's image server (s4.anilist.co) and keeps them on the server; with Covers: Loaded from AniList, your browser loads them from there instead"
 msgstr "Изтегля корици от сървъра за изображения на AniList (s4.anilist.co) и ги пази на сървъра; с Корици: Зареждани от AniList браузърът ви ги зарежда оттам"
@@ -1377,11 +1389,11 @@ msgstr "Да се импортира ли {file}? Данните на библи
 msgid "Imported {series} and {books}. Reloading…"
 msgstr "Импортирани: {series} и {books}. Презареждане…"
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js
 msgid "Importing…"
 msgstr "Импортиране…"
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js
 msgid "Import…"
 msgstr "Импорт…"
 
@@ -2655,6 +2667,10 @@ msgstr "Корица"
 msgid "Poster changed"
 msgstr "Корицата е сменена"
 
+#: app/web/templates/settings/backup.html
+msgid "Preparing…"
+msgstr "Подготвя се…"
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Preview (not saved yet)"
 msgstr "Преглед (още не е запазено)"
@@ -3413,6 +3429,18 @@ msgstr "Това е собствената папка с данни на MangaVi
 msgid "The current password is wrong"
 msgstr "Текущата парола е грешна"
 
+#: app/backup.py
+msgid "The database in this file can't be read ({error})."
+msgstr "Базата данни в този файл не може да бъде прочетена ({error})."
+
+#: app/backup.py
+msgid "The database in this file has no version."
+msgstr "Базата данни в този файл няма версия."
+
+#: app/backup.py
+msgid "The database in this file is damaged."
+msgstr "Базата данни в този файл е повредена."
+
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
 msgstr "Страницата Изглед в Настройки"
@@ -3440,6 +3468,10 @@ msgstr "GitHub токенът и тайните настройки на доба
 #: app/web/static/js/app.js
 msgid "The image is larger than 10 MB"
 msgstr "Изображението е по-голямо от 10 MB"
+
+#: app/web/static/js/app.js
+msgid "The import failed"
+msgstr "Импортирането не успя"
 
 #: app/api/books.py
 msgid "The last chapter must be after the first one"
@@ -3537,6 +3569,10 @@ msgstr "Прозорецът за редактиране на поредица (
 msgid "The series' Edit dialog: titles, description, numbers, tags, links and the poster. Built in."
 msgstr "Прозорецът за редактиране на поредица: заглавия, описание, номера, етикети, връзки и корица. Вградена."
 
+#: app/web/static/js/app.js
+msgid "The server couldn't be reached"
+msgstr "Сървърът не отговаря"
+
 #: app/web/static/js/common.js
 msgid "The server is taking too long to answer"
 msgstr "Сървърът отговаря твърде бавно"
@@ -3617,6 +3653,18 @@ msgstr "Тънък"
 msgid "This can't be undone."
 msgstr "Това не може да се отмени."
 
+#: app/api/backup.py
+msgid "This export isn't there anymore: export again."
+msgstr "Този експорт вече го няма: експортирайте отново."
+
+#: app/backup.py
+msgid "This file comes from a newer MangaVibe ({version}) than this one. Update MangaVibe first, then import it."
+msgstr "Този файл е от по-нова версия на MangaVibe ({version}) от тази. Първо обновете MangaVibe, след това го импортирайте."
+
+#: app/backup.py
+msgid "This file comes from a newer MangaVibe than this one. Update MangaVibe first, then import it."
+msgstr "Този файл е от по-нова версия на MangaVibe от тази. Първо обновете MangaVibe, след това го импортирайте."
+
 #: app/web/static/js/reader.js
 msgid "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."
 msgstr "Това е текстова книга (лека новела). Добавете четец за текстови книги в Настройки → Добавки, за да я четете."
@@ -3628,6 +3676,14 @@ msgstr "Това е единствената библиотека. Първо д
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "This is the path inside Docker. To see the one on your NAS, set {setting} for its library folder."
 msgstr "Това е пътят в Docker. За да виждате този на вашия NAS, задайте {setting} за папката на библиотеката."
+
+#: app/backup.py
+msgid "This isn't a MangaVibe export (not a .zip file)."
+msgstr "Това не е експорт от MangaVibe (не е .zip файл)."
+
+#: app/backup.py
+msgid "This isn't a MangaVibe export: pick a file made by Settings → Backup → Export."
+msgstr "Това не е експорт от MangaVibe: изберете файл, създаден от Настройки → Резервно копие → Експорт."
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "This library"
@@ -3904,6 +3960,10 @@ msgstr "Качена от вас"
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Uploading…"
 msgstr "Качване…"
+
+#: app/web/static/js/app.js
+msgid "Uploading… {percent}%"
+msgstr "Качва се… {percent}%"
 
 #: app/plugins/builtin/attention_lists/templates/attention/matches.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/web/templates/settings/plugins.html
 msgid "Use"

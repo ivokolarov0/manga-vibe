@@ -2143,21 +2143,64 @@ function settingsView() {
                      { version: v.short, current: cur }))) return;
       installUpdate(v.sha, { rollback: true, label: v.short });
     },
-    // ---- Settings → Backup (app/backup.py): the export is a plain download link
-    backupTokens: "false", importing: false,
+    // ---- Settings → Backup (app/backup.py)
+    backupTokens: "false", exporting: false, importing: false,
+    uploaded: null,  // while an import's file goes up: 0-100; null once the server works on it
+    // the server makes the file first (a spinner meanwhile: it can take a while), then the browser
+    // downloads the ready file
+    async exportBackup() {
+      if (this.exporting || this.importing) return;
+      this.exporting = true;
+      try {
+        const r = await api(`/api/backup/export?tokens=${this.backupTokens}`, { method: "POST" });
+        const a = document.createElement("a");
+        a.href = `/api/backup/download/${encodeURIComponent(r.id)}`;
+        a.download = r.file;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        toast(t("Downloading {file}", { file: r.file }));
+      } catch (err) {
+        toast(err.message, 10000, "error");
+      } finally {
+        this.exporting = false;
+      }
+    },
+    importText() {
+      if (!this.importing) return t("Import…");
+      return this.uploaded === null ? t("Importing…") : t("Uploading… {percent}%", { percent: this.uploaded });
+    },
+    // the file itself as the body (not a form), so the server writes it straight to the data volume;
+    // XMLHttpRequest, not fetch, to show how much of it went up
+    uploadBackup(file) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/backup/import");
+        xhr.setRequestHeader("Content-Type", "application/zip");
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) this.uploaded = Math.min(99, Math.floor((e.loaded / e.total) * 100));
+        };
+        xhr.upload.onload = () => { this.uploaded = null; };  // sent: the server imports it now
+        xhr.onload = () => {
+          let body = {};
+          try { body = JSON.parse(xhr.responseText); } catch { /* not JSON: the status text says it */ }
+          if (xhr.status >= 200 && xhr.status < 300) resolve(body);
+          else reject(new Error(body.detail || xhr.statusText || t("The import failed")));
+        };
+        xhr.onerror = () => reject(new Error(t("The server couldn't be reached")));
+        xhr.send(file);
+      });
+    },
     async importBackup(e) {
       const file = e.target.files[0];
       e.target.value = "";  // the same file can be picked again
-      if (!file || this.importing) return;
+      if (!file || this.importing || this.exporting) return;
       if (!confirm(t("Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first.",
                      { file: file.name }))) return;
+      this.uploaded = 0;
       this.importing = true;
       try {
-        // the file itself as the body (not a form), so the server writes it straight to the data volume
-        const res = await fetch("/api/backup/import", { method: "POST", body: file,
-                                                         headers: { "Content-Type": "application/zip" } });
-        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
-        const r = await res.json();
+        const r = await this.uploadBackup(file);
         toast(t("Imported {series} and {books}. Reloading…", { series: tn("{n} series", "{n} series", r.series),
                                                                books: tn("{n} book", "{n} books", r.books) }), 4000);
         // everything changed (and with accounts, the login may have too): start again from the top
@@ -2165,6 +2208,7 @@ function settingsView() {
       } catch (err) {
         toast(err.message, 10000, "error");
         this.importing = false;
+        this.uploaded = null;
       }
     },
     async loadProviders() { this.providers = await api("/api/metadata/providers").catch(() => this.providers); },

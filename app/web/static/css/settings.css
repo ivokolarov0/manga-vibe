@@ -438,6 +438,18 @@
     cursor: pointer;
   }
 
+  /* a file picker that can't be used now (an export is running) looks like a disabled button */
+  .file-btn.disabled:not(.busy) {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  /* Settings → Backup: "Uploading… 42%" doesn't jump around as the number changes */
+  .file-btn.busy {
+    cursor: progress;
+    font-variant-numeric: tabular-nums;
+  }
+
   .setting-row .label small.plugin-status {
     color: var(--accent);
   }
