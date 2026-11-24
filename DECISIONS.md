@@ -1246,6 +1246,16 @@ Plugin API version, and the app works after every one.
   all show the page's language. A text with a number in it is one translated sentence per unit ("{n}+
   chapters", "Up to {n} volumes") instead of English words joined around the number. Book labels ("Vol 1")
   and errors from the server stay English until the server-texts step.
+- **Server texts: every request runs in the person's language** (the `Language` middleware in app/main.py,
+  innermost, so the accounts plugin has said who is asking: their setting, else Accept-Language). Then the
+  server just calls `t()`: book labels ("Bd. 1 Kap. 1"), error messages, plugins' names, descriptions,
+  permissions, settings and buttons in the API, status lines, the reading-mode reason. Not for files
+  (pages, thumbnails, posters, static: no words, no extra database read) and not for the server's own calls
+  for assistants (`mangavibe.internal`): those keep the app's English words.
+- **Error messages are translated on their way out** (one exception handler) instead of at each of ~120
+  `raise`: `HTTPException(404, "…")` texts are found by the extractor, which reads Python with `ast` (so
+  text split over lines is one msgid, and comments don't count). Messages with values are `t()` with
+  placeholders. The client no longer looks at an error's words (Fix match checks the 503 status).
 - **Step 2c, the reader**: reader.js builds its markup as strings, so every translated text that goes into
   `innerHTML` is escaped (`esc(t(…))`); the image reader (a plugin) uses `MangaVibe.t` and its own
   `escHtml`. Messages only for developers (`console.error`) stay English.

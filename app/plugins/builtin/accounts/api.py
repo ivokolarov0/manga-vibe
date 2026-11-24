@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 from app import users
 from app.plugins import Context
-from app.plugins.sdk import TooManyTries, check_password, hash_password
+from app.plugins.sdk import TooManyTries, check_password, hash_password, t
 from app.plugins.web import plugin_ctx
 from app.users import manage
 
@@ -24,7 +24,7 @@ def _name(data, name, account_id=None):
         raise HTTPException(400, "Give the account a name")
     same = core.by_name(data, name)
     if same and same["id"] != account_id:
-        raise HTTPException(400, f"There is already an account called {same['name']}")
+        raise HTTPException(400, t("There is already an account called {name}", name=same["name"]))
     return name
 
 

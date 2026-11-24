@@ -185,6 +185,31 @@ def test_page_in_english_by_default(client):
     assert '<html lang="en"' in page and "Search your library" in page
 
 
+def test_the_server_answers_in_the_language_of_the_person_asking(client):
+    """Every request runs in the person's language (the Language middleware, app/main.py): error messages,
+    book labels and what plugins say."""
+    de = {"Accept-Language": "de-DE"}
+    r = client.get("/api/series/999999", headers=de)
+    assert r.status_code == 404 and r.json()["detail"] == "Serie nicht gefunden"
+    assert client.get("/api/series/999999").json()["detail"] == "Series not found"
+    series = client.get("/api/series?q=Hana", headers=de).json()["items"][0]
+    labels = [b["label"] for b in client.get(f"/api/series/{series['id']}/books", headers=de).json()]
+    assert "Bd. 1 Kap. 1" in labels, labels
+    plugins = {p["id"]: p for p in client.get("/api/plugins", headers={"Accept-Language": "bg"}).json()["plugins"]}
+    assert plugins["book-labels"]["name"] == "Имена на книгите"
+    assert plugins["book-labels"]["permissions"] == ["Чете номерата на книгите; не се свързва никъде"]
+
+
+def test_error_messages_and_plugin_texts_are_found_in_python():
+    """python -m app.i18n reads Python with ast: HTTPException messages (also split over lines) and the
+    built-in plugins' names, descriptions and permissions are in messages.pot."""
+    found = i18n.extract()
+    assert ("Only an admin can do this", None) in found
+    assert ("Book labels", None) in found
+    assert ("Calls books by their numbers (Vol 3, Ch 12-14, Extra 2) instead of their file names. Built in.", None) in found
+    assert ("Vol {n}", None) in found
+
+
 def test_saved_language_is_each_persons_own(client):
     try:
         client.put("/api/settings", json={"language": "de"})

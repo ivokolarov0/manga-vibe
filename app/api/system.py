@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from sqlalchemy import func
 
 from app import config, plugin_sources, plugin_updates, users
+from app.i18n import t
 from app.api.common import get_or_404
 from app.users import manage
 from app.api.filters import visible_series
@@ -99,8 +100,8 @@ def add_library(body: LibraryBody, db=Depends(get_db)):
     gives it the library named like it."""
     root = Path(body.root_path)
     if not root.is_absolute() or not root.is_dir():
-        raise HTTPException(400, f"Folder {body.root_path} does not exist inside the container. "
-                                 "Mount it as a volume first.")
+        raise HTTPException(400, t("Folder {path} does not exist inside the container. Mount it as a volume first.",
+                                   path=body.root_path))
     resolved = root.resolve()
     data = config.DATA_DIR.resolve()
     if resolved == data or data in resolved.parents:
@@ -164,7 +165,7 @@ def folders(path: str = "", db=Depends(get_db)):
     try:
         entries = sorted(os.scandir(base), key=lambda e: natural_key(e.name))
     except OSError as e:
-        raise HTTPException(403, f"Can't open this folder: {e.strerror}")
+        raise HTTPException(403, t("Can't open this folder: {error}", error=e.strerror))
     for e in entries:
         try:
             if not e.is_dir() or e.name.startswith((".", "@", "#")):
@@ -276,7 +277,8 @@ def put_settings(body: dict, db=Depends(get_db)):
     if "reader_autohide" in known:
         n = _autohide_number(known["reader_autohide"])
         if n is None or not (n == 0 or AUTOHIDE_MIN <= n <= AUTOHIDE_MAX):
-            raise HTTPException(400, f"Hide controls after: 0 (never) or {AUTOHIDE_MIN} to {AUTOHIDE_MAX} seconds")
+            raise HTTPException(400, t("Hide controls after: 0 (never) or {min} to {max} seconds",
+                                       min=AUTOHIDE_MIN, max=AUTOHIDE_MAX))
         known["reader_autohide"] = n
     for k, v in known.items():
         set_setting(db, users.personal_key(k) if k in PERSONAL_SETTINGS else k, v)
@@ -297,21 +299,23 @@ def _plugin_dict(p, db):
     ctx = Context(p, db)
     saved = ctx.settings
     categories = plugins.categories_of(p)
-    return {"id": p.id, "name": p.name, "version": p.version,
-            "description": p.description, "enabled": p.id not in plugins.disabled,
+    # what it says, in the language of the person asking (#263): the built-in plugins' words are in the app's
+    # .po files, another plugin's in its own i18n/<lang>.po; a text nobody translated stays as it is
+    return {"id": p.id, "name": t(p.name), "version": p.version,
+            "description": t(p.description), "enabled": p.id not in plugins.disabled,
             # where Settings -> Plugins lists it: the main category first, the others are tags
             "category": categories[0], "categories": categories,
             "builtin": plugins.is_builtin(p.id),  # comes with the app (app/plugins/builtin/)
-            "provider": p.is_provider, "fields": [f.label for f in p.fields],
+            "provider": p.is_provider, "fields": [t(f.label) for f in p.fields],
             "ui": with_ui(p),  # adds to the page: switching it on or off adds or removes that (app.js)
-            "actions": [a.label for a in p.actions],
-            "settings": [{"key": f.key, "label": f.label, "help": f.help, "secret": f.secret,
-                          "options": [[str(v), str(label)] for v, label in f.options],
+            "actions": [t(a.label) for a in p.actions],
+            "settings": [{"key": f.key, "label": t(f.label), "help": t(f.help) if f.help else f.help, "secret": f.secret,
+                          "options": [[str(v), t(str(label))] for v, label in f.options],
                           "value": "" if f.secret else str(ctx.setting(f.key) or ""),
                           "saved": bool(saved.get(f.key))} for f in p.settings_fields],
-            "global_actions": [{"key": a.key, "label": a.label, "confirm": a.confirm}
+            "global_actions": [{"key": a.key, "label": t(a.label), "confirm": t(a.confirm) if a.confirm else a.confirm}
                                for a in p.global_actions],
-            "permissions": plugin_updates.permissions_of(p),
+            "permissions": [t(x) for x in plugin_updates.permissions_of(p)],
             "status": _plugin_status(p, db), "update": plugin_updates.info(db, p),
             # jobs (Plugin API 15): what it does and needs, and why it doesn't run although it's on
             "provides": plugin_jobs(p, "provides"), "requires": plugin_jobs(p, "requires"),
@@ -364,7 +368,7 @@ def save_plugin_settings(plugin_id: str, body: dict, db=Depends(get_db)):
         if f.key in body:
             v = str(body[f.key] or "").strip()
             if v and f.options and v not in {str(o) for o, _ in f.options}:
-                raise HTTPException(400, f"{f.label}: not one of the options")
+                raise HTTPException(400, t("{label}: not one of the options", label=t(f.label)))
             if v:
                 values[f.key] = v
             else:
@@ -384,7 +388,7 @@ def run_global_action(plugin_id: str, action_key: str, db=Depends(get_db)):
         db.commit()
     except Exception as e:
         db.rollback()
-        raise HTTPException(500, f"Plugin error: {type(e).__name__}: {e}")
+        raise HTTPException(500, t("Plugin error: {error}", error=f"{type(e).__name__}: {e}"))
     return action_result(result)
 
 

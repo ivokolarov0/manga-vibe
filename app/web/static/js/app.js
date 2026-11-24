@@ -1650,7 +1650,7 @@ function fixMatch() {
         this.error = e.message;
         // provider offline (e.g. AniList down): try the next one once
         const other = this.$store.app.providers.find((p) => p.id !== this.provider);
-        if (fallback && e.message.includes("unavailable") && other) {
+        if (fallback && e.status === 503 && other) {  // the message is in the page's language: not by its words
           this.$store.app.providers = await api("/api/providers");
           this.provider = other.id;
           this.searching = false;

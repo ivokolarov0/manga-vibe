@@ -47,6 +47,14 @@ msgstr "({n} без метаданни са пропуснати)"
 msgid "+{n} more"
 msgstr "+ още {n}"
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "A day"
+msgstr "Ден"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "A month"
+msgstr "Месец"
+
 #: app/web/templates/shell/toasts.html
 msgid "A new MangaVibe version needs a new Docker image"
 msgstr "Новата версия на MangaVibe изисква нов Docker образ"
@@ -58,6 +66,10 @@ msgstr "Има нова версия"
 #: app/web/templates/shell/toasts.html
 msgid "A new version of MangaVibe is available"
 msgstr "Има нова версия на MangaVibe"
+
+#: app/api/update.py
+msgid "A newer version came out meanwhile. Reload the page."
+msgstr "Междувременно излезе по-нова версия. Презаредете страницата."
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "A page from a book"
@@ -79,6 +91,10 @@ msgstr "Източникът е списък с добавки (файл plugins
 msgid "A text book (a light novel). Add a reader for text books in Settings → Plugins to read it (e.g. Light novel reader)."
 msgstr "Текстова книга (лека новела). Добавете четец за текстови книги в Настройки → Добавки, за да я четете (напр. Light novel reader)."
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "A week"
+msgstr "Седмица"
+
 #: app/web/static/js/app.js
 msgid "A white outline around the letters, so they stay readable over the art"
 msgstr "Бял контур около буквите, за да се четат върху рисунката"
@@ -95,21 +111,33 @@ msgstr "остават около {h} ч {min} мин"
 msgid "about {min} min left"
 msgstr "остават около {min} мин"
 
+#: app/api/system.py
+msgid "accept_permissions must be a list"
+msgstr "accept_permissions трябва да е списък"
+
 #: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
 msgid "Account"
 msgstr "Акаунт"
+
+#: app/plugins/builtin/accounts/api.py
+msgid "Account not found"
+msgstr "Акаунтът не е намерен"
 
 #: app/plugins/builtin/accounts/menu.html
 msgid "Account: {name}"
 msgstr "Акаунт: {name}"
 
-#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/accounts/__init__.py app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html
 msgid "Accounts"
 msgstr "Акаунти"
 
 #: app/plugins/builtin/accounts/login.html
 msgid "Accounts are on. Make the first account: an admin, who manages the app and the other accounts. It keeps everything read so far."
 msgstr "Акаунтите са включени. Създайте първия акаунт: администратор, който управлява приложението и другите акаунти. Той запазва всичко прочетено досега."
+
+#: app/api/books.py app/api/series.py app/api/system.py
+msgid "Action not found"
+msgstr "Действието не е намерено"
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "Add"
@@ -153,6 +181,14 @@ msgid_plural "Added {n} series to favorites"
 msgstr[0] "{n} поредица е добавена в любими"
 msgstr[1] "{n} поредици са добавени в любими"
 
+#: app/plugins/builtin/libraries/__init__.py
+msgid "Adds the library tabs, Settings → Libraries and the library pickers"
+msgstr "Добавя разделите на библиотеките, Настройки → Библиотеки и избора на библиотека"
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Adds the Saved and Save search buttons to the library page"
+msgstr "Добавя бутоните Запазени и Запази търсенето на страницата на библиотеката"
+
 #: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
 msgid "Admin"
 msgstr "Администратор"
@@ -195,6 +231,14 @@ msgstr[1] "и още {n}"
 msgid "Android app"
 msgstr "Приложение за Android"
 
+#: app/plugins/builtin/anilist.py
+msgid "AniList"
+msgstr "AniList"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "AniList recommendations"
+msgstr "Препоръки от AniList"
+
 #: app/web/static/js/app.js
 msgid "AniList/MangaUpdates not reachable; retrying at {time}"
 msgstr "AniList/MangaUpdates не отговарят; нов опит в {time}"
@@ -215,6 +259,10 @@ msgstr "Приложи"
 msgid "Ascending"
 msgstr "Възходящо"
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Ask AniList again after"
+msgstr "Питай AniList отново след"
+
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
 msgid "Ask for the passwords again"
 msgstr "Поискай паролите отново"
@@ -223,9 +271,17 @@ msgstr "Поискай паролите отново"
 msgid "Asked for when the library is opened. Its series are hidden everywhere until then."
 msgstr "Иска се при отваряне на библиотеката. Дотогава поредиците ѝ са скрити навсякъде."
 
+#: app/plugins/builtin/accounts/__init__.py
+msgid "Asks everyone to log in; adds Settings → Accounts and an account menu"
+msgstr "Иска от всички да влизат; добавя Настройки → Акаунти и меню на акаунта"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Asks GitHub ({repo}) for its newest release and shows a message when one is out"
 msgstr "Пита GitHub ({repo}) за най-новата версия и показва съобщение, когато излезе"
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "At most {n} saved searches"
+msgstr "Най-много {n} запазени търсения"
 
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Author"
@@ -283,9 +339,17 @@ msgstr "Назад, цял екран и бутонът с опции са от 
 msgid "Backup"
 msgstr "Резервно копие"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/book_labels/__init__.py
 msgid "Book labels"
 msgstr "Имена на книгите"
+
+#: app/api/common.py
+msgid "Book not found"
+msgstr "Книгата не е намерена"
+
+#: app/api/series.py
+msgid "Book not in this series"
+msgstr "Книгата не е от тази поредица"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Books"
@@ -323,9 +387,29 @@ msgstr "Вградени"
 msgid "Built into the Docker image, no download"
 msgstr "Вградена в Docker образа, без изтегляне"
 
+#: app/plugins/builtin/mangaupdates.py
+msgid "Built-in metadata provider: MangaUpdates link, and fallback metadata."
+msgstr "Вграден източник на метаданни: връзка към MangaUpdates и резервни метаданни."
+
+#: app/plugins/builtin/anilist.py
+msgid "Built-in metadata provider: titles, description, tags, cover, links."
+msgstr "Вграден източник на метаданни: заглавия, описание, етикети, корица, връзки."
+
 #: app/web/static/js/app.js
 msgid "Built-in version (from the Docker image)"
 msgstr "Вградена версия (от Docker образа)"
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Calls books by their numbers (Vol 3, Ch 12-14, Extra 2) instead of their file names. Built in."
+msgstr "Нарича книгите по номерата им (Том 3, Гл. 12-14, Екстра 2) вместо по имената на файловете. Вградена."
+
+#: app/plugins/builtin/libraries/__init__.py
+msgid "Can hide a library's series behind a password; connects to nothing"
+msgstr "Може да скрие поредиците на библиотека зад парола; не се свързва никъде"
+
+#: app/api/system.py
+msgid "Can't open this folder: {error}"
+msgstr "Папката не може да се отвори: {error}"
 
 #: app/web/static/js/reader.js
 msgid "Can't reach MangaVibe"
@@ -363,9 +447,17 @@ msgstr "Ширина на картите"
 msgid "Category"
 msgstr "Категория"
 
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Ch {from}-{to}"
+msgstr "Гл. {from}-{to}"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "ch {n}"
 msgstr "гл. {n}"
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Ch {n}"
+msgstr "Гл. {n}"
 
 #: app/plugins/builtin/libraries/settings.html
 msgid "Change or remove…"
@@ -483,6 +575,22 @@ msgstr "Пълна: колекцията се смята за пълна, как
 msgid "Completed"
 msgstr "Прочетена"
 
+#: app/plugins/builtin/mangaupdates.py
+msgid "Connects to api.mangaupdates.com"
+msgstr "Свързва се с api.mangaupdates.com"
+
+#: app/plugins/builtin/anilist.py
+msgid "Connects to graphql.anilist.co"
+msgstr "Свързва се с graphql.anilist.co"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Connects to graphql.anilist.co for the series matched on AniList"
+msgstr "Свързва се с graphql.anilist.co за поредиците, свързани с AniList"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Connects to nothing"
+msgstr "Не се свързва никъде"
+
 #: app/web/static/js/app.js
 msgid "Contained"
 msgstr "Ограничена"
@@ -495,13 +603,17 @@ msgstr "Продължи"
 msgid "Continue reading"
 msgstr "Продължи четенето"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/continue_page/__init__.py
 msgid "Continue reading page"
 msgstr "Страница Продължи четенето"
 
 #: app/plugins/builtin/image_reader/image_reader.js
 msgid "Contrast"
 msgstr "Контраст"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Convert pages to"
+msgstr "Преобразувай страниците в"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copied"
@@ -535,6 +647,10 @@ msgstr "Копирането не успя. Маркирайте пътя и г�
 msgid "Cover from {source}"
 msgstr "Корица от {source}"
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Covers"
+msgstr "Корици"
+
 #: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
 msgid "Current password"
 msgstr "Текуща парола"
@@ -546,6 +662,10 @@ msgstr "Тъмна"
 #: app/web/static/js/app.js
 msgid "Darker pages are easier on the eyes, e.g. at night"
 msgstr "По-тъмните страници са по-щадящи за очите, например вечер"
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Decides which series the library lists and in what order; connects to nothing"
+msgstr "Решава кои поредици показва библиотеката и в какъв ред; не се свързва никъде"
 
 #: app/web/static/js/app.js
 msgid "Default reading mode"
@@ -693,13 +813,53 @@ msgstr "Изтегли най-новата"
 msgid "Downloaded from GitHub"
 msgstr "Изтегля се от GitHub"
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Downloads covers from AniList's image server (s4.anilist.co) and keeps them on the server; with Covers: Loaded from AniList, your browser loads them from there instead"
+msgstr "Изтегля корици от сървъра за изображения на AniList (s4.anilist.co) и ги пази на сървъра; с Корици: Зареждани от AniList браузърът ви ги зарежда оттам"
+
 #: app/web/templates/settings/backup.html
 msgid "Downloads {file}"
 msgstr "Изтегля {file}"
 
+#: app/plugins/builtin/continue_page/__init__.py
+msgid "Draws the Continue reading page; connects to nothing"
+msgstr "Рисува страницата Продължи четенето; не се свързва никъде"
+
+#: app/plugins/builtin/dialogs/__init__.py
+msgid "Draws the Edit dialog; connects to nothing"
+msgstr "Рисува прозореца за редактиране; не се свързва никъде"
+
+#: app/plugins/builtin/dialogs/__init__.py
+msgid "Draws the Fix match dialog; the searches are the metadata sources'"
+msgstr "Рисува прозореца за поправка на съвпадение; търсенията са на източниците на метаданни"
+
+#: app/plugins/builtin/library_page/__init__.py
+msgid "Draws the library page; connects to nothing"
+msgstr "Рисува страницата на библиотеката; не се свързва никъде"
+
 #: app/contracts/__init__.py
 msgid "Draws the pages in the reader: paged or vertical, zoom, swipes, the fit"
 msgstr "Рисува страниците в четеца: по страници или вертикално, мащаб, плъзгане, побиране"
+
+#: app/plugins/builtin/cards/__init__.py
+msgid "Draws the series cards in the library and Continue reading; connects to nothing"
+msgstr "Рисува картите на поредиците в библиотеката и Продължи четенето; не се свързва никъде"
+
+#: app/plugins/builtin/series_page/__init__.py
+msgid "Draws the series page; connects to nothing"
+msgstr "Рисува страницата на поредицата; не се свързва никъде"
+
+#: app/plugins/builtin/nav_sidebar/__init__.py
+msgid "Draws the sidebar and the top bar; connects to nothing"
+msgstr "Рисува страничната и горната лента; не се свързва никъде"
+
+#: app/plugins/builtin/nav/__init__.py
+msgid "Draws the top bar; connects to nothing"
+msgstr "Рисува горната лента; не се свързва никъде"
+
+#: app/api/series.py
+msgid "Dropdown not found"
+msgstr "Падащото меню не е намерено"
 
 #: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Dropped"
@@ -729,7 +889,7 @@ msgstr "По-стари версии"
 msgid "Edit"
 msgstr "Редактирай"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/dialogs/__init__.py
 msgid "Edit dialog"
 msgstr "Прозорец за редактиране"
 
@@ -777,9 +937,17 @@ msgstr "Всички библиотеки са заключени. Докосн�
 msgid "Every plugin loaded."
 msgstr "Всички добавки са заредени."
 
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Every series is optimized already"
+msgstr "Всички поредици вече са оптимизирани"
+
 #: app/plugins/builtin/accounts/settings.html
 msgid "Everyone logs in. Each account has its own reading progress, favorites, Continue reading, saved searches and Settings → Reader. Admins also manage the app: settings, folders, metadata, plugins, deleting, and these accounts."
 msgstr "Всеки влиза с акаунт. Всеки акаунт има свой напредък, любими, Продължи четенето, запазени търсения и Настройки → Четец. Администраторите управляват и приложението: настройки, папки, метаданни, добавки, изтриване и тези акаунти."
+
+#: app/plugins/builtin/accounts/__init__.py
+msgid "Everyone logs in; each account has its own progress, favorites, saved searches and reader settings. Admins manage the app and pick the libraries each account sees. Built in."
+msgstr "Всеки влиза с акаунт; всеки акаунт има свой напредък, любими, запазени търсения и настройки на четеца. Администраторите управляват приложението и избират кои библиотеки вижда всеки акаунт. Вградена."
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18."
@@ -793,13 +961,21 @@ msgstr "Изход от цял екран"
 msgid "Export"
 msgstr "Експорт"
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/book_labels/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "extra"
 msgstr "екстра"
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Extra"
+msgstr "Екстра"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Extra / bonus"
 msgstr "Екстра / бонус"
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Extra {n}"
+msgstr "Екстра {n}"
 
 #: app/web/templates/settings/plugins.html
 msgid "Failed to load"
@@ -829,7 +1005,15 @@ msgstr "Първо най-малко"
 msgid "File hidden from reading (it stays on disk)"
 msgstr "Файлът е скрит от четене (остава на диска)"
 
-#: app/contracts/__init__.py
+#: app/api/books.py
+msgid "File is missing (moved or share not mounted?)"
+msgstr "Файлът липсва (преместен или споделената папка не е монтирана?)"
+
+#: app/api/common.py
+msgid "File is outside the library folders"
+msgstr "Файлът е извън папките на библиотеката"
+
+#: app/contracts/__init__.py app/plugins/builtin/filename_parser/__init__.py
 msgid "File name parser"
 msgstr "Разчитане на имената на файловете"
 
@@ -844,6 +1028,14 @@ msgstr "Файлове"
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Files alone are not enough for it. See {url}"
 msgstr "Само файловете не стигат. Вижте {url}"
+
+#: app/plugins/builtin/mangaupdates.py
+msgid "Fills in series metadata"
+msgstr "Попълва метаданните на поредиците"
+
+#: app/plugins/builtin/anilist.py
+msgid "Fills in series metadata and covers"
+msgstr "Попълва метаданните и кориците на поредиците"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/sheets/library.html
 msgid "Filter"
@@ -864,6 +1056,10 @@ msgstr "Автоматично търсене на метаданни"
 #: app/web/templates/sheets/library.html
 msgid "Find: {what}"
 msgstr "Търсене: {what}"
+
+#: app/plugins/builtin/title_matcher/__init__.py
+msgid "Finds a series' entry from its folder name: cleans the name, scores each provider's results by title, year and format, and takes the best one only when it's sure. Built in."
+msgstr "Намира записа на поредица по името на папката ѝ: изчиства името, оценява резултатите на всеки източник по заглавие, година и формат и взема най-добрия само когато е сигурен. Вградена."
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Finished"
@@ -893,7 +1089,7 @@ msgstr "По ширина"
 msgid "Fix match"
 msgstr "Поправи съвпадението"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/dialogs/__init__.py
 msgid "Fix match dialog"
 msgstr "Прозорец за поправка на съвпадението"
 
@@ -913,9 +1109,17 @@ msgstr "Папка"
 msgid "Folder added. Scanning…"
 msgstr "Папката е добавена. Сканира се…"
 
+#: app/api/system.py
+msgid "Folder not found"
+msgstr "Папката не е намерена"
+
 #: app/web/static/js/app.js
 msgid "Folder removed"
 msgstr "Папката е премахната"
+
+#: app/api/system.py
+msgid "Folder {path} does not exist inside the container. Mount it as a volume first."
+msgstr "Папката {path} не съществува в контейнера. Първо я монтирайте като том."
 
 #: app/plugins/builtin/libraries/settings.html
 msgid "For example Manga, Comics, Manhwa. Then point a folder at it, or move series to it. Just a set of filters (e.g. only Isekai)? Filter the home screen and use “Save search”."
@@ -928,6 +1132,14 @@ msgstr "За поредиците ѝ, които нямат собствен"
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "For new series after each scan"
 msgstr "За нови поредици след всяко сканиране"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Forget every saved recommendation and cover? They are asked for again when a series page opens."
+msgstr "Да се забравят ли всички запазени препоръки и корици? Ще се поискат отново при отваряне на страница на поредица."
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Forget saved recommendations and covers"
+msgstr "Забрави запазените препоръки и корици"
 
 #: app/plugins/builtin/libraries/settings.html
 msgid "Forgot it? Start MangaVibe once with {setting}. The app has no accounts, so this keeps the library from others using it; anyone who can open the files or the database still can."
@@ -1009,6 +1221,26 @@ msgstr "GitHub токенът е премахнат"
 msgid "GitHub token saved"
 msgstr "GitHub токенът е запазен"
 
+#: app/api/series.py
+msgid "Give a provider and id, or a URL"
+msgstr "Посочете източник и id или адрес"
+
+#: app/plugins/builtin/accounts/api.py
+msgid "Give the account a name"
+msgstr "Дайте име на акаунта"
+
+#: app/api/books.py
+msgid "Give the first chapter of the range too"
+msgstr "Посочете и първата глава от диапазона"
+
+#: app/plugins/builtin/libraries/api.py
+msgid "Give the library a name"
+msgstr "Дайте име на библиотеката"
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Give the search a name"
+msgstr "Дайте име на търсенето"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Go back"
 msgstr "Върни се"
@@ -1069,6 +1301,10 @@ msgstr "Скрито от този списък. „Покажи игнорир�
 msgid "Hide controls after"
 msgstr "Скрий контролите след"
 
+#: app/api/system.py
+msgid "Hide controls after: 0 (never) or {min} to {max} seconds"
+msgstr "Скрий контролите след: 0 (никога) или от {min} до {max} секунди"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Hide from reading"
 msgstr "Скрий от четене"
@@ -1093,9 +1329,17 @@ msgstr "Скривай с контролите"
 msgid "Highest first"
 msgstr "Първо най-високите"
 
+#: app/plugins/builtin/cards/__init__.py
+msgid "How a series looks in the library and Continue reading: poster, badges, title and progress. Built in; replace it with a plugin that draws the cards its own way."
+msgstr "Как изглежда поредица в библиотеката и Продължи четенето: корица, значки, заглавие и напредък. Вградена; заменете я с добавка, която рисува картите по свой начин."
+
 #: app/contracts/__init__.py
 msgid "How a series looks in the library grid, its list view and Continue reading"
 msgstr "Как изглежда поредица в решетката на библиотеката, в списъка и в Продължи четенето"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "How many"
+msgstr "Колко"
 
 #: app/web/static/js/app.js
 msgid "Idle. New series are matched automatically after each scan."
@@ -1117,7 +1361,7 @@ msgstr "Игнорирай"
 msgid "Ignore all {n}"
 msgstr "Игнорирай всички {n}"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/image_reader/__init__.py
 msgid "Image reader"
 msgstr "Четец на изображения"
 
@@ -1261,6 +1505,10 @@ msgstr "Само за вас. При цяла ширина Библиотека�
 msgid "Just for you. Missing words are shown in English"
 msgstr "Само за вас. Липсващите думи се показват на английски"
 
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Keep the library page's filters and sort under a name (e.g. Isekai) and pick them again from the Saved button. Built in."
+msgstr "Запазва филтрите и подредбата на библиотеката под име (напр. Isekai) и ги избира отново от бутона Запазени. Вградена."
+
 #: app/web/static/js/app.js
 msgid "Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
 msgstr "Да се запази ли по-новата база данни? {version} може да не разбере добавеното от по-новите версии и части от нея може да не работят. Ново обновяване оправя това."
@@ -1268,6 +1516,14 @@ msgstr "Да се запази ли по-новата база данни? {vers
 #: app/plugins/builtin/saved_searches/save_button.html
 msgid "Keep these filters under a name: the Saved button brings them back"
 msgstr "Запази тези филтри под име: бутонът Запазени ги връща"
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Keeps its searches in MangaVibe's database; connects to nothing"
+msgstr "Пази търсенията си в базата данни на MangaVibe; не се свързва никъде"
+
+#: app/plugins/builtin/accounts/__init__.py
+msgid "Keeps the accounts (password hashes) in MangaVibe's database; connects to nothing"
+msgstr "Пази акаунтите (хешове на паролите) в базата данни на MangaVibe; не се свързва никъде"
 
 #: app/web/static/js/app.js
 msgid "Language"
@@ -1333,7 +1589,7 @@ msgstr "Да може ли обновяването на метаданни от
 msgid "Letter"
 msgstr "Буква"
 
-#: app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "Libraries"
 msgstr "Библиотеки"
 
@@ -1341,7 +1597,11 @@ msgstr "Библиотеки"
 msgid "Library"
 msgstr "Библиотека"
 
-#: app/contracts/__init__.py
+#: app/api/system.py
+msgid "Library already exists"
+msgstr "Библиотеката вече съществува"
+
+#: app/contracts/__init__.py app/plugins/builtin/library_query/__init__.py
 msgid "Library filters and sorting"
 msgstr "Филтри и подредба на библиотеката"
 
@@ -1357,13 +1617,21 @@ msgstr "Библиотека за поредиците в {folder}"
 msgid "Library listing"
 msgstr "Показване на библиотеката"
 
-#: app/contracts/__init__.py
+#: app/api/common.py app/plugins/builtin/libraries/api.py
+msgid "Library not found"
+msgstr "Библиотеката не е намерена"
+
+#: app/contracts/__init__.py app/plugins/builtin/library_page/__init__.py
 msgid "Library page"
 msgstr "Страница на библиотеката"
 
 #: app/web/static/js/app.js
 msgid "Library view"
 msgstr "Изглед на библиотеката"
+
+#: app/plugins/builtin/nav_sidebar/__init__.py
+msgid "Library, Continue and Settings in a sidebar on the left, the search box at the top. On phones, the usual bar. Built in."
+msgstr "Библиотека, Продължи и Настройки в странична лента вляво, търсенето – горе. На телефони – обичайната лента. Вградена."
 
 #: app/web/static/js/app.js
 msgid "Light"
@@ -1397,9 +1665,17 @@ msgstr "Списък"
 msgid "Lists of things in the library worth a look, in Settings → Needs attention"
 msgstr "Списъци с неща в библиотеката, които заслужават внимание, в Настройки → Нуждае се от внимание"
 
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Lists problems in your library in Settings; connects to nothing"
+msgstr "Показва проблемите в библиотеката ви в Настройки; не се свързва никъде"
+
 #: app/web/static/js/app.js
 msgid "Load more while scrolling, or show numbered pages"
 msgstr "Зареждай още при превъртане или показвай номерирани страници"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Loaded from AniList"
+msgstr "Зареждани от AniList"
 
 #: app/web/templates/settings/plugins.html
 msgid "Loading the plugin sources…"
@@ -1437,6 +1713,10 @@ msgstr "Заключена: изчезват, докато не се отклю�
 msgid "Log in"
 msgstr "Вход"
 
+#: app/plugins/builtin/accounts/api.py
+msgid "Log in first"
+msgstr "Първо влезте"
+
 #: app/plugins/builtin/accounts/menu.html
 msgid "Log out"
 msgstr "Изход"
@@ -1448,6 +1728,10 @@ msgstr "Провери отново"
 #: app/web/static/js/app.js
 msgid "Looking for metadata…"
 msgstr "Търсене на метаданни…"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Lossy: Normal looks the same as the original when reading."
+msgstr "Със загуби: при Нормално изглежда като оригинала при четене."
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Lower = fewer series in Needs attention, more wrong matches"
@@ -1465,6 +1749,10 @@ msgstr "Основна навигация"
 msgid "Make the admin account"
 msgstr "Създай администраторски акаунт"
 
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Makes books smaller: converts PNG and JPEG pages to JPEG XL (or AVIF, WebP), lossy. For one series from its page, or for all of them here. It replaces your files. Built in."
+msgstr "Прави книгите по-малки: преобразува PNG и JPEG страниците в JPEG XL (или AVIF, WebP) със загуби. За една поредица от страницата ѝ или за всички оттук. Заменя файловете ви. Вградена."
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Manage in Plugins"
 msgstr "Управление в Добавки"
@@ -1477,6 +1765,14 @@ msgstr "Управлява приложението и акаунтите"
 msgid "Manga"
 msgstr "Манга"
 
+#: app/plugins/builtin/mangaupdates.py
+msgid "MangaUpdates"
+msgstr "MangaUpdates"
+
+#: app/api/system.py
+msgid "MangaVibe can't update this plugin: it doesn't name a GitHub repo, or it isn't a file or folder of its own in the plugins folder"
+msgstr "MangaVibe не може да обнови тази добавка: тя не посочва хранилище в GitHub или не е отделен файл или папка в папката с добавки"
+
 #: app/web/templates/shell/banners.html
 msgid "MangaVibe for Android"
 msgstr "MangaVibe за Android"
@@ -1484,6 +1780,10 @@ msgstr "MangaVibe за Android"
 #: app/web/static/js/app.js
 msgid "MangaVibe needs {jobs}. To switch {plugin} off, switch on another plugin that does it."
 msgstr "MangaVibe има нужда от {jobs}. За да изключите {plugin}, включете друга добавка, която върши това."
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "MangaVibe shows all three in every browser. Other comic apps may not open JPEG XL or AVIF."
+msgstr "MangaVibe показва и трите във всеки браузър. Други приложения за комикси може да не отварят JPEG XL или AVIF."
 
 #: app/web/templates/settings/plugins.html
 msgid "MangaVibe's own plugins"
@@ -1701,7 +2001,7 @@ msgstr "Лента за навигация"
 msgid "needs attention"
 msgstr "нуждае се от внимание"
 
-#: app/plugins/builtin/library_query/__init__.py app/web/templates/views/settings.html
+#: app/plugins/builtin/attention_lists/__init__.py app/plugins/builtin/library_query/__init__.py app/web/templates/views/settings.html
 msgid "Needs attention"
 msgstr "Нуждае се от внимание"
 
@@ -1777,6 +2077,10 @@ msgstr "Няма сигурно съвпадение"
 msgid "No confident match was found online. Pick the right one, or open Fix match."
 msgstr "Не е намерено сигурно съвпадение онлайн. Изберете правилното или отворете Поправи съвпадението."
 
+#: app/plugins/builtin/anilist_recommendations/api.py
+msgid "No cover"
+msgstr "Няма корица"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "No description."
 msgstr "Няма описание."
@@ -1792,6 +2096,10 @@ msgstr "Няма папки вътре."
 #: app/plugins/builtin/libraries/libraries.js
 msgid "No folders: only series moved here by hand"
 msgstr "Без папки: само ръчно преместени поредици"
+
+#: app/api/edit.py
+msgid "No icon"
+msgstr "Няма икона"
 
 #: app/web/templates/sheets/library.html
 msgid "No match."
@@ -1845,6 +2153,22 @@ msgstr "Не се изтриват поредици или файлове: па�
 msgid "No series yet. The first scan may still be running; see Settings."
 msgstr "Още няма поредици. Първото сканиране може още да тече; вижте Настройки."
 
+#: app/api/books.py app/api/edit.py
+msgid "No such page"
+msgstr "Няма такава страница"
+
+#: app/main.py
+msgid "No such plugin script"
+msgstr "Няма такъв скрипт на добавка"
+
+#: app/main.py
+msgid "No such plugin style"
+msgstr "Няма такъв стил на добавка"
+
+#: app/api/books.py
+msgid "No thumbnail"
+msgstr "Няма миниатюра"
+
 #: app/web/templates/settings/plugins.html
 msgid "None"
 msgstr "Нито една"
@@ -1865,6 +2189,10 @@ msgstr "Не е дубликат"
 msgid "Not a problem"
 msgstr "Не е проблем"
 
+#: app/api/attention.py
+msgid "Not a row you can see"
+msgstr "Не е ред, който можете да видите"
+
 #: app/web/static/js/app.js
 msgid "Not checked yet"
 msgstr "Още не е проверявано"
@@ -1873,6 +2201,10 @@ msgstr "Още не е проверявано"
 msgid "not checked yet"
 msgstr "още не е проверявано"
 
+#: app/api/system.py
+msgid "Not found"
+msgstr "Не е намерено"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "not found, check the volume mount"
 msgstr "не е намерена, проверете монтирането на тома"
@@ -1880,6 +2212,10 @@ msgstr "не е намерена, проверете монтирането на
 #: app/web/static/js/app.js
 msgid "Not matched (your choice)"
 msgstr "Без съвпадение (ваш избор)"
+
+#: app/api/series.py
+msgid "Not one of the options"
+msgstr "Не е от възможностите"
 
 #: app/web/templates/settings/plugin.html
 msgid "Not running: {why}"
@@ -1912,6 +2248,14 @@ msgstr "Нищо не е започнато. Започнете поредица
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Nothing in {library} yet. Move series here with Edit, or select several (hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders."
 msgstr "В {library} още няма нищо. Преместете поредици тук чрез Редактиране или изберете няколко (задръжте карта) и използвайте ⋯ → Премести в библиотека. Цяла папка: Настройки → Папки на библиотеката."
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Nothing optimized yet"
+msgstr "Още нищо не е оптимизирано"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Nothing saved yet"
+msgstr "Още нищо не е запазено"
 
 #: app/web/static/js/app.js
 msgid "Nothing was changed"
@@ -1993,6 +2337,22 @@ msgstr "Едноглавна"
 msgid "Only add sources you trust: a plugin runs inside MangaVibe with full access to its data."
 msgstr "Добавяйте само източници, на които имате доверие: добавката работи в MangaVibe с пълен достъп до данните му."
 
+#: app/api/series.py
+msgid "Only an admin can change the series' reading mode"
+msgstr "Само администратор може да сменя режима на четене на поредицата"
+
+#: app/api/system.py
+msgid "Only an admin can change these settings"
+msgstr "Само администратор може да променя тези настройки"
+
+#: app/users.py
+msgid "Only an admin can do this"
+msgstr "Само администратор може да направи това"
+
+#: app/api/series.py
+msgid "Only an admin can refresh metadata"
+msgstr "Само администратор може да обновява метаданните"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Only folders mounted in the container are visible (e.g. /library2)."
 msgstr "Виждат се само папки, монтирани в контейнера (напр. /library2)."
@@ -2040,6 +2400,32 @@ msgstr "Отвори библиотеката"
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead"
 msgstr "Отваря приложението и го свързва с този сървър. Ако не е инсталирано, вместо това се изтегля"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimize"
+msgstr "Оптимизиране"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimize all series"
+msgstr "Оптимизирай всички поредици"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimize this series"
+msgstr "Оптимизирай тази поредица"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimizing is running already"
+msgstr "Оптимизирането вече тече"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimizing {n} series"
+msgid_plural "Optimizing {n} series"
+msgstr[0] "Оптимизиране на {n} поредица"
+msgstr[1] "Оптимизиране на {n} поредици"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimizing {series}, book {book} of {books}"
+msgstr "Оптимизиране на {series}, книга {book} от {books}"
 
 #: app/plugins/builtin/libraries/settings.html
 msgid "Optional: keeps this library private from others using the app"
@@ -2189,9 +2575,17 @@ msgstr "Изберете една"
 msgid "Pick one or none"
 msgstr "Изберете една или нито една"
 
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Pick some filters first"
+msgstr "Първо изберете филтри"
+
 #: app/contracts/__init__.py
 msgid "Picking the right metadata for a series, drawn with fixMatch()"
 msgstr "Избор на правилните метаданни за поредица, рисуван с fixMatch()"
+
+#: app/plugins/builtin/dialogs/__init__.py
+msgid "Picking the right metadata for a series: search the sources, or paste a link. Built in."
+msgstr "Избор на правилните метаданни за поредица: търсене в източниците или поставяне на връзка. Вградена."
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Plan to read"
@@ -2212,6 +2606,18 @@ msgstr "Полета от добавки върху страницата, нап
 #: app/web/templates/settings/plugins.html
 msgid "Plugin categories"
 msgstr "Категории добавки"
+
+#: app/api/books.py app/api/series.py app/api/system.py
+msgid "Plugin error: {error}"
+msgstr "Грешка в добавка: {error}"
+
+#: app/api/system.py
+msgid "Plugin not found"
+msgstr "Добавката не е намерена"
+
+#: app/api/system.py
+msgid "Plugin not found or switched off"
+msgstr "Добавката не е намерена или е изключена"
 
 #: app/web/templates/settings/plugins.html
 msgid "Plugin sources"
@@ -2265,6 +2671,10 @@ msgstr "Предишна глава"
 msgid "Previous page"
 msgstr "Предишна страница"
 
+#: app/api/edit.py app/api/series.py
+msgid "Provider unavailable: {error}"
+msgstr "Източникът е недостъпен: {error}"
+
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Publication"
 msgstr "Издаване"
@@ -2276,6 +2686,10 @@ msgstr "Да се върне ли копието на базата данни о
 #: app/plugins/builtin/cards/templates/views/card.html
 msgid "p{page}/{pages}"
 msgstr "с. {page}/{pages}"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Quality"
+msgstr "Качество"
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Queued for automatic matching"
@@ -2340,6 +2754,22 @@ msgstr "Скорост на четене"
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "Reading status"
 msgstr "Състояние на четене"
+
+#: app/plugins/builtin/filename_parser/__init__.py
+msgid "Reads book file names; connects to nothing"
+msgstr "Чете имената на файловете на книгите; не се свързва никъде"
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Reads book numbers; connects to nothing"
+msgstr "Чете номерата на книгите; не се свързва никъде"
+
+#: app/plugins/builtin/title_matcher/__init__.py
+msgid "Reads series folder names; connects to nothing (the providers do)"
+msgstr "Чете имената на папките на поредиците; не се свързва никъде (източниците го правят)"
+
+#: app/plugins/builtin/filename_parser/__init__.py
+msgid "Reads volume, chapter and revision from file names (Vol 3, c012-014, c012v2, 第1巻). Built in."
+msgstr "Чете том, глава и редакция от имената на файловете (Vol 3, c012-014, c012v2, 第1巻). Вградена."
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Ready to install"
@@ -2428,6 +2858,10 @@ msgstr[1] "{n} поредици са махнати от любими"
 #: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
 msgid "Renamed to {name}"
 msgstr "Преименувано на {name}"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Replaces book files in your manga folder when you ask it to (never on its own)"
+msgstr "Заменя файлове с книги в папката ви с манга, когато поискате (никога сама)"
 
 #: app/web/templates/settings/backup.html
 msgid "Replaces everything on this server with the file: library data, progress, accounts and settings. The current database is copied to /data/backups first. Files from older versions are updated; files from a newer version need MangaVibe updated first."
@@ -2533,9 +2967,29 @@ msgstr "Запазен (пишете, за да го смените)"
 msgid "Saved as “{name}”. The Saved button brings it back, in any library."
 msgstr "Запазено като „{name}“. Бутонът Запазени го връща във всяка библиотека."
 
-#: app/contracts/__init__.py app/plugins/builtin/saved_searches/sheet.html app/plugins/builtin/saved_searches/tool.html
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Saved for {n} series"
+msgid_plural "Saved for {n} series"
+msgstr[0] "Запазено за {n} поредица"
+msgstr[1] "Запазено за {n} поредици"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Saved on this server"
+msgstr "Запазени на този сървър"
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Saved search not found"
+msgstr "Запазеното търсене не е намерено"
+
+#: app/contracts/__init__.py app/plugins/builtin/saved_searches/__init__.py app/plugins/builtin/saved_searches/sheet.html app/plugins/builtin/saved_searches/tool.html
 msgid "Saved searches"
 msgstr "Запазени търсения"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Saved {size} in {n} book"
+msgid_plural "Saved {size} in {n} books"
+msgstr[0] "Спестени {size} в {n} книга"
+msgstr[1] "Спестени {size} в {n} книги"
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Saved. It shows in its folder's library now."
@@ -2560,6 +3014,10 @@ msgstr "Запазен. Обновленията от частни хранил�
 #: app/web/static/js/app.js
 msgid "Saved. Your changes are kept when metadata is refreshed."
 msgstr "Запазено. Промените ви остават и при обновяване на метаданните."
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Saved: downloaded once and kept, so they show offline and your browser only talks to MangaVibe. Loaded from AniList: no disk space, but your browser asks AniList for every cover."
+msgstr "Запазени: изтеглят се веднъж и се пазят, така че се виждат и офлайн, а браузърът ви говори само с MangaVibe. Зареждани от AniList: без място на диска, но браузърът ви пита AniList за всяка корица."
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Saving…"
@@ -2633,11 +3091,23 @@ msgstr "Избери всички {n}"
 msgid "Selected series"
 msgstr "Избрани поредици"
 
-#: app/contracts/__init__.py
+#: app/api/system.py
+msgid "Send the plugin's source and id"
+msgstr "Изпратете източника и id на добавката"
+
+#: app/plugins/builtin/libraries/__init__.py
+msgid "Separate libraries (Manga, Comics...) with tabs on the home screen, a reading mode and an optional password each. Built in."
+msgstr "Отделни библиотеки (Манга, Комикси...) с раздели на началния екран, всяка със свой режим на четене и парола по желание. Вградена."
+
+#: app/contracts/__init__.py app/plugins/builtin/cards/__init__.py
 msgid "Series cards"
 msgstr "Карти на поредиците"
 
-#: app/contracts/__init__.py
+#: app/api/common.py app/api/series.py app/plugins/builtin/anilist_recommendations/api.py
+msgid "Series not found"
+msgstr "Поредицата не е намерена"
+
+#: app/contracts/__init__.py app/plugins/builtin/series_page/__init__.py
 msgid "Series page"
 msgstr "Страница на поредицата"
 
@@ -2665,6 +3135,10 @@ msgstr "Зададен чрез GITHUB_TOKEN. Запазен тук токен �
 msgid "set by you"
 msgstr "зададено от вас"
 
+#: app/direction.py
+msgid "set for this series"
+msgstr "зададено за тази поредица"
+
 #: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
 msgid "Settings"
 msgstr "Настройки"
@@ -2673,27 +3147,55 @@ msgstr "Настройки"
 msgid "Settings ({n} need attention)"
 msgstr "Настройки ({n} се нуждаят от внимание)"
 
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Display: theme, cards, page width, the library's listing and titles. Built in."
+msgstr "Настройки → Изглед: тема, карти, ширина на страницата, показване и заглавия на библиотеката. Вградена."
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Library folders: add and remove folders, scan, the path outside Docker. Built in."
+msgstr "Настройки → Папки на библиотеката: добавяне и премахване на папки, сканиране, пътят извън Docker. Вградена."
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Metadata: the sources, automatic matching and its threshold. Built in."
+msgstr "Настройки → Метаданни: източниците, автоматичното търсене на съвпадения и прагът му. Вградена."
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Settings → Needs attention: files that can't be opened, missing metadata, series matched to the same entry, duplicates, missing chapters, books no reader shows. Built in."
+msgstr "Настройки → Нуждае се от внимание: файлове, които не се отварят, липсващи метаданни, поредици, свързани с един и същ запис, дубликати, липсващи глави, книги, които никой четец не показва. Вградена."
+
+#: app/direction.py
+msgid "Settings → Reader"
+msgstr "Настройки → Четец"
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Reader: the reading mode, fit, taps, overlays, the page's look; and the Android app. Built in."
+msgstr "Настройки → Четец: режимът на четене, мащабът, докосванията, полетата, видът на страницата; и приложението за Android. Вградена."
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Updates: the running version, checking, installing and going back. Built in."
+msgstr "Настройки → Обновления: работещата версия, проверка, инсталиране и връщане назад. Вградена."
+
 #: app/web/templates/ui/macros.html
 msgid "Settings, {n} need attention"
 msgstr "Настройки, {n} се нуждаят от внимание"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Display"
 msgstr "Настройки: Изглед"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Library folders"
 msgstr "Настройки: Папки на библиотеката"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Metadata"
 msgstr "Настройки: Метаданни"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Reader"
 msgstr "Настройки: Четец"
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Updates"
 msgstr "Настройки: Обновления"
 
@@ -2762,6 +3264,18 @@ msgstr[1] "Покажи {n} етикета със спойлери"
 #: app/plugins/builtin/saved_searches/sheet.html
 msgid "Shown now: tap to clear it"
 msgstr "Показва се сега: докоснете, за да го изчистите"
+
+#: app/plugins/builtin/image_reader/__init__.py
+msgid "Shows the pages of a book: page by page or one long strip (webtoons), with zoom, swipes, tap zones, the fit and the page look. Built in."
+msgstr "Показва страниците на книга: страница по страница или като дълга лента (уебтуни), с мащабиране, плъзгане, зони за докосване, мащаб и вид на страницата. Вградена."
+
+#: app/plugins/builtin/image_reader/__init__.py
+msgid "Shows the pages of the book being read; connects to nothing"
+msgstr "Показва страниците на четената книга; не се свързва никъде"
+
+#: app/plugins/builtin/nav_sidebar/__init__.py
+msgid "Sidebar"
+msgstr "Странична лента"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/shell/toasts.html
 msgid "Skip this version"
@@ -2843,6 +3357,10 @@ msgstr "Състояние: {status} (авто)"
 msgid "Still on the server, no download"
 msgstr "Още е на сървъра, без изтегляне"
 
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Stop"
+msgstr "Спри"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Stop selecting"
 msgstr "Спри избирането"
@@ -2883,9 +3401,29 @@ msgstr "Зони за докосване"
 msgid "Text outline"
 msgstr "Контур на текста"
 
+#: app/api/edit.py
+msgid "That book is not in this series"
+msgstr "Тази книга не е от тази поредица"
+
+#: app/api/system.py
+msgid "That is MangaVibe's own data folder, not a manga folder"
+msgstr "Това е собствената папка с данни на MangaVibe, а не папка с манга"
+
+#: app/plugins/builtin/accounts/api.py
+msgid "The current password is wrong"
+msgstr "Текущата парола е грешна"
+
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
 msgstr "Страницата Изглед в Настройки"
+
+#: app/plugins/builtin/accounts/api.py
+msgid "The first account can't be deleted"
+msgstr "Първият акаунт не може да се изтрие"
+
+#: app/plugins/builtin/accounts/api.py
+msgid "The first account stays an admin"
+msgstr "Първият акаунт остава администратор"
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "the first one: has the reading from before accounts"
@@ -2903,9 +3441,17 @@ msgstr "GitHub токенът и тайните настройки на доба
 msgid "The image is larger than 10 MB"
 msgstr "Изображението е по-голямо от 10 MB"
 
+#: app/api/books.py
+msgid "The last chapter must be after the first one"
+msgstr "Последната глава трябва да е след първата"
+
 #: app/contracts/__init__.py
 msgid "The Library folders page of Settings"
 msgstr "Страницата Папки на библиотеката в Настройки"
+
+#: app/plugins/builtin/library_page/__init__.py
+msgid "The library: its buttons and filters, the cards, pages and multi-select. Built in; replace it with a plugin that draws the library its own way."
+msgstr "Библиотеката: бутоните и филтрите, картите, страниците и множественият избор. Вградена; заменете я с добавка, която рисува библиотеката по свой начин."
 
 #: app/contracts/__init__.py
 msgid "The library: its filters' buttons, the cards, paging and multi-select, from MangaVibe.library"
@@ -2914,6 +3460,10 @@ msgstr "Библиотеката: бутоните за филтри, карти
 #: app/contracts/__init__.py
 msgid "The Metadata page of Settings"
 msgstr "Страницата Метаданни в Настройки"
+
+#: app/plugins/builtin/libraries/__init__.py
+msgid "the mode of {library}"
+msgstr "режимът на {library}"
 
 #: app/web/static/js/app.js
 msgid "The new version did not start. MangaVibe went back to the previous one; see the container log."
@@ -2927,6 +3477,10 @@ msgstr "Тези, които акаунтът вижда; останалите �
 msgid "The page a series opens on, drawn from MangaVibe.series"
 msgstr "Страницата, на която се отваря поредица, рисувана от MangaVibe.series"
 
+#: app/plugins/builtin/series_page/__init__.py
+msgid "The page a series opens on: poster, details, tags, books and files, with its buttons. Built in; replace it with a plugin that draws the page its own way."
+msgstr "Страницата, на която се отваря поредица: корица, подробности, етикети, книги и файлове, с бутоните ѝ. Вградена; заменете я с добавка, която рисува страницата по свой начин."
+
 #: app/web/static/js/app.js
 msgid "The page of a series also uses the whole screen"
 msgstr "Страницата на поредица също заема целия екран"
@@ -2934,6 +3488,10 @@ msgstr "Страницата на поредица също заема цели�
 #: app/web/templates/shell/toasts.html
 msgid "The page reloads by itself when the new version is running."
 msgstr "Страницата ще се презареди сама, когато новата версия заработи."
+
+#: app/api/edit.py
+msgid "The provider has no cover for this series"
+msgstr "Източникът няма корица за тази поредица"
 
 #: app/web/templates/sheets/library.html
 msgid "The published total, from the metadata. Leave a box empty for no limit."
@@ -2967,9 +3525,17 @@ msgstr "Папката на поредицата я няма, затова по�
 msgid "The series in progress, from MangaVibe.continue"
 msgstr "Започнатите поредици, от MangaVibe.continue"
 
+#: app/plugins/builtin/continue_page/__init__.py
+msgid "The series in progress, the last read first. Built in; replace it with a plugin that draws the page its own way."
+msgstr "Започнатите поредици, последно четената първа. Вградена; заменете я с добавка, която рисува страницата по свой начин."
+
 #: app/contracts/__init__.py
 msgid "The series' Edit dialog (info and poster), drawn with editSeries()"
 msgstr "Прозорецът за редактиране на поредица (данни и корица), рисуван с editSeries()"
+
+#: app/plugins/builtin/dialogs/__init__.py
+msgid "The series' Edit dialog: titles, description, numbers, tags, links and the poster. Built in."
+msgstr "Прозорецът за редактиране на поредица: заглавия, описание, номера, етикети, връзки и корица. Вградена."
 
 #: app/web/static/js/common.js
 msgid "The server is taking too long to answer"
@@ -2982,6 +3548,10 @@ msgstr "Източниците още нямат добавки."
 #: app/contracts/__init__.py
 msgid "The top bar and Library / Continue (a bar, or a sidebar); it must keep the Settings button"
 msgstr "Горната лента и Библиотека / Продължи (лента или странична лента); трябва да запази бутона Настройки"
+
+#: app/plugins/builtin/nav/__init__.py
+msgid "The top bar with the search box and Settings, and the Library / Continue bar. Built in."
+msgstr "Горната лента с търсенето и Настройки, и лентата Библиотека / Продължи. Вградена."
 
 #: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
 msgid "The two new passwords are different"
@@ -3006,6 +3576,18 @@ msgstr "Библиотеката на папката им"
 #: app/web/static/js/app.js
 msgid "Theme"
 msgstr "Тема"
+
+#: app/plugins/builtin/accounts/api.py
+msgid "There are accounts already: log in"
+msgstr "Вече има акаунти: влезте"
+
+#: app/plugins/builtin/libraries/api.py
+msgid "There is already a library called {name}"
+msgstr "Вече има библиотека с име {name}"
+
+#: app/plugins/builtin/accounts/api.py
+msgid "There is already an account called {name}"
+msgstr "Вече има акаунт с име {name}"
 
 #: app/web/templates/sheets/library.html
 msgid "These appear once series have metadata."
@@ -3039,7 +3621,7 @@ msgstr "Това не може да се отмени."
 msgid "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."
 msgstr "Това е текстова книга (лека новела). Добавете четец за текстови книги в Настройки → Добавки, за да я четете."
 
-#: app/plugins/builtin/libraries/libraries.js
+#: app/plugins/builtin/libraries/api.py app/plugins/builtin/libraries/libraries.js
 msgid "This is the only library. Add another one first."
 msgstr "Това е единствената библиотека. Първо добавете друга."
 
@@ -3051,13 +3633,25 @@ msgstr "Това е пътят в Docker. За да виждате този на
 msgid "This library"
 msgstr "Тази библиотека"
 
+#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/api.py
+msgid "This library is locked"
+msgstr "Тази библиотека е заключена"
+
 #: app/plugins/builtin/libraries/unlock_dialog.html
 msgid "This library is locked. Its series show again in this browser after the password, until “Lock now” or a new tab."
 msgstr "Тази библиотека е заключена. Поредиците ѝ се показват отново в този браузър след паролата, до „Заключи сега“ или нов раздел."
 
+#: app/api/system.py
+msgid "This plugin has no web pages"
+msgstr "Тази добавка няма уеб страници"
+
 #: app/web/templates/settings/plugin.html
 msgid "This plugin is not installed."
 msgstr "Тази добавка не е инсталирана."
+
+#: app/api/edit.py
+msgid "This series has no metadata source; use Fix match first"
+msgstr "Тази поредица няма източник на метаданни; първо използвайте Поправи съвпадението"
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "This series won't be matched"
@@ -3079,6 +3673,10 @@ msgstr "Тази версия е пропусната. Ще разберете �
 msgid "This version needs a new Docker image"
 msgstr "Тази версия изисква нов Docker образ"
 
+#: app/api/update.py
+msgid "This version needs a new Docker image. See github.com/ivokolarov0/manga-vibe#updating"
+msgstr "Тази версия изисква нов Docker образ. Вижте github.com/ivokolarov0/manga-vibe#updating"
+
 #: app/web/static/js/reader.js
 msgid "This was the last book in the series."
 msgstr "Това беше последната книга от поредицата."
@@ -3090,6 +3688,10 @@ msgstr "Заглавие"
 #: app/web/static/js/app.js
 msgid "Title language"
 msgstr "Език на заглавията"
+
+#: app/plugins/builtin/title_matcher/__init__.py
+msgid "Title matcher"
+msgstr "Търсене по заглавие"
 
 #: app/web/templates/sheets/library.html
 msgid "Title starts with"
@@ -3103,11 +3705,15 @@ msgstr "Заглавието започва с {letter}"
 msgid "to chapter"
 msgstr "до глава"
 
+#: app/api/attention.py
+msgid "Too many ignored rows"
+msgstr "Твърде много игнорирани редове"
+
 #: app/web/static/js/app.js
 msgid "Top"
 msgstr "Горе"
 
-#: app/web/static/js/app.js app/web/static/js/reader.js
+#: app/plugins/builtin/nav/__init__.py app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Top bar"
 msgstr "Горна лента"
 
@@ -3135,6 +3741,10 @@ msgstr "Два или повече файла с един и същ номер �
 msgid "Type"
 msgstr "Вид"
 
+#: app/plugins/builtin/libraries/api.py
+msgid "Type a password"
+msgstr "Въведете парола"
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Type the new password"
 msgstr "Въведете новата парола"
@@ -3147,6 +3757,26 @@ msgstr "Отмяна на преместване: всяка отново сле
 msgid "Unknown"
 msgstr "Неизвестно"
 
+#: app/api/series.py
+msgid "Unknown action"
+msgstr "Непознато действие"
+
+#: app/api/series.py
+msgid "Unknown reader mode"
+msgstr "Непознат режим на четеца"
+
+#: app/plugins/builtin/libraries/api.py
+msgid "Unknown reading mode"
+msgstr "Непознат режим на четене"
+
+#: app/api/series.py
+msgid "Unknown reading status"
+msgstr "Непознато състояние на четене"
+
+#: app/api/attention.py
+msgid "Unknown row"
+msgstr "Непознат ред"
+
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Unknown status"
 msgstr "Неизвестно състояние"
@@ -3154,6 +3784,14 @@ msgstr "Неизвестно състояние"
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
 msgid "Unlock"
 msgstr "Отключи"
+
+#: app/api/system.py app/plugins/builtin/libraries/api.py
+msgid "Unlock the folder's library first"
+msgstr "Първо отключете библиотеката на папката"
+
+#: app/plugins/builtin/libraries/api.py
+msgid "Unlock {name} first"
+msgstr "Първо отключете {name}"
 
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
 msgid "unlocked"
@@ -3175,9 +3813,29 @@ msgstr "Непрочетена"
 msgid "Unread count"
 msgstr "Брой непрочетени"
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Until then a series shows the recommendations it got last time."
+msgstr "Дотогава поредицата показва препоръките, получени последния път."
+
 #: app/web/templates/dialogs/folder-picker.html
 msgid "Up"
 msgstr "Нагоре"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Up to 10"
+msgstr "До 10"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Up to 15"
+msgstr "До 15"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Up to 25"
+msgstr "До 25"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Up to 5"
+msgstr "До 5"
 
 #: app/web/static/js/app.js
 msgid "Up to date. New versions come from {url}"
@@ -3223,6 +3881,10 @@ msgstr "Обновена {when}"
 msgid "Updates"
 msgstr "Обновления"
 
+#: app/api/update.py
+msgid "Updates only work in the MangaVibe Docker image"
+msgstr "Обновленията работят само в Docker образа на MangaVibe"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Updates work only in the MangaVibe Docker image. Here, update with git."
 msgstr "Обновленията работят само в Docker образа на MangaVibe. Тук обновявайте с git."
@@ -3251,6 +3913,10 @@ msgstr "Използвай"
 msgid "Use a page from a book"
 msgstr "Използвай страница от книга"
 
+#: app/plugins/builtin/accounts/api.py
+msgid "Use a password of at least 4 characters"
+msgstr "Използвайте парола от поне 4 знака"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Use file name again"
 msgstr "Пак по името на файла"
@@ -3274,6 +3940,10 @@ msgstr "Използвай {plugin} за {job}"
 #: app/web/templates/settings/plugin.html
 msgid "Uses:"
 msgstr "Използва:"
+
+#: app/api/system.py
+msgid "version must be a text"
+msgstr "version трябва да е текст"
 
 #: app/web/static/js/app.js
 msgid "Version {version} is available"
@@ -3302,6 +3972,10 @@ msgstr "Глас"
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "vol {n}"
 msgstr "том {n}"
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Vol {n}"
+msgstr "Том {n}"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Volume"
@@ -3334,6 +4008,10 @@ msgstr "Как се казва книга в списъците, четеца и
 #: app/contracts/__init__.py
 msgid "What the library can be filtered and sorted by, and how"
 msgstr "По какво и как може да се филтрира и подрежда библиотеката"
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "What the library can be filtered and sorted by: reading status, publication, genres and tags, author, length, favorites, first letter and the sorts. Built in; replace it with a plugin that does the same job."
+msgstr "По какво може да се филтрира и подрежда библиотеката: състояние на четене, издаване, жанрове и етикети, автор, дължина, любими, първа буква и подредбите. Вградена; заменете я с добавка, която върши същото."
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "What {path} is on your NAS or computer, e.g. {example1} or {example2}. The series page shows and copies it."
@@ -3371,6 +4049,10 @@ msgstr "В коя библиотека се показва. Файловете �
 msgid "Which provider result is the series, from its folder name"
 msgstr "Кой резултат от източника е поредицата, по името на папката ѝ"
 
+#: app/api/system.py
+msgid "Which version? Send it as version"
+msgstr "Коя версия? Изпратете я като version"
+
 #: app/web/templates/settings/plugins.html
 msgid "Without {job}"
 msgstr "Без {job}"
@@ -3378,6 +4060,14 @@ msgstr "Без {job}"
 #: app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/shell/toasts.html
 msgid "Working…"
 msgstr "Работи се…"
+
+#: app/plugins/builtin/accounts/api.py
+msgid "Wrong name or password"
+msgstr "Грешно име или парола"
+
+#: app/plugins/builtin/libraries/api.py
+msgid "Wrong password"
+msgstr "Грешна парола"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Year"
@@ -3390,6 +4080,10 @@ msgstr "Да"
 #: app/plugins/builtin/accounts/settings.html
 msgid "you"
 msgstr "вие"
+
+#: app/plugins/builtin/accounts/api.py
+msgid "You can't delete your own account"
+msgstr "Не можете да изтриете собствения си акаунт"
 
 #: app/web/static/js/app.js
 msgid "You have"
@@ -3448,6 +4142,14 @@ msgstr "{from}–{to} глави"
 #: app/web/static/js/app.js
 msgid "{from}–{to} volumes"
 msgstr "{from}–{to} тома"
+
+#: app/plugins/query.py
+msgid "{key} must be a whole number"
+msgstr "{key} трябва да е цяло число"
+
+#: app/api/system.py
+msgid "{label}: not one of the options"
+msgstr "{label}: не е от възможностите"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "{label}: unknown"
@@ -3525,6 +4227,12 @@ msgid_plural "{n} chapters"
 msgstr[0] "{n} глава"
 msgstr[1] "{n} глави"
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "{n} cover ({size} MB)"
+msgid_plural "{n} covers ({size} MB)"
+msgstr[0] "{n} корица ({size} MB)"
+msgstr[1] "{n} корици ({size} MB)"
+
 #: app/web/static/js/app.js
 msgid "{n} error"
 msgid_plural "{n} errors"
@@ -3542,6 +4250,10 @@ msgid "{n} file hidden from this list"
 msgid_plural "{n} files hidden from this list"
 msgstr[0] "{n} файл е скрит от този списък"
 msgstr[1] "{n} файла са скрити от този списък"
+
+#: app/api/series.py
+msgid "{n} files could not be deleted ({error}). The series stays in the library with what is left."
+msgstr "{n} файла не можаха да се изтрият ({error}). Поредицата остава в библиотеката с останалото."
 
 #: app/web/static/js/app.js
 msgid "{n} new book"
@@ -3590,6 +4302,12 @@ msgid "{n} series"
 msgid_plural "{n} series"
 msgstr[0] "{n} поредица"
 msgstr[1] "{n} поредици"
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "{n} series waiting"
+msgid_plural "{n} series waiting"
+msgstr[0] "{n} поредица чака"
+msgstr[1] "{n} поредици чакат"
 
 #: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "{n} unread"
@@ -3643,6 +4361,10 @@ msgstr "{plugin} заменя {other} ({job})."
 msgid "{plugin} {version} asks for new permissions:"
 msgstr "{plugin} {version} иска нови разрешения:"
 
+#: app/plugins/builtin/optimize/__init__.py
+msgid "{started}. Left out: {blocked}"
+msgstr "{started}. Пропуснати: {blocked}"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "{value} (default)"
 msgstr "{value} (по подразбиране)"
@@ -3655,6 +4377,10 @@ msgstr "{version} е по-стара от базата данни: по-нови
 msgid "{warning} The files don't go to a recycle bin."
 msgstr "{warning} Файловете не отиват в кошчето."
 
+#: app/api/common.py
+msgid "{what} not found"
+msgstr "Не е намерено: {what}"
+
 #: app/web/templates/sheets/library.html
 msgid "{what}, at least"
 msgstr "{what}, поне"
@@ -3662,3 +4388,7 @@ msgstr "{what}, поне"
 #: app/web/templates/sheets/library.html
 msgid "{what}, at most"
 msgstr "{what}, най-много"
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "“If you liked this” at the end of a series page: what AniList's readers recommend, with covers. Series you have open here; the others on AniList. Built in."
+msgstr "„Ако ви е харесало“ в края на страницата на поредица: какво препоръчват читателите в AniList, с корици. Поредиците, които имате, се отварят тук; останалите – в AniList. Вградена."

@@ -142,9 +142,12 @@ translation is simply shown in English.
 - **In your `js`**: `MangaVibe.t(text, values)`, `MangaVibe.tn(singular, plural, n, values)`, `MangaVibe.th`, `MangaVibe.lang`
   (e.g. `"bg"`), and `MangaVibe.fmtDate`, `fmtDateTime`, `fmtTime`, `fmtNum`, which write dates and numbers
   the language's way (`Intl`).
-- **In Python**: `from app.plugins.sdk import N_, t, tn`. Mark a label that's defined once and shown later
-  with `N_("Sync")` (e.g. a `settings_pages` label: the page translates it); `t()` translates while a page is
-  drawn.
+- **In Python**: `from app.plugins.sdk import N_, t, tn`. Every request runs in the language of the person
+  asking, so `t()` works in your API, `status()`, `run_action()` messages and `HTTPException(400, t("…"))`.
+  Mark a label that's defined once and shown later with `N_("Sync")` (e.g. a `settings_pages` label).
+  Your plugin's `name`, `description`, `permissions`, and the labels of its `settings_fields`, `actions`,
+  `fields` and `choices` are translated by the app where it shows them: put them in your `.po` and they
+  show in the person's language. Background work (scans, events) runs in English.
 - **Placeholders** are `{name}`: `t("Synced {count} series", { count })` (Python: `t("…", count=3)`). `tn()`
   gives `{n}`. Give `t()` the English text as a plain string, not a variable: the texts are found in the code.
 - **Your own translations**: a folder plugin ships `i18n/<lang>.po` next to its `__init__.py`, the same

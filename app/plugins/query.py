@@ -19,6 +19,7 @@ from fastapi import HTTPException
 from sqlalchemy import func
 
 from app.api import filters as _core
+from app.i18n import t
 from app.api.common import my_state
 from app.models import Series
 
@@ -85,7 +86,7 @@ def number(params, key) -> int | None:
     try:
         return int(raw)
     except ValueError:
-        raise HTTPException(422, f"{key} must be a whole number")
+        raise HTTPException(422, t("{key} must be a whole number", key=key))
 
 
 def flag(params, key) -> bool:

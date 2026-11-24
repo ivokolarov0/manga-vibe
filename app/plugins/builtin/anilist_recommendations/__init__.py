@@ -11,7 +11,7 @@ import shutil
 from pathlib import Path
 
 from app.plugins import Action, Plugin, SettingDef
-from app.plugins.sdk import PluginSeriesData
+from app.plugins.sdk import PluginSeriesData, t, tn
 
 from . import core
 from .api import router as api_router
@@ -53,8 +53,9 @@ class AniListRecommendations(Plugin):
         series = ctx.db.query(PluginSeriesData).filter_by(plugin=self.id, key=core.KEY).count()
         covers, size = core.cache_size(ctx)
         if not series and not covers:
-            return "Nothing saved yet"
-        return f"Saved for {series} series · {covers} covers ({size / 1048576:.1f} MB)"
+            return t("Nothing saved yet")
+        return " · ".join([tn("Saved for {n} series", "Saved for {n} series", series),
+                           tn("{n} cover ({size} MB)", "{n} covers ({size} MB)", covers, size=f"{size / 1048576:.1f}")])
 
     def run_global_action(self, ctx, action_key):
         if action_key == "clear":

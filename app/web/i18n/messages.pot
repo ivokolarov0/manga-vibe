@@ -45,6 +45,14 @@ msgstr ""
 msgid "+{n} more"
 msgstr ""
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "A day"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "A month"
+msgstr ""
+
 #: app/web/templates/shell/toasts.html
 msgid "A new MangaVibe version needs a new Docker image"
 msgstr ""
@@ -55,6 +63,10 @@ msgstr ""
 
 #: app/web/templates/shell/toasts.html
 msgid "A new version of MangaVibe is available"
+msgstr ""
+
+#: app/api/update.py
+msgid "A newer version came out meanwhile. Reload the page."
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html
@@ -77,6 +89,10 @@ msgstr ""
 msgid "A text book (a light novel). Add a reader for text books in Settings → Plugins to read it (e.g. Light novel reader)."
 msgstr ""
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "A week"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "A white outline around the letters, so they stay readable over the art"
 msgstr ""
@@ -93,20 +109,32 @@ msgstr ""
 msgid "about {min} min left"
 msgstr ""
 
+#: app/api/system.py
+msgid "accept_permissions must be a list"
+msgstr ""
+
 #: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
 msgid "Account"
+msgstr ""
+
+#: app/plugins/builtin/accounts/api.py
+msgid "Account not found"
 msgstr ""
 
 #: app/plugins/builtin/accounts/menu.html
 msgid "Account: {name}"
 msgstr ""
 
-#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/accounts/__init__.py app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html
 msgid "Accounts"
 msgstr ""
 
 #: app/plugins/builtin/accounts/login.html
 msgid "Accounts are on. Make the first account: an admin, who manages the app and the other accounts. It keeps everything read so far."
+msgstr ""
+
+#: app/api/books.py app/api/series.py app/api/system.py
+msgid "Action not found"
 msgstr ""
 
 #: app/plugins/builtin/accounts/settings.html
@@ -151,6 +179,14 @@ msgid_plural "Added {n} series to favorites"
 msgstr[0] ""
 msgstr[1] ""
 
+#: app/plugins/builtin/libraries/__init__.py
+msgid "Adds the library tabs, Settings → Libraries and the library pickers"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Adds the Saved and Save search buttons to the library page"
+msgstr ""
+
 #: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
 msgid "Admin"
 msgstr ""
@@ -193,6 +229,14 @@ msgstr[1] ""
 msgid "Android app"
 msgstr ""
 
+#: app/plugins/builtin/anilist.py
+msgid "AniList"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "AniList recommendations"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "AniList/MangaUpdates not reachable; retrying at {time}"
 msgstr ""
@@ -213,6 +257,10 @@ msgstr ""
 msgid "Ascending"
 msgstr ""
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Ask AniList again after"
+msgstr ""
+
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
 msgid "Ask for the passwords again"
 msgstr ""
@@ -221,8 +269,16 @@ msgstr ""
 msgid "Asked for when the library is opened. Its series are hidden everywhere until then."
 msgstr ""
 
+#: app/plugins/builtin/accounts/__init__.py
+msgid "Asks everyone to log in; adds Settings → Accounts and an account menu"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Asks GitHub ({repo}) for its newest release and shows a message when one is out"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "At most {n} saved searches"
 msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
@@ -281,8 +337,16 @@ msgstr ""
 msgid "Backup"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/book_labels/__init__.py
 msgid "Book labels"
+msgstr ""
+
+#: app/api/common.py
+msgid "Book not found"
+msgstr ""
+
+#: app/api/series.py
+msgid "Book not in this series"
 msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
@@ -321,8 +385,28 @@ msgstr ""
 msgid "Built into the Docker image, no download"
 msgstr ""
 
+#: app/plugins/builtin/mangaupdates.py
+msgid "Built-in metadata provider: MangaUpdates link, and fallback metadata."
+msgstr ""
+
+#: app/plugins/builtin/anilist.py
+msgid "Built-in metadata provider: titles, description, tags, cover, links."
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Built-in version (from the Docker image)"
+msgstr ""
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Calls books by their numbers (Vol 3, Ch 12-14, Extra 2) instead of their file names. Built in."
+msgstr ""
+
+#: app/plugins/builtin/libraries/__init__.py
+msgid "Can hide a library's series behind a password; connects to nothing"
+msgstr ""
+
+#: app/api/system.py
+msgid "Can't open this folder: {error}"
 msgstr ""
 
 #: app/web/static/js/reader.js
@@ -361,8 +445,16 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Ch {from}-{to}"
+msgstr ""
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "ch {n}"
+msgstr ""
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Ch {n}"
 msgstr ""
 
 #: app/plugins/builtin/libraries/settings.html
@@ -481,6 +573,22 @@ msgstr ""
 msgid "Completed"
 msgstr ""
 
+#: app/plugins/builtin/mangaupdates.py
+msgid "Connects to api.mangaupdates.com"
+msgstr ""
+
+#: app/plugins/builtin/anilist.py
+msgid "Connects to graphql.anilist.co"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Connects to graphql.anilist.co for the series matched on AniList"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Connects to nothing"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Contained"
 msgstr ""
@@ -493,12 +601,16 @@ msgstr ""
 msgid "Continue reading"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/continue_page/__init__.py
 msgid "Continue reading page"
 msgstr ""
 
 #: app/plugins/builtin/image_reader/image_reader.js
 msgid "Contrast"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Convert pages to"
 msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
@@ -533,6 +645,10 @@ msgstr ""
 msgid "Cover from {source}"
 msgstr ""
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Covers"
+msgstr ""
+
 #: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
 msgid "Current password"
 msgstr ""
@@ -543,6 +659,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Darker pages are easier on the eyes, e.g. at night"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Decides which series the library lists and in what order; connects to nothing"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -691,12 +811,52 @@ msgstr ""
 msgid "Downloaded from GitHub"
 msgstr ""
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Downloads covers from AniList's image server (s4.anilist.co) and keeps them on the server; with Covers: Loaded from AniList, your browser loads them from there instead"
+msgstr ""
+
 #: app/web/templates/settings/backup.html
 msgid "Downloads {file}"
 msgstr ""
 
+#: app/plugins/builtin/continue_page/__init__.py
+msgid "Draws the Continue reading page; connects to nothing"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/__init__.py
+msgid "Draws the Edit dialog; connects to nothing"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/__init__.py
+msgid "Draws the Fix match dialog; the searches are the metadata sources'"
+msgstr ""
+
+#: app/plugins/builtin/library_page/__init__.py
+msgid "Draws the library page; connects to nothing"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "Draws the pages in the reader: paged or vertical, zoom, swipes, the fit"
+msgstr ""
+
+#: app/plugins/builtin/cards/__init__.py
+msgid "Draws the series cards in the library and Continue reading; connects to nothing"
+msgstr ""
+
+#: app/plugins/builtin/series_page/__init__.py
+msgid "Draws the series page; connects to nothing"
+msgstr ""
+
+#: app/plugins/builtin/nav_sidebar/__init__.py
+msgid "Draws the sidebar and the top bar; connects to nothing"
+msgstr ""
+
+#: app/plugins/builtin/nav/__init__.py
+msgid "Draws the top bar; connects to nothing"
+msgstr ""
+
+#: app/api/series.py
+msgid "Dropdown not found"
 msgstr ""
 
 #: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
@@ -727,7 +887,7 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/dialogs/__init__.py
 msgid "Edit dialog"
 msgstr ""
 
@@ -775,8 +935,16 @@ msgstr ""
 msgid "Every plugin loaded."
 msgstr ""
 
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Every series is optimized already"
+msgstr ""
+
 #: app/plugins/builtin/accounts/settings.html
 msgid "Everyone logs in. Each account has its own reading progress, favorites, Continue reading, saved searches and Settings → Reader. Admins also manage the app: settings, folders, metadata, plugins, deleting, and these accounts."
+msgstr ""
+
+#: app/plugins/builtin/accounts/__init__.py
+msgid "Everyone logs in; each account has its own progress, favorites, saved searches and reader settings. Admins manage the app and pick the libraries each account sees. Built in."
 msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
@@ -791,12 +959,20 @@ msgstr ""
 msgid "Export"
 msgstr ""
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/book_labels/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "extra"
+msgstr ""
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Extra"
 msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Extra / bonus"
+msgstr ""
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Extra {n}"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -827,7 +1003,15 @@ msgstr ""
 msgid "File hidden from reading (it stays on disk)"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/api/books.py
+msgid "File is missing (moved or share not mounted?)"
+msgstr ""
+
+#: app/api/common.py
+msgid "File is outside the library folders"
+msgstr ""
+
+#: app/contracts/__init__.py app/plugins/builtin/filename_parser/__init__.py
 msgid "File name parser"
 msgstr ""
 
@@ -841,6 +1025,14 @@ msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Files alone are not enough for it. See {url}"
+msgstr ""
+
+#: app/plugins/builtin/mangaupdates.py
+msgid "Fills in series metadata"
+msgstr ""
+
+#: app/plugins/builtin/anilist.py
+msgid "Fills in series metadata and covers"
 msgstr ""
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/sheets/library.html
@@ -861,6 +1053,10 @@ msgstr ""
 
 #: app/web/templates/sheets/library.html
 msgid "Find: {what}"
+msgstr ""
+
+#: app/plugins/builtin/title_matcher/__init__.py
+msgid "Finds a series' entry from its folder name: cleans the name, scores each provider's results by title, year and format, and takes the best one only when it's sure. Built in."
 msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
@@ -891,7 +1087,7 @@ msgstr ""
 msgid "Fix match"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/dialogs/__init__.py
 msgid "Fix match dialog"
 msgstr ""
 
@@ -911,8 +1107,16 @@ msgstr ""
 msgid "Folder added. Scanning…"
 msgstr ""
 
+#: app/api/system.py
+msgid "Folder not found"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Folder removed"
+msgstr ""
+
+#: app/api/system.py
+msgid "Folder {path} does not exist inside the container. Mount it as a volume first."
 msgstr ""
 
 #: app/plugins/builtin/libraries/settings.html
@@ -925,6 +1129,14 @@ msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "For new series after each scan"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Forget every saved recommendation and cover? They are asked for again when a series page opens."
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Forget saved recommendations and covers"
 msgstr ""
 
 #: app/plugins/builtin/libraries/settings.html
@@ -1007,6 +1219,26 @@ msgstr ""
 msgid "GitHub token saved"
 msgstr ""
 
+#: app/api/series.py
+msgid "Give a provider and id, or a URL"
+msgstr ""
+
+#: app/plugins/builtin/accounts/api.py
+msgid "Give the account a name"
+msgstr ""
+
+#: app/api/books.py
+msgid "Give the first chapter of the range too"
+msgstr ""
+
+#: app/plugins/builtin/libraries/api.py
+msgid "Give the library a name"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Give the search a name"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Go back"
 msgstr ""
@@ -1067,6 +1299,10 @@ msgstr ""
 msgid "Hide controls after"
 msgstr ""
 
+#: app/api/system.py
+msgid "Hide controls after: 0 (never) or {min} to {max} seconds"
+msgstr ""
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Hide from reading"
 msgstr ""
@@ -1091,8 +1327,16 @@ msgstr ""
 msgid "Highest first"
 msgstr ""
 
+#: app/plugins/builtin/cards/__init__.py
+msgid "How a series looks in the library and Continue reading: poster, badges, title and progress. Built in; replace it with a plugin that draws the cards its own way."
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "How a series looks in the library grid, its list view and Continue reading"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "How many"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1115,7 +1359,7 @@ msgstr ""
 msgid "Ignore all {n}"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/image_reader/__init__.py
 msgid "Image reader"
 msgstr ""
 
@@ -1259,12 +1503,24 @@ msgstr ""
 msgid "Just for you. Missing words are shown in English"
 msgstr ""
 
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Keep the library page's filters and sort under a name (e.g. Isekai) and pick them again from the Saved button. Built in."
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
 msgstr ""
 
 #: app/plugins/builtin/saved_searches/save_button.html
 msgid "Keep these filters under a name: the Saved button brings them back"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Keeps its searches in MangaVibe's database; connects to nothing"
+msgstr ""
+
+#: app/plugins/builtin/accounts/__init__.py
+msgid "Keeps the accounts (password hashes) in MangaVibe's database; connects to nothing"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1331,7 +1587,7 @@ msgstr ""
 msgid "Letter"
 msgstr ""
 
-#: app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "Libraries"
 msgstr ""
 
@@ -1339,7 +1595,11 @@ msgstr ""
 msgid "Library"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/api/system.py
+msgid "Library already exists"
+msgstr ""
+
+#: app/contracts/__init__.py app/plugins/builtin/library_query/__init__.py
 msgid "Library filters and sorting"
 msgstr ""
 
@@ -1355,12 +1615,20 @@ msgstr ""
 msgid "Library listing"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/api/common.py app/plugins/builtin/libraries/api.py
+msgid "Library not found"
+msgstr ""
+
+#: app/contracts/__init__.py app/plugins/builtin/library_page/__init__.py
 msgid "Library page"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Library view"
+msgstr ""
+
+#: app/plugins/builtin/nav_sidebar/__init__.py
+msgid "Library, Continue and Settings in a sidebar on the left, the search box at the top. On phones, the usual bar. Built in."
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1395,8 +1663,16 @@ msgstr ""
 msgid "Lists of things in the library worth a look, in Settings → Needs attention"
 msgstr ""
 
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Lists problems in your library in Settings; connects to nothing"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Load more while scrolling, or show numbered pages"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Loaded from AniList"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1435,6 +1711,10 @@ msgstr ""
 msgid "Log in"
 msgstr ""
 
+#: app/plugins/builtin/accounts/api.py
+msgid "Log in first"
+msgstr ""
+
 #: app/plugins/builtin/accounts/menu.html
 msgid "Log out"
 msgstr ""
@@ -1445,6 +1725,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Looking for metadata…"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Lossy: Normal looks the same as the original when reading."
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
@@ -1463,6 +1747,10 @@ msgstr ""
 msgid "Make the admin account"
 msgstr ""
 
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Makes books smaller: converts PNG and JPEG pages to JPEG XL (or AVIF, WebP), lossy. For one series from its page, or for all of them here. It replaces your files. Built in."
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Manage in Plugins"
 msgstr ""
@@ -1475,12 +1763,24 @@ msgstr ""
 msgid "Manga"
 msgstr ""
 
+#: app/plugins/builtin/mangaupdates.py
+msgid "MangaUpdates"
+msgstr ""
+
+#: app/api/system.py
+msgid "MangaVibe can't update this plugin: it doesn't name a GitHub repo, or it isn't a file or folder of its own in the plugins folder"
+msgstr ""
+
 #: app/web/templates/shell/banners.html
 msgid "MangaVibe for Android"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "MangaVibe needs {jobs}. To switch {plugin} off, switch on another plugin that does it."
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "MangaVibe shows all three in every browser. Other comic apps may not open JPEG XL or AVIF."
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1699,7 +1999,7 @@ msgstr ""
 msgid "needs attention"
 msgstr ""
 
-#: app/plugins/builtin/library_query/__init__.py app/web/templates/views/settings.html
+#: app/plugins/builtin/attention_lists/__init__.py app/plugins/builtin/library_query/__init__.py app/web/templates/views/settings.html
 msgid "Needs attention"
 msgstr ""
 
@@ -1775,6 +2075,10 @@ msgstr ""
 msgid "No confident match was found online. Pick the right one, or open Fix match."
 msgstr ""
 
+#: app/plugins/builtin/anilist_recommendations/api.py
+msgid "No cover"
+msgstr ""
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "No description."
 msgstr ""
@@ -1789,6 +2093,10 @@ msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "No folders: only series moved here by hand"
+msgstr ""
+
+#: app/api/edit.py
+msgid "No icon"
 msgstr ""
 
 #: app/web/templates/sheets/library.html
@@ -1843,6 +2151,22 @@ msgstr ""
 msgid "No series yet. The first scan may still be running; see Settings."
 msgstr ""
 
+#: app/api/books.py app/api/edit.py
+msgid "No such page"
+msgstr ""
+
+#: app/main.py
+msgid "No such plugin script"
+msgstr ""
+
+#: app/main.py
+msgid "No such plugin style"
+msgstr ""
+
+#: app/api/books.py
+msgid "No thumbnail"
+msgstr ""
+
 #: app/web/templates/settings/plugins.html
 msgid "None"
 msgstr ""
@@ -1863,6 +2187,10 @@ msgstr ""
 msgid "Not a problem"
 msgstr ""
 
+#: app/api/attention.py
+msgid "Not a row you can see"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Not checked yet"
 msgstr ""
@@ -1871,12 +2199,20 @@ msgstr ""
 msgid "not checked yet"
 msgstr ""
 
+#: app/api/system.py
+msgid "Not found"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "not found, check the volume mount"
 msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Not matched (your choice)"
+msgstr ""
+
+#: app/api/series.py
+msgid "Not one of the options"
 msgstr ""
 
 #: app/web/templates/settings/plugin.html
@@ -1909,6 +2245,14 @@ msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Nothing in {library} yet. Move series here with Edit, or select several (hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders."
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Nothing optimized yet"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Nothing saved yet"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1991,6 +2335,22 @@ msgstr ""
 msgid "Only add sources you trust: a plugin runs inside MangaVibe with full access to its data."
 msgstr ""
 
+#: app/api/series.py
+msgid "Only an admin can change the series' reading mode"
+msgstr ""
+
+#: app/api/system.py
+msgid "Only an admin can change these settings"
+msgstr ""
+
+#: app/users.py
+msgid "Only an admin can do this"
+msgstr ""
+
+#: app/api/series.py
+msgid "Only an admin can refresh metadata"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Only folders mounted in the container are visible (e.g. /library2)."
 msgstr ""
@@ -2037,6 +2397,32 @@ msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimize"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimize all series"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimize this series"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimizing is running already"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimizing {n} series"
+msgid_plural "Optimizing {n} series"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Optimizing {series}, book {book} of {books}"
 msgstr ""
 
 #: app/plugins/builtin/libraries/settings.html
@@ -2187,8 +2573,16 @@ msgstr ""
 msgid "Pick one or none"
 msgstr ""
 
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Pick some filters first"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "Picking the right metadata for a series, drawn with fixMatch()"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/__init__.py
+msgid "Picking the right metadata for a series: search the sources, or paste a link. Built in."
 msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
@@ -2209,6 +2603,18 @@ msgstr ""
 
 #: app/web/templates/settings/plugins.html
 msgid "Plugin categories"
+msgstr ""
+
+#: app/api/books.py app/api/series.py app/api/system.py
+msgid "Plugin error: {error}"
+msgstr ""
+
+#: app/api/system.py
+msgid "Plugin not found"
+msgstr ""
+
+#: app/api/system.py
+msgid "Plugin not found or switched off"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -2263,6 +2669,10 @@ msgstr ""
 msgid "Previous page"
 msgstr ""
 
+#: app/api/edit.py app/api/series.py
+msgid "Provider unavailable: {error}"
+msgstr ""
+
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Publication"
 msgstr ""
@@ -2273,6 +2683,10 @@ msgstr ""
 
 #: app/plugins/builtin/cards/templates/views/card.html
 msgid "p{page}/{pages}"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Quality"
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
@@ -2337,6 +2751,22 @@ msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "Reading status"
+msgstr ""
+
+#: app/plugins/builtin/filename_parser/__init__.py
+msgid "Reads book file names; connects to nothing"
+msgstr ""
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Reads book numbers; connects to nothing"
+msgstr ""
+
+#: app/plugins/builtin/title_matcher/__init__.py
+msgid "Reads series folder names; connects to nothing (the providers do)"
+msgstr ""
+
+#: app/plugins/builtin/filename_parser/__init__.py
+msgid "Reads volume, chapter and revision from file names (Vol 3, c012-014, c012v2, 第1巻). Built in."
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
@@ -2425,6 +2855,10 @@ msgstr[1] ""
 
 #: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
 msgid "Renamed to {name}"
+msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Replaces book files in your manga folder when you ask it to (never on its own)"
 msgstr ""
 
 #: app/web/templates/settings/backup.html
@@ -2531,9 +2965,29 @@ msgstr ""
 msgid "Saved as “{name}”. The Saved button brings it back, in any library."
 msgstr ""
 
-#: app/contracts/__init__.py app/plugins/builtin/saved_searches/sheet.html app/plugins/builtin/saved_searches/tool.html
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Saved for {n} series"
+msgid_plural "Saved for {n} series"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Saved on this server"
+msgstr ""
+
+#: app/plugins/builtin/saved_searches/__init__.py
+msgid "Saved search not found"
+msgstr ""
+
+#: app/contracts/__init__.py app/plugins/builtin/saved_searches/__init__.py app/plugins/builtin/saved_searches/sheet.html app/plugins/builtin/saved_searches/tool.html
 msgid "Saved searches"
 msgstr ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Saved {size} in {n} book"
+msgid_plural "Saved {size} in {n} books"
+msgstr[0] ""
+msgstr[1] ""
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Saved. It shows in its folder's library now."
@@ -2557,6 +3011,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Saved. Your changes are kept when metadata is refreshed."
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Saved: downloaded once and kept, so they show offline and your browser only talks to MangaVibe. Loaded from AniList: no disk space, but your browser asks AniList for every cover."
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html
@@ -2631,11 +3089,23 @@ msgstr ""
 msgid "Selected series"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/api/system.py
+msgid "Send the plugin's source and id"
+msgstr ""
+
+#: app/plugins/builtin/libraries/__init__.py
+msgid "Separate libraries (Manga, Comics...) with tabs on the home screen, a reading mode and an optional password each. Built in."
+msgstr ""
+
+#: app/contracts/__init__.py app/plugins/builtin/cards/__init__.py
 msgid "Series cards"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/api/common.py app/api/series.py app/plugins/builtin/anilist_recommendations/api.py
+msgid "Series not found"
+msgstr ""
+
+#: app/contracts/__init__.py app/plugins/builtin/series_page/__init__.py
 msgid "Series page"
 msgstr ""
 
@@ -2663,6 +3133,10 @@ msgstr ""
 msgid "set by you"
 msgstr ""
 
+#: app/direction.py
+msgid "set for this series"
+msgstr ""
+
 #: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
 msgid "Settings"
 msgstr ""
@@ -2671,27 +3145,55 @@ msgstr ""
 msgid "Settings ({n} need attention)"
 msgstr ""
 
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Display: theme, cards, page width, the library's listing and titles. Built in."
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Library folders: add and remove folders, scan, the path outside Docker. Built in."
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Metadata: the sources, automatic matching and its threshold. Built in."
+msgstr ""
+
+#: app/plugins/builtin/attention_lists/__init__.py
+msgid "Settings → Needs attention: files that can't be opened, missing metadata, series matched to the same entry, duplicates, missing chapters, books no reader shows. Built in."
+msgstr ""
+
+#: app/direction.py
+msgid "Settings → Reader"
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Reader: the reading mode, fit, taps, overlays, the page's look; and the Android app. Built in."
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/__init__.py
+msgid "Settings → Updates: the running version, checking, installing and going back. Built in."
+msgstr ""
+
 #: app/web/templates/ui/macros.html
 msgid "Settings, {n} need attention"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Display"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Library folders"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Metadata"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Reader"
 msgstr ""
 
-#: app/contracts/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/settings_pages/__init__.py
 msgid "Settings: Updates"
 msgstr ""
 
@@ -2759,6 +3261,18 @@ msgstr[1] ""
 
 #: app/plugins/builtin/saved_searches/sheet.html
 msgid "Shown now: tap to clear it"
+msgstr ""
+
+#: app/plugins/builtin/image_reader/__init__.py
+msgid "Shows the pages of a book: page by page or one long strip (webtoons), with zoom, swipes, tap zones, the fit and the page look. Built in."
+msgstr ""
+
+#: app/plugins/builtin/image_reader/__init__.py
+msgid "Shows the pages of the book being read; connects to nothing"
+msgstr ""
+
+#: app/plugins/builtin/nav_sidebar/__init__.py
+msgid "Sidebar"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/shell/toasts.html
@@ -2841,6 +3355,10 @@ msgstr ""
 msgid "Still on the server, no download"
 msgstr ""
 
+#: app/plugins/builtin/optimize/__init__.py
+msgid "Stop"
+msgstr ""
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Stop selecting"
 msgstr ""
@@ -2881,8 +3399,28 @@ msgstr ""
 msgid "Text outline"
 msgstr ""
 
+#: app/api/edit.py
+msgid "That book is not in this series"
+msgstr ""
+
+#: app/api/system.py
+msgid "That is MangaVibe's own data folder, not a manga folder"
+msgstr ""
+
+#: app/plugins/builtin/accounts/api.py
+msgid "The current password is wrong"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
+msgstr ""
+
+#: app/plugins/builtin/accounts/api.py
+msgid "The first account can't be deleted"
+msgstr ""
+
+#: app/plugins/builtin/accounts/api.py
+msgid "The first account stays an admin"
 msgstr ""
 
 #: app/plugins/builtin/accounts/settings.html
@@ -2901,8 +3439,16 @@ msgstr ""
 msgid "The image is larger than 10 MB"
 msgstr ""
 
+#: app/api/books.py
+msgid "The last chapter must be after the first one"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "The Library folders page of Settings"
+msgstr ""
+
+#: app/plugins/builtin/library_page/__init__.py
+msgid "The library: its buttons and filters, the cards, pages and multi-select. Built in; replace it with a plugin that draws the library its own way."
 msgstr ""
 
 #: app/contracts/__init__.py
@@ -2911,6 +3457,10 @@ msgstr ""
 
 #: app/contracts/__init__.py
 msgid "The Metadata page of Settings"
+msgstr ""
+
+#: app/plugins/builtin/libraries/__init__.py
+msgid "the mode of {library}"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -2925,12 +3475,20 @@ msgstr ""
 msgid "The page a series opens on, drawn from MangaVibe.series"
 msgstr ""
 
+#: app/plugins/builtin/series_page/__init__.py
+msgid "The page a series opens on: poster, details, tags, books and files, with its buttons. Built in; replace it with a plugin that draws the page its own way."
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "The page of a series also uses the whole screen"
 msgstr ""
 
 #: app/web/templates/shell/toasts.html
 msgid "The page reloads by itself when the new version is running."
+msgstr ""
+
+#: app/api/edit.py
+msgid "The provider has no cover for this series"
 msgstr ""
 
 #: app/web/templates/sheets/library.html
@@ -2965,8 +3523,16 @@ msgstr ""
 msgid "The series in progress, from MangaVibe.continue"
 msgstr ""
 
+#: app/plugins/builtin/continue_page/__init__.py
+msgid "The series in progress, the last read first. Built in; replace it with a plugin that draws the page its own way."
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "The series' Edit dialog (info and poster), drawn with editSeries()"
+msgstr ""
+
+#: app/plugins/builtin/dialogs/__init__.py
+msgid "The series' Edit dialog: titles, description, numbers, tags, links and the poster. Built in."
 msgstr ""
 
 #: app/web/static/js/common.js
@@ -2979,6 +3545,10 @@ msgstr ""
 
 #: app/contracts/__init__.py
 msgid "The top bar and Library / Continue (a bar, or a sidebar); it must keep the Settings button"
+msgstr ""
+
+#: app/plugins/builtin/nav/__init__.py
+msgid "The top bar with the search box and Settings, and the Library / Continue bar. Built in."
 msgstr ""
 
 #: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
@@ -3003,6 +3573,18 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Theme"
+msgstr ""
+
+#: app/plugins/builtin/accounts/api.py
+msgid "There are accounts already: log in"
+msgstr ""
+
+#: app/plugins/builtin/libraries/api.py
+msgid "There is already a library called {name}"
+msgstr ""
+
+#: app/plugins/builtin/accounts/api.py
+msgid "There is already an account called {name}"
 msgstr ""
 
 #: app/web/templates/sheets/library.html
@@ -3037,7 +3619,7 @@ msgstr ""
 msgid "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."
 msgstr ""
 
-#: app/plugins/builtin/libraries/libraries.js
+#: app/plugins/builtin/libraries/api.py app/plugins/builtin/libraries/libraries.js
 msgid "This is the only library. Add another one first."
 msgstr ""
 
@@ -3049,12 +3631,24 @@ msgstr ""
 msgid "This library"
 msgstr ""
 
+#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/api.py
+msgid "This library is locked"
+msgstr ""
+
 #: app/plugins/builtin/libraries/unlock_dialog.html
 msgid "This library is locked. Its series show again in this browser after the password, until “Lock now” or a new tab."
 msgstr ""
 
+#: app/api/system.py
+msgid "This plugin has no web pages"
+msgstr ""
+
 #: app/web/templates/settings/plugin.html
 msgid "This plugin is not installed."
+msgstr ""
+
+#: app/api/edit.py
+msgid "This series has no metadata source; use Fix match first"
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
@@ -3077,6 +3671,10 @@ msgstr ""
 msgid "This version needs a new Docker image"
 msgstr ""
 
+#: app/api/update.py
+msgid "This version needs a new Docker image. See github.com/ivokolarov0/manga-vibe#updating"
+msgstr ""
+
 #: app/web/static/js/reader.js
 msgid "This was the last book in the series."
 msgstr ""
@@ -3087,6 +3685,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Title language"
+msgstr ""
+
+#: app/plugins/builtin/title_matcher/__init__.py
+msgid "Title matcher"
 msgstr ""
 
 #: app/web/templates/sheets/library.html
@@ -3101,11 +3703,15 @@ msgstr ""
 msgid "to chapter"
 msgstr ""
 
+#: app/api/attention.py
+msgid "Too many ignored rows"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Top"
 msgstr ""
 
-#: app/web/static/js/app.js app/web/static/js/reader.js
+#: app/plugins/builtin/nav/__init__.py app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Top bar"
 msgstr ""
 
@@ -3133,6 +3739,10 @@ msgstr ""
 msgid "Type"
 msgstr ""
 
+#: app/plugins/builtin/libraries/api.py
+msgid "Type a password"
+msgstr ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Type the new password"
 msgstr ""
@@ -3145,12 +3755,40 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
+#: app/api/series.py
+msgid "Unknown action"
+msgstr ""
+
+#: app/api/series.py
+msgid "Unknown reader mode"
+msgstr ""
+
+#: app/plugins/builtin/libraries/api.py
+msgid "Unknown reading mode"
+msgstr ""
+
+#: app/api/series.py
+msgid "Unknown reading status"
+msgstr ""
+
+#: app/api/attention.py
+msgid "Unknown row"
+msgstr ""
+
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Unknown status"
 msgstr ""
 
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
 msgid "Unlock"
+msgstr ""
+
+#: app/api/system.py app/plugins/builtin/libraries/api.py
+msgid "Unlock the folder's library first"
+msgstr ""
+
+#: app/plugins/builtin/libraries/api.py
+msgid "Unlock {name} first"
 msgstr ""
 
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html
@@ -3173,8 +3811,28 @@ msgstr ""
 msgid "Unread count"
 msgstr ""
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Until then a series shows the recommendations it got last time."
+msgstr ""
+
 #: app/web/templates/dialogs/folder-picker.html
 msgid "Up"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Up to 10"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Up to 15"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Up to 25"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "Up to 5"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -3221,6 +3879,10 @@ msgstr ""
 msgid "Updates"
 msgstr ""
 
+#: app/api/update.py
+msgid "Updates only work in the MangaVibe Docker image"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Updates work only in the MangaVibe Docker image. Here, update with git."
 msgstr ""
@@ -3249,6 +3911,10 @@ msgstr ""
 msgid "Use a page from a book"
 msgstr ""
 
+#: app/plugins/builtin/accounts/api.py
+msgid "Use a password of at least 4 characters"
+msgstr ""
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Use file name again"
 msgstr ""
@@ -3271,6 +3937,10 @@ msgstr ""
 
 #: app/web/templates/settings/plugin.html
 msgid "Uses:"
+msgstr ""
+
+#: app/api/system.py
+msgid "version must be a text"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -3299,6 +3969,10 @@ msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "vol {n}"
+msgstr ""
+
+#: app/plugins/builtin/book_labels/__init__.py
+msgid "Vol {n}"
 msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
@@ -3331,6 +4005,10 @@ msgstr ""
 
 #: app/contracts/__init__.py
 msgid "What the library can be filtered and sorted by, and how"
+msgstr ""
+
+#: app/plugins/builtin/library_query/__init__.py
+msgid "What the library can be filtered and sorted by: reading status, publication, genres and tags, author, length, favorites, first letter and the sorts. Built in; replace it with a plugin that does the same job."
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
@@ -3369,12 +4047,24 @@ msgstr ""
 msgid "Which provider result is the series, from its folder name"
 msgstr ""
 
+#: app/api/system.py
+msgid "Which version? Send it as version"
+msgstr ""
+
 #: app/web/templates/settings/plugins.html
 msgid "Without {job}"
 msgstr ""
 
 #: app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/shell/toasts.html
 msgid "Working…"
+msgstr ""
+
+#: app/plugins/builtin/accounts/api.py
+msgid "Wrong name or password"
+msgstr ""
+
+#: app/plugins/builtin/libraries/api.py
+msgid "Wrong password"
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
@@ -3387,6 +4077,10 @@ msgstr ""
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "you"
+msgstr ""
+
+#: app/plugins/builtin/accounts/api.py
+msgid "You can't delete your own account"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -3445,6 +4139,14 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "{from}–{to} volumes"
+msgstr ""
+
+#: app/plugins/query.py
+msgid "{key} must be a whole number"
+msgstr ""
+
+#: app/api/system.py
+msgid "{label}: not one of the options"
 msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
@@ -3523,6 +4225,12 @@ msgid_plural "{n} chapters"
 msgstr[0] ""
 msgstr[1] ""
 
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "{n} cover ({size} MB)"
+msgid_plural "{n} covers ({size} MB)"
+msgstr[0] ""
+msgstr[1] ""
+
 #: app/web/static/js/app.js
 msgid "{n} error"
 msgid_plural "{n} errors"
@@ -3540,6 +4248,10 @@ msgid "{n} file hidden from this list"
 msgid_plural "{n} files hidden from this list"
 msgstr[0] ""
 msgstr[1] ""
+
+#: app/api/series.py
+msgid "{n} files could not be deleted ({error}). The series stays in the library with what is left."
+msgstr ""
 
 #: app/web/static/js/app.js
 msgid "{n} new book"
@@ -3586,6 +4298,12 @@ msgstr ""
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/static/js/app.js
 msgid "{n} series"
 msgid_plural "{n} series"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/plugins/builtin/optimize/__init__.py
+msgid "{n} series waiting"
+msgid_plural "{n} series waiting"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -3641,6 +4359,10 @@ msgstr ""
 msgid "{plugin} {version} asks for new permissions:"
 msgstr ""
 
+#: app/plugins/builtin/optimize/__init__.py
+msgid "{started}. Left out: {blocked}"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "{value} (default)"
 msgstr ""
@@ -3653,10 +4375,18 @@ msgstr ""
 msgid "{warning} The files don't go to a recycle bin."
 msgstr ""
 
+#: app/api/common.py
+msgid "{what} not found"
+msgstr ""
+
 #: app/web/templates/sheets/library.html
 msgid "{what}, at least"
 msgstr ""
 
 #: app/web/templates/sheets/library.html
 msgid "{what}, at most"
+msgstr ""
+
+#: app/plugins/builtin/anilist_recommendations/__init__.py
+msgid "“If you liked this” at the end of a series page: what AniList's readers recommend, with covers. Series you have open here; the others on AniList. Built in."
 msgstr ""
