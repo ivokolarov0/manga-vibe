@@ -16,10 +16,11 @@ const R = { book: null, page: 0, mode: "paged", saveTimer: null, wake: null, fir
   img: null,   // the reader:images plugin showing the book (its registered reader)
   own: null,   // a plugin's reader of its own (a light novel)
   opening: 0 };  // counts openReader() calls, so a slow answer for an earlier one is dropped
-const MODES = { paged: "Pages", vertical: "Vertical" };
+// the words in the page's language (t(), common.js, issue #263)
+const MODES = { paged: t("Pages"), vertical: t("Vertical") };
 // plugin overlay boxes: background opacity in % and the outline around the text (reader settings)
-const OV_OPACITY = { 100: "Solid", 75: "75%", 50: "50%", 25: "25%", 0: "See-through" };
-const OV_OUTLINE = { off: "Off", thin: "Thin", thick: "Thick" };
+const OV_OPACITY = { 100: t("Solid"), 75: pct(75), 50: pct(50), 25: pct(25), 0: t("See-through") };
+const OV_OUTLINE = { off: t("Off"), thin: t("Thin"), thick: t("Thick") };
 const OV_STROKE = { off: "0px", thin: "0.12em", thick: "0.22em" };
 
 /* the value after `cur` in a {value: label} list, wrapping around */
@@ -133,7 +134,7 @@ function drawerSide() { return settings.reader_drawer_side === "left" ? "left" :
 function menuButton() {
   const b = $("#r-menu");
   if (!b) return;
-  const label = R.drawer ? "Close options" : "Reading options";
+  const label = R.drawer ? t("Close options") : t("Reading options");
   b.classList.toggle("open", R.drawer);
   b.title = label;
   b.setAttribute("aria-label", label);
@@ -175,7 +176,7 @@ function drawerPanel(key, title, body) {
   return `<aside class="d-panel" data-panel-of="${esc(key)}" aria-label="${esc(title)}" inert>
     <div class="d-row d-panel-head">
       <div class="d-title">${esc(title)}</div>
-      <button class="icon" data-panel-close aria-label="Back to the reading options" title="Close">${ICONS.close}</button>
+      <button class="icon" data-panel-close aria-label="${esc(t("Back to the reading options"))}" title="${esc(t("Close"))}">${ICONS.close}</button>
     </div>${body}</aside>`;
 }
 
@@ -207,10 +208,10 @@ const PLUGIN_FORMATS = ["epub-text"];  // formats only a plugin's reader shows
 function openPluginReader(el, book, startPage) {
   const own = book.reader && window.pluginReader?.(book.reader, book.format);
   if (!own) {
-    el.innerHTML = `<div class="endcard"><p>${book.reader
-      ? "The reader for this book didn't load. Reload the page, or check its plugin in Settings → Plugins."
-      : "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."}</p>
-      <a class="btn" href="#/series/${book.series_id}">Back</a></div>`;
+    el.innerHTML = `<div class="endcard"><p>${esc(book.reader
+      ? t("The reader for this book didn't load. Reload the page, or check its plugin in Settings → Plugins.")
+      : t("This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."))}</p>
+      <a class="btn" href="#/series/${book.series_id}">${esc(t("Back"))}</a></div>`;
     return;
   }
   const page = startPage !== null ? +startPage : (book.completed ? 0 : book.page);
@@ -240,8 +241,8 @@ function openPluginReader(el, book, startPage) {
     own.open(el, book, ctl);
   } catch (e) {
     console.error("The plugin's reader failed to open", e);
-    el.innerHTML = `<div class="endcard"><p>The reader for this book failed: ${esc(e.message)}</p>
-      <a class="btn" href="#/series/${book.series_id}">Back</a></div>`;
+    el.innerHTML = `<div class="endcard"><p>${esc(t("The reader for this book failed: {error}", { error: e.message }))}</p>
+      <a class="btn" href="#/series/${book.series_id}">${esc(t("Back"))}</a></div>`;
   }
   requestWakeLock();
   androidApp?.readerState(true, settings.reader_volume_keys !== false);
@@ -292,7 +293,7 @@ function imageCtl(book) {
         openBook("previous", 1e9);
         return;
       }
-      toast(`Start of book. Previous: ${book.prev.label}`);
+      toast(t("Start of book. Previous: {book}", { book: book.prev.label }));
       R.startToast = toast.timer;  // another toast (or the toast going away) ends it
     },
     // a tap on the page: true when the host took it (it closed the reading options); call it first
@@ -342,8 +343,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   const el = $("#reader");
   el.hidden = false;
   // a spinner, and a way out while it waits (the reader's own Back button comes with the book)
-  el.innerHTML = `<div class="loading">Loading…</div>
-    <button class="btn loading-back" id="r-back">${ICONS.back} Back</button>`;
+  el.innerHTML = `<div class="loading">${esc(t("Loading…"))}</div>
+    <button class="btn loading-back" id="r-back">${ICONS.back} ${esc(t("Back"))}</button>`;
   $("#r-back").onclick = () => leaveReader();
   document.body.style.overflow = "hidden";
   const open = ++R.opening;  // a newer open (or leaving) makes this one stale
@@ -351,15 +352,15 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   try { book = await api(`/api/books/${bookId}`, { timeout: LOAD_TIMEOUT }); } catch (e) {
     if (open !== R.opening || el.hidden) return;  // left (or another book) meanwhile
     el.innerHTML = `<div class="endcard"><p>${esc(e.message)}</p>
-      <div class="btn-row"><button class="btn primary" id="r-retry">Try again</button><a class="btn" href="#/">Back</a></div></div>`;
+      <div class="btn-row"><button class="btn primary" id="r-retry">${esc(t("Try again"))}</button><a class="btn" href="#/">${esc(t("Back"))}</a></div></div>`;
     $("#r-retry").addEventListener("click", () => openReader(bookId, startPage, cameFromApp));
     // e.g. a locked library: its plugin asks for the password, then the book opens
     MangaVibe.denied(e, () => openReader(bookId, startPage, cameFromApp));
     return;
   }
   if (open !== R.opening || el.hidden) return;
-  if (book.error) { el.innerHTML = `<div class="endcard"><p>${esc(book.error)}</p>
-    <a class="btn" href="#/series/${book.series_id}">Back</a></div>`; return; }
+  if (book.error) { el.innerHTML = `<div class="endcard"><p>${esc(t(book.error))}</p>
+    <a class="btn" href="#/series/${book.series_id}">${esc(t("Back"))}</a></div>`; return; }
   if (book.reader || PLUGIN_FORMATS.includes(book.format)) return openPluginReader(el, book, startPage);
   Object.assign(R, { book, mode: book.reader_mode === "vertical" ? "vertical" : "paged",
     page: startPage !== null ? +startPage : (book.completed ? 0 : book.page) });
@@ -373,6 +374,9 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
   ovReset(book);
   R.panel = null;
   const plugins = drawerPlugins(book), canSay = book.overlays.length > 0 && canSpeak();
+  // words used more than once below, escaped for the markup
+  const L = { back: esc(t("Back")), fullscreen: esc(t("Fullscreen")), page: esc(t("Page")),
+              prevChapter: esc(t("Previous chapter")), nextChapter: esc(t("Next chapter")) };
   el.innerHTML = `
     <div id="r-pages"></div>
     <div class="ov-status" id="r-ov-status" hidden></div>
@@ -381,7 +385,7 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
     <div class="read-progress" id="r-progress">
       <span id="rp-cur"></span>
       <div class="rp-track">${Array.from({ length: book.page_count },
-        (_, i) => `<i data-p="${i}" title="Page ${i + 1}"></i>`).join("")}</div>
+        (_, i) => `<i data-p="${i}" title="${esc(t("Page {n}", { n: i + 1 }))}"></i>`).join("")}</div>
       <span>${book.page_count}</span>
     </div>
     <div class="chrome top">
@@ -390,74 +394,74 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
     </div>
     <!-- the most used buttons, stacked just above the bottom card on the thumb side (one-handed use) -->
     <div class="chrome rail">
-      <button id="r-back" class="icon" aria-label="Back" title="Back">${ICONS.back}</button>
-      <button id="r-fs2" class="icon" aria-label="Fullscreen" title="Fullscreen">${ICONS.fullscreen}</button>
+      <button id="r-back" class="icon" aria-label="${L.back}" title="${L.back}">${ICONS.back}</button>
+      <button id="r-fs2" class="icon" aria-label="${L.fullscreen}" title="${L.fullscreen}">${ICONS.fullscreen}</button>
     </div>
     <!-- a floating card; the options button is at the thumb end -->
     <div class="chrome bottom">
       <!-- chapter buttons (only when there is one to go to), page numbers and slider: back on the left,
            forward on the right -->
       <div class="b-pages">
-        ${book.prev ? `<button id="r-prev" class="icon" aria-label="Previous chapter"
+        ${book.prev ? `<button id="r-prev" class="icon" aria-label="${L.prevChapter}"
           title="${esc(book.prev.label)}">${ICONS.chPrev}</button>` : ""}
         <span id="r-num"></span>
-        <input type="range" id="r-slider" min="1" max="${book.page_count}" value="${R.page + 1}" aria-label="Page">
+        <input type="range" id="r-slider" min="1" max="${book.page_count}" value="${R.page + 1}" aria-label="${L.page}">
         <span>${book.page_count}</span>
-        ${book.next ? `<button id="r-next" class="icon" aria-label="Next chapter"
+        ${book.next ? `<button id="r-next" class="icon" aria-label="${L.nextChapter}"
           title="${esc(book.next.label)}">${ICONS.chNext}</button>` : ""}
       </div>
       <button id="r-menu" class="icon b-menu" aria-controls="r-drawer">${ICONS.burger}</button>
     </div>
     <!-- written in desktop order (top to bottom, like MangaDex). On touch screens reader.css moves
          the rarely used options to the top and keeps page/chapter/close at the bottom, by the thumb. -->
-    <aside class="drawer" id="r-drawer" aria-label="Reading options" ${R.drawer ? "" : "inert"}>
+    <aside class="drawer" id="r-drawer" aria-label="${esc(t("Reading options"))}" ${R.drawer ? "" : "inert"}>
       <div class="d-row d-foot">
-        <button class="d-opt" id="r-exit">${ICONS.back}<span>Back to series</span></button>
-        <button id="r-close" class="icon" aria-label="Close options" title="Close">${ICONS.close}</button>
+        <button class="d-opt" id="r-exit">${ICONS.back}<span>${esc(t("Back to series"))}</span></button>
+        <button id="r-close" class="icon" aria-label="${esc(t("Close options"))}" title="${esc(t("Close"))}">${ICONS.close}</button>
       </div>
       <div class="d-title">${esc(book.series_title)}</div>
       <div class="d-sub">${esc(book.label)}</div>
       <div class="d-row d-page">
-        <button id="r-pprev" class="icon" aria-label="Previous page">‹</button>
+        <button id="r-pprev" class="icon" aria-label="${esc(t("Previous page"))}">‹</button>
         <!-- the whole box opens the list: an invisible native select over the visible text -->
-        <label class="d-field pick"><small>Page</small><span id="r-page-label"></span>
-          <select id="r-page" aria-label="Page">${Array.from({ length: book.page_count },
+        <label class="d-field pick"><small>${L.page}</small><span id="r-page-label"></span>
+          <select id="r-page" aria-label="${L.page}">${Array.from({ length: book.page_count },
             (_, i) => `<option value="${i}">${i + 1} / ${book.page_count}</option>`).join("")}</select></label>
-        <button id="r-pnext" class="icon" aria-label="Next page">›</button>
+        <button id="r-pnext" class="icon" aria-label="${esc(t("Next page"))}">›</button>
       </div>
       <div class="d-row d-chapter">
-        <button id="r-cprev" class="icon" aria-label="Previous chapter" ${book.prev ? `title="${esc(book.prev.label)}"` : "disabled"}>‹</button>
-        <div class="d-field"><small>Chapter</small><span>${esc(book.label)}</span></div>
-        <button id="r-cnext" class="icon" aria-label="Next chapter" ${book.next ? `title="${esc(book.next.label)}"` : "disabled"}>›</button>
+        <button id="r-cprev" class="icon" aria-label="${L.prevChapter}" ${book.prev ? `title="${esc(book.prev.label)}"` : "disabled"}>‹</button>
+        <div class="d-field"><small>${esc(t("Chapter"))}</small><span>${esc(book.label)}</span></div>
+        <button id="r-cnext" class="icon" aria-label="${L.nextChapter}" ${book.next ? `title="${esc(book.next.label)}"` : "disabled"}>›</button>
       </div>
       <hr>
       <!-- the mode only when the image reader draws more than one -->
       <button class="d-opt" id="r-mode" hidden>${ICONS.mode}<span></span></button>
       <!-- the image reader's own options (built in: the fit, the zoom lock and Page look), once it's open -->
       <div id="r-own" style="display: contents"></div>
-      <button class="d-opt d-toggle" id="r-topbar">${ICONS.topBar}<span>Top bar</span><b></b></button>
-      <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>Fullscreen</span></button>
-      <div class="d-row"><label class="d-field pick"><small>Hide controls after</small><span id="r-autohide-label"></span>
-        <select id="r-autohide" aria-label="Hide controls after"></select></label></div>
-      <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>Reader settings</span></a>
+      <button class="d-opt d-toggle" id="r-topbar">${ICONS.topBar}<span>${esc(t("Top bar"))}</span><b></b></button>
+      <button class="d-opt" id="r-fs">${ICONS.fullscreen}<span>${L.fullscreen}</span></button>
+      <div class="d-row"><label class="d-field pick"><small>${esc(t("Hide controls after"))}</small><span id="r-autohide-label"></span>
+        <select id="r-autohide" aria-label="${esc(t("Hide controls after"))}"></select></label></div>
+      <a class="d-opt" id="r-settings" href="#/settings/reader">${ICONS.settings}<span>${esc(t("Reader settings"))}</span></a>
       <!-- last, after a line: everything a plugin adds, one row per plugin -->
-      ${plugins.length ? `<div class="d-head d-plugins">Plugins</div>` : ""}
+      ${plugins.length ? `<div class="d-head d-plugins">${esc(t("Plugins"))}</div>` : ""}
       ${plugins.map((p) => `<button class="d-opt d-toggle d-more" data-panel="plugin:${esc(p.id)}">${ICONS.plugin}
         <span>${esc(p.name)}</span><b data-ov-state="${p.overlay ? esc(p.id) : ""}"></b></button>`).join("")}
     </aside>
     ${plugins.map((p) => drawerPanel(`plugin:${p.id}`, p.name, `
       ${p.overlay ? `<button class="d-opt d-toggle" data-ov="${esc(p.id)}">${ICONS.overlay}<span>${esc(p.overlay.label)}</span><b></b></button>` : ""}
       ${p.actions.map((i) => `<button class="d-opt" data-act="${i}">${ICONS.plugin}<span>${esc(book.actions[i].label)}</span></button>`).join("")}
-      ${p.overlay && canSay ? `<div class="d-head">Read aloud</div>
-        <button class="d-opt d-toggle" data-say="on">${ICONS.speak}<span>Read aloud</span><b></b></button>
-        <p class="d-hint" data-say="hint" hidden>Switch ${esc(p.overlay.label)} on above to hear its text.</p>
-        <button class="d-opt d-toggle" data-say="rate">${ICONS.speed}<span>Reading speed</span><b></b></button>
-        <button class="d-opt d-toggle" data-say="turn">${ICONS.autoTurn}<span>Turn pages by itself</span><b></b></button>
-        <div class="d-row" data-say="voice"><label class="d-field pick"><small>Voice</small><span></span>
-          <select aria-label="Voice"></select></label></div>` : ""}
-      ${p.overlay ? `<div class="d-head" data-ov-look-head hidden>Boxes on the page</div>
-        <button class="d-opt d-toggle" data-ov-look="opacity" hidden>${ICONS.overlay}<span>Box background</span><b></b></button>
-        <button class="d-opt d-toggle" data-ov-look="outline" hidden>${ICONS.overlay}<span>Text outline</span><b></b></button>
+      ${p.overlay && canSay ? `<div class="d-head">${esc(t("Read aloud"))}</div>
+        <button class="d-opt d-toggle" data-say="on">${ICONS.speak}<span>${esc(t("Read aloud"))}</span><b></b></button>
+        <p class="d-hint" data-say="hint" hidden>${esc(t("Switch {overlay} on above to hear its text.", { overlay: p.overlay.label }))}</p>
+        <button class="d-opt d-toggle" data-say="rate">${ICONS.speed}<span>${esc(t("Reading speed"))}</span><b></b></button>
+        <button class="d-opt d-toggle" data-say="turn">${ICONS.autoTurn}<span>${esc(t("Turn pages by itself"))}</span><b></b></button>
+        <div class="d-row" data-say="voice"><label class="d-field pick"><small>${esc(t("Voice"))}</small><span></span>
+          <select aria-label="${esc(t("Voice"))}"></select></label></div>` : ""}
+      ${p.overlay ? `<div class="d-head" data-ov-look-head hidden>${esc(t("Boxes on the page"))}</div>
+        <button class="d-opt d-toggle" data-ov-look="opacity" hidden>${ICONS.overlay}<span>${esc(t("Box background"))}</span><b></b></button>
+        <button class="d-opt d-toggle" data-ov-look="outline" hidden>${ICONS.overlay}<span>${esc(t("Text outline"))}</span><b></b></button>
         <button class="d-opt" data-ov-unhide hidden>${ICONS.overlay}<span></span></button>` : ""}`)).join("")}`;
   $("#r-back").onclick = () => leaveReader();
   $("#r-menu").onclick = () => setDrawer(!R.drawer);
@@ -494,8 +498,8 @@ async function openReader(bookId, startPage, cameFromApp = R.cameFromApp) {
     $("#r-drawer").insertAdjacentHTML("afterend",
       (own.panels || []).map((p) => drawerPanel(p.key, p.title, p.body)).join(""));
   } else {
-    $("#r-pages").innerHTML = `<div class="endcard"><p>No reader for pictures loaded. Reload the page, or check
-      Settings → Plugins.</p><a class="btn" href="#/series/${book.series_id}">Back</a></div>`;
+    $("#r-pages").innerHTML = `<div class="endcard"><p>${esc(t("No reader for pictures loaded. Reload the page, or check Settings → Plugins."))}</p>
+      <a class="btn" href="#/series/${book.series_id}">${L.back}</a></div>`;
   }
   $("#r-mode").hidden = !opened || imgModes().length < 2;
   $("#r-mode span").textContent = MODES[R.mode];
@@ -589,10 +593,10 @@ function showEndCard() {
     return;
   }
   el.insertAdjacentHTML("beforeend", `<div class="endcard">
-    <p>End of ${esc(R.book.label)}</p>
-    ${R.book.next ? `<button class="btn primary" id="end-next">Next: ${esc(R.book.next.label)}</button>`
-      : `<p class="muted">This was the last book in the series.</p>`}
-    <a class="btn" href="#/series/${R.book.series_id}">Back to series</a></div>`);
+    <p>${esc(t("End of {book}", { book: R.book.label }))}</p>
+    ${R.book.next ? `<button class="btn primary" id="end-next">${esc(t("Next: {book}", { book: R.book.next.label }))}</button>`
+      : `<p class="muted">${esc(t("This was the last book in the series."))}</p>`}
+    <a class="btn" href="#/series/${R.book.series_id}">${esc(t("Back to series"))}</a></div>`);
   $("#end-next")?.addEventListener("click", (e) => {
     e.stopPropagation();
     location.replace(`#/read/${R.book.next.id}?page=0`);
@@ -653,13 +657,13 @@ function ovUpdateButtons() {
     const on = R.ov.on.includes(b.dataset.ov);
     b.classList.toggle("on", on);
     b.setAttribute("aria-pressed", on);
-    b.querySelector("b").textContent = on ? "On" : "Off";
+    b.querySelector("b").textContent = on ? t("On") : t("Off");
   });
   // the plugin's row in the drawer says whether its overlay is on
   el.querySelectorAll("[data-ov-state]").forEach((b) => {
     if (!b.dataset.ovState) return;
     const on = R.ov.on.includes(b.dataset.ovState);
-    b.textContent = on ? "On" : "Off";
+    b.textContent = on ? t("On") : t("Off");
     b.parentElement.classList.toggle("on", on);
   });
   // how the boxes look, and hidden boxes: only while an overlay is on (the settings are for all of them)
@@ -671,7 +675,7 @@ function ovUpdateButtons() {
   });
   el.querySelectorAll("[data-ov-unhide]").forEach((b) => {
     b.hidden = !n || !any;
-    b.querySelector("span").textContent = `Show ${n} hidden ${n === 1 ? "box" : "boxes"}`;
+    b.querySelector("span").textContent = tn("Show {n} hidden box", "Show {n} hidden boxes", n);
   });
   sayButtons();
 }
@@ -829,7 +833,7 @@ async function ovLoad(i) {
   catch {}
   ov.loading.delete(i);
   if (R.ov !== ov) return;  // another book, or the toggles changed meanwhile
-  const layers = data ? data.layers : [{ pending: true, message: "Can't reach MangaVibe", boxes: [] }];
+  const layers = data ? data.layers : [{ pending: true, message: t("Can't reach MangaVibe"), boxes: [] }];
   const done = layers.every((l) => !l.pending);
   ov.pages.set(i, { layers, done });
   ovDraw(i);
@@ -863,7 +867,8 @@ function ovDraw(i) {
   const layer = ovLayer(i);
   if (!layer) return;
   const layers = R.ov.pages.get(i)?.layers || [];
-  const pct = (v) => `${(v * 100).toFixed(3)}%`;
+  const pct = (v) => `${(v * 100).toFixed(3)}%`;  // CSS, not text: not the page's language
+  const hideLabel = esc(t("Hide this box"));
   // only plain class names from plugins: letters, digits, - and _
   const cls = (s) => s.split(/\s+/).filter((c) => /^[\w-]+$/.test(c)).join(" ");
   layer.innerHTML = layers.flatMap((l) => l.boxes.filter((b) => !b.hidden).map((b) =>
@@ -873,7 +878,7 @@ function ovDraw(i) {
     // the × goes to the corner away from the nearer screen edge: the title bar is at the top, the
     // controls card at the bottom, and either would cover it
     + `<button class="ov-hide${b.y + b.h / 2 < 0.5 ? " low" : ""}" data-plugin="${esc(l.plugin)}" data-box="${esc(b.id)}" `
-    + `aria-label="Hide this box" title="Hide this box">×</button></div>`)).join("");
+    + `aria-label="${hideLabel}" title="${hideLabel}">×</button></div>`)).join("");
   // the × must not count as a tap on the page (turning it or toggling the controls)
   layer.querySelectorAll(".ov-hide").forEach((btn) => {
     for (const type of ["pointerdown", "pointerup", "click"]) btn.addEventListener(type, (e) => e.stopPropagation());
@@ -893,7 +898,7 @@ async function ovHide(i, plugin, box) {
     const r = await api(`/api/books/${R.book.id}/overlays/${i}/hidden`, { method: "PUT", body: { plugin, box, hidden: true } });
     R.book.hidden_boxes = r.hidden_boxes;
     ovUpdateButtons();
-    toast("Box hidden. Reader options → Show hidden boxes brings it back.");
+    toast(t("Box hidden. Reader options → Show hidden boxes brings it back."));
   } catch (e) {
     if (b) b.hidden = false;
     ovDraw(i);
@@ -946,7 +951,7 @@ function ovStatus() {
   const el = $("#r-ov-status");
   if (!el) return;
   const entry = R.ov?.on.length ? R.ov.pages.get(R.page) : null;
-  const msg = entry ? entry.layers.map((l) => l.message || (l.pending ? "Working…" : "")).filter(Boolean)[0] : "";
+  const msg = entry ? entry.layers.map((l) => l.message || (l.pending ? t("Working…") : "")).filter(Boolean)[0] : "";
   el.hidden = !msg;
   el.textContent = msg || "";
   el.classList.toggle("busy", !!entry && !entry.done);
@@ -1034,7 +1039,7 @@ function sayButtons() {
   const toggle = (el, on) => {
     el.classList.toggle("on", on);
     el.setAttribute("aria-pressed", on);
-    el.querySelector("b").textContent = on ? "On" : "Off";
+    el.querySelector("b").textContent = on ? t("On") : t("Off");
   };
   sayAll("on").forEach((b) => toggle(b, S.on));
   // nothing to read while no overlay is on: say how to get some
@@ -1057,10 +1062,10 @@ function sayButtons() {
 function sayVoices(row) {
   const sel = row.querySelector("select");
   const voices = speechSynthesis.getVoices();
-  sel.innerHTML = `<option value="">Device default</option>` + voices.map((v) =>
+  sel.innerHTML = `<option value="">${esc(t("Device default"))}</option>` + voices.map((v) =>
     `<option value="${esc(v.voiceURI)}">${esc(v.name)} (${esc(v.lang)})</option>`).join("");
   sel.value = voices.some((v) => v.voiceURI === S.voice) ? S.voice : "";
-  row.querySelector("span").textContent = sel.selectedOptions[0]?.textContent || "Device default";
+  row.querySelector("span").textContent = sel.selectedOptions[0]?.textContent || t("Device default");
 }
 if (!androidApp && "speechSynthesis" in window) {
   speechSynthesis.addEventListener?.("voiceschanged", () => { if (R.book) sayButtons(); });  // the list comes late
@@ -1127,7 +1132,7 @@ function speakFrom(start) {
       if (e.error === "not-allowed") {  // no tap on this page yet: wait for one
         S.blocked = true;
         S.key = null;
-        toast("Tap the page to start reading aloud");
+        toast(t("Tap the page to start reading aloud"));
       } else if (e.error !== "interrupted" && e.error !== "canceled") {
         speechSynthesis.cancel();  // the rest of this page too
         finish();                  // and go on as if it was read (the next page, with Turn pages by itself)
@@ -1347,20 +1352,20 @@ document.addEventListener("fullscreenchange", () => {
 /* both fullscreen buttons show what a tap will do; hidden where the browser has no fullscreen (iPhone)
    and in the Android app, which already fills the screen between the phone's bars */
 function updateFullscreenButtons() {
-  const on = !!document.fullscreenElement, label = on ? "Exit fullscreen" : "Fullscreen";
+  const on = !!document.fullscreenElement, label = on ? t("Exit fullscreen") : t("Fullscreen");
   const rail = $("#r-fs2"), opt = $("#r-fs");
   if (!rail || !opt) return;
   rail.hidden = opt.hidden = document.fullscreenEnabled === false || !!androidApp;
   rail.innerHTML = on ? ICONS.fullscreenExit : ICONS.fullscreen;
   rail.title = label;
   rail.setAttribute("aria-label", label);
-  opt.innerHTML = `${on ? ICONS.fullscreenExit : ICONS.fullscreen}<span>${label}</span>`;
+  opt.innerHTML = `${on ? ICONS.fullscreenExit : ICONS.fullscreen}<span>${esc(label)}</span>`;
 }
 document.addEventListener("fullscreenchange", updateFullscreenButtons);
 
 function toggleFullscreen() {
   if (document.fullscreenElement) document.exitFullscreen();
-  else document.documentElement.requestFullscreen?.().catch(() => toast("Fullscreen not available"));
+  else document.documentElement.requestFullscreen?.().catch(() => toast(t("Fullscreen not available")));
 }
 
 async function requestWakeLock() {

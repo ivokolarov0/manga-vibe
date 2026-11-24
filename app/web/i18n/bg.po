@@ -259,13 +259,21 @@ msgstr "Автоматично: първа страница"
 msgid "Automatic: {mode}"
 msgstr "Автоматично: {mode}"
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Back"
 msgstr "Назад"
+
+#: app/web/static/js/reader.js
+msgid "Back to series"
+msgstr "Към поредицата"
 
 #: app/web/static/js/app.js
 msgid "Back to the numbers from the file name"
 msgstr "Върнато към номерата от името на файла"
+
+#: app/web/static/js/reader.js
+msgid "Back to the reading options"
+msgstr "Обратно към опциите за четене"
 
 #: app/web/static/js/app.js
 msgid "Back, fullscreen and the options button sit on this side, within thumb reach"
@@ -287,6 +295,22 @@ msgstr "Книги"
 msgid "Bottom"
 msgstr "Долу"
 
+#: app/web/static/js/reader.js
+msgid "Box background"
+msgstr "Фон на полетата"
+
+#: app/web/static/js/reader.js
+msgid "Box hidden. Reader options → Show hidden boxes brings it back."
+msgstr "Полето е скрито. Опции за четене → Покажи скритите полета го връща."
+
+#: app/web/static/js/reader.js
+msgid "Boxes on the page"
+msgstr "Полета върху страницата"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Brightness"
+msgstr "Яркост"
+
 #: app/web/static/js/app.js
 msgid "Browser's language"
 msgstr "Езикът на браузъра"
@@ -302,6 +326,10 @@ msgstr "Вградена в Docker образа, без изтегляне"
 #: app/web/static/js/app.js
 msgid "Built-in version (from the Docker image)"
 msgstr "Вградена версия (от Docker образа)"
+
+#: app/web/static/js/reader.js
+msgid "Can't reach MangaVibe"
+msgstr "Няма връзка с MangaVibe"
 
 #: app/web/templates/settings/plugin.html
 msgid "Can't run: {why}"
@@ -359,7 +387,7 @@ msgstr "Смяна на сървъра"
 msgid "Change your password"
 msgstr "Смяна на паролата ви"
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/reader.js
 msgid "Chapter"
 msgstr "Глава"
 
@@ -411,9 +439,13 @@ msgstr "Изчисти търсенето"
 msgid "Cleared: the series page shows the path inside Docker"
 msgstr "Изчистено: страницата на поредицата показва пътя в Docker"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/shell/toasts.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/reader.js app/web/templates/shell/toasts.html
 msgid "Close"
 msgstr "Затвори"
+
+#: app/web/static/js/reader.js
+msgid "Close options"
+msgstr "Затвори опциите"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py
 msgid "Collection"
@@ -467,6 +499,10 @@ msgstr "Продължи четенето"
 msgid "Continue reading page"
 msgstr "Страница Продължи четенето"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Contrast"
+msgstr "Контраст"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copied"
 msgstr "Копирано"
@@ -478,6 +514,10 @@ msgstr "Копирай"
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copy path"
 msgstr "Копирай пътя"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Could not load page {n}"
+msgstr "Страница {n} не можа да се зареди"
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Could not load the library: {error}"
@@ -601,6 +641,10 @@ msgstr "Описание"
 msgid "Details"
 msgstr "Подробности"
 
+#: app/web/static/js/reader.js
+msgid "Device default"
+msgstr "По подразбиране на устройството"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Disabled"
 msgstr "Изключен"
@@ -697,6 +741,14 @@ msgstr "Редактиране · {title}"
 msgid "Edition"
 msgstr "Издание"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "End of the series."
+msgstr "Край на поредицата."
+
+#: app/web/static/js/reader.js
+msgid "End of {book}"
+msgstr "Край на {book}"
+
 #: app/web/static/js/app.js
 msgid "English"
 msgstr "Английски"
@@ -732,6 +784,10 @@ msgstr "Всеки влиза с акаунт. Всеки акаунт има с
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18."
 msgstr "Пример: един zip с глави от 10 до 18 → Глава 10, до глава 18."
+
+#: app/web/static/js/reader.js
+msgid "Exit fullscreen"
+msgstr "Изход от цял екран"
 
 #: app/web/templates/settings/backup.html
 msgid "Export"
@@ -821,15 +877,15 @@ msgstr "Завършена поредица с липсващи томове и�
 msgid "Fit"
 msgstr "Мащаб"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Fit height"
 msgstr "По височина"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Fit screen"
 msgstr "По екрана"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Fit width"
 msgstr "По ширина"
 
@@ -900,6 +956,14 @@ msgstr "Всички промени"
 #: app/web/static/js/app.js
 msgid "Full width"
 msgstr "Цяла ширина"
+
+#: app/web/static/js/reader.js
+msgid "Fullscreen"
+msgstr "Цял екран"
+
+#: app/web/static/js/reader.js
+msgid "Fullscreen not available"
+msgstr "Цял екран не е наличен"
 
 #: app/web/static/js/app.js
 msgid "Fullscreen on first tap"
@@ -1001,7 +1065,7 @@ msgstr "Скрит (по-стара редакция)"
 msgid "Hidden from this list. “Show ignored” brings it back."
 msgstr "Скрито от този списък. „Покажи игнорираните“ го връща."
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Hide controls after"
 msgstr "Скрий контролите след"
 
@@ -1012,6 +1076,10 @@ msgstr "Скрий от четене"
 #: app/web/templates/settings/attention.html
 msgid "Hide ignored rows"
 msgstr "Скрий игнорираните"
+
+#: app/web/static/js/reader.js
+msgid "Hide this box"
+msgstr "Скрий това поле"
 
 #: app/plugins/builtin/attention_lists/templates/attention/duplicates.html
 msgid "Hide this one"
@@ -1137,7 +1205,7 @@ msgstr "Инсталирани"
 msgid "Installed v{version}"
 msgstr "Инсталирана v{version}"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Inverted"
 msgstr "Обърнати"
 
@@ -1145,7 +1213,7 @@ msgstr "Обърнати"
 msgid "Inverted turns white pages black with white lines. Warm takes out the blue light"
 msgstr "Обърнати прави белите страници черни с бели линии. Топли маха синята светлина"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Inverted, warm"
 msgstr "Обърнати, топли"
 
@@ -1249,7 +1317,7 @@ msgstr "Ляво назад, дясно напред"
 msgid "Length"
 msgstr "Дължина"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Less"
 msgstr "По-малък"
 
@@ -1337,7 +1405,7 @@ msgstr "Зареждай още при превъртане или показв�
 msgid "Loading the plugin sources…"
 msgstr "Зареждане на източниците на добавки…"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr "Зареждане…"
 
@@ -1543,7 +1611,7 @@ msgstr "Липсват глави {chapters}"
 msgid "Missing metadata"
 msgstr "Липсващи метаданни"
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "More"
 msgstr "По-голям"
 
@@ -1563,7 +1631,7 @@ msgstr "По-голям прави бледите линии и дребния �
 msgid "More plugins come from other sources: {link}."
 msgstr "Още добавки идват от други източници: {link}."
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Most"
 msgstr "Най-голям"
 
@@ -1685,9 +1753,17 @@ msgstr "Първо най-новите"
 msgid "Next"
 msgstr "Напред"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/web/static/js/reader.js
+msgid "Next chapter"
+msgstr "Следваща глава"
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Next page"
 msgstr "Следваща страница"
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/reader.js
+msgid "Next: {book}"
+msgstr "Следваща: {book}"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "No"
@@ -1745,6 +1821,10 @@ msgstr "Няма инсталирани добавки."
 msgid "No plugins match."
 msgstr "Никоя добавка не отговаря."
 
+#: app/web/static/js/reader.js
+msgid "No reader for pictures loaded. Reload the page, or check Settings → Plugins."
+msgstr "Не е зареден четец за изображения. Презаредете страницата или проверете Настройки → Добавки."
+
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "No results. Try a different spelling or the English/Japanese title."
 msgstr "Няма резултати. Опитайте с друго изписване или с английското/японското заглавие."
@@ -1773,7 +1853,7 @@ msgstr "Нито една"
 msgid "None in use"
 msgstr "Не се използва нито една"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Normal"
 msgstr "Нормално"
 
@@ -1857,7 +1937,7 @@ msgstr "Номерата са зададени от вас"
 msgid "Numbers, symbols and other scripts"
 msgstr "Цифри, символи и други писмености"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugins.html
 msgid "Off"
 msgstr "Изкл."
 
@@ -1869,7 +1949,7 @@ msgstr "Изкл. (само плъзгане)"
 msgid "Oldest first"
 msgstr "Първо най-старите"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr "Вкл."
 
@@ -1981,6 +2061,10 @@ msgstr "Ред"
 msgid "Original"
 msgstr "Оригинален размер"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Original size"
+msgstr "Оригинален размер"
+
 #: app/plugins/__init__.py app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Other"
 msgstr "Други"
@@ -2009,7 +2093,7 @@ msgstr "Контур на текста в полетата"
 msgid "owner/repo or https://…/plugins.json"
 msgstr "owner/repo или https://…/plugins.json"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/reader.js
 msgid "Page"
 msgstr "Страница"
 
@@ -2017,7 +2101,7 @@ msgstr "Страница"
 msgid "Page brightness"
 msgstr "Яркост на страницата"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page colours"
 msgstr "Цветове на страницата"
 
@@ -2025,15 +2109,23 @@ msgstr "Цветове на страницата"
 msgid "Page contrast"
 msgstr "Контраст на страницата"
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Page look"
+msgstr "Вид на страницата"
+
 #: app/web/static/js/app.js
 msgid "Page width"
 msgstr "Ширина на страницата"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/reader.js
+msgid "Page {n}"
+msgstr "Страница {n}"
+
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr "Страница {page} от {pages}"
 
-#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Pages"
 msgstr "Страници"
 
@@ -2133,7 +2225,7 @@ msgstr "Източниците на добавки са обновени"
 msgid "Plugin tools"
 msgstr "Инструменти от добавки"
 
-#: app/plugins/web.py app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/web.py app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "Добавки"
 
@@ -2165,7 +2257,11 @@ msgstr "Преглед (още не е запазено)"
 msgid "Previous"
 msgstr "Назад"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/web/static/js/reader.js
+msgid "Previous chapter"
+msgstr "Предишна глава"
+
+#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Previous page"
 msgstr "Предишна страница"
 
@@ -2193,6 +2289,10 @@ msgstr "Прочети отново папката на поредицата, с
 msgid "Read"
 msgstr "Прочетена"
 
+#: app/web/static/js/reader.js
+msgid "Read aloud"
+msgstr "Четене на глас"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
 msgstr "Четете в приложението MangaVibe вместо в браузъра: цял екран без ленти на браузъра, екранът не изгасва, докато четете, а бутоните за звук обръщат страниците. То показва същия MangaVibe, така че библиотеката, напредъкът и настройките ви са същите."
@@ -2200,6 +2300,10 @@ msgstr "Четете в приложението MangaVibe вместо в бр�
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
 msgstr "Четец"
+
+#: app/web/static/js/reader.js
+msgid "Reader settings"
+msgstr "Настройки на четеца"
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Reading"
@@ -2224,6 +2328,14 @@ msgstr "Режим на четене: {mode}"
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Reading mode…"
 msgstr "Режим на четене…"
+
+#: app/web/static/js/reader.js
+msgid "Reading options"
+msgstr "Опции за четене"
+
+#: app/web/static/js/reader.js
+msgid "Reading speed"
+msgstr "Скорост на четене"
 
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "Reading status"
@@ -2505,7 +2617,7 @@ msgstr "Търсене в {source}…"
 msgid "See {url}"
 msgstr "Вижте {url}"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "See-through"
 msgstr "Прозрачен"
 
@@ -2631,6 +2743,12 @@ msgid_plural "Show {n} files"
 msgstr[0] "Покажи {n} файл"
 msgstr[1] "Покажи {n} файла"
 
+#: app/web/static/js/reader.js
+msgid "Show {n} hidden box"
+msgid_plural "Show {n} hidden boxes"
+msgstr[0] "Покажи {n} скрито поле"
+msgstr[1] "Покажи {n} скрити полета"
+
 #: app/web/templates/settings/attention.html
 msgid "Show {n} ignored"
 msgstr "Покажи игнорираните ({n})"
@@ -2653,7 +2771,7 @@ msgstr "Пропусни тази версия"
 msgid "Small"
 msgstr "Малки"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Solid"
 msgstr "Плътен"
 
@@ -2697,6 +2815,10 @@ msgstr "Източници и настройка"
 msgid "Start"
 msgstr "Започни"
 
+#: app/web/static/js/reader.js
+msgid "Start of book. Previous: {book}"
+msgstr "Начало на книгата. Предишна: {book}"
+
 #: app/web/static/js/app.js
 msgid "Starting…"
 msgstr "Стартиране…"
@@ -2733,6 +2855,10 @@ msgstr "Да се включи ли?"
 msgid "Switch the plugin on to change its settings."
 msgstr "Включете добавката, за да промените настройките ѝ."
 
+#: app/web/static/js/reader.js
+msgid "Switch {overlay} on above to hear its text."
+msgstr "Включете {overlay} по-горе, за да чуете текста."
+
 #: app/plugins/__init__.py
 msgid "System"
 msgstr "Система"
@@ -2745,9 +2871,17 @@ msgstr "Етикети"
 msgid "Tap once to include, again to exclude, again to clear."
 msgstr "Докоснете веднъж, за да включите, втори път – за да изключите, трети – за да изчистите."
 
+#: app/web/static/js/reader.js
+msgid "Tap the page to start reading aloud"
+msgstr "Докоснете страницата, за да започне четенето на глас"
+
 #: app/web/static/js/app.js
 msgid "Tap zones"
 msgstr "Зони за докосване"
+
+#: app/web/static/js/reader.js
+msgid "Text outline"
+msgstr "Контур на текста"
 
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
@@ -2804,6 +2938,14 @@ msgstr "Страницата ще се презареди сама, когато
 #: app/web/templates/sheets/library.html
 msgid "The published total, from the metadata. Leave a box empty for no limit."
 msgstr "Издаденият брой от метаданните. Оставете поле празно за без ограничение."
+
+#: app/web/static/js/reader.js
+msgid "The reader for this book didn't load. Reload the page, or check its plugin in Settings → Plugins."
+msgstr "Четецът за тази книга не се зареди. Презаредете страницата или проверете добавката му в Настройки → Добавки."
+
+#: app/web/static/js/reader.js
+msgid "The reader for this book failed: {error}"
+msgstr "Четецът за тази книга се провали: {error}"
 
 #: app/contracts/__init__.py
 msgid "The Reader page of Settings"
@@ -2881,17 +3023,21 @@ msgstr "Тези файлове не можаха да се отворят. Съ
 msgid "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."
 msgstr "Тези поредици са свързани с един и същ запис онлайн. Често една папка е разделена на две или едно съвпадение е грешно."
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Thick"
 msgstr "Дебел"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Thin"
 msgstr "Тънък"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "This can't be undone."
 msgstr "Това не може да се отмени."
+
+#: app/web/static/js/reader.js
+msgid "This is a text book (a light novel). Add a reader for text books in Settings → Plugins to read it."
+msgstr "Това е текстова книга (лека новела). Добавете четец за текстови книги в Настройки → Добавки, за да я четете."
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "This is the only library. Add another one first."
@@ -2933,6 +3079,10 @@ msgstr "Тази версия е пропусната. Ще разберете �
 msgid "This version needs a new Docker image"
 msgstr "Тази версия изисква нов Docker образ"
 
+#: app/web/static/js/reader.js
+msgid "This was the last book in the series."
+msgstr "Това беше последната книга от поредицата."
+
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Title"
 msgstr "Заглавие"
@@ -2957,7 +3107,7 @@ msgstr "до глава"
 msgid "Top"
 msgstr "Горе"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Top bar"
 msgstr "Горна лента"
 
@@ -2965,13 +3115,17 @@ msgstr "Горна лента"
 msgid "Tried in this order. Fallbacks are used when the main source has no match or is down."
 msgstr "Пробват се в този ред. Резервните се ползват, когато основният няма съвпадение или е недостъпен."
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js
 msgid "Try again"
 msgstr "Опитай отново"
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Try automatic match again"
 msgstr "Опитай пак автоматично"
+
+#: app/web/static/js/reader.js
+msgid "Turn pages by itself"
+msgstr "Обръщай страниците само"
 
 #: app/plugins/builtin/attention_lists/__init__.py
 msgid "Two or more files with the same chapter number. Both are kept."
@@ -3129,7 +3283,7 @@ msgstr "Има версия {version}"
 msgid "Version {version} is available (you have {current})"
 msgstr "Има версия {version} (вие имате {current})"
 
-#: app/web/static/js/app.js
+#: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Vertical"
 msgstr "Вертикално"
 
@@ -3140,6 +3294,10 @@ msgstr "Вертикално (уебтуни)"
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "View"
 msgstr "Изглед"
+
+#: app/web/static/js/reader.js
+msgid "Voice"
+msgstr "Глас"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "vol {n}"
@@ -3161,7 +3319,7 @@ msgstr "Том, глава и редакция от името на файла �
 msgid "Volumes"
 msgstr "Томове"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Warm"
 msgstr "Топли"
 
@@ -3217,7 +3375,7 @@ msgstr "Кой резултат от източника е поредицата,
 msgid "Without {job}"
 msgstr "Без {job}"
 
-#: app/web/static/js/app.js app/web/templates/shell/toasts.html
+#: app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/shell/toasts.html
 msgid "Working…"
 msgstr "Работи се…"
 
@@ -3267,6 +3425,14 @@ msgstr "Библиотеката, напредъкът и настройките
 msgid "Your own plugins aren't in this page, only the built-in ones. Switch off the one that causes trouble."
 msgstr "Вашите добавки не са заредени, само вградените. Изключете тази, която създава проблеми."
 
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Zoom allowed (tap to lock)"
+msgstr "Мащабирането е разрешено (докоснете, за да заключите)"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "Zoom locked (tap to allow zoom and moving)"
+msgstr "Мащабирането е заключено (докоснете, за да разрешите мащаб и местене)"
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "{account} doesn't see {library} now"
 msgstr "{account} вече не вижда {library}"
@@ -3290,6 +3456,10 @@ msgstr "{label}: неизвестно"
 #: app/web/static/js/app.js
 msgid "{length} or unknown"
 msgstr "{length} или неизвестно"
+
+#: app/plugins/builtin/image_reader/image_reader.js
+msgid "{level} contrast"
+msgstr "Контраст: {level}"
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "{library} is locked"

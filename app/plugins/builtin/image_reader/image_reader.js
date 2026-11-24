@@ -10,11 +10,14 @@ const WIDTHS = [720, 1080, 1440, 1800, 2160, 2880];
 const TAP_SIDE = 0.25;  // width of each page-turn tap zone (left: back, right: forward); the middle toggles the controls
 const CLICK_SIDE = 0.4;  // the same with a mouse: a wide screen leaves only a narrow middle strip for the controls
 const TAP_EDGE = 0.2;   // one-handed layout: the narrow "previous" strip; the rest turns forward
-const FITS = { screen: "Fit screen", width: "Fit width", height: "Fit height", original: "Original size" };
+// the words in the page's language (MangaVibe.t, issue #263)
+const MV = window.MangaVibe;
+const FITS = { screen: MV.t("Fit screen"), width: MV.t("Fit width"), height: MV.t("Fit height"), original: MV.t("Original size") };
 // how the page images look (reader settings): easier on the eyes, e.g. white pages at night
-const BRIGHTNESS = { 100: "Normal", 85: "85%", 70: "70%", 55: "55%", 40: "40%" };
-const CONTRAST = { 100: "Normal", 125: "More", 150: "Most", 75: "Less" };
-const COLORS = { normal: "Normal", dark: "Inverted", warm: "Warm", "dark-warm": "Inverted, warm" };
+const pctText = (n) => MV.fmtNum(n / 100, { style: "percent" });
+const BRIGHTNESS = { 100: MV.t("Normal"), 85: pctText(85), 70: pctText(70), 55: pctText(55), 40: pctText(40) };
+const CONTRAST = { 100: MV.t("Normal"), 125: MV.t("More"), 150: MV.t("Most"), 75: MV.t("Less") };
+const COLORS = { normal: MV.t("Normal"), dark: MV.t("Inverted"), warm: MV.t("Warm"), "dark-warm": MV.t("Inverted, warm") };
 const MAX_ZOOM = 5;
 
 const svg = (body) => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
@@ -92,7 +95,7 @@ function updateLockButton() {
   if (!b) return;
   b.innerHTML = locked() ? ICONS.lock : ICONS.unlock;
   b.classList.toggle("on", locked());
-  b.title = locked() ? "Zoom locked (tap to allow zoom and moving)" : "Zoom allowed (tap to lock)";
+  b.title = locked() ? MV.t("Zoom locked (tap to allow zoom and moving)") : MV.t("Zoom allowed (tap to lock)");
   b.setAttribute("aria-label", b.title);
 }
 
@@ -163,7 +166,7 @@ function maybeHiRes() {
 function setupPaged() {
   R.el.innerHTML = `<div class="stage"><img alt=""></div>`;
   const st = stage();
-  img().onerror = () => MangaVibe.toast("Could not load page " + (R.page + 1), 3000, "error");
+  img().onerror = () => MangaVibe.toast(MV.t("Could not load page {n}", { n: R.page + 1 }), 3000, "error");
   updateLockButton();
   showPage(0);
 
@@ -397,7 +400,7 @@ function showPage(fromDir = 0, atEnd = false) {
   clearTimeout(st._spin);
   st._spin = setTimeout(() => st.classList.add("waiting"), 150);  // slow page: show a spinner
   el.src = pageUrl(R.page);
-  el.alt = `Page ${R.page + 1} of ${R.book.page_count}`;
+  el.alt = MV.t("Page {page} of {pages}", { page: R.page + 1, pages: R.book.page_count });
   // Firefox resolves decode() at once for the old picture while the new one is still loading
   // (Chrome waits), so wait for the load first: else the old page slides in, then blinks to the new one
   const loaded = el.complete ? Promise.resolve() : new Promise((done) => {
@@ -451,10 +454,10 @@ function setupVertical() {
   const box = vbox();
   // each page in a box of its own, so a plugin overlay can sit on top of it (the host puts it there)
   box.innerHTML = Array.from({ length: R.book.page_count }, (_, i) =>
-    `<div class="vpage" data-p="${i}"><img data-i="${i}" loading="lazy" src="${pageUrl(i)}" alt="Page ${i + 1}"></div>`).join("") +
+    `<div class="vpage" data-p="${i}"><img data-i="${i}" loading="lazy" src="${pageUrl(i)}" alt="${escHtml(MV.t("Page {n}", { n: i + 1 }))}"></div>`).join("") +
     `<div style="padding:40px 20px;text-align:center">
-      ${R.book.next ? `<button class="btn primary" id="v-next">Next: ${escHtml(R.book.next.label)}</button>`
-        : `<p class="muted">End of the series.</p>`}</div>`;
+      ${R.book.next ? `<button class="btn primary" id="v-next">${escHtml(MV.t("Next: {book}", { book: R.book.next.label }))}</button>`
+        : `<p class="muted">${escHtml(MV.t("End of the series."))}</p>`}</div>`;
   box.querySelectorAll("img").forEach((im) => {
     im.onload = () => im.classList.add("loaded");
     im.addEventListener("error", () => im.classList.add("failed"));  // no spinner forever on a broken page
@@ -514,8 +517,8 @@ function applyLook() {
   const state = document.getElementById("r-look-state");
   if (state) {
     const parts = [colors() !== "normal" && COLORS[colors()], brightness() !== 100 && BRIGHTNESS[brightness()],
-      contrast() !== 100 && `${CONTRAST[contrast()]} contrast`].filter(Boolean);
-    state.textContent = parts.join(" · ") || "Normal";
+      contrast() !== 100 && MV.t("{level} contrast", { level: CONTRAST[contrast()] })].filter(Boolean);
+    state.textContent = parts.join(" · ") || MV.t("Normal");
     state.parentElement.classList.toggle("on", parts.length > 0);
   }
 }
@@ -615,14 +618,15 @@ function pageBox(i) {
 function drawer() {
   return {
     rows: `<div class="d-row d-fit">
-        <button class="d-opt" id="r-fit">${ICONS.fit}<span>${FITS[fit()]}</span></button>
+        <button class="d-opt" id="r-fit">${ICONS.fit}<span>${escHtml(FITS[fit()])}</span></button>
         ${R.mode !== "vertical" ? `<button id="r-lock" class="icon"></button>` : ""}
       </div>
-      <button class="d-opt d-toggle d-more" data-panel="look">${ICONS.sun}<span>Page look</span><b id="r-look-state"></b></button>`,
-    panels: [{ key: "look", title: "Page look", body: `
-      <button class="d-opt d-toggle" id="r-bright">${ICONS.sun}<span>Brightness</span><b></b></button>
-      <button class="d-opt d-toggle" id="r-contrast">${ICONS.contrast}<span>Contrast</span><b></b></button>
-      <button class="d-opt d-toggle" id="r-colors">${ICONS.colors}<span>Page colours</span><b></b></button>` }],
+      <button class="d-opt d-toggle d-more" data-panel="look">${ICONS.sun}<span>${escHtml(MV.t("Page look"))}</span><b id="r-look-state"></b></button>`,
+    // the host escapes a panel's title
+    panels: [{ key: "look", title: MV.t("Page look"), body: `
+      <button class="d-opt d-toggle" id="r-bright">${ICONS.sun}<span>${escHtml(MV.t("Brightness"))}</span><b></b></button>
+      <button class="d-opt d-toggle" id="r-contrast">${ICONS.contrast}<span>${escHtml(MV.t("Contrast"))}</span><b></b></button>
+      <button class="d-opt d-toggle" id="r-colors">${ICONS.colors}<span>${escHtml(MV.t("Page colours"))}</span><b></b></button>` }],
   };
 }
 
