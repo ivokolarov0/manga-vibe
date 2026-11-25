@@ -1347,3 +1347,29 @@ Plugin API version, and the app works after every one.
   id (`before`), which is also the order entries were written in.
 - **The API is the plugin's**: `/api/plugins/activity-log/api/entries` (like every built-in plugin's), not
   `/api/activity`; the whole router is admins only (`dependencies=[manage]`).
+
+### What the activity log records (issue #279, step 2 #281)
+
+- **Logged where the change is made, after it's saved**: in the API route (or deleting.py, the walker,
+  the updater), after the commit, so a refused or failed action leaves no entry. The list is in
+  docs/PLUGINS.md (The activity log).
+- **Logging in is the account's**: the login request has nobody logged in yet, so the entry is written
+  `acting_as` the account. A failed login is user 0 (not logged in), with the name tried and why, never
+  the password; the address is the entry's. A failed library unlock is logged the same way.
+- **Scans**: one someone starts logs `scan.started` as theirs and `scan.finished` (as System: the
+  scanner's thread) with counts the walker now keeps (new and missing series, new, changed and missing
+  books). The app's own scans (at start, every few hours) log only a `scan.finished` that changed
+  something, or the log would fill with nothing. Rescans of one series (the watcher) aren't logged.
+- **Settings**: only the app's (an admin's); each person's own (theme, reader, page size) are theirs.
+  A secret plugin setting and the GitHub token say only that they changed or were cleared.
+- **Metadata by hand only**: editing, a poster, the series' reading mode, Fix match, Unmatch, Refresh
+  (one series, or many from the multi-select as one entry). Automatic matching isn't logged: it's the
+  app's own work on every new series.
+- **Updates**: `update.started` from the request; `update.finished` at the next start, when the version
+  differs from the one last started (setting `running_version`), so it's there after a restart and also
+  for a new Docker image; `update.failed` from the updater's thread.
+- **Not there, so not logged**: merging series, deleting one book and removing a plugin aren't things
+  the app does (their kinds were taken out of KINDS). MCP keys are the Remote control plugin's
+  (manga-vibe-mcp): it can log `account.key_created` / `account.key_removed` itself.
+- **Switching the Activity log off isn't in it**: the entry is written by the plugin, which is off by
+  the time it would be. Switching it on again is its first entry.

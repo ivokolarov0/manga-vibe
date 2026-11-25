@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, Field, field_validator
 
+from app import activity
 from app.api.common import ensure_inside_library, get_or_404
 from app.db import get_db
 from app.i18n import t
@@ -114,7 +115,16 @@ def edit_metadata(series_id: int, body: MetadataEdit, db=Depends(get_db)):
     locked -= set(body.unlock)
     s.locked_fields = sorted(locked)
     db.commit()
+    fields = sorted(body.model_fields_set - {"unlock"})
+    if fields or body.unlock:
+        activity.log("metadata.changed", s.folder_name, target=("series", s.id),
+                     details={"fields": fields, **({"unlocked": sorted(body.unlock)} if body.unlock else {})})
     return {"ok": True, "locked_fields": s.locked_fields}
+
+
+def _poster_changed(s, source):
+    activity.log("metadata.changed", s.folder_name, target=("series", s.id),
+                 details={"fields": ["poster"], "poster": source})
 
 
 def _tags(db, s):
@@ -142,6 +152,7 @@ def upload_poster(series_id: int, file: UploadFile = File(...), db=Depends(get_d
         raise HTTPException(400, str(e))
     _lock_poster(s, True)
     db.commit()
+    _poster_changed(s, "upload")
     return {"ok": True}
 
 
@@ -187,6 +198,7 @@ def choose_poster(series_id: int, body: PosterChoice, db=Depends(get_db)):
         remove_poster(s)
         _lock_poster(s, False)
     db.commit()
+    _poster_changed(s, body.source)
     return {"ok": True}
 
 

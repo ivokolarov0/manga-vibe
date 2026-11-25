@@ -31,27 +31,32 @@ log_ = logging.getLogger("mangavibe.activity")
 # it ("<plugin id>.<what>"): they're in the group "other".
 GROUPS = ("accounts", "library", "plugins", "settings", "app", "other")
 KINDS = {
-    # accounts
+    # accounts (the accounts plugin; the keys: the Remote control plugin, manga-vibe-mcp)
     "account.login": "accounts", "account.logout": "accounts", "account.login_failed": "accounts",
     "account.added": "accounts", "account.removed": "accounts", "account.renamed": "accounts",
     "account.admin_given": "accounts", "account.admin_taken": "accounts",
     "account.password_changed": "accounts", "account.password_reset": "accounts",
+    "account.access_changed": "accounts",  # the libraries an account sees (the libraries plugin)
     "account.key_created": "accounts", "account.key_removed": "accounts",
-    # library
+    # library: folders, scans, series, metadata, and the libraries plugin's libraries
     "folder.added": "library", "folder.removed": "library", "folder.changed": "library",
     "scan.started": "library", "scan.finished": "library",
-    "series.deleted": "library", "series.merged": "library", "series.moved": "library",
-    "book.deleted": "library", "metadata.changed": "library", "metadata.matched": "library",
+    "series.deleted": "library", "series.moved": "library",
+    "metadata.changed": "library", "metadata.matched": "library", "metadata.unmatched": "library",
     "metadata.refetched": "library",
+    "library.added": "library", "library.changed": "library", "library.removed": "library",
+    "library.password_set": "library", "library.password_removed": "library",
+    "library.unlock_failed": "library",
     # plugins
     "plugin.installed": "plugins", "plugin.enabled": "plugins", "plugin.disabled": "plugins",
-    "plugin.updated": "plugins", "plugin.removed": "plugins", "plugin.failed": "plugins",
+    "plugin.updated": "plugins", "plugin.restored": "plugins", "plugin.failed": "plugins",
     "plugin_source.added": "plugins", "plugin_source.removed": "plugins",
     "safe_mode.on": "plugins", "safe_mode.off": "plugins",
-    # settings
+    # settings: the app's (not each person's own, like the theme) and the plugins'
     "setting.changed": "settings",
     # the app
-    "backup.exported": "app", "backup.imported": "app", "update.started": "app", "update.finished": "app",
+    "backup.exported": "app", "backup.imported": "app",
+    "update.started": "app", "update.finished": "app", "update.failed": "app",
 }
 KIND = re.compile(r"^[a-z0-9_-]+(\.[a-z0-9_-]+)+$")
 # a detail with one of these in its name is never kept, whatever its value
@@ -65,6 +70,11 @@ _request: ContextVar[dict | None] = ContextVar("mangavibe_activity_request", def
 
 def group_of(kind: str) -> str:
     return KINDS.get(kind, "other")
+
+
+def in_request() -> bool:
+    """True while a request is served (someone did it), False in background work (System)."""
+    return _request.get() is not None
 
 
 def clean(value, depth=0):

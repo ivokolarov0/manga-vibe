@@ -725,6 +725,8 @@ def _in_background(job, what):
         except Exception as e:
             log.error("%s failed: %s", what, e)
             status.update(state="error", message="", error=f"{what} failed. {_why(e)}")
+            from app import activity
+            activity.log("update.failed", what, details={"error": _why(e)[:500]})
         finally:
             lock.release()
 

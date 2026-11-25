@@ -1092,9 +1092,16 @@ class PluginManager:
                 try:
                     p.on_start(Context(p, db))
                     db.commit()
-                except Exception:
+                except Exception as e:
                     db.rollback()
                     log.error("Plugin %s failed in on_start:\n%s", p.id, traceback.format_exc())
+                    activity.log("plugin.failed", p.name or p.id, target=("plugin", p.id),
+                                 details={"version": p.version, "error": f"{type(e).__name__}: {e}"[:500]})
+
+    def log_load_errors(self):
+        """The plugin files that didn't load, in the activity log (at start, after Reload plugins)."""
+        for name, error in list(self.errors.items()):
+            activity.log("plugin.failed", name, details={"file": name, "error": error[:500]})
 
     def run_hook(self, db, hook, *args):
         """Call a hook on every enabled plugin; errors are logged, not raised."""

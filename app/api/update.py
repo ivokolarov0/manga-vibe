@@ -4,7 +4,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from app import updater
+from app import activity, updater
 from app.db import get_db, get_setting, set_setting
 from app.users import manage
 
@@ -50,7 +50,15 @@ def install(body: InstallBody):
         updater.install_in_background(body.sha, body.db)
     except RuntimeError as e:
         raise HTTPException(409, str(e))
+    _started(latest.get("version") or body.sha[:7], body.db)
     return {"ok": True}
+
+
+def _started(to, db_choice, rollback=False):
+    have = updater.current()
+    activity.log("update.started", to, details={"from": have.get("version") or (have.get("sha") or "")[:7] or None,
+                                                "to": to, **({"rollback": True} if rollback else {}),
+                                                **({"database": db_choice} if db_choice else {})})
 
 
 @router.get("/versions")
@@ -78,6 +86,7 @@ def rollback(body: RollbackBody):
         raise HTTPException(409, {"message": str(e), "needs_db": e.detail})
     except RuntimeError as e:
         raise HTTPException(409, str(e))
+    _started(body.sha[:7], body.db, rollback=True)
     return {"ok": True}
 
 

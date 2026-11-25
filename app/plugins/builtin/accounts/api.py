@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from app import users
-from app.plugins import Context
+from app.plugins import Context, activity
 from app.plugins.sdk import TooManyTries, check_password, hash_password, t
 from app.plugins.web import plugin_ctx
 from app.users import manage
@@ -26,6 +26,16 @@ def _name(data, name, account_id=None):
     if same and same["id"] != account_id:
         raise HTTPException(400, t("There is already an account called {name}", name=same["name"]))
     return name
+
+
+def _log(kind, account, details=None, as_account=False):
+    """An entry about `account`; `as_account`: done by that account (logging in: nobody is logged in yet)."""
+    target = ("account", account["id"])
+    if as_account:
+        with users.acting_as(core.user_of(account)):
+            activity.log(kind, account["name"], target=target, details=details)
+    else:
+        activity.log(kind, account["name"], target=target, details=details)
 
 
 @router.get("/me")
@@ -60,7 +70,14 @@ def setup(body: LoginBody, response: Response, ctx: Context = Depends(plugin_ctx
         core.save(ctx.db, data)
         ctx.db.commit()
     core.set_cookie(response, data, account)
+    _log("account.added", account, {"admin": True, "first": True}, as_account=True)
     return {"user": core.public(account)}
+
+
+def _failed(name, reason):
+    """A failed login: the name tried (never the password), and why. The address is in the entry."""
+    tried = name.strip()[:40]
+    activity.log("account.login_failed", tried, details={"name": tried, "reason": reason})
 
 
 @router.post("/login")
@@ -71,16 +88,22 @@ def login(body: LoginBody, response: Response, ctx: Context = Depends(plugin_ctx
         ok = core.throttle.verify(body.name.strip().lower(), body.password,
                                   account["password_hash"] if account else core.dummy_hash())
     except TooManyTries as e:
+        _failed(body.name, "too_many_tries")
         raise HTTPException(429, str(e)) from None
     if not ok or account is None:
+        _failed(body.name, "wrong_password" if account else "no_such_account")
         raise HTTPException(403, "Wrong name or password")
     core.set_cookie(response, data, account)
+    _log("account.login", account, as_account=True)
     return {"user": core.public(account)}
 
 
 @router.post("/logout")
 def logout(response: Response):
+    me = users.current()
     response.delete_cookie(core.COOKIE, path="/")
+    if me.id:  # not the login page's own call while nobody is logged in
+        activity.log("account.logout", me.name, target=("account", me.id))
     return {"ok": True}
 
 
@@ -103,6 +126,7 @@ def my_password(body: PasswordBody, response: Response, ctx: Context = Depends(p
     core.save(ctx.db, data)
     ctx.db.commit()
     core.set_cookie(response, data, account)
+    _log("account.password_changed", account)
     return {"ok": True}
 
 
@@ -128,6 +152,7 @@ def add_account(body: NewAccount, ctx: Context = Depends(plugin_ctx)):
     data["next_id"] += 1
     core.save(ctx.db, data)
     ctx.db.commit()
+    _log("account.added", account, {"admin": body.admin})
     return core.public(account)
 
 
@@ -145,6 +170,7 @@ def patch_account(account_id: int, body: AccountPatch, response: Response, ctx: 
     account = core.find(data, account_id)
     if account is None:
         raise HTTPException(404, "Account not found")
+    was = dict(account)
     if body.name is not None:
         account["name"] = _name(data, body.name, account_id)
     if body.admin is not None:
@@ -158,6 +184,12 @@ def patch_account(account_id: int, body: AccountPatch, response: Response, ctx: 
     ctx.db.commit()
     if body.password is not None and account_id == users.current_id():
         core.set_cookie(response, data, account)  # my own: this browser stays logged in
+    if account["name"] != was["name"]:
+        _log("account.renamed", account, {"old": was["name"], "new": account["name"]})
+    if bool(account["admin"]) != bool(was["admin"]):
+        _log("account.admin_given" if account["admin"] else "account.admin_taken", account)
+    if body.password is not None:
+        _log("account.password_changed" if account_id == users.current_id() else "account.password_reset", account)
     return core.public(account)
 
 
@@ -170,12 +202,14 @@ def delete_account(account_id: int, ctx: Context = Depends(plugin_ctx)):
     if account_id == users.current_id():
         raise HTTPException(400, "You can't delete your own account")
     data = core.copy(ctx.db)
-    if core.find(data, account_id) is None:
+    account = core.find(data, account_id)
+    if account is None:
         raise HTTPException(404, "Account not found")
     data["list"] = [a for a in data["list"] if a["id"] != account_id]
     core.save(ctx.db, data)
     users.forget(ctx.db, account_id)
     ctx.db.commit()
+    _log("account.removed", account)
     return {"ok": True}
 
 

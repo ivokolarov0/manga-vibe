@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from sqlalchemy import func
 
-from app import config, plugin_sources, plugin_updates, users
+from app import activity, config, plugin_sources, plugin_updates, users
 from app.i18n import t
 from app.api.common import get_or_404
 from app.users import manage
@@ -84,9 +84,13 @@ class LibraryPatch(BaseModel):
 def patch_library(lib_id: int, body: LibraryPatch, db=Depends(get_db)):
     """The folder's path outside Docker (shown and copied on the series page)."""
     lib = get_or_404(db, Library, lib_id)
+    was = lib.host_path
     if body.host_path is not None:
         lib.host_path = body.host_path.strip() or None
     db.commit()
+    if lib.host_path != was:
+        activity.log("folder.changed", lib.root_path, target=("folder", lib.id),
+                     details={"host_path": {"old": was, "new": lib.host_path}})
     return {"ok": True}
 
 
@@ -117,6 +121,7 @@ def add_library(body: LibraryBody, db=Depends(get_db)):
     db.commit()
     plugins.run_hook(db, "on_folders_changed")
     db.commit()
+    activity.log("folder.added", lib.root_path, target=("folder", lib.id))
     walker.start_scan_in_background(lib.id)  # only the new folder; the others are up to date
     return {"id": lib.id}
 
@@ -136,10 +141,12 @@ def delete_library(lib_id: int, request: Request, db=Depends(get_db)):
     removed = set(get_setting(db, "removed_libraries", []) or [])
     removed.add(lib.root_path)
     set_setting(db, "removed_libraries", sorted(removed))
+    series = db.query(Series.id).filter(Series.library_id == lib.id).count()
     db.delete(lib)
     db.flush()
     plugins.run_hook(db, "on_folder_removed", lib)  # e.g. the library made for it goes when empty
     db.commit()
+    activity.log("folder.removed", lib.root_path, target=("folder", lib_id), details={"series": series})
     return {"ok": True}
 
 
@@ -281,9 +288,15 @@ def put_settings(body: dict, db=Depends(get_db)):
             raise HTTPException(400, t("Hide controls after: 0 (never) or {min} to {max} seconds",
                                        min=AUTOHIDE_MIN, max=AUTOHIDE_MAX))
         known["reader_autohide"] = n
+    # the app's settings in the activity log, with the old and new value; each person's own (the theme,
+    # the reader) are theirs, not the admin's business
+    changed = {k: (get_setting(db, k, DEFAULT_SETTINGS[k]), v) for k, v in known.items()
+               if k not in PERSONAL_SETTINGS and get_setting(db, k, DEFAULT_SETTINGS[k]) != v}
     for k, v in known.items():
         set_setting(db, users.personal_key(k) if k in PERSONAL_SETTINGS else k, v)
     db.commit()
+    for k, (old, new) in changed.items():
+        activity.log("setting.changed", k, details={"setting": k, "old": old, "new": new})
     return get_settings(db)
 
 
@@ -349,6 +362,9 @@ def save_github_token(body: GitHubToken, db=Depends(get_db)):
     """The GitHub token updates use for private plugin repos. "" removes it (GITHUB_TOKEN, if set,
     is used then). It is never sent back."""
     plugin_updates.set_token(db, body.token)
+    # never the token itself: only that it was saved or removed
+    activity.log("setting.changed", "github_token", details={"setting": "github_token", "secret": True,
+                                                              "cleared": not body.token})
     return {"github_token": plugin_updates.token_source(db)}
 
 
@@ -365,6 +381,7 @@ def save_plugin_settings(plugin_id: str, body: dict, db=Depends(get_db)):
     p = _enabled_plugin(plugin_id)
     ctx = Context(p, db)
     values = ctx.settings
+    before = dict(values)
     for f in p.settings_fields:
         if f.key in body:
             v = str(body[f.key] or "").strip()
@@ -376,6 +393,12 @@ def save_plugin_settings(plugin_id: str, body: dict, db=Depends(get_db)):
                 values.pop(f.key, None)
     ctx.save_settings(values)
     db.commit()
+    for f in p.settings_fields:
+        old, new = before.get(f.key), values.get(f.key)
+        if old != new:  # a secret one: only that it changed, never its value
+            values_part = {"secret": True, "cleared": not new} if f.secret else {"old": old, "new": new}
+            activity.log("setting.changed", f"{p.id}.{f.key}", target=("plugin", p.id),
+                         details={"plugin": p.id, "setting": f.key, **values_part})
     return _plugin_dict(p, db)
 
 
@@ -437,10 +460,18 @@ def toggle_plugin(plugin_id: str, body: PluginToggle, db=Depends(get_db)):
     while one has a password: its series would show to everyone)."""
     if plugin_id not in plugins.plugins:
         raise HTTPException(404, "Plugin not found")
+    was_on = plugin_id not in plugins.disabled
     try:
         done = plugins.switch(db, plugin_id, body.enabled)
     except SwitchRefused as e:
         raise HTTPException(409, str(e))
+    if was_on != body.enabled:
+        p = plugins.plugins[plugin_id]
+        # the others it switched on or off with it (a plugin it replaced in a job, one it needs)
+        others = {k: [plugins.plugins[i].name for i in done[k] if i != plugin_id and i in plugins.plugins]
+                  for k in ("started", "stopped")}
+        activity.log("plugin.enabled" if body.enabled else "plugin.disabled", p.name, target=("plugin", p.id),
+                     details={"version": p.version, **{k: v for k, v in others.items() if v}})
     # what the page adds or takes out without reloading: this plugin, the one it replaced, and the
     # ones whose need is met now or no longer (app.js)
     ui = lambda ids: [i for i in ids if with_ui(plugins.plugins[i])]  # noqa: E731
@@ -493,7 +524,10 @@ def _version(body):
     return v
 
 
-def _put_in_version(db, run):
+def _put_in_version(db, run, kind=None, plugin_id=None, details=None):
+    """Run an install, update or restore; then log `kind` for `plugin_id`, with the versions."""
+    was = plugins.plugins.get(plugin_id)
+    old = was.version if was else None
     try:
         message = run()
     except plugin_updates.NeedsApproval as e:
@@ -501,6 +535,10 @@ def _put_in_version(db, run):
         raise HTTPException(409, {"message": str(e), "permissions": e.permissions})
     except plugin_updates.UpdateError as e:
         raise HTTPException(400, str(e))
+    if kind:
+        p = plugins.plugins.get(plugin_id)
+        activity.log(kind, p.name if p else plugin_id, target=("plugin", plugin_id),
+                     details={**({"from": old} if old else {}), "to": p.version if p else None, **(details or {})})
     return {"message": message, **list_plugins(db)}
 
 
@@ -509,7 +547,8 @@ def install_plugin_update(plugin_id: str, body: dict | None = None, db=Depends(g
     """The newest release, or the release tagged `version` (older ones too)."""
     _installed_plugin(plugin_id)
     accepted, version = _accepted(body), _version(body)
-    return _put_in_version(db, lambda: plugin_updates.install(db, plugin_id, accepted, version))
+    return _put_in_version(db, lambda: plugin_updates.install(db, plugin_id, accepted, version),
+                           "plugin.updated", plugin_id, {"permissions": accepted} if accepted else None)
 
 
 @router.post("/plugins/{plugin_id}/updates/restore", dependencies=[manage])
@@ -519,7 +558,8 @@ def restore_plugin_version(plugin_id: str, body: dict | None = None, db=Depends(
     accepted, version = _accepted(body), _version(body)
     if not version:
         raise HTTPException(400, "Which version? Send it as version")
-    return _put_in_version(db, lambda: plugin_updates.restore(db, plugin_id, version, accepted))
+    return _put_in_version(db, lambda: plugin_updates.restore(db, plugin_id, version, accepted),
+                           "plugin.restored", plugin_id, {"permissions": accepted} if accepted else None)
 
 
 @router.get("/plugins/{plugin_id}/updates/releases", dependencies=[manage])
@@ -548,7 +588,13 @@ def add_plugin_source(body: PluginSource, db=Depends(get_db)):
         plugin_sources.add(db, body.url)
     except plugin_sources.SourceError as e:
         raise HTTPException(400, str(e))
+    activity.log("plugin_source.added", _address(body.url))
     return plugin_sources.available(db)
+
+
+def _address(url):
+    """A source's address for the log, without a query string (it could carry a key)."""
+    return url.strip().split("?", 1)[0].split("#", 1)[0]
 
 
 @router.post("/plugins/sources/remove", dependencies=[manage])
@@ -558,6 +604,7 @@ def remove_plugin_source(body: PluginSource, db=Depends(get_db)):
         plugin_sources.remove(db, body.url)
     except plugin_sources.SourceError as e:
         raise HTTPException(400, str(e))
+    activity.log("plugin_source.removed", _address(body.url))
     return plugin_sources.available(db)
 
 
@@ -570,7 +617,9 @@ def install_available_plugin(body: dict | None = None, db=Depends(get_db)):
     if not isinstance(source, str) or not isinstance(plugin_id, str):
         raise HTTPException(400, "Send the plugin's source and id")
     accepted = _accepted(body)
-    r = _put_in_version(db, lambda: plugin_sources.install(db, source, plugin_id, accepted))
+    r = _put_in_version(db, lambda: plugin_sources.install(db, source, plugin_id, accepted),
+                        "plugin.installed", plugin_id,
+                        {"source": _address(source), **({"permissions": accepted} if accepted else {})})
     return {**r, "available": plugin_sources.available(db)}
 
 
@@ -579,4 +628,5 @@ def reload_plugins(db=Depends(get_db)):
     plugins.load()
     plugins.load_switches(db)
     plugins.start(db)
+    plugins.log_load_errors()
     return list_plugins(db)
