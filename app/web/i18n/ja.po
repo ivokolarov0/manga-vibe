@@ -1141,6 +1141,10 @@ msgstr "すべてのライブラリがロックされています。上のタブ
 msgid "Every plugin loaded."
 msgstr "すべてのプラグインを読み込みました。"
 
+#: app/web/static/js/app.js
+msgid "Every row of Home is hidden. Show them again in Settings → Display → Home page."
+msgstr "ホームの行はすべて非表示です。設定 → 表示 → ホームページでもう一度表示できます。"
+
 #: app/plugins/builtin/optimize/__init__.py
 msgid "Every series is optimized already"
 msgstr "すべてのシリーズは最適化済みです"
@@ -3820,6 +3824,10 @@ msgstr "もっと見る"
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html
 msgid "Show on Home"
 msgstr "ホームに表示"
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Show the rows"
+msgstr "行を表示"
 
 #: app/web/templates/settings/plugin.html
 msgid "Show the {category} plugins"

@@ -1,12 +1,15 @@
 """The Home page's rows (issue #291, app/api/home.py): GET /api/home and /api/home/sections, the rows' order and
 which are hidden (home_layout), and the libraries plugin's Libraries row."""
+import shutil
 from datetime import timedelta
 
 import pytest
 
-from app.api.home import clean_layout
+from app.api.home import clean_layout, tiles
 from app.db import SessionLocal
 from app.models import Series
+from app.scanner import walker
+from tests.conftest import TMP, make_zip
 from tests.test_shelves import L, comics  # noqa: F401 - comics is a fixture
 
 CORE = ["continue", "added", "updated"]
@@ -49,21 +52,37 @@ def test_recently_added_newest_first(client):
     assert {"title", "poster", "reading_status", "unread_count", "incomplete", "updated_at"} <= set(card)
 
 
-def test_recently_updated_leaves_out_what_was_only_just_added(client):
-    """A series whose books changed long after it was added is there; one whose books came with it isn't."""
-    hana = folder("Hana to Akuma")
-    assert hana not in [s["id"] for s in rows(client).get("updated", {"items": []})["items"]]
-    with SessionLocal() as db:
-        s = db.get(Series, hana)
-        old_added = s.added_at
-        s.added_at = s.updated_at - timedelta(days=3)
+def updated_ids(client):
+    return [s["id"] for s in rows(client).get("updated", {"items": []})["items"]]
+
+
+def test_recently_updated_is_new_books(client):
+    """A new book in a series that has been here a while puts it first; a book going missing, a series that
+    was only just added (its first books, or more found right after) don't. The library's "updated" sort (its
+    See all) starts the same way."""
+    root = TMP / "manga" / "Updated Later"
+    make_zip(root / "Updated_Later_v01.zip")
+    walker.scan_all()
+    sid = folder("Updated Later")
+    make_zip(root / "Updated_Later_v02.zip")  # minutes after it was added: still part of adding it
+    walker.scan_all()
+    assert sid not in updated_ids(client)
+    with SessionLocal() as db:  # it has been here for days
+        s = db.get(Series, sid)
+        s.added_at = s.added_at - timedelta(days=3)
         db.commit()
+    (root / "Updated_Later_v02.zip").unlink()  # a book going missing is no update
+    walker.scan_all()
+    assert sid not in updated_ids(client)
+    make_zip(root / "Updated_Later_v03.zip")  # a new book is
+    walker.scan_all()
     try:
-        assert [s["id"] for s in rows(client)["updated"]["items"]][0] == hana
+        assert updated_ids(client)[0] == sid
+        library = client.get("/api/series", params={"sort": "updated", "limit": 5}).json()["items"]
+        assert library[0]["id"] == sid
     finally:
-        with SessionLocal() as db:
-            db.get(Series, hana).added_at = old_added
-            db.commit()
+        shutil.rmtree(root)
+        walker.scan_all()
 
 
 def test_continue_reading_row(client):
@@ -82,6 +101,19 @@ def test_order_and_hidden_rows(client):
     assert [s["id"] for s in found][:3] == ["updated", "added", "continue"]
     assert next(s for s in found if s["id"] == "continue")["hidden"]
     assert "continue" not in rows(client) and "added" in rows(client)
+    assert client.get("/api/home").json()["all_hidden"] is False
+
+
+def test_every_row_hidden(client):
+    """Home then says so (all_hidden), not "no series yet"."""
+    ids = [s["id"] for s in client.get("/api/home/sections").json()]
+    client.put("/api/settings", json={"home_layout": {"hidden": ids}})
+    assert client.get("/api/home").json() == {"sections": [], "all_hidden": True}
+
+
+def test_tiles_without_an_id_or_twice_are_left_out():
+    assert tiles([{"title": "A"}, {"id": 1, "title": "B"}, {"id": "1", "title": "C"}, {"id": 2}, "x"]) == [
+        {"id": "1", "title": "B", "subtitle": "", "image": "", "href": "", "icon": ""}]
 
 
 def test_a_saved_layout_is_cleaned():

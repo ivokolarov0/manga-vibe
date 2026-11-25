@@ -92,7 +92,9 @@ class Rows(Plugin):
     home_sections = [HomeSection("az", N_("A to Z"), see_all="#/library?sort=title"),
                      HomeSection("links", N_("Links"), kind="tiles"),
                      HomeSection("broken", N_("Broken")),
-                     HomeSection("nothing", N_("Nothing"))]
+                     HomeSection("nothing", N_("Nothing")),
+                     HomeSection("bad", N_("Made wrong"), see_all=None),
+                     HomeSection("az", N_("A to Z again"))]
 
     def home_section(self, ctx, request, key, limit):
         if key == "az":
@@ -116,6 +118,11 @@ def test_rows_from_a_plugin(client, install, caplog):
     # a row that fails, or has nothing, is left out; Home still answers
     assert "my-rows:broken" not in found and "my-rows:nothing" not in found
     assert "my-rows failed in home_section('broken')" in caplog.text
+    # one made wrong (see_all=None) or there twice is left out, not Home and Settings with it
+    assert "my-rows:bad" not in found and found["my-rows:az"]["title"] == "A to Z"
+    listed = client.get("/api/home/sections")
+    assert listed.status_code == 200 and [s["id"] for s in listed.json()].count("my-rows:az") == 1
+    assert "my-rows:bad" not in [s["id"] for s in listed.json()]
     # in the settings' list after the app's own, and can be moved and hidden like them
     listed = [s["id"] for s in client.get("/api/home/sections").json()]
     assert listed.index("my-rows:az") > listed.index("updated")

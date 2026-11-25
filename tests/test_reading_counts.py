@@ -130,12 +130,12 @@ def test_old_database_gets_its_counts(tmp_path):
         db.add(Progress(user_id=1, book_id=1, page=9, completed=True))
         db.commit()
     with eng.begin() as c:
-        # as before the counts existed: no triggers, nothing counted, one migration to go
+        # as before the counts existed: no triggers, nothing counted, from the counts' migration (19) on to go
         for name, _ in database.READING_COUNT_TRIGGERS:
             c.execute(text(f"DROP TRIGGER {name}"))
         c.execute(text("DELETE FROM series_total"))
         c.execute(text("DELETE FROM series_read"))
-        c.execute(text("UPDATE schema_version SET version = :v"), {"v": len(database.MIGRATIONS) - 1})
+        c.execute(text("UPDATE schema_version SET version = 18"))
     database.migrate(eng)
     with eng.connect() as c:
         assert c.execute(text("SELECT series_id, total, main FROM series_total")).all() == [(1, 3, 2)]

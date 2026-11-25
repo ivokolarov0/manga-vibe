@@ -13,7 +13,6 @@ import logging
 import traceback
 
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy import func
 
 from app.api import filters
 from app.api.common import latest_labels, load_states, series_card, series_counts, title_lang
@@ -27,9 +26,6 @@ router = APIRouter(prefix="/api")
 log = logging.getLogger("mangavibe.plugins")
 
 LIMIT = 10  # cards per row
-# A series counts as updated once its books changed more than this long after it was added: the books of
-# the scan that found it are part of adding it, so a new series isn't in both rows
-JUST_ADDED_DAYS = 1 / 24  # an hour
 
 CORE = [HomeSection("continue", N_("Continue reading"), see_all="#/continue"),
         HomeSection("added", N_("Recently added"), see_all="#/library?sort=added"),
@@ -42,10 +38,17 @@ def all_sections() -> list[tuple[str, object, HomeSection]]:
     """[(id, plugin or None, section)] of every row there is, in the default order: the app's, then the
     running plugins'."""
     out = [(s.key, None, s) for s in CORE]
+    seen = {s.key for s in CORE}
     for p in plugins.enabled():
         for s in getattr(p, "home_sections", None) or []:
-            if isinstance(s, HomeSection) and s.kind in KINDS:
-                out.append((f"{p.id}:{s.key}", p, s))
+            sid = f"{p.id}:{getattr(s, 'key', '')}"
+            # a row that's made wrong (or twice) is left out and logged; it never takes Home down
+            if not (isinstance(s, HomeSection) and s.kind in KINDS and s.key and isinstance(s.key, str)
+                    and isinstance(s.title, str) and s.title and isinstance(s.see_all, str)) or sid in seen:
+                log.error("Plugin %s: its Home row %r is left out (made wrong, or there twice)", p.id, s)
+                continue
+            seen.add(sid)
+            out.append((sid, p, s))
     return out
 
 
@@ -109,18 +112,22 @@ def core_items(db, request, key) -> list[dict]:
     q = db.query(Series).filter(Series.missing_since.is_(None), *visible_series(db, request))
     if key == "added":
         q = q.order_by(Series.added_at.desc(), Series.id.desc())
-    else:  # updated: new books since it was added, the last first
-        q = (q.filter(func.julianday(Series.updated_at) - func.julianday(Series.added_at) > JUST_ADDED_DAYS)
-             .order_by(Series.updated_at.desc(), Series.id.desc()))
+    else:  # updated: new books after it was added (the scanner's books_added_at), the last first
+        q = q.filter(Series.books_added_at.is_not(None)).order_by(Series.books_added_at.desc(), Series.id.desc())
     return series_cards(db, request, q.limit(LIMIT).all())
 
 
 def tiles(found) -> list[dict]:
-    """A plugin's tiles, with only the keys the page draws, as text."""
-    out = []
-    for x in list(found or [])[:LIMIT]:
-        if isinstance(x, dict) and x.get("title"):
-            out.append({k: "" if x.get(k) is None else str(x[k]) for k in TILE_KEYS})
+    """A plugin's tiles, with only the keys the page draws, as text. One without a title or an id (the page
+    tells the tiles apart by it), or with an id seen before, is left out."""
+    out, ids = [], set()
+    for x in list(found or []):
+        if not isinstance(x, dict) or not x.get("title") or x.get("id") in (None, "") or str(x["id"]) in ids:
+            continue
+        ids.add(str(x["id"]))
+        out.append({k: "" if x.get(k) is None else str(x[k]) for k in TILE_KEYS})
+        if len(out) >= LIMIT:
+            break
     return out
 
 
@@ -142,15 +149,16 @@ def items_of(db, request, plugin, s) -> list[dict]:
 @router.get("/home")
 def home(request: Request, db=Depends(get_db)):
     """Every row this person shows on Home, in their order, with up to LIMIT cards each, of the series the
-    request may see (e.g. not a locked library's). Rows with nothing in them are left out."""
-    out = []
-    for sid, plugin, s, hidden in ordered(db):
+    request may see (e.g. not a locked library's). Rows with nothing in them are left out. all_hidden: the
+    person hid every row (Settings → Display), so an empty Home says so instead of "no series"."""
+    out, rows = [], ordered(db)
+    for sid, plugin, s, hidden in rows:
         if hidden:
             continue
         items = items_of(db, request, plugin, s)
         if items:
             out.append({**section_info(sid, plugin, s), "items": items})
-    return {"sections": out}
+    return {"sections": out, "all_hidden": bool(rows) and all(hidden for *_, hidden in rows)}
 
 
 @router.get("/home/sections")

@@ -181,6 +181,10 @@ class LibraryQuery(Plugin):
         cols = {"title": lambda: lq.title, "added": lambda: Series.added_at, "updated": lambda: Series.updated_at,
                 "read": lambda: lq.my_state("last_read_at"), "score": lambda: Series.average_score,
                 "year": lambda: Series.start_year, "unread": lq.unread_count}
-        col = cols[found[0]]()
         order = params.get("order") or found[2]
-        return [col.desc().nulls_last() if order == "desc" else col.asc().nulls_last()]
+        by = lambda c: c.desc().nulls_last() if order == "desc" else c.asc().nulls_last()  # noqa: E731
+        if found[0] == "updated":
+            # the series that got new books, the last first (as Home's Recently updated row, its "See all");
+            # the rest by their last change
+            return [by(Series.books_added_at), by(Series.updated_at)]
+        return [by(cols[found[0]]())]

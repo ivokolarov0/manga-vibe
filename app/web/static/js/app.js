@@ -261,8 +261,8 @@ document.addEventListener("alpine:init", () => {
 
   window.addEventListener("mv-theme", (e) => (Alpine.store("app").theme = e.detail));
 
-  let lastView = null, libraryScroll = 0;
-  history.scrollRestoration = "manual";  // we restore the library position ourselves
+  let lastView = null, libraryScroll = 0, homeScroll = 0;
+  history.scrollRestoration = "manual";  // we restore the library's and Home's positions ourselves
   function route() {
     const app = Alpine.store("app");
     const [path, query] = location.hash.slice(1).split("?");
@@ -290,7 +290,8 @@ document.addEventListener("alpine:init", () => {
     let scrollTarget = null;
     if (view !== lastView || newId !== app.id || (view === "settings" && newSub !== app.sub)) {
       if (lastView === "library") libraryScroll = scrollY;
-      scrollTarget = view === "library" ? libraryScroll : 0;
+      if (lastView === "home") homeScroll = scrollY;  // back from a series opened on Home: the same row
+      scrollTarget = view === "library" ? libraryScroll : view === "home" ? homeScroll : 0;
     }
     // a series opened from another page can go back to it; one opened directly (link, fresh tab) has
     // nowhere to go back to. Coming back from the reader or switching tabs keeps what it was.
@@ -330,7 +331,8 @@ document.addEventListener("alpine:init", () => {
     } catch {}
   }
   queueMicrotask(async () => {
-    await loadSettings().then((s) => s.me && (Alpine.store("app").me = s.me)).catch(() => {});    await loadLibrarySchema();  // before plugins start: e.g. saved searches label their filters with it
+    await loadSettings().then((s) => s.me && (Alpine.store("app").me = s.me)).catch(() => {});
+    await loadLibrarySchema();  // before plugins start: e.g. saved searches label their filters with it
     // plugins get ready before anything is shown, e.g. accounts: the login; libraries: lock them on a
     // new tab, pick one
     await emitPlugins("start");
@@ -1328,6 +1330,8 @@ function homeController() {
   return {
     sections: null,  // [{ id, plugin, title, kind ("series" | "tiles"), layout, see_all, items }]; null until loaded
     failed: "",      // why the last load failed, else ""
+    allHidden: false,  // the person hid every row (Settings → Display → Home page)
+    asked: 0,        // the number of the newest load: an older answer that comes in after it is dropped
     init() {
       const app = () => Alpine.store("app");
       watchValue(() => app().view, (v) => v === "home" && this.load());
@@ -1339,12 +1343,18 @@ function homeController() {
     async load() {
       if (Alpine.store("app").view !== "home") return;
       document.title = t("Home");
+      const mine = ++this.asked;  // e.g. two library tabs picked quickly: only the last one's answer counts
       try {
-        this.sections = (await api(`/api/home?${scopeParam()}`)).sections;
+        const r = await api(`/api/home?${scopeParam()}`);
+        if (mine !== this.asked) return;
+        this.allHidden = !!r.all_hidden;
+        // the same rows again (e.g. back from a series): left as they are, so nothing is drawn again
+        if (JSON.stringify(r.sections) !== JSON.stringify(this.sections)) this.sections = r.sections;
         this.failed = "";
-      } catch (e) { if (this.sections === null) this.failed = e.message; }
+      } catch (e) { if (mine === this.asked && this.sections === null) this.failed = e.message; }
     },
     get emptyText() {
+      if (this.allHidden) return t("Every row of Home is hidden. Show them again in Settings → Display → Home page.");
       // a plugin may know why (e.g. libraries: this one is locked), as on the library page
       return collectPlugins("empty-library")[0] || t("No series yet. The first scan may still be running; see Settings.");
     },
@@ -1944,21 +1954,34 @@ function loadPluginView() {
    their order: dragged, or moved with the arrow buttons (keyboard too), and shown or hidden one by one.
    Saved as home_layout ({ order, hidden }) through PUT /api/settings. Inside Settings' component (st, save). */
 function homeSettings() {
+  let saving = Promise.resolve();  // the saves, one after the other (not in Alpine's data: a Promise can't be proxied)
   return {
     sections: [],  // GET /api/home/sections: [{ id, title, hidden }] in the person's order
     dragging: null,  // the id of the row being dragged
     init() {
-      this.load();
-      this.$watch("$store.app.sub", (s) => s === "display" && this.load());  // e.g. a plugin switched on since
+      // only while Settings → Display is open (the section is in the page all the time, hidden): not at
+      // every start, and again each time it opens (e.g. a plugin with a row was switched on since)
+      const open = () => this.$store.app.view === "settings" && this.$store.app.sub === "display";
+      this.$watch("$store.app.sub", () => open() && this.load());
+      this.$watch("$store.app.view", () => open() && this.load());
+      if (open()) this.load();
     },
-    async load() { this.sections = await api("/api/home/sections").catch(() => this.sections); },
-    async saveLayout(message = t("Saved")) {
-      const home_layout = { order: this.sections.map((s) => s.id), hidden: this.sections.filter((s) => s.hidden).map((s) => s.id) };
-      try {
-        await api("/api/settings", { method: "PUT", body: { home_layout } });
-        await loadSettings();
-        toast(message);
-      } catch (e) { toast(e.message, 6000, "error"); await this.load(); }
+    async load() {
+      if (this.dragging !== null) return;  // never under a drag: it would lose the row being dragged
+      this.sections = await api("/api/home/sections").catch(() => this.sections);
+    },
+    // Each save sends the order as it is when its turn comes, after the one before has answered: quick
+    // clicks can't have an older order answer last and win
+    saveLayout(message = t("Saved")) {
+      saving = saving.then(async () => {
+        const home_layout = { order: this.sections.map((s) => s.id), hidden: this.sections.filter((s) => s.hidden).map((s) => s.id) };
+        try {
+          await api("/api/settings", { method: "PUT", body: { home_layout } });
+          await loadSettings();
+          toast(message);
+        } catch (e) { toast(e.message, 6000, "error"); await this.load(); }
+      });
+      return saving;
     },
     move(i, by) {
       const j = i + by;
@@ -1980,6 +2003,7 @@ function homeSettings() {
     dragOver(s) {
       if (this.dragging === null || this.dragging === s.id) return;
       const from = this.sections.findIndex((x) => x.id === this.dragging), to = this.sections.indexOf(s);
+      if (from < 0 || to < 0) return;  // not in the list (any more): move nothing, never the last row
       const [moved] = this.sections.splice(from, 1);
       this.sections.splice(to, 0, moved);
     },
@@ -1987,6 +2011,7 @@ function homeSettings() {
       if (this.dragging === null) return;
       const s = this.sections.find((x) => x.id === this.dragging);
       this.dragging = null;
+      if (!s) return;
       this.saveLayout(t("Moved: {row} is number {n} now", { row: s.title, n: fmtNum(this.sections.indexOf(s) + 1) }));
     },
   };
@@ -2173,7 +2198,8 @@ function settingsView() {
       // the page is drawn in its language on the server: draw it again, staying where we are
       if (key === "language") { location.reload(); return; }
       if (key === "theme") setTheme(v);
-      await loadSettings();      if (["title_language", "library_listing", "library_page_size", "grid_columns"].includes(key)) this.$store.app.libraryDirty++;
+      await loadSettings();
+      if (["title_language", "library_listing", "library_page_size", "grid_columns"].includes(key)) this.$store.app.libraryDirty++;
       toast(t("Saved"));
     },
     async rescan(lib) {

@@ -58,7 +58,8 @@
       <div class="empty" x-show="$store.home.sections && !$store.home.sections.length" x-cloak>
         <svg class="ic" aria-hidden="true"><use href="#i-books"/></svg>
         <span x-text="$store.home.emptyText"></span>
-        <a class="btn small primary" href="#/library">{{ t("Open the Library") }}</a>
+        <a class="btn small primary" href="#/settings/display" x-show="$store.home.allHidden">{{ t("Show the rows") }}</a>
+        <a class="btn small primary" href="#/library" x-show="!$store.home.allHidden">{{ t("Open the Library") }}</a>
       </div>
       {% endblock %}
     </div>

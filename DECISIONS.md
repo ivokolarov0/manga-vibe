@@ -1439,9 +1439,18 @@ Plugin API version, and the app works after every one.
   ones left out. A plugin's row that fails is logged and left out. A plugin's series row gives `Series` rows
   and the core makes the cards, filtered again with `visible_series()`, so a plugin can't show a locked
   library's series by mistake, and every card looks like the library's.
-- **Recently updated leaves out what was only just added**: a series counts as updated once its books
-  changed more than an hour after it was added (`updated_at` against `added_at`), so a new series isn't in
-  both rows; the first scan's books are part of adding it.
+- **Recently updated is new books, kept in `Series.books_added_at`** (migration 20). `updated_at` was no
+  good: the scanner sets it when books go missing or are read again too. The scanner sets `books_added_at`
+  only for a new book in a series that has been here more than an hour (a folder still being copied in is
+  part of adding it), so a new series isn't in both rows. The library's "updated" sort (the row's See all)
+  orders by it first, then by `updated_at`, so both start with the same series. The migration takes
+  `updated_at` for series it set more than an hour after they were added.
+- **Hardened after review**: a plugin row that's made wrong (not strings, `see_all=None`) or there twice is
+  logged and left out instead of failing Home; tiles without an id (or twice) are dropped; only the newest
+  `/api/home` answer is used (quick library tab switches); unchanged rows aren't drawn again; Home keeps its
+  scroll when you come back; Settings' saves go one after another, each with the order as it is then;
+  every row hidden says so on Home, with a button to Settings.
+- **The Libraries cards show a random series' cover**, a different one each time Home loads.
 - **Home follows the library tabs**, like Continue reading: the tabs show on Home and its rows send the list
   scope. The Libraries row (the libraries plugin's, a `"tiles"` row) opens a library in the Library tab
   through the plugin's `home-tile` handler (a locked one asks for its password first). It shows from two

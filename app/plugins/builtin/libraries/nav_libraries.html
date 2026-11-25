@@ -11,7 +11,7 @@
   <template x-for="s in [...($store.libraries.showAll ? [{ id: 0, name: t('All') }] : []), ...$store.libraries.list]" :key="s.id">
     <button type="button" class="nav-entry" :class="{ picked: $store.libraries.picked === s.id }"
             :aria-pressed="$store.libraries.picked === s.id" :title="s.locked ? t('Locked: asks for the password') : null"
-            @click="$store.libraries.pick(s.id); if (!['library', 'continue'].includes($store.app.view)) location.hash = '#/library'">
+            @click="$store.libraries.pick(s.id); if (!['home', 'library', 'continue'].includes($store.app.view)) location.hash = '#/library'">
       <span class="nav-ic"><svg class="ic" aria-hidden="true"><use :href="s.id ? '#i-books' : '#i-blocks'"/></svg></span>
       <span class="nav-label" x-text="s.name"></span>
       <span class="lock" x-show="s.has_password" x-html="icon(s.locked ? 'lock' : 'unlock')"

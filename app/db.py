@@ -111,7 +111,21 @@ MIGRATIONS = [
     # 19: the reading counts per series and user, kept by triggers from now on (READING_COUNT_TRIGGERS);
     # the tables come from create_all, this fills them from what's read so far
     lambda conn: rebuild_reading_counts(conn),
+    # 20: when a series last got new books (Home's Recently updated, #291). Until now only updated_at was
+    # kept, which books going missing set too: the series it set more than an hour after they were added
+    # are taken as updated then
+    lambda conn: add_books_added_at(conn),
 ]
+
+
+def add_books_added_at(conn):
+    """Migration 20. Only adds the column when it isn't there: a database made by create_all (or a test that
+    winds the version back) has it already."""
+    cols = {row[1] for row in conn.execute(text("PRAGMA table_info(series)"))}
+    if "books_added_at" not in cols:
+        conn.execute(text("ALTER TABLE series ADD COLUMN books_added_at DATETIME"))
+    conn.execute(text("UPDATE series SET books_added_at = updated_at WHERE books_added_at IS NULL "
+                      "AND julianday(updated_at) - julianday(added_at) > 1.0 / 24"))
 
 
 # ---------------------------------------------------------------- reading counts (series_total, series_read)

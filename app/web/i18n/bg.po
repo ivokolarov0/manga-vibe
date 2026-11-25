@@ -1147,6 +1147,10 @@ msgstr "Всички библиотеки са заключени. Докосн�
 msgid "Every plugin loaded."
 msgstr "Всички добавки са заредени."
 
+#: app/web/static/js/app.js
+msgid "Every row of Home is hidden. Show them again in Settings → Display → Home page."
+msgstr "Всички редове на началната страница са скрити. Покажете ги отново в Настройки → Изглед → Начална страница."
+
 #: app/plugins/builtin/optimize/__init__.py
 msgid "Every series is optimized already"
 msgstr "Всички поредици вече са оптимизирани"
@@ -3842,6 +3846,10 @@ msgstr "Покажи още"
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html
 msgid "Show on Home"
 msgstr "Показвай на началната страница"
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Show the rows"
+msgstr "Покажи редовете"
 
 #: app/web/templates/settings/plugin.html
 msgid "Show the {category} plugins"

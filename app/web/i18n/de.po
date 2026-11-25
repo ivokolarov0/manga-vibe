@@ -1147,6 +1147,10 @@ msgstr "Alle Bibliotheken sind gesperrt. Tippe oben auf einen Tab, um sie zu ent
 msgid "Every plugin loaded."
 msgstr "Alle Plugins wurden geladen."
 
+#: app/web/static/js/app.js
+msgid "Every row of Home is hidden. Show them again in Settings → Display → Home page."
+msgstr "Alle Reihen der Startseite sind ausgeblendet. Zeige sie wieder unter Einstellungen → Anzeige → Startseite."
+
 #: app/plugins/builtin/optimize/__init__.py
 msgid "Every series is optimized already"
 msgstr "Alle Serien sind schon optimiert"
@@ -3842,6 +3846,10 @@ msgstr "Mehr zeigen"
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html
 msgid "Show on Home"
 msgstr "Auf der Startseite zeigen"
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Show the rows"
+msgstr "Reihen zeigen"
 
 #: app/web/templates/settings/plugin.html
 msgid "Show the {category} plugins"

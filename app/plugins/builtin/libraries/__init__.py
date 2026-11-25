@@ -90,7 +90,7 @@ class Libraries(Plugin):
 
     def home_section(self, ctx, request, key, limit):
         """A card per library this person sees (with accounts, the ones an admin shares with them), with
-        the cover of its newest series and how many it has; a locked one without either. Opening one shows
+        the cover of one of its series (a random one, a different one each time) and how many it has; a locked one without either. Opening one shows
         it in the Library (libraries.js, "home-tile"). Only once there are two: one is just the Library."""
         db = ctx.db
         locked, hidden = core.locked_for(db, request), core.hidden_ids(db)
@@ -100,12 +100,13 @@ class Libraries(Plugin):
         n, col = api.counts(db, locked), core.shelf_column()
         out = []
         for s in found[:limit]:
-            newest = None if s.id in locked else (
+            # the cover of one of its series, picked at random each time Home loads
+            cover = None if s.id in locked else (
                 db.query(Series).filter(col == s.id, Series.missing_since.is_(None))
-                .order_by(Series.added_at.desc(), Series.id.desc()).first())
+                .order_by(func.random()).first())
             out.append({"id": s.id, "title": s.name, "href": "#/library",
                         "subtitle": t("Locked") if s.id in locked else tn("{n} series", "{n} series", n.get(s.id, 0)),
-                        "image": f"/api/series/{newest.id}/poster?size=sm&v={poster_version(newest)}" if newest else "",
+                        "image": f"/api/series/{cover.id}/poster?size=sm&v={poster_version(cover)}" if cover else "",
                         "icon": "lock" if s.id in locked else "books"})
         return out
 

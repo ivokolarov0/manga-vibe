@@ -1145,6 +1145,10 @@ msgstr ""
 msgid "Every plugin loaded."
 msgstr ""
 
+#: app/web/static/js/app.js
+msgid "Every row of Home is hidden. Show them again in Settings → Display → Home page."
+msgstr ""
+
 #: app/plugins/builtin/optimize/__init__.py
 msgid "Every series is optimized already"
 msgstr ""
@@ -3839,6 +3843,10 @@ msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html
 msgid "Show on Home"
+msgstr ""
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Show the rows"
 msgstr ""
 
 #: app/web/templates/settings/plugin.html
