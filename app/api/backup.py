@@ -39,10 +39,10 @@ def _file_name() -> str:
     return f"mangavibe-backup-{date.today().isoformat()}.zip"
 
 
-def _build(tokens: bool, prefix="tmp") -> Path:
+def _build(tokens: bool, activity_log: bool, prefix="tmp") -> Path:
     path = _temp_file(".zip", prefix)
     try:
-        backup.export_to(path, include_tokens=tokens)
+        backup.export_to(path, include_tokens=tokens, include_activity=activity_log)
     except Exception:
         path.unlink(missing_ok=True)
         raise
@@ -50,16 +50,17 @@ def _build(tokens: bool, prefix="tmp") -> Path:
 
 
 @router.get("/export")
-def export(tokens: bool = False):
-    """The export as a download. `tokens`: the GitHub token and the plugins' secret settings go along."""
-    path = _build(tokens)
-    _exported(path, tokens)
+def export(tokens: bool = False, activity_log: bool = False):
+    """The export as a download. `tokens`: the GitHub token and the plugins' secret settings go along;
+    `activity_log`: the activity log does (Settings → Activity, #283)."""
+    path = _build(tokens, activity_log)
+    _exported(path, tokens, activity_log)
     return FileResponse(path, media_type="application/zip", filename=_file_name(),
                         background=BackgroundTask(path.unlink, missing_ok=True))
 
 
 @router.post("/export")
-def prepare_export(tokens: bool = False):
+def prepare_export(tokens: bool = False, activity_log: bool = False):
     """Make the export and say where to download it (GET /download/<id>). The page shows that it's
     working while this runs (it can take a while), then the browser downloads the ready file at once."""
     now = time.time()
@@ -69,14 +70,15 @@ def prepare_export(tokens: bool = False):
                 old.unlink(missing_ok=True)
         except OSError:
             pass
-    path = _build(tokens, READY_PREFIX)
-    _exported(path, tokens)
+    path = _build(tokens, activity_log, READY_PREFIX)
+    _exported(path, tokens, activity_log)
     return {"id": path.name, "file": _file_name(), "size": path.stat().st_size}
 
 
-def _exported(path, tokens):
+def _exported(path, tokens, activity_log):
     # whether the tokens went along is worth knowing (named so the log's secret filter keeps it: it isn't one)
     activity.log("backup.exported", _file_name(), details={"private_settings_included": bool(tokens),
+                                                           "activity_log": bool(activity_log),
                                                            "size": path.stat().st_size})
 
 

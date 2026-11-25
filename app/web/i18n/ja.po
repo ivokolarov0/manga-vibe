@@ -47,6 +47,22 @@ msgstr "（メタデータのない {n} 件はスキップ）"
 msgid "+{n} more"
 msgstr "+{n} 件"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "1 year"
+msgstr "1年"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "30 days"
+msgstr "30日"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "90 days"
+msgstr "90日"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "A CSV file of what the filters below show. Clearing removes every entry and writes one saying who did it."
+msgstr "下のフィルターで表示されている内容の CSV ファイルです。消去するとすべての項目が削除され、誰が消去したかを示す項目が1つ記録されます。"
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "A day"
 msgstr "1 日"
@@ -216,7 +232,7 @@ msgid "Added {n} series to favorites"
 msgid_plural "Added {n} series to favorites"
 msgstr[0] "{n} シリーズをお気に入りに追加しました"
 
-#: app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/export.py
 msgid "Address"
 msgstr "アドレス"
 
@@ -629,9 +645,17 @@ msgstr "フィルターをクリア"
 msgid "Clear progress for every book in this series? It will also be removed from Continue reading."
 msgstr "このシリーズのすべての本の進み具合を消去しますか？続きを読むからも削除されます。"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Clear the activity log? Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."
+msgstr "アクティビティログを消去しますか？すべての項目が完全に削除されます。コピーを残すには先にエクスポートしてください。消去後のログは、あなたが消去したことを示す1件から始まります。"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Clear the filters"
 msgstr "絞り込みをクリア"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Clear the log…"
+msgstr "ログを消去…"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear the search"
@@ -640,6 +664,11 @@ msgstr "検索をクリア"
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Cleared"
 msgstr "消去済み"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Cleared the activity log ({n} entry)"
+msgid_plural "Cleared the activity log ({n} entries)"
+msgstr[0] "アクティビティログを消去しました（{n} 件）"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Cleared {name}"
@@ -892,7 +921,7 @@ msgstr "降順"
 msgid "Description"
 msgstr "あらすじ"
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/export.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "Details"
 msgstr "詳細"
 
@@ -1073,6 +1102,10 @@ msgid "Enter the first chapter of the range"
 msgstr "範囲の最初の話を入力してください"
 
 #: app/plugins/builtin/activity_log/activity_log.js
+msgid "Entries"
+msgstr "件数"
+
+#: app/plugins/builtin/activity_log/activity_log.js
 msgid "Error"
 msgstr "エラー"
 
@@ -1131,6 +1164,10 @@ msgstr "全画面を終了"
 #: app/web/templates/settings/backup.html
 msgid "Export"
 msgstr "エクスポート"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Export as CSV"
+msgstr "CSV でエクスポート"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Exported a backup"
@@ -1332,6 +1369,10 @@ msgstr "独自の設定がないシリーズに使います"
 msgid "For new series after each scan"
 msgstr "スキャンのたびに新しいシリーズに対して"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Forever"
+msgstr "無期限"
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "Forget every saved recommendation and cover? They are asked for again when a series page opens."
 msgstr "保存したおすすめと表紙をすべて消去しますか？シリーズのページを開くと再び取得します。"
@@ -1488,6 +1529,10 @@ msgstr "グリッド"
 msgid "Grid columns"
 msgstr "列の数"
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "Group"
+msgstr "グループ"
+
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Has metadata"
 msgstr "メタデータあり"
@@ -1629,6 +1674,10 @@ msgid "Include adult titles"
 msgstr "成人向け作品を含める"
 
 #: app/web/templates/settings/backup.html
+msgid "Include the activity log"
+msgstr "アクティビティログを含める"
+
+#: app/web/templates/settings/backup.html
 msgid "Include tokens"
 msgstr "トークンを含める"
 
@@ -1728,6 +1777,14 @@ msgstr "あなただけの設定。全幅にすると、ライブラリと続き
 msgid "Just for you. Missing words are shown in English"
 msgstr "あなただけの設定。翻訳がない言葉は英語で表示されます"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Keep entries for"
+msgstr "項目の保存期間"
+
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Keep entries for 30, 90 or 365 days, or forever (0)"
+msgstr "保存期間は 30、90、365 日、または無期限（0）です"
+
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "Keep the library page's filters and sort under a name (e.g. Isekai) and pick them again from the Saved button. Built in."
 msgstr "ライブラリの絞り込みと並べ替えに名前（例：異世界）を付けて保存し、保存ボタンから呼び出します。組み込み。"
@@ -1760,7 +1817,7 @@ msgstr "ログを MangaVibe のデータベースに保存します。外部に�
 msgid "key"
 msgstr "キー"
 
-#: app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/export.py
 msgid "Kind"
 msgstr "種類"
 
@@ -2616,6 +2673,10 @@ msgstr "オフ"
 msgid "Off (swipe only)"
 msgstr "オフ（スワイプのみ）"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Older entries are removed once a day."
+msgstr "古い項目は1日に1回削除されます。"
+
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Oldest first"
 msgstr "古い順"
@@ -3259,6 +3320,11 @@ msgstr "フォルダー {name} を削除しました"
 msgid "Removed the plugin source {name}"
 msgstr "プラグインの入手先 {name} を削除しました"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed {n} entry"
+msgid_plural "Removed {n} entries"
+msgstr[0] "{n} 件を削除しました"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Removed {n} series from favorites"
 msgid_plural "Removed {n} series from favorites"
@@ -3372,7 +3438,7 @@ msgstr "検索を保存"
 msgid "Save this search"
 msgstr "この検索を保存"
 
-#: app/plugins/builtin/libraries/libraries.js app/plugins/builtin/saved_searches/tool.html app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/libraries.js app/plugins/builtin/saved_searches/tool.html app/web/static/js/app.js
 msgid "Saved"
 msgstr "保存しました"
 
@@ -3429,6 +3495,11 @@ msgstr "保存済み。非公開リポジトリからの更新に使われます
 #: app/web/static/js/app.js
 msgid "Saved. Your changes are kept when metadata is refreshed."
 msgstr "保存しました。メタデータを更新しても変更は残ります。"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Saved. {n} older entry was removed."
+msgid_plural "Saved. {n} older entries were removed."
+msgstr[0] "保存しました。古い項目 {n} 件を削除しました。"
 
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "Saved: downloaded once and kept, so they show offline and your browser only talks to MangaVibe. Loaded from AniList: no disk space, but your browser asks AniList for every cover."
@@ -3841,6 +3912,10 @@ msgstr "停止"
 msgid "Stop selecting"
 msgstr "選択をやめる"
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "Summary"
+msgstr "概要"
+
 #: app/web/static/js/app.js
 msgid "Switch it on?"
 msgstr "オンにしますか？"
@@ -3861,13 +3936,17 @@ msgstr "{name} をオフにしました"
 msgid "Switched {name} on"
 msgstr "{name} をオンにしました"
 
-#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/export.py
 msgid "System"
 msgstr "システム"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/sheets/library.html
 msgid "Tags"
 msgstr "タグ"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Take it out of the app"
+msgstr "アプリから持ち出す"
 
 #: app/web/templates/sheets/library.html
 msgid "Tap once to include, again to exclude, again to clear."
@@ -3880,6 +3959,14 @@ msgstr "ページをタップすると読み上げを始めます"
 #: app/web/static/js/app.js
 msgid "Tap zones"
 msgstr "タップ領域"
+
+#: app/plugins/builtin/activity_log/export.py
+msgid "Target"
+msgstr "対象"
+
+#: app/plugins/builtin/activity_log/export.py
+msgid "Target ID"
+msgstr "対象の ID"
 
 #: app/web/static/js/reader.js
 msgid "Text outline"
@@ -4221,6 +4308,14 @@ msgstr "このバージョンには新しい Docker イメージが必要です�
 msgid "This was the last book in the series."
 msgstr "シリーズ最後の本でした。"
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "Time (local)"
+msgstr "日時（ローカル）"
+
+#: app/plugins/builtin/activity_log/export.py
+msgid "Time (UTC)"
+msgstr "日時（UTC）"
+
 #: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/library_query/__init__.py
 msgid "Title"
 msgstr "タイトル"
@@ -4513,6 +4608,14 @@ msgstr "このページを使う"
 msgid "Use {plugin} for {job}"
 msgstr "{job} に {plugin} を使う"
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "User"
+msgstr "ユーザー"
+
+#: app/plugins/builtin/activity_log/export.py
+msgid "User ID"
+msgstr "ユーザー ID"
+
 #: app/web/templates/settings/plugin.html
 msgid "Uses:"
 msgstr "使うもの："
@@ -4649,6 +4752,10 @@ msgstr "どのバージョンですか？version として送ってください"
 msgid "Who"
 msgstr "誰が"
 
+#: app/web/templates/settings/backup.html
+msgid "Who did what, and when, with the addresses they came from. Off: the file has an empty log, and importing it empties this server's."
+msgstr "誰がいつ何をしたか、接続元のアドレスとともに。オフ：ファイルのログは空になり、インポートするとこのサーバーのログも空になります。"
+
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged."
 msgstr "誰がいつ何をしたか（ログイン、アカウント、フォルダーとスキャン、削除したシリーズ、プラグイン、設定）。このページは管理者だけが見られます。読書は記録されません。"
@@ -4657,9 +4764,17 @@ msgstr "誰がいつ何をしたか（ログイン、アカウント、フォル
 msgid "Why"
 msgstr "理由"
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "With a key"
+msgstr "キーを使用"
+
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "With a key (e.g. an assistant)"
 msgstr "キーを使って（アシスタントなど）"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "With the activity log"
+msgstr "アクティビティログを含む"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "With the tokens"
@@ -4685,7 +4800,7 @@ msgstr "パスワードが違います"
 msgid "Year"
 msgstr "年"
 
-#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/export.py app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Yes"
 msgstr "はい"
 

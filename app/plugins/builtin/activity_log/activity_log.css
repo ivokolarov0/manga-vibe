@@ -176,6 +176,15 @@
 
 /* phones: the time above what happened, so the words get the whole width */
 @media (max-width: 520px) {
+  /* Export and Clear go under their text instead of squeezing it into a narrow column */
+  .activity-actions {
+    flex-wrap: wrap;
+
+    & .label {
+      flex: 1 1 100%;
+    }
+  }
+
   .activity-entry > summary {
     flex-wrap: wrap;
   }

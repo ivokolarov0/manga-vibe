@@ -11,7 +11,9 @@ The file is a .zip:
 The manga files are not in it, nor the caches (thumbnails, resized pages: made again) or the plugins
 installed into /data/plugins (their settings are in the database; install them again).
 
-Tokens (the GitHub token, plugin settings marked secret) are left out unless asked for; so are all the
+The activity log (who did what, with addresses; the Activity log plugin's table) is left out unless asked
+for: the copy has the table, empty. Tokens (the GitHub token, plugin settings marked secret) are left out
+unless asked for; so are all the
 settings of a plugin that isn't loaded (which of them are secret isn't known). Password hashes
 (accounts, locked libraries) and the keys that sign logins always go along: without them nobody could log
 in after an import.
@@ -47,6 +49,8 @@ DB_NAME = "mangavibe.db"
 COVERS = "covers/"
 CSS_NAME = "custom.css"
 KEEP_SAFETY_COPIES = 3
+# the Activity log plugin's table (app/plugins/builtin/activity_log/store.py): left out unless asked for
+ACTIVITY_TABLE = "activity"
 _SAFE_NAME = re.compile(r"^(?!\.\.?$)[\w.-]+$")  # a plain file name: not "." or ".."
 
 
@@ -157,14 +161,41 @@ def _counts(path) -> dict:
         conn.close()
 
 
-def export_to(dest: Path, include_tokens=False) -> dict:
-    """Write the export to `dest` (a .zip). Returns its manifest."""
+def _strip_activity(path) -> bool:
+    """Empty the activity log in an exported copy (the Activity log plugin's table, `activity`). True when
+    there was one to empty."""
+    conn = sqlite3.connect(path)
+    try:
+        if not conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+                            (ACTIVITY_TABLE,)).fetchone():
+            return False
+        conn.execute(f"DELETE FROM {ACTIVITY_TABLE}")
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def _vacuum(path):
+    conn = sqlite3.connect(path)
+    try:
+        conn.execute("VACUUM")
+    finally:
+        conn.close()
+
+
+def export_to(dest: Path, include_tokens=False, include_activity=False) -> dict:
+    """Write the export to `dest` (a .zip). Returns its manifest. The activity log (who did what, with
+    addresses) stays out unless `include_activity`."""
     from app import db as database
     with _work_dir() as work:
         copy = work / DB_NAME
         _copy_db(Path(database.engine.url.database), copy)
+        emptied = not include_activity and _strip_activity(copy)
         if not include_tokens:
-            _strip_tokens(copy)
+            _strip_tokens(copy)  # VACUUMs too
+        elif emptied:
+            _vacuum(copy)  # what was removed isn't left in free pages
         conn = sqlite3.connect(copy)
         try:
             schema = conn.execute("SELECT version FROM schema_version").fetchone()[0]
@@ -172,7 +203,7 @@ def export_to(dest: Path, include_tokens=False) -> dict:
             conn.close()
         manifest = {"app": "MangaVibe", "format": FORMAT, "schema": schema, "version": _version(),
                     "created": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                    "tokens": bool(include_tokens), **_counts(copy)}
+                    "tokens": bool(include_tokens), "activity_log": bool(include_activity), **_counts(copy)}
         with zipfile.ZipFile(dest, "w", zipfile.ZIP_DEFLATED) as z:
             z.writestr(MANIFEST, json.dumps(manifest, indent=2))
             z.write(copy, DB_NAME)

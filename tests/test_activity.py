@@ -333,3 +333,127 @@ def test_the_people_filter_knows_people_who_are_gone(client, fresh):
     manager.wait_idle()
     assert client.get("/api/plugins/activity-log/api/people").json() == [{"id": 9, "name": "New name"}]
     assert len(entries(client, user="9")) == 2
+
+
+# ---------------------------------------------------------------- step 4 (#283): keeping, clearing, CSV, backup
+
+O = "/api/plugins/activity-log/api/options"
+
+
+def _aged(summaries_days: dict):
+    """Entries `days` old, one per summary (written, then moved into the past)."""
+    from datetime import datetime, timedelta, timezone
+    from app.db import SessionLocal
+    from app.plugins.builtin.activity_log import store
+    for summary in summaries_days:
+        activity.log("folder.changed", summary)
+    manager.wait_idle()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    with SessionLocal() as db:
+        for summary, days in summaries_days.items():
+            db.execute(store.table.update().where(store.table.c.summary == summary)
+                       .values(at=now - timedelta(days=days)))
+        db.commit()
+
+
+@pytest.fixture
+def keep_default(client):
+    yield
+    client.put(O, json={"keep_days": 90})
+    manager.wait_idle()
+
+
+def test_old_entries_are_removed_after_the_time_chosen(client, fresh, keep_default):
+    from app.db import SessionLocal
+    from app.plugins import Context
+    from app.plugins.builtin import activity_log
+    assert client.get(O).json() == {"keep_days": 90, "choices": [30, 90, 365, 0]}
+    _aged({"new": 1, "month": 40, "year": 200, "ancient": 400})
+    # the daily clean-up (the plugin's thread runs clean_up(); here it's called once)
+    with SessionLocal() as db:
+        ctx = Context(manager.get("activity-log"), db)
+        assert activity_log.clean_up(ctx) == 2
+        db.commit()
+    assert {e["summary"] for e in entries(client)} == {"new", "month"}
+    # a shorter time removes the older ones at once; forever keeps everything
+    r = client.put(O, json={"keep_days": 30}).json()
+    assert r == {"keep_days": 30, "removed": 1}
+    assert {e["summary"] for e in entries(client, kind="folder.changed")} == {"new"}
+    changed = one(client, "setting.changed")
+    assert changed["details"] == {"plugin": "activity-log", "setting": "keep_days", "old": 90, "new": 30}
+    _aged({"old again": 5000})
+    assert client.put(O, json={"keep_days": 0}).json()["removed"] == 0
+    assert "old again" in {e["summary"] for e in entries(client)}
+    assert client.put(O, json={"keep_days": 7}).status_code == 400
+
+
+def test_the_clean_up_runs_in_the_plugins_thread(client, fresh):
+    import threading
+    assert any(t.name == "plugin-activity-log" and t.is_alive() for t in threading.enumerate())
+
+
+def test_clearing_leaves_one_entry_saying_who(client, fresh):
+    for i in range(3):
+        activity.log("folder.added", f"f{i}")
+    manager.wait_idle()
+    assert client.post("/api/plugins/activity-log/api/clear").json() == {"removed": 3}
+    [e] = entries(client)
+    assert (e["kind"], e["details"], e["user_id"]) == ("activity.cleared", {"entries": 3}, 1)
+
+
+def test_export_as_csv_what_the_filters_show(client, fresh):
+    import csv
+    import io
+    activity.log("plugin.enabled", "=HYPERLINK(\"http://evil\")", target=("plugin", "x"), details={"v": "Ä"})
+    activity.log("account.login_failed", "+mira")
+    activity.log("folder.added", "Not this one")
+    manager.wait_idle()
+    r = client.get("/api/plugins/activity-log/api/export.csv",
+                   params={"group": "plugins,accounts", "tz": "No/Such_Zone", "offset": 120})
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/csv")
+    assert 'filename="mangavibe-activity-' in r.headers["content-disposition"]
+    assert r.content.startswith(b"\xef\xbb\xbf")  # the byte order mark: spreadsheet programs read it as UTF-8
+    rows = list(csv.reader(io.StringIO(r.content.decode("utf-8-sig"))))
+    assert rows[0][:2] == ["Time (UTC)", "Time (local)"] and len(rows) == 3  # the header and the two filtered
+    failed, enabled = rows[1], rows[2]
+    assert failed[8] == "'+mira" and enabled[8].startswith("'=HYPERLINK")  # not run as formulas
+    assert failed[3] == "System" and enabled[9:11] == ["plugin", "x"] and '"v": "Ä"' in enabled[11]
+    from datetime import datetime
+    utc, local = (datetime.strptime(enabled[i], "%Y-%m-%d %H:%M:%S") for i in (0, 1))
+    assert (local - utc).total_seconds() == 7200  # the browser's offset, as the zone isn't known here
+
+
+def test_keeping_clearing_and_exporting_are_for_admins(client, fresh, accounts_on):
+    other = accounts_on
+    client.post(f"{A}/setup", json={"name": "Ivo", "password": "secret1"})
+    client.post(f"{A}/accounts", json={"name": "Kid", "password": "kid1", "admin": False})
+    other.post(f"{A}/login", json={"name": "Kid", "password": "kid1"})
+    assert other.get(O).status_code == 403
+    assert other.put(O, json={"keep_days": 30}).status_code == 403
+    assert other.post("/api/plugins/activity-log/api/clear").status_code == 403
+    assert other.get("/api/plugins/activity-log/api/export.csv").status_code == 403
+
+
+def test_the_backup_has_the_log_only_when_asked(client, fresh, tmp_path):
+    import io
+    import json
+    import sqlite3
+    import zipfile
+    activity.log("folder.added", "kept or not")
+    manager.wait_idle()
+
+    def logged(activity_log):
+        r = client.get(f"/api/backup/export?activity_log={'true' if activity_log else 'false'}")
+        assert r.status_code == 200
+        z = zipfile.ZipFile(io.BytesIO(r.content))
+        path = tmp_path / f"db-{activity_log}.db"
+        path.write_bytes(z.read("mangavibe.db"))
+        con = sqlite3.connect(path)
+        try:
+            n = con.execute("SELECT COUNT(*) FROM activity WHERE summary = 'kept or not'").fetchone()[0]
+        finally:
+            con.close()
+        return n, json.loads(z.read("manifest.json"))["activity_log"]
+
+    assert logged(False) == (0, False)
+    assert logged(True) == (1, True)

@@ -60,6 +60,7 @@ MangaVibe.onStart(() => {
     "update.started": (v) => (v.rollback ? MV.t("Started going back to {to}", v) : MV.t("Started an update to {to}", v)),
     "update.finished": (v) => MV.t("MangaVibe was updated from {from} to {to}", v),
     "update.failed": () => MV.t("An update failed"),
+    "activity.cleared": (v) => MV.tn("Cleared the activity log ({n} entry)", "Cleared the activity log ({n} entries)", v.entries || 0),
   };
   // the page's kinds filter: the groups (activity.GROUPS)
   const GROUPS = [["accounts", MV.t("Accounts")], ["library", MV.t("Library")], ["plugins", MV.t("Plugins")],
@@ -85,6 +86,7 @@ MangaVibe.onStart(() => {
     changed_books: MV.t("Changed books"), missing_series: MV.t("Series gone"), missing_books: MV.t("Books gone"),
     errors: MV.t("Errors"), seconds: MV.t("Seconds"), rollback: MV.t("Going back"), database: MV.t("Database"),
     size: MV.t("Size"), private_settings_included: MV.t("With the tokens"), safety_copy: MV.t("Copy from before"),
+    activity_log: MV.t("With the activity log"), entries: MV.t("Entries"),
   };
   const VALUES = {
     wrong_password: MV.t("Wrong password"), no_such_account: MV.t("No such account"),
@@ -99,6 +101,7 @@ MangaVibe.onStart(() => {
   Alpine.data("activityLog", () => ({
     entries: [], people: [], more: false, loading: false, failed: "", loaded: false,
     f: { user: "", group: "", from: "", to: "", q: "" },
+    keep: "90", clearing: false,
     now: Date.now(), timer: null, observer: null, seq: 0,
     groups: GROUPS,
     init() {
@@ -109,6 +112,7 @@ MangaVibe.onStart(() => {
     open() {
       this.reload();
       MV.api(`${API}/people`).then((p) => (this.people = p)).catch(() => {});
+      MV.api(`${API}/options`).then((o) => (this.keep = String(o.keep_days))).catch(() => {});
       clearInterval(this.timer);
       this.timer = setInterval(() => (this.now = Date.now()), 30000);  // "5 minutes ago" moves on
       this.$nextTick(() => this.watchEnd());
@@ -174,6 +178,36 @@ MangaVibe.onStart(() => {
     clear() {
       this.f = { user: "", group: "", from: "", to: "", q: "" };
       this.reload();
+    },
+    // ---- keeping, exporting and clearing (#283)
+    async saveKeep() {
+      try {
+        const r = await MV.api(`${API}/options`, { method: "PUT", body: { keep_days: Number(this.keep) } });
+        MV.toast(r.removed ? MV.tn("Saved. {n} older entry was removed.", "Saved. {n} older entries were removed.", r.removed)
+          : MV.t("Saved"));
+        if (r.removed) this.reload();
+      } catch (e) { MV.toast(e.message, 6000, "error"); }
+    },
+    // the CSV of what the filters show, with the times also in this browser's time zone
+    get exportUrl() {
+      const p = this.query();
+      p.delete("limit");
+      p.set("tz", Intl.DateTimeFormat().resolvedOptions().timeZone || "");
+      p.set("offset", String(-new Date().getTimezoneOffset()));
+      return `${API}/export.csv?${p}`;
+    },
+    async clearLog() {
+      if (!confirm(MV.t("Clear the activity log? Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."))) return;
+      this.clearing = true;
+      try {
+        const r = await MV.api(`${API}/clear`, { method: "POST" });
+        MV.toast(MV.tn("Removed {n} entry", "Removed {n} entries", r.removed));
+        setTimeout(() => this.reload(), 400);  // the entry about the clearing is written in the background
+      } catch (e) {
+        MV.toast(e.message, 6000, "error");
+      } finally {
+        this.clearing = false;
+      }
     },
     // the entries by day, newest first: [{ key, label, entries }]
     get days() {

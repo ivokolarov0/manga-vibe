@@ -301,6 +301,17 @@ It shows them in **Settings → Activity**, for admins only: newest first, group
 it's about. A replacement plugin can listen to `on_activity` the same way and show them its own way. A
 new kind of the app needs its sentence in `activity_log.js` (`SAID`; a test checks every kind has one).
 
+**Keeping, clearing and taking it out** (issue #283), on the same page and admins only:
+`GET` / `PUT .../api/options` `{"keep_days": 30 | 90 | 365 | 0}` (0: forever; 90 when not set) is how long
+entries are kept: the plugin's thread removes older ones at start and then once a day, and a shorter
+time removes them at once. `POST .../api/clear` removes every entry and logs `activity.cleared` (with the
+count), so the log never empties without a trace. `GET .../api/export.csv` takes the list's filters and
+`tz` (an IANA zone) / `offset` (minutes east of UTC, when the server doesn't know the zone): a UTF-8 CSV,
+newest first, with the time in UTC and local, who, the address, the kind, the summary, the target and the
+details as JSON; a cell that a spreadsheet would run as a formula gets a `'` in front. A backup (Settings
+→ Backup) leaves the log out unless "Include the activity log" is on (`activity_log=true`): the file then
+has an empty `activity` table.
+
 What the app logs (issue #281), each with the person who did it:
 
 | Group | Kinds |
@@ -309,7 +320,7 @@ What the app logs (issue #281), each with the person who did it:
 | library | `folder.added`, `folder.removed`, `folder.changed`, `scan.started` (only when someone starts one), `scan.finished` (counts: `new_series`, `new_books`, `changed_books`, `missing_series`, `missing_books`, `errors`; the app's own scans only when they changed something), `series.deleted`, `series.moved`, `metadata.changed` (`fields`), `metadata.matched`, `metadata.unmatched`, `metadata.refetched`, `library.added`, `library.changed`, `library.removed`, `library.password_set`, `library.password_removed`, `library.unlock_failed` |
 | plugins | `plugin.installed`, `plugin.enabled`, `plugin.disabled`, `plugin.updated`, `plugin.restored` (`from` and `to` versions), `plugin.failed` (didn't load, or failed in `on_start`), `plugin_source.added`, `plugin_source.removed`, `safe_mode.on`, `safe_mode.off` |
 | settings | `setting.changed`: the app's settings (`setting`, `old`, `new`) and the plugins' (`plugin`, `setting`; a secret one says only that it changed). Not each person's own (theme, reader) |
-| app | `backup.exported`, `backup.imported`, `update.started`, `update.finished` (seen at the next start), `update.failed` |
+| app | `backup.exported`, `backup.imported`, `update.started`, `update.finished` (seen at the next start), `update.failed`, `activity.cleared` |
 
 Reading is never logged (opening a book, turning pages, progress, favorites): it's each person's own.
 
