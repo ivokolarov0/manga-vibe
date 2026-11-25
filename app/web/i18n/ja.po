@@ -59,6 +59,10 @@ msgstr "ライブラリをスキャン中です。終わってからもう一度
 msgid "A month"
 msgstr "1 か月"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "A name, a series, an address…"
+msgstr "名前、シリーズ、アドレス…"
+
 #: app/web/templates/shell/toasts.html
 msgid "A new MangaVibe version needs a new Docker image"
 msgstr "新しいバージョンの MangaVibe には新しい Docker イメージが必要です"
@@ -135,7 +139,7 @@ msgstr "アカウントが見つかりません"
 msgid "Account: {name}"
 msgstr "アカウント：{name}"
 
-#: app/plugins/builtin/accounts/__init__.py app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/accounts/__init__.py app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Accounts"
 msgstr "アカウント"
 
@@ -146,6 +150,10 @@ msgstr "アカウントが有効です。最初のアカウントを作成して
 #: app/api/books.py app/api/series.py app/api/system.py
 msgid "Action not found"
 msgstr "操作が見つかりません"
+
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+msgid "Activity"
+msgstr "アクティビティ"
 
 #: app/plugins/builtin/activity_log/__init__.py
 msgid "Activity log"
@@ -187,14 +195,38 @@ msgstr "ソースを追加"
 msgid "Add to favorites"
 msgstr "お気に入りに追加"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the account {name}"
+msgstr "アカウント {name} を追加しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the folder {name}"
+msgstr "フォルダー {name} を追加しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the library {name}"
+msgstr "ライブラリ {name} を追加しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the plugin source {name}"
+msgstr "プラグインの入手先 {name} を追加しました"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Added {n} series to favorites"
 msgid_plural "Added {n} series to favorites"
 msgstr[0] "{n} シリーズをお気に入りに追加しました"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Address"
+msgstr "アドレス"
+
 #: app/plugins/builtin/random_manga/__init__.py
 msgid "Adds a Random series button to the library page, the Sidebar and the picked series' page"
 msgstr "ライブラリ、サイドバー、選ばれたシリーズのページに「ランダムなシリーズ」ボタンを追加します"
+
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Adds Settings → Activity, for admins only"
+msgstr "設定 → アクティビティを追加します（管理者のみ）"
 
 #: app/plugins/builtin/libraries/__init__.py
 msgid "Adds the library tabs, Settings → Libraries and the library pickers"
@@ -204,9 +236,13 @@ msgstr "ライブラリのタブ、設定 → ライブラリ、ライブラリ�
 msgid "Adds the Saved and Save search buttons to the library page"
 msgstr "ライブラリのページに保存ボタンと検索を保存ボタンを追加します"
 
-#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Admin"
 msgstr "管理者"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "After"
+msgstr "変更後"
 
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html app/web/static/js/app.js app/web/templates/settings/plugins.html
 msgid "All"
@@ -228,6 +264,14 @@ msgstr "許可してインストールしますか？"
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr "総数が不明なシリーズも表示（連載中、メタデータなし）"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Also switched off"
+msgstr "一緒にオフになったもの"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Also switched on"
+msgstr "一緒にオンになったもの"
+
 #: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Always"
 msgstr "常に"
@@ -239,6 +283,10 @@ msgstr "常に表示"
 #: app/web/static/js/app.js
 msgid "an earlier update"
 msgstr "以前の更新"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "An update failed"
+msgstr "アップデートに失敗しました"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/shell/toasts.html
 msgid "and {n} more"
@@ -357,6 +405,10 @@ msgstr "戻る・全画面・オプションのボタンを、親指の届くこ
 msgid "Backup"
 msgstr "バックアップ"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Before"
+msgstr "変更前"
+
 #: app/contracts/__init__.py app/plugins/builtin/book_labels/__init__.py
 msgid "Book labels"
 msgstr "本の名前"
@@ -369,9 +421,13 @@ msgstr "本が見つかりません"
 msgid "Book not in this series"
 msgstr "この本はこのシリーズのものではありません"
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/series_page/templates/views/series.html
 msgid "Books"
 msgstr "本"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Books gone"
+msgstr "なくなった本"
 
 #: app/web/static/js/app.js
 msgid "Bottom"
@@ -501,6 +557,34 @@ msgstr "サーバーを変更"
 msgid "Change your password"
 msgstr "パスワードの変更"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed books"
+msgstr "変更された本"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed the folder {name}"
+msgstr "フォルダー {name} を変更しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed the library {name}"
+msgstr "ライブラリ {name} を変更しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed their password"
+msgstr "自分のパスワードを変更しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed which libraries {name} sees"
+msgstr "{name} が見られるライブラリを変更しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed {name}"
+msgstr "{name} を変更しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed {name} from {old} to {new}"
+msgstr "{name} を {old} から {new} に変更しました"
+
 #: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/reader.js
 msgid "Chapter"
 msgstr "話"
@@ -537,6 +621,10 @@ msgstr "クリア"
 msgid "Clear all"
 msgstr "すべてクリア"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Clear filters"
+msgstr "フィルターをクリア"
+
 #: app/web/static/js/app.js
 msgid "Clear progress for every book in this series? It will also be removed from Continue reading."
 msgstr "このシリーズのすべての本の進み具合を消去しますか？続きを読むからも削除されます。"
@@ -548,6 +636,14 @@ msgstr "絞り込みをクリア"
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear the search"
 msgstr "検索をクリア"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Cleared"
+msgstr "消去済み"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Cleared {name}"
+msgstr "{name} を消去しました"
 
 #: app/web/static/js/app.js
 msgid "Cleared: the series page shows the path inside Docker"
@@ -645,6 +741,10 @@ msgstr "コピーしました"
 msgid "Copy"
 msgstr "コピー"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Copy from before"
+msgstr "以前のコピー"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copy path"
 msgstr "パスをコピー"
@@ -684,6 +784,10 @@ msgstr "ダーク"
 #: app/web/static/js/app.js
 msgid "Darker pages are easier on the eyes, e.g. at night"
 msgstr "暗めのページは夜などに目にやさしくなります"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Database"
+msgstr "データベース"
 
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Decides which series the library lists and in what order; connects to nothing"
@@ -734,6 +838,18 @@ msgstr[0] "{n} シリーズを削除"
 msgid "Delete {n} series and files"
 msgid_plural "Delete {n} series and files"
 msgstr[0] "{n} シリーズとファイルを削除"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Deleted the account {name}"
+msgstr "アカウント {name} を削除しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Deleted the library {name}"
+msgstr "ライブラリ {name} を削除しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Deleted the series {name} and its folder"
+msgstr "シリーズ {name} とそのフォルダーを削除しました"
 
 #: app/web/static/js/app.js
 msgid "Deleted {done} of {total}. {error}"
@@ -928,6 +1044,10 @@ msgstr "編集ダイアログ"
 msgid "Edit · {title}"
 msgstr "編集 · {title}"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Edited {name}"
+msgstr "{name} を編集しました"
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js
 msgid "Edition"
 msgstr "版"
@@ -952,7 +1072,11 @@ msgstr "英語タイトル"
 msgid "Enter the first chapter of the range"
 msgstr "範囲の最初の話を入力してください"
 
-#: app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Error"
+msgstr "エラー"
+
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
 msgid "Errors"
 msgstr "エラー"
 
@@ -972,6 +1096,10 @@ msgstr "すべてのプラグインを読み込みました。"
 msgid "Every series is optimized already"
 msgstr "すべてのシリーズは最適化済みです"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Everyone"
+msgstr "全員"
+
 #: app/plugins/builtin/accounts/settings.html
 msgid "Everyone logs in. Each account has its own reading progress, favorites, Continue reading, saved searches and Settings → Reader. Admins also manage the app: settings, folders, metadata, plugins, deleting, and these accounts."
 msgstr "全員がログインします。アカウントごとに読書の進み具合、お気に入り、続きを読む、保存した検索、設定 → リーダー があります。管理者はアプリ（設定、フォルダ、メタデータ、プラグイン、削除、アカウント）も管理します。"
@@ -979,6 +1107,10 @@ msgstr "全員がログインします。アカウントごとに読書の進み
 #: app/plugins/builtin/accounts/__init__.py
 msgid "Everyone logs in; each account has its own progress, favorites, saved searches and reader settings. Admins manage the app and pick the libraries each account sees. Built in."
 msgstr "全員がログインします。アカウントごとに進み具合、お気に入り、保存した検索、リーダーの設定があります。管理者はアプリを管理し、各アカウントが見られるライブラリを選びます。組み込み。"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Everything"
+msgstr "すべて"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18."
@@ -1000,6 +1132,10 @@ msgstr "全画面を終了"
 msgid "Export"
 msgstr "エクスポート"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Exported a backup"
+msgstr "バックアップをエクスポートしました"
+
 #: app/plugins/builtin/book_labels/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "extra"
 msgstr "番外編"
@@ -1020,6 +1156,14 @@ msgstr "番外編 {n}"
 msgid "Failed to load"
 msgstr "読み込み失敗"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Failed to log in as {name}"
+msgstr "{name} としてのログインに失敗しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Failed to unlock the library {name}"
+msgstr "ライブラリ {name} のロック解除に失敗しました"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Fallback"
 msgstr "予備"
@@ -1039,6 +1183,14 @@ msgstr "お気に入り"
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Fewest first"
 msgstr "少ない順"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Fields"
+msgstr "項目"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "File"
+msgstr "ファイル"
 
 #: app/web/static/js/app.js
 msgid "File hidden from reading (it stays on disk)"
@@ -1068,6 +1220,10 @@ msgstr "ファイル"
 msgid "Files alone are not enough for it. See {url}"
 msgstr "ファイルだけでは足りません。{url} を参照してください"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Files left"
+msgstr "残ったファイル"
+
 #: app/plugins/builtin/mangaupdates.py
 msgid "Fills in series metadata"
 msgstr "シリーズのメタデータを補完します"
@@ -1083,6 +1239,10 @@ msgstr "絞り込み"
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Filter by first letter"
 msgstr "頭文字で絞り込む"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Filter the activity"
+msgstr "アクティビティを絞り込む"
 
 #: app/web/templates/sheets/library.html
 msgid "Find a tag"
@@ -1140,7 +1300,7 @@ msgstr "照合を修正 · {folder}"
 msgid "Fix match…"
 msgstr "照合を修正…"
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Folder"
 msgstr "フォルダ"
 
@@ -1187,6 +1347,10 @@ msgstr "忘れた場合は {setting} を付けて MangaVibe を一度起動し�
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Format"
 msgstr "種類"
+
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+msgid "From"
+msgstr "開始日"
 
 #: app/plugins/builtin/anilist_recommendations/panel.html
 msgid "From AniList readers' recommendations."
@@ -1300,6 +1464,10 @@ msgstr "{version} に戻す"
 msgid "Go back to {version}? MangaVibe restarts with it. {current} won't be offered again until a newer version is out."
 msgstr "{version} に戻しますか？MangaVibe はそのバージョンで再起動します。{current} はさらに新しいバージョンが出るまで再び提示されません。"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Going back"
+msgstr "以前のバージョンに戻す"
+
 #: app/web/templates/shell/toasts.html
 msgid "Going back failed"
 msgstr "元に戻せませんでした"
@@ -1368,6 +1536,10 @@ msgstr "操作ボタンと一緒に隠す"
 msgid "Highest first"
 msgstr "高い順"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "How"
+msgstr "方法"
+
 #: app/plugins/builtin/cards/__init__.py
 msgid "How a series looks in the library and Continue reading: poster, badges, title and progress. Built in; replace it with a plugin that draws the cards its own way."
 msgstr "ライブラリと続きを読むでのシリーズの見た目（表紙、バッジ、タイトル、進み具合）。組み込み。独自のカードを描くプラグインで置き換えられます。"
@@ -1376,7 +1548,7 @@ msgstr "ライブラリと続きを読むでのシリーズの見た目（表紙
 msgid "How a series looks in the library grid, its list view and Continue reading"
 msgstr "ライブラリのグリッド、リスト表示、続きを読むでのシリーズの見た目"
 
-#: app/plugins/builtin/anilist_recommendations/__init__.py
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "How many"
 msgstr "件数"
 
@@ -1411,6 +1583,14 @@ msgstr "インポート"
 #: app/web/static/js/app.js
 msgid "Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first."
 msgstr "{file} をインポートしますか？このサーバーのライブラリデータ、読書の進み具合、アカウント、設定がファイルの内容に置き換わります。現在のデータベースは先に /data/backups にコピーされます。"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Imported a backup"
+msgstr "バックアップをインポートしました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Imported a backup made {name}"
+msgstr "{name} に作成したバックアップをインポートしました"
 
 #: app/web/static/js/app.js
 msgid "Imported {series} and {books}. Reloading…"
@@ -1487,6 +1667,10 @@ msgstr "インストール済み"
 #: app/web/templates/settings/plugins.html
 msgid "Installed v{version}"
 msgstr "v{version} をインストール済み"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Installed {name} {to}"
+msgstr "{name} {to} をインストールしました"
 
 #: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Inverted"
@@ -1572,6 +1756,14 @@ msgstr "アカウント（パスワードのハッシュ）を MangaVibe のデ�
 msgid "Keeps the log in MangaVibe's database; connects to nothing"
 msgstr "ログを MangaVibe のデータベースに保存します。外部には接続しません"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "key"
+msgstr "キー"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Kind"
+msgstr "種類"
+
 #: app/web/static/js/app.js
 msgid "Language"
 msgstr "言語"
@@ -1616,6 +1808,10 @@ msgstr "左"
 msgid "Left back, right forward"
 msgstr "左で戻る、右で進む"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Left safe mode"
+msgstr "セーフモードを終了しました"
+
 #: app/plugins/builtin/image_reader/image_reader.js
 msgid "Left to right"
 msgstr "左から右"
@@ -1640,11 +1836,11 @@ msgstr "メタデータの更新ですべての項目を再び変更できるよ
 msgid "Letter"
 msgstr "頭文字"
 
-#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "Libraries"
 msgstr "ライブラリ"
 
-#: app/plugins/__init__.py app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Library"
 msgstr "ライブラリ"
 
@@ -1732,7 +1928,7 @@ msgstr "AniList から読み込む"
 msgid "Loading the plugin sources…"
 msgstr "プラグインのソースを読み込み中…"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr "読み込み中…"
 
@@ -1772,6 +1968,14 @@ msgstr "先にログインしてください"
 msgid "Log out"
 msgstr "ログアウト"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Logged in"
+msgstr "ログインしました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Logged out"
+msgstr "ログアウトしました"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Look again"
 msgstr "再確認"
@@ -1791,6 +1995,14 @@ msgstr "低いほど要確認のシリーズは減りますが、誤った照合
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Lowest first"
 msgstr "低い順"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Made a key for {name}"
+msgstr "{name} のキーを作成しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Made {name} an admin"
+msgstr "{name} を管理者にしました"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Main"
@@ -1835,6 +2047,10 @@ msgstr "MangaVibe には {jobs} が必要です。{plugin} をオフにするに
 #: app/plugins/builtin/optimize/__init__.py
 msgid "MangaVibe shows all three in every browser. Other comic apps may not open JPEG XL or AVIF."
 msgstr "MangaVibe はどのブラウザでも 3 種類すべてを表示できます。ほかの漫画アプリは JPEG XL や AVIF を開けないことがあります。"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "MangaVibe was updated from {from} to {to}"
+msgstr "MangaVibe が {from} から {to} にアップデートされました"
 
 #: app/web/templates/settings/plugins.html
 msgid "MangaVibe's own plugins"
@@ -1901,6 +2117,10 @@ msgstr "自動照合 · {score}"
 #: app/web/static/js/app.js
 msgid "Matched by you"
 msgstr "手動で照合"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Matched {name}"
+msgstr "{name} をマッチさせました"
 
 #: app/web/static/js/app.js
 msgid "Matched: {title}"
@@ -1996,6 +2216,23 @@ msgid "Move {n} series to"
 msgid_plural "Move {n} series to"
 msgstr[0] "{n} シリーズの移動先"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved to"
+msgstr "移動先"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {name} back to its folder's library"
+msgstr "{name} をフォルダーのライブラリに戻しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {name} to {to}"
+msgstr "{name} を {to} に移動しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {n} series back to their folders' libraries"
+msgid_plural "Moved {n} series back to their folders' libraries"
+msgstr[0] "{n} シリーズをそれぞれのフォルダーのライブラリに戻しました"
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Moved {n} series to their folders' libraries"
 msgid_plural "Moved {n} series to their folders' libraries"
@@ -2006,7 +2243,12 @@ msgid "Moved {n} series to {library}"
 msgid_plural "Moved {n} series to {library}"
 msgstr[0] "{n} シリーズを {library} に移動しました"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {n} series to {to}"
+msgid_plural "Moved {n} series to {to}"
+msgstr[0] "{n} シリーズを {to} に移動しました"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Name"
 msgstr "名前"
 
@@ -2062,6 +2304,14 @@ msgstr "必要：{jobs}"
 msgid "Never"
 msgstr "隠さない"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Never match"
+msgstr "マッチさせない"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "New books"
+msgstr "新しい本"
+
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "New library"
 msgstr "新しいライブラリ"
@@ -2085,6 +2335,10 @@ msgstr "新しいパスワード…"
 #: app/web/templates/settings/plugins.html
 msgid "New plugin source"
 msgstr "新しいプラグインのソース"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "New series"
+msgstr "新しいシリーズ"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "New version: {version}"
@@ -2110,7 +2364,7 @@ msgstr "次のページ"
 msgid "Next: {book}"
 msgstr "次：{book}"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "No"
 msgstr "いいえ"
 
@@ -2198,6 +2452,10 @@ msgstr "シリーズやファイルは削除されません。フォルダと移
 msgid "No series yet. The first scan may still be running; see Settings."
 msgstr "シリーズはまだありません。最初のスキャンが実行中かもしれません。設定を確認してください。"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "No such account"
+msgstr "そのアカウントはありません"
+
 #: app/api/books.py app/api/edit.py
 msgid "No such page"
 msgstr "そのページはありません"
@@ -2282,6 +2540,10 @@ msgstr "{tag} 以外"
 msgid "Notes"
 msgstr "ノート"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Nothing has happened yet."
+msgstr "まだ何も起きていません。"
+
 #: app/web/templates/settings/attention.html
 msgid "Nothing here. All good."
 msgstr "何もありません。問題なしです。"
@@ -2293,6 +2555,10 @@ msgstr "読みかけのものはありません。シリーズを読み始める
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Nothing in {library} yet. Move series here with Edit, or select several (hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders."
 msgstr "{library} にはまだ何もありません。編集でシリーズを移すか、カードを長押しして複数選び ⋯ → ライブラリへ移動 を使ってください。フォルダごとなら 設定 → ライブラリのフォルダ。"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Nothing matches these filters."
+msgstr "このフィルターに一致するものはありません。"
 
 #: app/plugins/builtin/optimize/__init__.py
 msgid "Nothing optimized yet"
@@ -2438,7 +2704,7 @@ msgstr "表示場所だけが変わります。ファイルはフォルダに残
 msgid "Only {library}, the library picked on the home screen"
 msgstr "ホーム画面で選んだライブラリ {library} のみ"
 
-#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
 msgid "Open"
 msgstr "開く"
 
@@ -2469,6 +2735,10 @@ msgstr "ダウンロードした MangaVibe.apk を開き、Android に聞かれ�
 #: app/plugins/builtin/continue_page/templates/views/continue.html
 msgid "Open the Library"
 msgstr "ライブラリを開く"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Opened the app in safe mode"
+msgstr "アプリをセーフモードで開きました"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead"
@@ -2523,7 +2793,7 @@ msgstr "原寸"
 msgid "Original size"
 msgstr "原寸"
 
-#: app/plugins/__init__.py app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Other"
 msgstr "その他"
 
@@ -2546,6 +2816,10 @@ msgstr "オーバーレイの背景"
 #: app/web/static/js/app.js
 msgid "Overlay text outline"
 msgstr "オーバーレイ文字のふち"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Owner"
+msgstr "オーナー"
 
 #: app/web/templates/settings/plugins.html
 msgid "owner/repo or https://…/plugins.json"
@@ -2607,6 +2881,10 @@ msgstr "ページ：1 ページずつ、次のページは右（→、右側を�
 msgid "Paginated"
 msgstr "ページ番号"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Partly"
+msgstr "一部"
+
 #: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
 msgid "Password"
 msgstr "パスワード"
@@ -2627,7 +2905,7 @@ msgstr "パスワードを削除しました"
 msgid "Password saved. This browser stays unlocked until “Lock now” or a new tab."
 msgstr "パスワードを保存しました。このブラウザは「今すぐロック」か新しいタブまでロック解除のままです。"
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Path outside Docker"
 msgstr "Docker 外のパス"
 
@@ -2638,6 +2916,10 @@ msgstr "{name} の Docker 外のパス"
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Per page"
 msgstr "1 ページの件数"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Permissions accepted"
+msgstr "承認した権限"
 
 #: app/web/static/js/app.js
 msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
@@ -2679,7 +2961,7 @@ msgstr "読む予定"
 msgid "Please choose an image file"
 msgstr "画像ファイルを選んでください"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/app.js
 msgid "Plugin"
 msgstr "プラグイン"
 
@@ -2715,7 +2997,7 @@ msgstr "プラグインのソースを更新しました"
 msgid "Plugin tools"
 msgstr "プラグインのツール"
 
-#: app/plugins/web.py app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/web.py app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "プラグイン"
 
@@ -2731,7 +3013,7 @@ msgstr "プラグインと独自スタイル"
 msgid "Plugins from this source run inside MangaVibe with full access to its data. Only add sources you trust. Add it?"
 msgstr "このソースのプラグインは MangaVibe 内でデータに完全にアクセスできます。信頼できるソースだけを追加してください。追加しますか？"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Poster"
 msgstr "表紙"
 
@@ -2758,6 +3040,10 @@ msgstr "前の章"
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Previous page"
 msgstr "前のページ"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Provider"
+msgstr "提供元"
 
 #: app/api/edit.py app/api/series.py
 msgid "Provider unavailable: {error}"
@@ -2899,6 +3185,15 @@ msgstr "更新"
 msgid "Refresh metadata"
 msgstr "メタデータを更新"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Refreshed the metadata of {name}"
+msgstr "{name} のメタデータを更新しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Refreshed the metadata of {n} series"
+msgid_plural "Refreshed the metadata of {n} series"
+msgstr[0] "{n} シリーズのメタデータを更新しました"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Refreshing metadata for {n} series in the background"
 msgid_plural "Refreshing metadata for {n} series in the background"
@@ -2952,10 +3247,26 @@ msgstr "{filter} を外す"
 msgid "Remove “{name}” ({path}) from MangaVibe?"
 msgstr "「{name}」（{path}）を MangaVibe から削除しますか？"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed a key of {name}"
+msgstr "{name} のキーを削除しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed the folder {name}"
+msgstr "フォルダー {name} を削除しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed the plugin source {name}"
+msgstr "プラグインの入手先 {name} を削除しました"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Removed {n} series from favorites"
 msgid_plural "Removed {n} series from favorites"
 msgstr[0] "{n} シリーズをお気に入りから外しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Renamed the account {old} to {new}"
+msgstr "アカウント {old} の名前を {new} に変更しました"
 
 #: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
 msgid "Renamed to {name}"
@@ -3131,9 +3442,17 @@ msgstr "保存中…"
 msgid "Scan"
 msgstr "スキャン"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Scan finished"
+msgstr "スキャンが完了しました"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Scan for new files"
 msgstr "新しいファイルをスキャン"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Scan of {name} finished"
+msgstr "{name} のスキャンが完了しました"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Scan only this folder"
@@ -3155,7 +3474,7 @@ msgstr "スキャン中…"
 msgid "Score"
 msgstr "評価"
 
-#: app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_query/__init__.py app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_query/__init__.py app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Search"
 msgstr "検索"
 
@@ -3174,6 +3493,14 @@ msgstr "ライブラリを検索"
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Searching {source}…"
 msgstr "{source} を検索中…"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Seconds"
+msgstr "秒"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Secret"
+msgstr "秘密"
 
 #: app/web/templates/shell/toasts.html
 msgid "See {url}"
@@ -3203,9 +3530,17 @@ msgstr "プラグインのソースと ID を送ってください"
 msgid "Separate libraries (Manga, Comics...) with tabs on the home screen, a reading mode and an optional password each. Built in."
 msgstr "ホーム画面のタブで切り替える個別のライブラリ（マンガ、コミックなど）。それぞれに読み方と任意のパスワードを設定できます。組み込み。"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Series"
+msgstr "シリーズ"
+
 #: app/contracts/__init__.py app/plugins/builtin/cards/__init__.py
 msgid "Series cards"
 msgstr "シリーズのカード"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Series gone"
+msgstr "なくなったシリーズ"
 
 #: app/api/common.py app/api/series.py app/plugins/builtin/anilist_recommendations/api.py
 msgid "Series not found"
@@ -3227,6 +3562,14 @@ msgstr "1 ページのシリーズ数"
 msgid "Server"
 msgstr "サーバー"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Set a new password for {name}"
+msgstr "{name} に新しいパスワードを設定しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Set a password on the library {name}"
+msgstr "ライブラリ {name} にパスワードを設定しました"
+
 #: app/plugins/builtin/libraries/settings.html
 msgid "Set a password…"
 msgstr "パスワードを設定…"
@@ -3243,7 +3586,11 @@ msgstr "手動設定"
 msgid "set for this series"
 msgstr "このシリーズに設定"
 
-#: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Setting"
+msgstr "設定"
+
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
 msgid "Settings"
 msgstr "設定"
 
@@ -3331,7 +3678,7 @@ msgstr "再び表示"
 msgid "Show less"
 msgstr "閉じる"
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Show more"
 msgstr "もっと見る"
 
@@ -3382,6 +3729,10 @@ msgstr "読んでいる本のページを表示します。外部には接続し
 msgid "Sidebar"
 msgstr "サイドバー"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Size"
+msgstr "サイズ"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/shell/toasts.html
 msgid "Skip this version"
 msgstr "このバージョンをスキップ"
@@ -3398,6 +3749,10 @@ msgstr "不透明"
 msgid "some missing"
 msgstr "一部欠けあり"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Someone not logged in"
+msgstr "ログインしていない誰か"
+
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/sheets/library.html
 msgid "Sort"
 msgstr "並べ替え"
@@ -3410,7 +3765,7 @@ msgstr "並べ替えの基準"
 msgid "Sort: {sort}"
 msgstr "並べ替え：{sort}"
 
-#: app/web/templates/settings/plugins.html
+#: app/plugins/builtin/activity_log/activity_log.js app/web/templates/settings/plugins.html
 msgid "Source"
 msgstr "入手元"
 
@@ -3437,6 +3792,22 @@ msgstr "読み始める"
 #: app/web/static/js/reader.js
 msgid "Start of book. Previous: {book}"
 msgstr "本の始めです。前：{book}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started a scan of every folder"
+msgstr "すべてのフォルダーのスキャンを開始しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started a scan of {name}"
+msgstr "{name} のスキャンを開始しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started an update to {to}"
+msgstr "{to} へのアップデートを開始しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started going back to {to}"
+msgstr "{to} に戻す処理を開始しました"
 
 #: app/web/static/js/app.js
 msgid "Starting…"
@@ -3482,7 +3853,15 @@ msgstr "設定を変更するにはプラグインをオンにしてください
 msgid "Switch {overlay} on above to hear its text."
 msgstr "テキストを聞くには、上の {overlay} をオンにしてください。"
 
-#: app/plugins/__init__.py
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Switched {name} off"
+msgstr "{name} をオフにしました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Switched {name} on"
+msgstr "{name} をオンにしました"
+
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js
 msgid "System"
 msgstr "システム"
 
@@ -3514,6 +3893,10 @@ msgstr "その本はこのシリーズのものではありません"
 msgid "That is MangaVibe's own data folder, not a manga folder"
 msgstr "それは MangaVibe 自身のデータフォルダで、マンガのフォルダではありません"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "The app"
+msgstr "アプリ"
+
 #: app/plugins/builtin/accounts/api.py
 msgid "The current password is wrong"
 msgstr "現在のパスワードが違います"
@@ -3533,6 +3916,10 @@ msgstr "このファイルのデータベースは壊れています。"
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
 msgstr "設定の表示ページ"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "The first account"
+msgstr "最初のアカウント"
 
 #: app/plugins/builtin/accounts/api.py
 msgid "The first account can't be deleted"
@@ -3834,7 +4221,7 @@ msgstr "このバージョンには新しい Docker イメージが必要です�
 msgid "This was the last book in the series."
 msgstr "シリーズ最後の本でした。"
 
-#: app/plugins/builtin/library_query/__init__.py
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/library_query/__init__.py
 msgid "Title"
 msgstr "タイトル"
 
@@ -3854,13 +4241,33 @@ msgstr "タイトルの頭文字"
 msgid "Title starts with {letter}"
 msgstr "タイトルが {letter} で始まる"
 
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+msgid "To"
+msgstr "終了日"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "to chapter"
 msgstr "終わりの話"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Today"
+msgstr "今日"
+
 #: app/api/attention.py
 msgid "Too many ignored rows"
 msgstr "無視した項目が多すぎます"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Too many tries"
+msgstr "試行回数が多すぎます"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Took admin rights from {name}"
+msgstr "{name} の管理者権限を外しました"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Took the password off the library {name}"
+msgstr "ライブラリ {name} のパスワードを外しました"
 
 #: app/web/static/js/app.js
 msgid "Top"
@@ -3954,13 +4361,17 @@ msgstr "先に {name} のロックを解除してください"
 msgid "unlocked"
 msgstr "ロック解除中"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/app.js
 msgid "Unlocked"
 msgstr "ロックを解除しました"
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Unmatch (use folder name)"
 msgstr "照合を解除（フォルダ名を使う）"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Unmatched {name}"
+msgstr "{name} のマッチを解除しました"
 
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Unread"
@@ -4029,6 +4440,10 @@ msgstr "{version} に更新"
 #: app/web/templates/settings/plugins.html
 msgid "Update {version}"
 msgstr "更新 {version}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Updated {name} from {from} to {to}"
+msgstr "{name} を {from} から {to} にアップデートしました"
 
 #: app/web/static/js/app.js
 msgid "Updated {when}"
@@ -4102,6 +4517,10 @@ msgstr "{job} に {plugin} を使う"
 msgid "Uses:"
 msgstr "使うもの："
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Version"
+msgstr "バージョン"
+
 #: app/api/system.py
 msgid "version must be a text"
 msgstr "version はテキストでなければなりません"
@@ -4162,6 +4581,14 @@ msgstr "暖色"
 msgid "Webtoons, long strips"
 msgstr "ウェブトゥーン、縦長の漫画"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Went back to {name} {to}"
+msgstr "{name} {to} に戻しました"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "What"
+msgstr "内容"
+
 #: app/contracts/__init__.py
 msgid "What a book is called in the lists, the reader and Continue (Vol 3, Ch 12-14)"
 msgstr "一覧、リーダー、続きを読むでの本の呼び方（3 巻、12-14 話）"
@@ -4181,6 +4608,10 @@ msgstr "NAS やパソコン上での {path} のパス。例：{example1}、{exam
 #: app/web/templates/settings/plugin.html
 msgid "What's new"
 msgstr "新機能"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "When"
+msgstr "日時"
 
 #: app/web/static/js/app.js
 msgid "When nothing is touched. Turning the page or a tap in the middle hides them at once"
@@ -4214,6 +4645,26 @@ msgstr "フォルダ名から、ソースの検索結果のどれがシリーズ
 msgid "Which version? Send it as version"
 msgstr "どのバージョンですか？version として送ってください"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Who"
+msgstr "誰が"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged."
+msgstr "誰がいつ何をしたか（ログイン、アカウント、フォルダーとスキャン、削除したシリーズ、プラグイン、設定）。このページは管理者だけが見られます。読書は記録されません。"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Why"
+msgstr "理由"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "With a key (e.g. an assistant)"
+msgstr "キーを使って（アシスタントなど）"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "With the tokens"
+msgstr "トークンを含む"
+
 #: app/web/templates/settings/plugins.html
 msgid "Without {job}"
 msgstr "{job} なし"
@@ -4226,7 +4677,7 @@ msgstr "処理中…"
 msgid "Wrong name or password"
 msgstr "名前またはパスワードが違います"
 
-#: app/plugins/builtin/libraries/api.py
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/api.py
 msgid "Wrong password"
 msgstr "パスワードが違います"
 
@@ -4234,9 +4685,13 @@ msgstr "パスワードが違います"
 msgid "Year"
 msgstr "年"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Yes"
 msgstr "はい"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Yesterday"
+msgstr "昨日"
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "you"
@@ -4346,6 +4801,10 @@ msgstr "{name} を追加しました。編集でシリーズを移すか、カ�
 #: app/plugins/builtin/accounts/accounts.js
 msgid "{name} can log in now."
 msgstr "{name} はログインできるようになりました。"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "{name} failed to start"
+msgstr "{name} の起動に失敗しました"
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "{name} is an admin"

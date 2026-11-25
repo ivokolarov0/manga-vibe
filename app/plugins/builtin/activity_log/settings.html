@@ -1,0 +1,72 @@
+<!-- Settings → Activity (#/settings/activity, admins): activityLog in activity_log.js. The words: t() (#263) -->
+<section x-show="section === 'activity'" x-data="activityLog" class="activity-page" aria-labelledby="activity-title">
+  <h2 id="activity-title" x-text="t('Activity')"></h2>
+  <p class="muted" x-text="t('Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged.')"></p>
+
+  <div class="activity-filters" role="search" :aria-label="t('Filter the activity')">
+    <label class="activity-search">
+      <span x-text="t('Search')"></span>
+      <input type="search" x-model="f.q" @input.debounce.400ms="reload()" maxlength="200"
+             :placeholder="t('A name, a series, an address…')">
+    </label>
+    <label>
+      <span x-text="t('Who')"></span>
+      <select x-model="f.user" @change="reload()">
+        <option value="" x-text="t('Everyone')"></option>
+        <template x-for="p in people" :key="personValue(p)">
+          <option :value="personValue(p)" x-text="personLabel(p)"></option>
+        </template>
+      </select>
+    </label>
+    <label>
+      <span x-text="t('What')"></span>
+      <select x-model="f.group" @change="reload()">
+        <option value="" x-text="t('Everything')"></option>
+        <template x-for="[g, label] in groups" :key="g">
+          <option :value="g" x-text="label"></option>
+        </template>
+      </select>
+    </label>
+    <label>
+      <span x-text="t('From')"></span>
+      <input type="date" x-model="f.from" :max="f.to || null" @change="reload()">
+    </label>
+    <label>
+      <span x-text="t('To')"></span>
+      <input type="date" x-model="f.to" :min="f.from || null" @change="reload()">
+    </label>
+    <button type="button" class="btn small" x-show="filtered" @click="clear()" x-text="t('Clear filters')"></button>
+  </div>
+
+  <p class="activity-note error" x-show="failed" x-text="failed" role="alert"></p>
+  <p class="activity-note" x-show="loaded && !loading && !failed && !entries.length"
+     x-text="filtered ? t('Nothing matches these filters.') : t('Nothing has happened yet.')"></p>
+
+  <template x-for="day in days" :key="day.key">
+    <div class="activity-day">
+      <h3 class="activity-day-title" x-text="day.label"></h3>
+      <template x-for="e in day.entries" :key="e.id">
+        <details class="activity-entry" :class="{ warn: warn(e) }">
+          <summary>
+            <time :datetime="e.at" :title="full(e)" x-text="when(e)"></time>
+            <span class="activity-text"><strong x-text="who(e)"></strong> <span x-text="what(e)"></span><span
+              class="chip activity-key" x-show="e.via === 'key'" x-text="t('key')"></span></span>
+          </summary>
+          <div class="activity-more">
+            <a class="btn small" x-show="link(e)" :href="link(e)" x-text="t('Open')"></a>
+            <dl class="activity-details">
+              <template x-for="([k, v], i) in rows(e)" :key="i">
+                <div><dt x-text="k"></dt><dd x-text="v"></dd></div>
+              </template>
+            </dl>
+          </div>
+        </details>
+      </template>
+    </div>
+  </template>
+
+  <div class="activity-end" x-ref="end">
+    <span x-show="loading" class="muted" x-text="t('Loading…')"></span>
+    <button type="button" class="btn small" x-show="more && !loading" @click="loadMore()" x-text="t('Show more')"></button>
+  </div>
+</section>

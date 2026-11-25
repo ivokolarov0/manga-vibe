@@ -1,0 +1,202 @@
+/* Activity log (built-in plugin): Settings → Activity. Plugin CSS is loaded after the built-in styles, outside
+   their layers (see css/main.css), so a theme's custom.css still comes last and wins. */
+
+.activity-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px 10px;
+  margin: 6px 0 12px;
+
+  & label {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  & select,
+  & input {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  & .activity-search {
+    flex: 1 1 16rem;
+
+    & input {
+      width: 100%;
+    }
+  }
+}
+
+.activity-note {
+  margin: 18px 0;
+  color: var(--muted);
+  text-align: center;
+
+  &.error {
+    color: var(--danger);
+  }
+}
+
+.activity-day {
+  margin: 0 -16px;
+}
+
+.activity-day-title {
+  margin: 0;
+  padding: 12px 16px 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* one entry; the divider goes between entries (never border-bottom + :last-child, see CLAUDE.md, #245) */
+.activity-entry {
+  & ~ & {
+    border-top: 1px solid var(--border);
+  }
+
+  & > summary {
+    display: flex;
+    align-items: baseline;
+    gap: 6px 12px;
+    padding: 9px 16px;
+    list-style: none;
+    cursor: pointer;
+    transition: background-color var(--fast);
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    /* the marker right before the time, pointing at the label: down when open */
+    &::before {
+      content: "";
+      flex-shrink: 0;
+      inline-size: 0.42em;
+      block-size: 0.42em;
+      border-inline-end: 2px solid var(--muted);
+      border-block-end: 2px solid var(--muted);
+      rotate: -45deg;
+      translate: 0 -0.15em;
+    }
+
+    &:dir(rtl)::before {
+      rotate: 135deg;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
+  }
+
+  &[open] > summary::before {
+    rotate: 45deg;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    & > summary::before {
+      transition: rotate var(--fast);
+    }
+  }
+
+  @media (hover: hover) {
+    & > summary:hover {
+      background: color-mix(in srgb, var(--surface2) 45%, transparent);
+    }
+  }
+
+  & time {
+    flex: 0 0 auto;
+    min-width: 7.5em;  /* lines up the words after it; a longer one ("преди 4 минути") still fits */
+    white-space: nowrap;
+    color: var(--muted);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .activity-text {
+    flex: 1 1 14em;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  & .activity-key {
+    margin-inline-start: 6px;
+    vertical-align: 1px;
+  }
+
+  /* a failure stands out: a failed login, a library that didn't unlock, a plugin or an update that failed */
+  &.warn {
+    background: color-mix(in srgb, var(--warn) 11%, transparent);
+    box-shadow: inset 3px 0 var(--warn);
+  }
+}
+
+.activity-more {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  padding: 2px 16px 12px calc(16px + 0.42em + 12px);
+}
+
+.activity-details {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 3px 14px;
+  margin: 0;
+  font-size: 13px;
+
+  & > div {
+    display: contents;
+  }
+
+  & dt {
+    color: var(--muted);
+  }
+
+  & dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.activity-end {
+  display: flex;
+  justify-content: center;
+  min-height: 24px;
+  padding: 10px 0 4px;
+}
+
+/* phones: the time above what happened, so the words get the whole width */
+@media (max-width: 520px) {
+  .activity-entry > summary {
+    flex-wrap: wrap;
+  }
+
+  .activity-entry time {
+    min-width: 0;
+  }
+
+  .activity-entry .activity-text {
+    flex-basis: 100%;
+  }
+
+  .activity-more {
+    padding-inline-start: 16px;
+  }
+
+  .activity-details {
+    grid-template-columns: minmax(0, 1fr);
+
+    & dd {
+      margin-bottom: 4px;
+    }
+  }
+}

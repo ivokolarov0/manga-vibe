@@ -289,8 +289,17 @@ Every entry, whoever's it is: a plugin that shows them must show them only to ad
 The built-in **Activity log** plugin (`app/plugins/builtin/activity_log/`) keeps them in a table of its
 own (`activity`) and answers admins only: `GET /api/plugins/activity-log/api/entries`, newest first,
 `limit` (up to 200, 50 when not given), `before=<id>` for the next page (`more` says there is one), and
-filters `user` (an id, or `system`), `kind` (one, or a prefix ending in a dot: `account.`) and `group`
-(one or more, comma-separated). Switched off, nothing is kept, and `activity.log()` costs nothing.
+filters `user` (an id, or `system`), `kind` (one, or a prefix ending in a dot: `account.`), `group`
+(one or more, comma-separated), `q` (words that must all be in the summary, the name, the kind, the
+address or the details) and `since` / `until` (ISO times: from, and before). Each entry has
+`target_exists`: its series, account, plugin, folder or library is still there. `GET .../api/people`
+lists who has entries (`[{id, name}]`, the latest name each had). Switched off, nothing is kept, and
+`activity.log()` costs nothing.
+
+It shows them in **Settings → Activity**, for admins only: newest first, grouped by day, with filters
+(who, what, dates, words); failures stand out; an entry opens to show its details and a link to what
+it's about. A replacement plugin can listen to `on_activity` the same way and show them its own way. A
+new kind of the app needs its sentence in `activity_log.js` (`SAID`; a test checks every kind has one).
 
 What the app logs (issue #281), each with the person who did it:
 

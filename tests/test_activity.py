@@ -260,3 +260,76 @@ def test_no_entry_keeps_a_password_key_or_token(client, fresh, accounts_on):
     text = json.dumps(logged)
     assert not [s for s in secrets if s in text]
     assert "password_hash" not in text and "scrypt" not in text
+
+
+# ---------------------------------------------------------------- step 3 (#282): Settings → Activity
+
+def test_search_dates_people_and_targets(client, fresh):
+    from datetime import datetime, timedelta, timezone
+    sid = next(s["id"] for s in client.get("/api/series").json()["items"] if s["title"] == "Series B")
+    activity.log("series.moved", "Series B", target=("series", sid), details={"to": "Comics 100%"})
+    activity.log("series.deleted", "Long Gone", target=("series", 999999))
+    activity.log("plugin.enabled", "Random manga", target=("plugin", "random-manga"))
+    with users.acting_as(users.User(7, "Mira")):  # a person's entry: logged as from a request
+        token = activity._request.set({"type": "http", "client": ("10.1.2.3", 1)})
+        try:
+            activity.log("account.login_failed", "mira_x", details={"name": "mira_x"})
+        finally:
+            activity._request.reset(token)
+    # words: all of them, anywhere (summary, name, kind, address, details); % and _ are only themselves
+    assert [e["summary"] for e in entries(client, q="series b")] == ["Series B"]
+    assert [e["summary"] for e in entries(client, q="100%")] == ["Series B"]
+    assert [e["summary"] for e in entries(client, q="mira 10.1.2")] == ["mira_x"]
+    assert entries(client, q="_x_") == [] and entries(client, q="Comics Gone") == []
+    assert [e["summary"] for e in entries(client, q="deleted gone")] == ["Long Gone"]  # the kind counts too
+    # dates: from (inclusive) and before
+    now = datetime.now(timezone.utc)
+    assert len(entries(client, since=(now - timedelta(minutes=5)).isoformat())) == 4
+    assert entries(client, until=(now - timedelta(minutes=5)).isoformat()) == []
+    # the targets still there get a link on the page
+    there = {e["summary"]: e["target_exists"] for e in entries(client)}
+    assert there == {"Series B": True, "Long Gone": False, "Random manga": True, "mira_x": False}
+    # who, for the filter: System and Mira (the latest name each had)
+    people = client.get("/api/plugins/activity-log/api/people").json()
+    assert {(p["id"], p["name"]) for p in people} == {(None, ""), (7, "Mira")}
+
+
+def test_the_page_is_the_plugins_and_only_while_it_is_on(client, fresh):
+    page = client.get("/").text
+    assert 'x-data="activityLog"' in page and "/plugins/activity-log.js" in page
+    script = client.get("/plugins/activity-log.js").text
+    assert 'MV.settingsPage(ID, "activity"' in script and 'store("app").admin' in script  # admins only
+    assert client.put("/api/plugins/activity-log", json={"enabled": False}).status_code == 200
+    try:
+        page = client.get("/").text
+        assert 'x-data="activityLog"' not in page and "/plugins/activity-log.js" not in page
+        assert client.get("/plugins/activity-log.js").status_code == 404
+    finally:
+        client.put("/api/plugins/activity-log", json={"enabled": True})
+
+
+def test_the_page_knows_every_kind_the_app_logs():
+    """Each of the app's kinds has its sentence on the page (activity_log.js SAID)."""
+    from pathlib import Path
+    script = (Path(activity.__file__).parent / "plugins" / "builtin" / "activity_log" / "activity_log.js").read_text("utf-8")
+    missing = [k for k in activity.KINDS if f'"{k}":' not in script]
+    assert not missing, f"activity_log.js has no words for {missing}"
+    assert set(activity.GROUPS) == set(__import__("re").findall(r'\["(\w+)", MV\.t\(', script.split("const GROUPS")[1].split(";")[0]))
+
+
+def test_the_people_filter_knows_people_who_are_gone(client, fresh):
+    with users.acting_as(users.User(9, "Old name")):
+        token = activity._request.set({"type": "http"})
+        try:
+            activity.log("account.logout", "Old name")
+        finally:
+            activity._request.reset(token)
+    with users.acting_as(users.User(9, "New name")):
+        token = activity._request.set({"type": "http"})
+        try:
+            activity.log("account.logout", "New name")
+        finally:
+            activity._request.reset(token)
+    manager.wait_idle()
+    assert client.get("/api/plugins/activity-log/api/people").json() == [{"id": 9, "name": "New name"}]
+    assert len(entries(client, user="9")) == 2

@@ -59,6 +59,10 @@ msgstr "Библиотеката се сканира в момента. Опит
 msgid "A month"
 msgstr "Месец"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "A name, a series, an address…"
+msgstr "Име, поредица, адрес…"
+
 #: app/web/templates/shell/toasts.html
 msgid "A new MangaVibe version needs a new Docker image"
 msgstr "Новата версия на MangaVibe изисква нов Docker образ"
@@ -135,7 +139,7 @@ msgstr "Акаунтът не е намерен"
 msgid "Account: {name}"
 msgstr "Акаунт: {name}"
 
-#: app/plugins/builtin/accounts/__init__.py app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/accounts/__init__.py app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Accounts"
 msgstr "Акаунти"
 
@@ -146,6 +150,10 @@ msgstr "Акаунтите са включени. Създайте първия 
 #: app/api/books.py app/api/series.py app/api/system.py
 msgid "Action not found"
 msgstr "Действието не е намерено"
+
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+msgid "Activity"
+msgstr "Действия"
 
 #: app/plugins/builtin/activity_log/__init__.py
 msgid "Activity log"
@@ -187,15 +195,39 @@ msgstr "Добави източник"
 msgid "Add to favorites"
 msgstr "Добави в любими"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the account {name}"
+msgstr "Добави акаунта {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the folder {name}"
+msgstr "Добави папката {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the library {name}"
+msgstr "Добави библиотеката {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the plugin source {name}"
+msgstr "Добави източника на добавки {name}"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Added {n} series to favorites"
 msgid_plural "Added {n} series to favorites"
 msgstr[0] "{n} поредица е добавена в любими"
 msgstr[1] "{n} поредици са добавени в любими"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Address"
+msgstr "Адрес"
+
 #: app/plugins/builtin/random_manga/__init__.py
 msgid "Adds a Random series button to the library page, the Sidebar and the picked series' page"
 msgstr "Добавя бутон „Случайна поредица“ в библиотеката, в страничната лента и на страницата на избраната поредица"
+
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Adds Settings → Activity, for admins only"
+msgstr "Добавя Настройки → Действия, само за администраторите"
 
 #: app/plugins/builtin/libraries/__init__.py
 msgid "Adds the library tabs, Settings → Libraries and the library pickers"
@@ -205,9 +237,13 @@ msgstr "Добавя разделите на библиотеките, Наст�
 msgid "Adds the Saved and Save search buttons to the library page"
 msgstr "Добавя бутоните Запазени и Запази търсенето на страницата на библиотеката"
 
-#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Admin"
 msgstr "Администратор"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "After"
+msgstr "След"
 
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html app/web/static/js/app.js app/web/templates/settings/plugins.html
 msgid "All"
@@ -229,6 +265,14 @@ msgstr "Да се разрешат ли и да се инсталира?"
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr "Покажи и поредици без известен брой (текущи, без метаданни)"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Also switched off"
+msgstr "Изключени заедно с нея"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Also switched on"
+msgstr "Включени заедно с нея"
+
 #: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Always"
 msgstr "Винаги"
@@ -240,6 +284,10 @@ msgstr "Винаги видима"
 #: app/web/static/js/app.js
 msgid "an earlier update"
 msgstr "предишно обновяване"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "An update failed"
+msgstr "Обновяване не успя"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/shell/toasts.html
 msgid "and {n} more"
@@ -359,6 +407,10 @@ msgstr "Назад, цял екран и бутонът с опции са от 
 msgid "Backup"
 msgstr "Резервно копие"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Before"
+msgstr "Преди"
+
 #: app/contracts/__init__.py app/plugins/builtin/book_labels/__init__.py
 msgid "Book labels"
 msgstr "Имена на книгите"
@@ -371,9 +423,13 @@ msgstr "Книгата не е намерена"
 msgid "Book not in this series"
 msgstr "Книгата не е от тази поредица"
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/series_page/templates/views/series.html
 msgid "Books"
 msgstr "Книги"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Books gone"
+msgstr "Изчезнали книги"
 
 #: app/web/static/js/app.js
 msgid "Bottom"
@@ -503,6 +559,34 @@ msgstr "Смяна на сървъра"
 msgid "Change your password"
 msgstr "Смяна на паролата ви"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed books"
+msgstr "Променени книги"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed the folder {name}"
+msgstr "Промени папката {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed the library {name}"
+msgstr "Промени библиотеката {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed their password"
+msgstr "Смени паролата си"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed which libraries {name} sees"
+msgstr "Промени кои библиотеки вижда {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed {name}"
+msgstr "Промени {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed {name} from {old} to {new}"
+msgstr "Промени {name} от {old} на {new}"
+
 #: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/reader.js
 msgid "Chapter"
 msgstr "Глава"
@@ -539,6 +623,10 @@ msgstr "Изчисти"
 msgid "Clear all"
 msgstr "Изчисти всички"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Clear filters"
+msgstr "Изчисти филтрите"
+
 #: app/web/static/js/app.js
 msgid "Clear progress for every book in this series? It will also be removed from Continue reading."
 msgstr "Да се изчисти ли напредъкът за всички книги от поредицата? Тя ще бъде премахната и от Продължи четенето."
@@ -550,6 +638,14 @@ msgstr "Изчисти филтрите"
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear the search"
 msgstr "Изчисти търсенето"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Cleared"
+msgstr "Изчистено"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Cleared {name}"
+msgstr "Изчисти {name}"
 
 #: app/web/static/js/app.js
 msgid "Cleared: the series page shows the path inside Docker"
@@ -647,6 +743,10 @@ msgstr "Копирано"
 msgid "Copy"
 msgstr "Копирай"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Copy from before"
+msgstr "Копие отпреди"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copy path"
 msgstr "Копирай пътя"
@@ -686,6 +786,10 @@ msgstr "Тъмна"
 #: app/web/static/js/app.js
 msgid "Darker pages are easier on the eyes, e.g. at night"
 msgstr "По-тъмните страници са по-щадящи за очите, например вечер"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Database"
+msgstr "База данни"
 
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Decides which series the library lists and in what order; connects to nothing"
@@ -738,6 +842,18 @@ msgid "Delete {n} series and files"
 msgid_plural "Delete {n} series and files"
 msgstr[0] "Изтрий {n} поредица и файловете"
 msgstr[1] "Изтрий {n} поредици и файловете"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Deleted the account {name}"
+msgstr "Изтри акаунта {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Deleted the library {name}"
+msgstr "Изтри библиотеката {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Deleted the series {name} and its folder"
+msgstr "Изтри поредицата {name} и папката ѝ"
 
 #: app/web/static/js/app.js
 msgid "Deleted {done} of {total}. {error}"
@@ -933,6 +1049,10 @@ msgstr "Прозорец за редактиране"
 msgid "Edit · {title}"
 msgstr "Редактиране · {title}"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Edited {name}"
+msgstr "Редактира {name}"
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js
 msgid "Edition"
 msgstr "Издание"
@@ -957,7 +1077,11 @@ msgstr "Заглавие на английски"
 msgid "Enter the first chapter of the range"
 msgstr "Въведете първата глава от диапазона"
 
-#: app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Error"
+msgstr "Грешка"
+
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
 msgid "Errors"
 msgstr "Грешки"
 
@@ -977,6 +1101,10 @@ msgstr "Всички добавки са заредени."
 msgid "Every series is optimized already"
 msgstr "Всички поредици вече са оптимизирани"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Everyone"
+msgstr "Всички"
+
 #: app/plugins/builtin/accounts/settings.html
 msgid "Everyone logs in. Each account has its own reading progress, favorites, Continue reading, saved searches and Settings → Reader. Admins also manage the app: settings, folders, metadata, plugins, deleting, and these accounts."
 msgstr "Всеки влиза с акаунт. Всеки акаунт има свой напредък, любими, Продължи четенето, запазени търсения и Настройки → Четец. Администраторите управляват и приложението: настройки, папки, метаданни, добавки, изтриване и тези акаунти."
@@ -984,6 +1112,10 @@ msgstr "Всеки влиза с акаунт. Всеки акаунт има с
 #: app/plugins/builtin/accounts/__init__.py
 msgid "Everyone logs in; each account has its own progress, favorites, saved searches and reader settings. Admins manage the app and pick the libraries each account sees. Built in."
 msgstr "Всеки влиза с акаунт; всеки акаунт има свой напредък, любими, запазени търсения и настройки на четеца. Администраторите управляват приложението и избират кои библиотеки вижда всеки акаунт. Вградена."
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Everything"
+msgstr "Всичко"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Example: one zip with chapters 10 to 18 → Chapter 10, to chapter 18."
@@ -1005,6 +1137,10 @@ msgstr "Изход от цял екран"
 msgid "Export"
 msgstr "Експорт"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Exported a backup"
+msgstr "Изнесе резервно копие"
+
 #: app/plugins/builtin/book_labels/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "extra"
 msgstr "екстра"
@@ -1025,6 +1161,14 @@ msgstr "Екстра {n}"
 msgid "Failed to load"
 msgstr "Не се заредиха"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Failed to log in as {name}"
+msgstr "Неуспешно влизане като {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Failed to unlock the library {name}"
+msgstr "Неуспешно отключване на библиотеката {name}"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Fallback"
 msgstr "Резервен"
@@ -1044,6 +1188,14 @@ msgstr "Любими"
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Fewest first"
 msgstr "Първо най-малко"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Fields"
+msgstr "Полета"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "File"
+msgstr "Файл"
 
 #: app/web/static/js/app.js
 msgid "File hidden from reading (it stays on disk)"
@@ -1073,6 +1225,10 @@ msgstr "Файлове"
 msgid "Files alone are not enough for it. See {url}"
 msgstr "Само файловете не стигат. Вижте {url}"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Files left"
+msgstr "Останали файлове"
+
 #: app/plugins/builtin/mangaupdates.py
 msgid "Fills in series metadata"
 msgstr "Попълва метаданните на поредиците"
@@ -1088,6 +1244,10 @@ msgstr "Филтър"
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Filter by first letter"
 msgstr "Филтър по първа буква"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Filter the activity"
+msgstr "Филтрирай действията"
 
 #: app/web/templates/sheets/library.html
 msgid "Find a tag"
@@ -1145,7 +1305,7 @@ msgstr "Поправка на съвпадението · {folder}"
 msgid "Fix match…"
 msgstr "Поправи съвпадението…"
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Folder"
 msgstr "Папка"
 
@@ -1192,6 +1352,10 @@ msgstr "Забравихте ли я? Стартирайте MangaVibe ведн�
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Format"
 msgstr "Формат"
+
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+msgid "From"
+msgstr "От"
 
 #: app/plugins/builtin/anilist_recommendations/panel.html
 msgid "From AniList readers' recommendations."
@@ -1305,6 +1469,10 @@ msgstr "Върни {version}"
 msgid "Go back to {version}? MangaVibe restarts with it. {current} won't be offered again until a newer version is out."
 msgstr "Връщане към {version}? MangaVibe ще се рестартира с нея. {current} няма да се предлага отново, докато не излезе по-нова версия."
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Going back"
+msgstr "Връщане към по-стара версия"
+
 #: app/web/templates/shell/toasts.html
 msgid "Going back failed"
 msgstr "Връщането не успя"
@@ -1373,6 +1541,10 @@ msgstr "Скривай с контролите"
 msgid "Highest first"
 msgstr "Първо най-високите"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "How"
+msgstr "Как"
+
 #: app/plugins/builtin/cards/__init__.py
 msgid "How a series looks in the library and Continue reading: poster, badges, title and progress. Built in; replace it with a plugin that draws the cards its own way."
 msgstr "Как изглежда поредица в библиотеката и Продължи четенето: корица, значки, заглавие и напредък. Вградена; заменете я с добавка, която рисува картите по свой начин."
@@ -1381,7 +1553,7 @@ msgstr "Как изглежда поредица в библиотеката и 
 msgid "How a series looks in the library grid, its list view and Continue reading"
 msgstr "Как изглежда поредица в решетката на библиотеката, в списъка и в Продължи четенето"
 
-#: app/plugins/builtin/anilist_recommendations/__init__.py
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "How many"
 msgstr "Колко"
 
@@ -1416,6 +1588,14 @@ msgstr "Импорт"
 #: app/web/static/js/app.js
 msgid "Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first."
 msgstr "Да се импортира ли {file}? Данните на библиотеката, напредъкът, акаунтите и настройките на този сървър се заменят с тези от файла. Текущата база данни първо се копира в /data/backups."
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Imported a backup"
+msgstr "Внесе резервно копие"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Imported a backup made {name}"
+msgstr "Внесе резервно копие от {name}"
 
 #: app/web/static/js/app.js
 msgid "Imported {series} and {books}. Reloading…"
@@ -1492,6 +1672,10 @@ msgstr "Инсталирани"
 #: app/web/templates/settings/plugins.html
 msgid "Installed v{version}"
 msgstr "Инсталирана v{version}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Installed {name} {to}"
+msgstr "Инсталира {name} {to}"
 
 #: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Inverted"
@@ -1577,6 +1761,14 @@ msgstr "Пази акаунтите (хешове на паролите) в ба
 msgid "Keeps the log in MangaVibe's database; connects to nothing"
 msgstr "Пази дневника в базата данни на MangaVibe; не се свързва никъде"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "key"
+msgstr "ключ"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Kind"
+msgstr "Вид"
+
 #: app/web/static/js/app.js
 msgid "Language"
 msgstr "Език"
@@ -1621,6 +1813,10 @@ msgstr "Лява"
 msgid "Left back, right forward"
 msgstr "Ляво назад, дясно напред"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Left safe mode"
+msgstr "Излезе от безопасния режим"
+
 #: app/plugins/builtin/image_reader/image_reader.js
 msgid "Left to right"
 msgstr "Отляво надясно"
@@ -1645,11 +1841,11 @@ msgstr "Да може ли обновяването на метаданни от
 msgid "Letter"
 msgstr "Буква"
 
-#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "Libraries"
 msgstr "Библиотеки"
 
-#: app/plugins/__init__.py app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Library"
 msgstr "Библиотека"
 
@@ -1737,7 +1933,7 @@ msgstr "Зареждани от AniList"
 msgid "Loading the plugin sources…"
 msgstr "Зареждане на източниците на добавки…"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr "Зареждане…"
 
@@ -1777,6 +1973,14 @@ msgstr "Първо влезте"
 msgid "Log out"
 msgstr "Изход"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Logged in"
+msgstr "Влезе"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Logged out"
+msgstr "Излезе"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Look again"
 msgstr "Провери отново"
@@ -1796,6 +2000,14 @@ msgstr "По-ниско = по-малко поредици в Нуждае се 
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Lowest first"
 msgstr "Първо най-ниските"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Made a key for {name}"
+msgstr "Създаде ключ за {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Made {name} an admin"
+msgstr "Направи {name} администратор"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Main"
@@ -1840,6 +2052,10 @@ msgstr "MangaVibe има нужда от {jobs}. За да изключите {p
 #: app/plugins/builtin/optimize/__init__.py
 msgid "MangaVibe shows all three in every browser. Other comic apps may not open JPEG XL or AVIF."
 msgstr "MangaVibe показва и трите във всеки браузър. Други приложения за комикси може да не отварят JPEG XL или AVIF."
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "MangaVibe was updated from {from} to {to}"
+msgstr "MangaVibe беше обновен от {from} на {to}"
 
 #: app/web/templates/settings/plugins.html
 msgid "MangaVibe's own plugins"
@@ -1908,6 +2124,10 @@ msgstr "Свързано автоматично · {score}"
 #: app/web/static/js/app.js
 msgid "Matched by you"
 msgstr "Свързано от вас"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Matched {name}"
+msgstr "Свърза {name}"
 
 #: app/web/static/js/app.js
 msgid "Matched: {title}"
@@ -2005,6 +2225,24 @@ msgid_plural "Move {n} series to"
 msgstr[0] "Преместване на {n} поредица в"
 msgstr[1] "Преместване на {n} поредици в"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved to"
+msgstr "Преместено в"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {name} back to its folder's library"
+msgstr "Върна {name} в библиотеката на папката ѝ"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {name} to {to}"
+msgstr "Премести {name} в {to}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {n} series back to their folders' libraries"
+msgid_plural "Moved {n} series back to their folders' libraries"
+msgstr[0] "Върна {n} поредица в библиотеката на папката ѝ"
+msgstr[1] "Върна {n} поредици в библиотеките на папките им"
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Moved {n} series to their folders' libraries"
 msgid_plural "Moved {n} series to their folders' libraries"
@@ -2017,7 +2255,13 @@ msgid_plural "Moved {n} series to {library}"
 msgstr[0] "{n} поредица е преместена в {library}"
 msgstr[1] "{n} поредици са преместени в {library}"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {n} series to {to}"
+msgid_plural "Moved {n} series to {to}"
+msgstr[0] "Премести {n} поредица в {to}"
+msgstr[1] "Премести {n} поредици в {to}"
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Name"
 msgstr "Име"
 
@@ -2073,6 +2317,14 @@ msgstr "Нуждае се от: {jobs}"
 msgid "Never"
 msgstr "Никога"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Never match"
+msgstr "Никога да не се свързва"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "New books"
+msgstr "Нови книги"
+
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "New library"
 msgstr "Нова библиотека"
@@ -2096,6 +2348,10 @@ msgstr "Нова парола…"
 #: app/web/templates/settings/plugins.html
 msgid "New plugin source"
 msgstr "Нов източник на добавки"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "New series"
+msgstr "Нови поредици"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "New version: {version}"
@@ -2121,7 +2377,7 @@ msgstr "Следваща страница"
 msgid "Next: {book}"
 msgstr "Следваща: {book}"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "No"
 msgstr "Не"
 
@@ -2209,6 +2465,10 @@ msgstr "Не се изтриват поредици или файлове: па�
 msgid "No series yet. The first scan may still be running; see Settings."
 msgstr "Още няма поредици. Първото сканиране може още да тече; вижте Настройки."
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "No such account"
+msgstr "Няма такъв акаунт"
+
 #: app/api/books.py app/api/edit.py
 msgid "No such page"
 msgstr "Няма такава страница"
@@ -2293,6 +2553,10 @@ msgstr "без {tag}"
 msgid "Notes"
 msgstr "Бележки"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Nothing has happened yet."
+msgstr "Още нищо не се е случило."
+
 #: app/web/templates/settings/attention.html
 msgid "Nothing here. All good."
 msgstr "Тук няма нищо. Всичко е наред."
@@ -2304,6 +2568,10 @@ msgstr "Нищо не е започнато. Започнете поредица
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Nothing in {library} yet. Move series here with Edit, or select several (hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders."
 msgstr "В {library} още няма нищо. Преместете поредици тук чрез Редактиране или изберете няколко (задръжте карта) и използвайте ⋯ → Премести в библиотека. Цяла папка: Настройки → Папки на библиотеката."
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Nothing matches these filters."
+msgstr "Нищо не отговаря на тези филтри."
 
 #: app/plugins/builtin/optimize/__init__.py
 msgid "Nothing optimized yet"
@@ -2449,7 +2717,7 @@ msgstr "Само къде се показват: файловете им ост�
 msgid "Only {library}, the library picked on the home screen"
 msgstr "Само {library}, библиотеката, избрана на началния екран"
 
-#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
 msgid "Open"
 msgstr "Отвори"
 
@@ -2480,6 +2748,10 @@ msgstr "Отворете изтегления MangaVibe.apk и разрешет�
 #: app/plugins/builtin/continue_page/templates/views/continue.html
 msgid "Open the Library"
 msgstr "Отвори библиотеката"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Opened the app in safe mode"
+msgstr "Отвори приложението в безопасен режим"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead"
@@ -2535,7 +2807,7 @@ msgstr "Оригинален размер"
 msgid "Original size"
 msgstr "Оригинален размер"
 
-#: app/plugins/__init__.py app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Other"
 msgstr "Други"
 
@@ -2558,6 +2830,10 @@ msgstr "Фон на изскачащите полета"
 #: app/web/static/js/app.js
 msgid "Overlay text outline"
 msgstr "Контур на текста в полетата"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Owner"
+msgstr "Собственик"
 
 #: app/web/templates/settings/plugins.html
 msgid "owner/repo or https://…/plugins.json"
@@ -2619,6 +2895,10 @@ msgstr "Страници: по една, следващата е вдясно (�
 msgid "Paginated"
 msgstr "По страници"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Partly"
+msgstr "Частично"
+
 #: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
 msgid "Password"
 msgstr "Парола"
@@ -2639,7 +2919,7 @@ msgstr "Паролата е премахната"
 msgid "Password saved. This browser stays unlocked until “Lock now” or a new tab."
 msgstr "Паролата е запазена. Този браузър остава отключен до „Заключи сега“ или нов раздел."
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Path outside Docker"
 msgstr "Път извън Docker"
 
@@ -2650,6 +2930,10 @@ msgstr "Път извън Docker за {name}"
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Per page"
 msgstr "На страница"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Permissions accepted"
+msgstr "Приети разрешения"
 
 #: app/web/static/js/app.js
 msgid "Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F"
@@ -2691,7 +2975,7 @@ msgstr "За четене"
 msgid "Please choose an image file"
 msgstr "Изберете файл с изображение"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/app.js
 msgid "Plugin"
 msgstr "Добавка"
 
@@ -2727,7 +3011,7 @@ msgstr "Източниците на добавки са обновени"
 msgid "Plugin tools"
 msgstr "Инструменти от добавки"
 
-#: app/plugins/web.py app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/web.py app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr "Добавки"
 
@@ -2743,7 +3027,7 @@ msgstr "Добавки и собствени стилове"
 msgid "Plugins from this source run inside MangaVibe with full access to its data. Only add sources you trust. Add it?"
 msgstr "Добавките от този източник работят в MangaVibe с пълен достъп до данните му. Добавяйте само източници, на които имате доверие. Да се добави ли?"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Poster"
 msgstr "Корица"
 
@@ -2770,6 +3054,10 @@ msgstr "Предишна глава"
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Previous page"
 msgstr "Предишна страница"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Provider"
+msgstr "Източник"
 
 #: app/api/edit.py app/api/series.py
 msgid "Provider unavailable: {error}"
@@ -2911,6 +3199,16 @@ msgstr "Обнови"
 msgid "Refresh metadata"
 msgstr "Обнови метаданните"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Refreshed the metadata of {name}"
+msgstr "Обнови метаданните на {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Refreshed the metadata of {n} series"
+msgid_plural "Refreshed the metadata of {n} series"
+msgstr[0] "Обнови метаданните на {n} поредица"
+msgstr[1] "Обнови метаданните на {n} поредици"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Refreshing metadata for {n} series in the background"
 msgid_plural "Refreshing metadata for {n} series in the background"
@@ -2965,11 +3263,27 @@ msgstr "Махни {filter}"
 msgid "Remove “{name}” ({path}) from MangaVibe?"
 msgstr "Да се премахне ли „{name}“ ({path}) от MangaVibe?"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed a key of {name}"
+msgstr "Премахна ключ на {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed the folder {name}"
+msgstr "Премахна папката {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed the plugin source {name}"
+msgstr "Премахна източника на добавки {name}"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Removed {n} series from favorites"
 msgid_plural "Removed {n} series from favorites"
 msgstr[0] "{n} поредица е махната от любими"
 msgstr[1] "{n} поредици са махнати от любими"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Renamed the account {old} to {new}"
+msgstr "Преименува акаунта {old} на {new}"
 
 #: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
 msgid "Renamed to {name}"
@@ -3147,9 +3461,17 @@ msgstr "Запазване…"
 msgid "Scan"
 msgstr "Сканирай"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Scan finished"
+msgstr "Сканирането приключи"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Scan for new files"
 msgstr "Търсене на нови файлове"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Scan of {name} finished"
+msgstr "Сканирането на {name} приключи"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Scan only this folder"
@@ -3171,7 +3493,7 @@ msgstr "Сканиране…"
 msgid "Score"
 msgstr "Оценка"
 
-#: app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_query/__init__.py app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_query/__init__.py app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Search"
 msgstr "Търсене"
 
@@ -3190,6 +3512,14 @@ msgstr "Търсене в библиотеката"
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Searching {source}…"
 msgstr "Търсене в {source}…"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Seconds"
+msgstr "Секунди"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Secret"
+msgstr "Тайна"
 
 #: app/web/templates/shell/toasts.html
 msgid "See {url}"
@@ -3219,9 +3549,17 @@ msgstr "Изпратете източника и id на добавката"
 msgid "Separate libraries (Manga, Comics...) with tabs on the home screen, a reading mode and an optional password each. Built in."
 msgstr "Отделни библиотеки (Манга, Комикси...) с раздели на началния екран, всяка със свой режим на четене и парола по желание. Вградена."
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Series"
+msgstr "Поредици"
+
 #: app/contracts/__init__.py app/plugins/builtin/cards/__init__.py
 msgid "Series cards"
 msgstr "Карти на поредиците"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Series gone"
+msgstr "Изчезнали поредици"
 
 #: app/api/common.py app/api/series.py app/plugins/builtin/anilist_recommendations/api.py
 msgid "Series not found"
@@ -3243,6 +3581,14 @@ msgstr "Поредици на страница"
 msgid "Server"
 msgstr "Сървър"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Set a new password for {name}"
+msgstr "Зададе нова парола на {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Set a password on the library {name}"
+msgstr "Сложи парола на библиотеката {name}"
+
 #: app/plugins/builtin/libraries/settings.html
 msgid "Set a password…"
 msgstr "Задай парола…"
@@ -3259,7 +3605,11 @@ msgstr "зададено от вас"
 msgid "set for this series"
 msgstr "зададено за тази поредица"
 
-#: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Setting"
+msgstr "Настройка"
+
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
 msgid "Settings"
 msgstr "Настройки"
 
@@ -3347,7 +3697,7 @@ msgstr "Покажи я отново"
 msgid "Show less"
 msgstr "Покажи по-малко"
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Show more"
 msgstr "Покажи още"
 
@@ -3401,6 +3751,10 @@ msgstr "Показва страниците на четената книга; н
 msgid "Sidebar"
 msgstr "Странична лента"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Size"
+msgstr "Размер"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/shell/toasts.html
 msgid "Skip this version"
 msgstr "Пропусни тази версия"
@@ -3417,6 +3771,10 @@ msgstr "Плътен"
 msgid "some missing"
 msgstr "някои липсват"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Someone not logged in"
+msgstr "Някой, който не е влязъл"
+
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/sheets/library.html
 msgid "Sort"
 msgstr "Подредба"
@@ -3429,7 +3787,7 @@ msgstr "Подреди по"
 msgid "Sort: {sort}"
 msgstr "Подредба: {sort}"
 
-#: app/web/templates/settings/plugins.html
+#: app/plugins/builtin/activity_log/activity_log.js app/web/templates/settings/plugins.html
 msgid "Source"
 msgstr "Източник"
 
@@ -3456,6 +3814,22 @@ msgstr "Започни"
 #: app/web/static/js/reader.js
 msgid "Start of book. Previous: {book}"
 msgstr "Начало на книгата. Предишна: {book}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started a scan of every folder"
+msgstr "Пусна сканиране на всички папки"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started a scan of {name}"
+msgstr "Пусна сканиране на {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started an update to {to}"
+msgstr "Пусна обновяване до {to}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started going back to {to}"
+msgstr "Пусна връщане към {to}"
 
 #: app/web/static/js/app.js
 msgid "Starting…"
@@ -3501,7 +3875,15 @@ msgstr "Включете добавката, за да промените нас
 msgid "Switch {overlay} on above to hear its text."
 msgstr "Включете {overlay} по-горе, за да чуете текста."
 
-#: app/plugins/__init__.py
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Switched {name} off"
+msgstr "Изключи {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Switched {name} on"
+msgstr "Включи {name}"
+
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js
 msgid "System"
 msgstr "Система"
 
@@ -3533,6 +3915,10 @@ msgstr "Тази книга не е от тази поредица"
 msgid "That is MangaVibe's own data folder, not a manga folder"
 msgstr "Това е собствената папка с данни на MangaVibe, а не папка с манга"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "The app"
+msgstr "Приложението"
+
 #: app/plugins/builtin/accounts/api.py
 msgid "The current password is wrong"
 msgstr "Текущата парола е грешна"
@@ -3552,6 +3938,10 @@ msgstr "Базата данни в този файл е повредена."
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
 msgstr "Страницата Изглед в Настройки"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "The first account"
+msgstr "Първият акаунт"
 
 #: app/plugins/builtin/accounts/api.py
 msgid "The first account can't be deleted"
@@ -3853,7 +4243,7 @@ msgstr "Тази версия изисква нов Docker образ. Вижт�
 msgid "This was the last book in the series."
 msgstr "Това беше последната книга от поредицата."
 
-#: app/plugins/builtin/library_query/__init__.py
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/library_query/__init__.py
 msgid "Title"
 msgstr "Заглавие"
 
@@ -3873,13 +4263,33 @@ msgstr "Заглавието започва с"
 msgid "Title starts with {letter}"
 msgstr "Заглавието започва с {letter}"
 
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+msgid "To"
+msgstr "До"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "to chapter"
 msgstr "до глава"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Today"
+msgstr "Днес"
+
 #: app/api/attention.py
 msgid "Too many ignored rows"
 msgstr "Твърде много игнорирани редове"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Too many tries"
+msgstr "Твърде много опити"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Took admin rights from {name}"
+msgstr "Отне администраторските права на {name}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Took the password off the library {name}"
+msgstr "Махна паролата на библиотеката {name}"
 
 #: app/web/static/js/app.js
 msgid "Top"
@@ -3973,13 +4383,17 @@ msgstr "Първо отключете {name}"
 msgid "unlocked"
 msgstr "отключена"
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/app.js
 msgid "Unlocked"
 msgstr "Отключено"
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Unmatch (use folder name)"
 msgstr "Премахни съвпадението (по името на папката)"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Unmatched {name}"
+msgstr "Развърза {name}"
 
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Unread"
@@ -4048,6 +4462,10 @@ msgstr "Обнови до {version}"
 #: app/web/templates/settings/plugins.html
 msgid "Update {version}"
 msgstr "Обновление {version}"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Updated {name} from {from} to {to}"
+msgstr "Обнови {name} от {from} на {to}"
 
 #: app/web/static/js/app.js
 msgid "Updated {when}"
@@ -4121,6 +4539,10 @@ msgstr "Използвай {plugin} за {job}"
 msgid "Uses:"
 msgstr "Използва:"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Version"
+msgstr "Версия"
+
 #: app/api/system.py
 msgid "version must be a text"
 msgstr "version трябва да е текст"
@@ -4181,6 +4603,14 @@ msgstr "Топли"
 msgid "Webtoons, long strips"
 msgstr "Уебтуни, дълги ленти"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Went back to {name} {to}"
+msgstr "Върна се към {name} {to}"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "What"
+msgstr "Какво"
+
 #: app/contracts/__init__.py
 msgid "What a book is called in the lists, the reader and Continue (Vol 3, Ch 12-14)"
 msgstr "Как се казва книга в списъците, четеца и Продължи (Том 3, Гл. 12-14)"
@@ -4200,6 +4630,10 @@ msgstr "Какво е {path} на вашия NAS или компютър, нап
 #: app/web/templates/settings/plugin.html
 msgid "What's new"
 msgstr "Какво ново"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "When"
+msgstr "Кога"
 
 #: app/web/static/js/app.js
 msgid "When nothing is touched. Turning the page or a tap in the middle hides them at once"
@@ -4233,6 +4667,26 @@ msgstr "Кой резултат от източника е поредицата,
 msgid "Which version? Send it as version"
 msgstr "Коя версия? Изпратете я като version"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Who"
+msgstr "Кой"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged."
+msgstr "Кой какво е направил и кога: влизания, акаунти, папки и сканирания, изтрити поредици, добавки и настройки. Само администраторите виждат тази страница. Четенето никога не се записва."
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Why"
+msgstr "Защо"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "With a key (e.g. an assistant)"
+msgstr "С ключ (например асистент)"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "With the tokens"
+msgstr "С токените"
+
 #: app/web/templates/settings/plugins.html
 msgid "Without {job}"
 msgstr "Без {job}"
@@ -4245,7 +4699,7 @@ msgstr "Работи се…"
 msgid "Wrong name or password"
 msgstr "Грешно име или парола"
 
-#: app/plugins/builtin/libraries/api.py
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/api.py
 msgid "Wrong password"
 msgstr "Грешна парола"
 
@@ -4253,9 +4707,13 @@ msgstr "Грешна парола"
 msgid "Year"
 msgstr "Година"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Yes"
 msgstr "Да"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Yesterday"
+msgstr "Вчера"
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "you"
@@ -4366,6 +4824,10 @@ msgstr "{name} е добавена. Преместете поредици в н�
 #: app/plugins/builtin/accounts/accounts.js
 msgid "{name} can log in now."
 msgstr "{name} вече може да влиза."
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "{name} failed to start"
+msgstr "{name} не успя да стартира"
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "{name} is an admin"
