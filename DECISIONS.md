@@ -1321,3 +1321,29 @@ Plugin API version, and the app works after every one.
   400px phone; the row now scrolls sideways like the quick filters, and Random is only its icon there.
   The Sidebar's entry is in its column only: the phone bar has no room for a fourth tab. The bar now
   styles `button.nav-entry` like its links, as docs/PLUGINS.md already said it did.
+
+### The activity log (Plugin API 29, issue #279; step 1 #280)
+
+- **Writing is the core's, keeping is a plugin's**: `activity.log()` (app/activity.py) only builds the entry
+  and sends `on_activity`; the built-in Activity log plugin stores it. Switched off (or replaced), nothing
+  breaks, and with no plugin listening `emit()` skips the queue: log() costs nothing.
+- **In the background**: the entry goes through the plugin worker like the reading events, so a request
+  that logs never waits for the database write. The time and who are taken when log() is called, not
+  when it's stored.
+- **Who**: a small core middleware (`activity.Requests`) marks the requests; inside one, the user is
+  `users.current()` (read at log() time, after the accounts guard set it), with the client address and
+  `via: "key"` when the scope carries a user (the MCP server). Outside a request it's *System*
+  (`user_id` None): background threads don't inherit the request's context. Not logged in (a failed
+  login) is user 0, the accounts plugin's NOBODY.
+- **Kinds, not sentences**: an entry keeps the kind, a summary (the name of the thing at the time) and
+  details, so step 3's page can say it in the reader's language. The kinds and their groups are listed
+  once, `activity.KINDS`; a plugin's own kinds are allowed (`<id>.<what>`) and fall in *other*.
+- **Secrets can't get in**: details are cleaned before they leave log(): any key whose name says it's a
+  password, token, secret, key, cookie or hash is dropped, at any depth; details over 8000 characters
+  are replaced by a note.
+- **The plugin's own table**, not a model in app/models.py: made with `create_all(checkfirst)` when the
+  plugin starts (app start, switched on, after a backup import) and again if it's missing when an entry
+  comes. It keeps the user's name at the time, so a removed account's entries still read well. Paged by
+  id (`before`), which is also the order entries were written in.
+- **The API is the plugin's**: `/api/plugins/activity-log/api/entries` (like every built-in plugin's), not
+  `/api/activity`; the whole router is admins only (`dependencies=[manage]`).

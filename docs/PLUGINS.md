@@ -27,7 +27,7 @@
 | [Reading events](#reading-events) | [A reader of its own](#a-reader-of-its-own) | [Saved searches](#the-saved-searches-job) |
 | [Updates](#updates) | [Styling](#styling-plugins-and-your-own-customcss) | [Parser, matcher, labels](#server-jobs-the-parser-the-matcher-and-book-labels) |
 | [Publish in a source](#publish-your-plugins-in-a-source) | [Example](#example) | [Image reader](#the-readerimages-job) |
-| [The SDK](#the-sdk) | | |
+| [The SDK](#the-sdk) | [The activity log](#the-activity-log) | |
 
 </details>
 
@@ -102,6 +102,7 @@ class Hello(Plugin):
 | **Change how the app looks** | `css = """ :root { --accent: #ff6fa8; } """` (loaded after the built-in styles, so it wins) |
 | **Metadata provider** | `is_provider = True`, implement `search(ctx, query, year)` → `list[Candidate]` and `fetch(ctx, provider_id)` → dict of series fields. Optional `url = "https://..."` links the site on the Metadata settings page |
 | **React to reading** | `on_book_started(ctx, book, series)`, `on_book_completed(ctx, book, series)`, `on_series_status_changed(ctx, series, old, new)` (see [Reading events](#reading-events)) |
+| **Tell the admin what happened** (the activity log) | `activity.log("myplugin.did", "what", target=("series", id), details={...})`; `on_activity(ctx, entry)` hears every entry (see [The activity log](#the-activity-log)). Plugin API 29 |
 | **Settings boxes** on the plugin's page (Settings → Plugins → the plugin) | `settings_fields = [SettingDef("client_id", "Client ID", help="...", secret=False)]`; the value is in `ctx.settings["client_id"]`. `secret=True` values are never sent back to the browser. With `options=[("auto", "Automatic"), ("manual", "Manual")]` and `default="auto"` it's a dropdown instead; `ctx.setting("key")` gives the saved value or the default |
 | **Buttons on the plugin's page** (Settings → Plugins → the plugin) | `global_actions = [Action("sync", "Sync all")]` and `run_global_action(ctx, key)` returning a message |
 | **Status line** under the plugin in Settings | `status(ctx)` returning a short text, e.g. `"Connected as Ivo"` |
@@ -255,6 +256,41 @@ class Tracker(Plugin):
     def status(self, ctx):
         return "Connected" if ctx.settings.get("token") else "Not connected"
 ```
+
+## The activity log
+
+Plugin API 29 (issue #279). Admins can see who did what, and when: logins, accounts, folders and scans,
+deleted series, plugins, settings. One call writes an entry, from the app or from a plugin:
+
+```python
+from app.plugins import activity
+
+activity.log("series.deleted", "One Piece", target=("series", 42), details={"books": 110})
+```
+
+| Argument | |
+|---|---|
+| `kind` | a stable id, `<thing>.<what happened>`: the app's are in `app/activity.py` `KINDS` (`account.login_failed`, `series.deleted`, `plugin.enabled`…), each in a group (accounts, library, plugins, settings, app). A plugin names its own after itself, `<plugin id>.<what>`: they're in the group *other* |
+| `summary` | the name of what it's about at the time (a series' title, an account's name), not a sentence: the page says what happened in the reader's language, from the kind |
+| `target` | `(type, id)`, e.g. `("series", 42)` or `("plugin", "anilist")`, so the page can link to it |
+| `details` | a small JSON object: old and new value, counts, a folder, a version. **Never a password, key or token**: a detail whose name says it's one (`password`, `token`, `secret`, `api_key`…) is left out |
+
+It fills in the time (UTC) and who: during a request the person asking (`users.current()`), with the
+address the request came from, and `via: "key"` for a request that came with a key (the MCP server);
+outside a request (scans, the folder watcher, metadata, plugin events and threads) *System*, `user_id`
+`None`. A request that nobody is logged in for (a failed login) has `user_id` 0. log() never raises:
+a mistake is logged, and what it records goes on.
+
+It sends **`on_activity(ctx, entry)`** to every switched-on plugin, in the background like the reading
+events, one at a time and in order. `entry` is a dict: `at` (ISO, UTC, ending in `Z`), `user_id`,
+`user_name`, `ip`, `via`, `kind`, `group`, `summary`, `target` (`[type, id]` or `None`) and `details`.
+Every entry, whoever's it is: a plugin that shows them must show them only to admins.
+
+The built-in **Activity log** plugin (`app/plugins/builtin/activity_log/`) keeps them in a table of its
+own (`activity`) and answers admins only: `GET /api/plugins/activity-log/api/entries`, newest first,
+`limit` (up to 200, 50 when not given), `before=<id>` for the next page (`more` says there is one), and
+filters `user` (an id, or `system`), `kind` (one, or a prefix ending in a dot: `account.`) and `group`
+(one or more, comma-separated). Switched off, nothing is kept, and `activity.log()` costs nothing.
 
 ## Drawing on pages
 
@@ -1215,7 +1251,7 @@ page.
 Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only this (a test checks it,
 `tests/contracts/test_sdk.py`), so a plugin of yours can do anything a built-in one does.
 
-- **Server**: `app.plugins` (`Plugin`, `Context`/`ctx` and the classes on this page), `app.plugins.web`,
+- **Server**: `app.plugins` (`Plugin`, `Context`/`ctx`, `activity` and the classes on this page), `app.plugins.web`,
   `app.plugins.query`, `app.users` and **`app.plugins.sdk`**, which collects the rest:
 
   | | |
@@ -1232,7 +1268,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 27 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 29 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

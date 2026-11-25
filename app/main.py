@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.datastructures import Headers
 
-from app import config, db as database, i18n, plugin_updates, updater
+from app import activity, config, db as database, i18n, plugin_updates, updater
 from app.api import attention, backup, books, edit, series, system, update
 from app.lanes import QuickLane
 from app.metadata import worker as metadata_worker
@@ -222,6 +222,8 @@ app.add_middleware(QuickLane)
 app.add_middleware(Language)
 app.add_middleware(UploadSizeLimit, limit=MAX_UPLOAD + 64 * 1024)  # + room for the multipart headers
 app.add_middleware(RememberAddress)
+# what a request does is the person's (or key's) in the activity log, not System's (app/activity.py)
+app.add_middleware(activity.Requests)
 # the plugins' own guards (Plugin.middleware), e.g. libraries: a locked library's series, books and pages
 app.add_middleware(plugin_web.PluginMiddleware)
 # before everything else (but compression): a change another website sends goes no further

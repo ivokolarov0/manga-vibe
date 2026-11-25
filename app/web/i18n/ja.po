@@ -147,6 +147,10 @@ msgstr "アカウントが有効です。最初のアカウントを作成して
 msgid "Action not found"
 msgstr "操作が見つかりません"
 
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Activity log"
+msgstr "アクティビティログ"
+
 #: app/plugins/builtin/accounts/settings.html
 msgid "Add"
 msgstr "追加"
@@ -1552,6 +1556,10 @@ msgstr "新しいデータベースを残しますか？{version} は新しい�
 msgid "Keep these filters under a name: the Saved button brings them back"
 msgstr "この絞り込みに名前を付けて保存します。保存ボタンで呼び出せます"
 
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Keeps a log of who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins can see it. Built in."
+msgstr "誰がいつ何をしたかを記録します（ログイン、アカウント、フォルダーとスキャン、削除したシリーズ、プラグイン、設定）。見られるのは管理者だけです。組み込み。"
+
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "Keeps its searches in MangaVibe's database; connects to nothing"
 msgstr "検索を MangaVibe のデータベースに保存します。外部には接続しません"
@@ -1559,6 +1567,10 @@ msgstr "検索を MangaVibe のデータベースに保存します。外部に�
 #: app/plugins/builtin/accounts/__init__.py
 msgid "Keeps the accounts (password hashes) in MangaVibe's database; connects to nothing"
 msgstr "アカウント（パスワードのハッシュ）を MangaVibe のデータベースに保存します。外部には接続しません"
+
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Keeps the log in MangaVibe's database; connects to nothing"
+msgstr "ログを MangaVibe のデータベースに保存します。外部には接続しません"
 
 #: app/web/static/js/app.js
 msgid "Language"
