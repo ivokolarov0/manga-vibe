@@ -1450,7 +1450,11 @@ Plugin API version, and the app works after every one.
   `/api/home` answer is used (quick library tab switches); unchanged rows aren't drawn again; Home keeps its
   scroll when you come back; Settings' saves go one after another, each with the order as it is then;
   every row hidden says so on Home, with a button to Settings.
-- **The Libraries cards show a random series' cover**, a different one each time Home loads.
+- **The Libraries cards show a random series' cover**, a different one each time Home loads. They're wide
+  (the owner asked for media-server style library cards): `HomeSection(shape="wide")`, 16:9, twice a series
+  card's width, the big poster cut to fit (from its upper part, where faces and titles mostly are) and
+  darkened so the library's name, written large across it, reads on any cover; the count under the card. The
+  name under it stays for screen readers only (the one on the picture is `aria-hidden`).
 - **On Home, a library tab opens that library** (the owner: picking one there "doesn't go anywhere"
   otherwise). The tabs, the sidebar's libraries and the Libraries row's cards all call the plugin's
   `choose(id)`: on the library and Continue it only switches what they show, anywhere else it picks the

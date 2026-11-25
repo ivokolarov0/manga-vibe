@@ -37,7 +37,7 @@ def test_the_rows_and_their_default_order(client):
     found = client.get("/api/home/sections").json()
     assert [s["id"] for s in found][:3] == CORE
     assert found[0] == {"id": "continue", "plugin": None, "title": "Continue reading", "kind": "series",
-                        "layout": "continue", "see_all": "#/continue", "hidden": False}
+                        "layout": "continue", "shape": "poster", "see_all": "#/continue", "hidden": False}
     added = next(s for s in found if s["id"] == "added")
     assert added["see_all"] == "#/library?sort=added" and added["layout"] == "library"
 
@@ -132,6 +132,7 @@ def test_the_page_has_home(client):
 def test_the_libraries_row(client, comics):  # noqa: F811
     """A card per library once there are two, with its newest series' cover and its count; a locked one
     with neither. It follows the libraries plugin: off, there's no row."""
+    assert rows(client)["libraries:libraries"]["shape"] == "wide"  # 16:9, the name across the cover
     tiles = {t["title"]: t for t in rows(client)["libraries:libraries"]["items"]}
     assert set(tiles) == {"manga", "comics"}
     assert tiles["comics"]["subtitle"] == "2 series" and tiles["comics"]["image"].startswith("/api/series/")

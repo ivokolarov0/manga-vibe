@@ -164,11 +164,14 @@ class HomeSection:
     carousel of series cards (home_section() returns Series rows, the newest first); "tiles": cards of the
     plugin's own, each a dict {id, title, subtitle, image, href} (e.g. the libraries). `title` is marked N_()
     and shown in the person's language. `see_all`: where "See all" goes (a #/ address, e.g. "#/library?sort=added"),
-    "" for none. Its id on the page and in the settings is "<plugin id>:<key>"."""
+    "" for none. `shape` (tiles): "poster", as tall as a series card, or "wide", a 16:9 card with the
+    title written across its picture (e.g. the libraries). Its id on the page and in the settings is
+    "<plugin id>:<key>"."""
     key: str
     title: str
     kind: str = "series"
     see_all: str = ""
+    shape: str = "poster"
 
 
 @dataclass

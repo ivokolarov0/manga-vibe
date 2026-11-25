@@ -21,7 +21,7 @@
                       :aria-label="t('More in {row}', { row: sec.title })"><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
             </div>
           </div>
-          <div class="home-track" :class="'home-' + sec.kind" x-ref="track">
+          <div class="home-track" :class="['home-' + sec.kind, 'shape-' + (sec.shape || 'poster')]" x-ref="track">
            <div class="home-slides">
             <template x-if="sec.kind === 'series'">
               <template x-for="s in sec.items" :key="s.id">
@@ -35,8 +35,10 @@
                     <div class="tile-cover">
                       <img x-show="item.image" :src="item.image" loading="lazy" alt="" draggable="false">
                       <svg class="ic" x-show="!item.image" aria-hidden="true"><use :href="'#i-' + (item.icon || 'books')"/></svg>
+                      <!-- a wide card's title, across its picture (home.css) -->
+                      <span class="tile-name" x-show="sec.shape === 'wide'" x-text="item.title" aria-hidden="true"></span>
                     </div>
-                    <div class="card-title" x-text="item.title"></div>
+                    <div class="card-title" :class="{ 'sr-under': sec.shape === 'wide' }" x-text="item.title"></div>
                     <div class="card-sub" x-text="item.subtitle"></div>
                   </a>
                 </div>

@@ -347,9 +347,11 @@ class Manhwa(Plugin):
                 .order_by(Series.added_at.desc()).limit(limit).all())
 ```
 
-- `HomeSection(key, title, kind="series", see_all="")`: `title` is marked `N_()` and shown in each person's
-  language; `see_all` is where "See all" goes (a `#/` address, e.g. the library with a sort or filter), `""`
-  for none. On the page and in the settings the row's id is `<plugin id>:<key>`.
+- `HomeSection(key, title, kind="series", see_all="", shape="poster")`: `title` is marked `N_()` and shown in
+  each person's language; `see_all` is where "See all" goes (a `#/` address, e.g. the library with a sort or
+  filter), `""` for none. `shape` is for a `"tiles"` row: `"poster"` cards are as tall as a series card,
+  `"wide"` ones are 16:9 with the title written large across the picture and the `subtitle` under it (the
+  libraries). On the page and in the settings the row's id is `<plugin id>:<key>`.
 - `home_section(ctx, request, key, limit)` gives what the row shows to the person asking (`users.current()`),
   at most `limit`: **`Series` rows** for a `"series"` row. The app leaves out what the request may not see
   (e.g. a locked library, [`series_filter()`](#your-own-api-and-ui)) and draws the cards (the card view, as in

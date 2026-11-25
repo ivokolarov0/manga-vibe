@@ -31,6 +31,7 @@ CORE = [HomeSection("continue", N_("Continue reading"), see_all="#/continue"),
         HomeSection("added", N_("Recently added"), see_all="#/library?sort=added"),
         HomeSection("updated", N_("Recently updated"), see_all="#/library?sort=updated")]
 KINDS = ("series", "tiles")
+SHAPES = ("poster", "wide")  # how a tiles row's cards look: as tall as a series card, or 16:9 with the title on it
 TILE_KEYS = ("id", "title", "subtitle", "image", "href", "icon")
 
 
@@ -44,7 +45,8 @@ def all_sections() -> list[tuple[str, object, HomeSection]]:
             sid = f"{p.id}:{getattr(s, 'key', '')}"
             # a row that's made wrong (or twice) is left out and logged; it never takes Home down
             if not (isinstance(s, HomeSection) and s.kind in KINDS and s.key and isinstance(s.key, str)
-                    and isinstance(s.title, str) and s.title and isinstance(s.see_all, str)) or sid in seen:
+                    and isinstance(s.title, str) and s.title and isinstance(s.see_all, str)
+                    and s.shape in SHAPES) or sid in seen:
                 log.error("Plugin %s: its Home row %r is left out (made wrong, or there twice)", p.id, s)
                 continue
             seen.add(sid)
@@ -78,7 +80,7 @@ def section_info(sid, plugin, s) -> dict:
     """What the page and Settings get of a row. layout: how its series cards are drawn (the card view's
     "continue", with the book and page to go on with, or "library")."""
     return {"id": sid, "plugin": plugin.id if plugin else None, "title": t(s.title), "kind": s.kind,
-            "layout": "continue" if sid == "continue" else "library",
+            "layout": "continue" if sid == "continue" else "library", "shape": s.shape,
             "see_all": s.see_all if s.see_all.startswith("#/") else ""}
 
 

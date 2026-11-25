@@ -86,7 +86,7 @@ class Libraries(Plugin):
                 "folder_shelf": shelf_of(folder.shelf_id if folder else None)}
 
     # --- the Home page's Libraries row (#291) ----------------------------------------------------------
-    home_sections = [HomeSection("libraries", N_("Libraries"), kind="tiles")]
+    home_sections = [HomeSection("libraries", N_("Libraries"), kind="tiles", shape="wide")]
 
     def home_section(self, ctx, request, key, limit):
         """A card per library this person sees (with accounts, the ones an admin shares with them), with
@@ -106,7 +106,8 @@ class Libraries(Plugin):
                 .order_by(func.random()).first())
             out.append({"id": s.id, "title": s.name, "href": "#/library",
                         "subtitle": t("Locked") if s.id in locked else tn("{n} series", "{n} series", n.get(s.id, 0)),
-                        "image": f"/api/series/{cover.id}/poster?size=sm&v={poster_version(cover)}" if cover else "",
+                        # the big poster: a wide card crops it, and is twice as wide as a series card
+                        "image": f"/api/series/{cover.id}/poster?v={poster_version(cover)}" if cover else "",
                         "icon": "lock" if s.id in locked else "books"})
         return out
 
