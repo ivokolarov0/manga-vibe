@@ -48,6 +48,15 @@ MangaVibe.onStart(() => {
       if (this.list.find((s) => s.id === id)?.locked) return this.openUnlock(id, () => this.set(id));
       this.set(id);
     },
+    /* A library picked anywhere but the library and Continue (Home's tabs and cards, the sidebar on another
+       page): show it in the Library, once it's open (a locked one asks for its password first). On the
+       library and Continue, picking only switches what they show. */
+    choose(id) {
+      if (["library", "continue"].includes(Alpine.store("app").view)) return this.pick(id);
+      const open = () => { this.set(id); location.hash = "#/library"; };
+      if (this.list.find((s) => s.id === id)?.locked) return this.openUnlock(id, open);
+      open();
+    },
     // after unlocking, locking, adding or removing a library: everything shown may change
     async changed() {
       await this.load().catch(() => {});
@@ -243,6 +252,11 @@ MangaVibe.onStart(() => {
     if (!info?.shelf || store.list.length < 2) return null;
     return [[MV.t("Library"), info.shelf.name
       + (info.shelf_override ? " " + MV.t("(moved here; its folder's is {library})", { library: info.folder_shelf?.name || MV.t("gone") }) : "")]];
+  });
+  // Home's Libraries row (#291): a library's card shows that library in the Library (a locked one asks first)
+  MV.on(ID, "home-tile", (item) => {
+    store.choose(+item.id);
+    return true;
   });
   // the library page with nothing to show: say why
   MV.on(ID, "empty-library", () => {

@@ -1423,3 +1423,60 @@ Plugin API version, and the app works after every one.
   and is VACUUMed. app/backup.py names the table (`ACTIVITY_TABLE`): the one place the core knows a
   plugin's table, as the backup is the core's. Importing a file without the log empties this server's,
   like everything else an import replaces; the import itself is then the first entry.
+
+### The Home page (Plugin API 30, issue #291)
+
+- **Home is `#/` and always there; the library moved to `#/library`** (the owner's choice: no switch to turn
+  Home off, which made every library address depend on a setting). Every library address is built in one
+  place (`libraryAt()` / `libraryUrl()` in app.js), so filters, sorts, the search box, paging and saved
+  searches (they keep only the query) all go to `#/library?…`. An old `#/?genre=…` address (a bookmark, a
+  plugin's link) is replaced with `#/library?genre=…`, so nothing saved breaks.
+- **The rows are the app's and the plugins', the page is a view**: `view:home` (built in: `home_page/`) only
+  draws `MangaVibe.home.sections`. A plugin that replaces the page keeps every row; one that adds a row
+  (`home_sections` + `home_section()`) works with any page. The app's own rows (Continue reading, Recently
+  added, Recently updated) are the core's (app/api/home.py), like Continue reading's API.
+- **One call for the page** (`GET /api/home`): every shown row with its 10 cards, the empty and hidden
+  ones left out. A plugin's row that fails is logged and left out. A plugin's series row gives `Series` rows
+  and the core makes the cards, filtered again with `visible_series()`, so a plugin can't show a locked
+  library's series by mistake, and every card looks like the library's.
+- **Recently updated is new books, kept in `Series.books_added_at`** (migration 20). `updated_at` was no
+  good: the scanner sets it when books go missing or are read again too. The scanner sets `books_added_at`
+  only for a new book in a series that has been here more than an hour (a folder still being copied in is
+  part of adding it), so a new series isn't in both rows. The library's "updated" sort (the row's See all)
+  orders by it first, then by `updated_at`, so both start with the same series. The migration takes
+  `updated_at` for series it set more than an hour after they were added.
+- **Hardened after review**: a plugin row that's made wrong (not strings, `see_all=None`) or there twice is
+  logged and left out instead of failing Home; tiles without an id (or twice) are dropped; only the newest
+  `/api/home` answer is used (quick library tab switches); unchanged rows aren't drawn again; Home keeps its
+  scroll when you come back; Settings' saves go one after another, each with the order as it is then;
+  every row hidden says so on Home, with a button to Settings.
+- **The Libraries cards show a random series' cover**, a different one each time Home loads. They're wide
+  (the owner asked for media-server style library cards): `HomeSection(shape="wide")`, 16:9, twice a series
+  card's width, the big poster cut to fit (from its upper part, where faces and titles mostly are) and
+  darkened so the library's name, written large across it, reads on any cover; the count under the card. The
+  name under it stays for screen readers only (the one on the picture is `aria-hidden`).
+- **Home is across the libraries, with no tabs**: the library tabs show on the Library and Continue only,
+  and Home's call sends no list scope, so its rows are everything the person may see (a locked library's
+  series stay out: the plugin's `series_filter()` still runs). The Libraries row is how Home opens one.
+  Its cards and the sidebar's libraries call the plugin's `choose(id)`: on the library and Continue it
+  only switches what they show, anywhere else it picks the library and opens `#/library` (a locked one asks
+  for its password first). The Libraries row is at the top of Home by default (`HomeSection.order`: 10, the
+  app's own rows 20–40) and has a card for every library, even when there's only one (the owner's call).
+- **Per person**: `home_layout` (`{order, hidden}`) is a personal setting. A row someone never put in
+  order (a plugin switched on later) comes after theirs, in the default order.
+- **Settings → Display → Home page**: the rows as setting rows (dividers between
+  rows, #245), each with a drag handle (HTML drag and drop, `setData` for Firefox), up / down buttons for the
+  keyboard and touch (`aria-disabled` at the ends, so focus stays on the button) and a show box.
+- **The carousels are Embla Carousel** (8.5.2, MIT, vendored as `static/js/vendor/embla-carousel.umd.js`
+  like Alpine: no CDN, works offline). A hand-made drag on a scrolling row was buggy (snapping fighting the
+  drag, clicks after drags); Embla does mouse and touch dragging with momentum, stopping at a card, no click
+  after a drag, and keeps up with cards added or removed. Chosen over Swiper: about 7 KB gzipped against
+  ~40 KB plus CSS, no styles of its own, no framework. Options: `align: "start"`, `containScroll:
+  "trimSnaps"`, `slidesToScroll: "auto"` (the arrows move a screen of cards), `skipSnaps` (a strong swipe goes
+  past several), `watchFocus` (Tab brings the card into view; the viewport's own scroll, which the browser
+  also does on focus, is undone), a short `duration` with reduced motion. The viewport is found in the row's
+  own element on the next tick (its `$refs` aren't there yet in `init()`), and the instance stays out of
+  Alpine's reactive data. Without the script the row still scrolls natively, with CSS snapping.
+- The arrows only with a mouse (`hover: hover`) and only while there's somewhere to go. The cards are
+  the card view (`home_card()` draws Continue reading's for that row, the library's for the others), with
+  `content-visibility` off so cards out of sight aren't blank while swiping.

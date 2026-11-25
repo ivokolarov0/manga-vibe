@@ -1,0 +1,333 @@
+/* The Home page (#291): rows of what's new, each a carousel of cards (the built-in view:home's markup,
+   app/plugins/builtin/home_page). The cards are the library's (library.css), as wide as Settings → Display
+   → Card size makes them (--card). Swipe or scroll a row sideways; on screens with a mouse, the arrows. */
+@layer pages {
+  .home-row {
+    margin-bottom: 22px;
+
+    @media (min-width: 700px) {
+      margin-bottom: 30px;
+    }
+  }
+
+  .home-row-head {
+    display: flex;
+    align-items: center;
+    gap: 6px 12px;
+    margin-bottom: 10px;
+
+    & h2 {
+      margin: 0;
+      font-size: 18px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      @media (min-width: 700px) {
+        font-size: 20px;
+      }
+    }
+  }
+
+  .home-see-all {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    padding: 4px 2px 4px 8px;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    & .ic {
+      width: 16px;
+      height: 16px;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  /* the arrows: for a mouse; touch screens swipe */
+  .home-arrows {
+    display: flex;
+    flex: none;
+    gap: 6px;
+
+    .home-see-all + & {
+      margin-left: 4px;
+    }
+
+    :not(.home-see-all) + & {
+      margin-left: auto;
+    }
+
+    & .iconbtn {
+      height: 32px;
+      min-width: 32px;
+      padding: 0;
+      border-radius: var(--radius-pill);
+
+      &:disabled {
+        opacity: 0.35;
+        cursor: default;
+      }
+    }
+
+    @media (hover: none) {
+      display: none !important;
+    }
+  }
+
+  /* the row: one line of cards, a carousel (Embla Carousel, home_page.js). .home-track is its viewport,
+     .home-slides what it moves, each .home-item a card as wide as --card. Without the script (.carousel not
+     set) the row scrolls sideways by itself and stops at a card */
+  .home-track {
+    --gap-x: 10px;
+    padding: 2px 0 6px;  /* room for the cards' shadow */
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    @media (min-width: 700px) {
+      --gap-x: 16px;
+    }
+
+    /* Embla moves the cards: it drags with the mouse and a finger swipes it sideways, while the page
+       still scrolls up and down; no text selected or pictures dragged by a press */
+    &.carousel {
+      overflow: hidden;
+      scroll-snap-type: none;
+      touch-action: pan-y pinch-zoom;
+      user-select: none;
+      -webkit-user-select: none;
+
+      @media (pointer: fine) {
+        cursor: grab;
+
+        &:active {
+          cursor: grabbing;
+        }
+      }
+
+      & img {
+        -webkit-user-drag: none;
+      }
+    }
+
+    & .home-slides {
+      display: flex;
+      gap: var(--gap-x);
+    }
+
+    & .home-item {
+      flex: 0 0 var(--card);
+      min-width: 0;
+      scroll-snap-align: start;
+    }
+
+    /* a card is always drawn here: content-visibility would leave the cards out of sight blank for a moment */
+    & .card {
+      content-visibility: visible;
+    }
+
+    /* the list view's details are the library's only */
+    & .card-meta {
+      display: none;
+    }
+  }
+
+  /* a plugin's cards, e.g. the libraries: a cover (or an icon), a name and a line under it */
+  .home-tile {
+    display: block;
+
+    & .tile-cover {
+      position: relative;
+      display: grid;
+      place-items: center;
+      aspect-ratio: 2 / 3;
+      overflow: hidden;
+      background: var(--surface2);
+      border-radius: 12px;
+      box-shadow: var(--shadow-sm);
+      color: var(--muted);
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent);
+        pointer-events: none;
+        transition: box-shadow var(--fast);
+      }
+
+      & img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      & .ic {
+        width: 40%;
+        height: 40%;
+        stroke-width: 1.4;
+      }
+    }
+
+    @media (hover: hover) {
+      &:hover .tile-cover::after {
+        box-shadow: inset 0 0 0 2px var(--accent);
+      }
+
+      &:hover .card-title {
+        color: var(--accent);
+      }
+    }
+
+    /* only a wide card writes its title on the picture */
+    & .tile-name {
+      display: none;
+    }
+  }
+
+  /* Wide cards (a row's shape "wide", e.g. the libraries): 16:9, twice a series card's width, a cover cut to
+     fit and darkened a little, the name large across the middle and the count under the card */
+  .home-track.shape-wide {
+    & .home-item {
+      flex-basis: calc(var(--card) * 2 + var(--gap-x));
+    }
+
+    & .tile-cover {
+      aspect-ratio: 16 / 9;
+
+      & img {
+        position: absolute;
+        inset: 0;
+        object-position: 50% 30%;  /* a cover's faces and titles are mostly in its upper part */
+        filter: brightness(0.6) saturate(1.05);
+        transition: filter var(--fast), transform 0.25s ease;
+      }
+
+      & .ic {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    & .tile-name {
+      position: relative;
+      display: block;
+      max-width: 100%;
+      padding: 0 12px;
+      overflow: hidden;
+      color: #fff;
+      font-size: clamp(16px, calc(var(--card) * 0.2), 30px);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      text-align: center;
+      text-overflow: ellipsis;
+      text-shadow: 0 2px 10px rgb(0 0 0 / 0.65), 0 1px 2px rgb(0 0 0 / 0.5);
+      white-space: nowrap;
+    }
+
+    /* the name is on the picture: the one under it is for screen readers only, the count shows */
+    & .card-title.sr-under {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    & .card-sub {
+      margin-top: 6px;
+      text-align: center;
+    }
+
+    @media (hover: hover) {
+      & .home-tile:hover .tile-cover img {
+        filter: brightness(0.75) saturate(1.1);
+        transform: scale(1.04);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      & .tile-cover img {
+        transition: none;
+      }
+
+      & .home-tile:hover .tile-cover img {
+        transform: none;
+      }
+    }
+  }
+
+  /* Settings → Display: Home's rows, each with a handle to drag, up / down and a show box */
+  .home-row-setting {
+    cursor: grab;
+
+    & .grip {
+      flex: none;
+      width: 18px;
+      height: 18px;
+      color: var(--muted);
+    }
+
+    & .label {
+      flex: 1;
+      min-width: 0;
+    }
+
+    &.off .label > span {
+      color: var(--muted);
+    }
+
+    &.dragging {
+      opacity: 0.5;
+    }
+  }
+
+  .home-row-tools {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 6px;
+
+    & .iconbtn {
+      height: 34px;
+      min-width: 34px;
+      padding: 0;
+
+      & .ic {
+        width: 18px;
+        height: 18px;
+      }
+
+      &[aria-disabled="true"] {
+        opacity: 0.35;
+        cursor: default;
+      }
+    }
+
+    & input[type="checkbox"] {
+      margin-left: 4px;
+    }
+  }
+}

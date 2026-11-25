@@ -1,0 +1,67 @@
+{#- The Home page: what's inside the page's <section class="view"> for it. Contract view:home@1 (docs/PLUGINS.md,
+    "The view:home job"): the rows are MangaVibe.home.sections ($store.home), each {id, plugin, title, kind,
+    layout, see_all, items}, in the person's order, the empty and hidden ones left out. A "series" row's
+    cards are {{ home_card() }} (with `s` and `sec`); a "tiles" row's open with $store.home.openTile($event,
+    sec, item). homeRow() (home_page.js) makes a row a carousel (Embla Carousel): x-ref "track" is its
+    viewport, .home-slides what moves, each .home-item a card; canPrev, canNext and step(dir) are its arrows.
+    Keep the slots home-end and card-badges. A plugin's page can {% extends "@home-page/views/home.html" %} and change a block. -#}
+{% from "ui/macros.html" import home_card with context %}
+    <div class="home-page-view" x-data>
+      {% block rows %}
+      <template x-for="sec in $store.home.sections || []" :key="sec.id">
+        <section class="home-row" x-data="homeRow()" :aria-labelledby="'home-row-' + sec.id">
+          <div class="home-row-head">
+            <h2 :id="'home-row-' + sec.id" x-text="sec.title"></h2>
+            <a class="home-see-all" x-show="sec.see_all" :href="sec.see_all"
+               :aria-label="t('See all: {row}', { row: sec.title })">{{ t("See all") }}<svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+            <div class="home-arrows" x-show="canPrev || canNext">
+              <button type="button" class="iconbtn" :disabled="!canPrev" @click="step(-1)"
+                      :aria-label="t('Back in {row}', { row: sec.title })"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
+              <button type="button" class="iconbtn" :disabled="!canNext" @click="step(1)"
+                      :aria-label="t('More in {row}', { row: sec.title })"><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+            </div>
+          </div>
+          <div class="home-track" :class="['home-' + sec.kind, 'shape-' + (sec.shape || 'poster')]" x-ref="track">
+           <div class="home-slides">
+            <template x-if="sec.kind === 'series'">
+              <template x-for="s in sec.items" :key="s.id">
+                {{ home_card() }}
+              </template>
+            </template>
+            <template x-if="sec.kind === 'tiles'">
+              <template x-for="item in sec.items" :key="item.id">
+                <div class="home-item">
+                  <a class="home-tile" :href="item.href || '#/'" @click="$store.home.openTile($event, sec, item)">
+                    <div class="tile-cover">
+                      <img x-show="item.image" :src="item.image" loading="lazy" alt="" draggable="false">
+                      <svg class="ic" x-show="!item.image" aria-hidden="true"><use :href="'#i-' + (item.icon || 'books')"/></svg>
+                      <!-- a wide card's title, across its picture (home.css) -->
+                      <span class="tile-name" x-show="sec.shape === 'wide'" x-text="item.title" aria-hidden="true"></span>
+                    </div>
+                    <div class="card-title" :class="{ 'sr-under': sec.shape === 'wide' }" x-text="item.title"></div>
+                    <div class="card-sub" x-text="item.subtitle"></div>
+                  </a>
+                </div>
+              </template>
+            </template>
+           </div>
+          </div>
+        </section>
+      </template>
+      {% endblock %}
+      {{ slot("home-end") }}
+      {% block empty %}
+      <p class="muted loading-line" x-show="$store.home.sections === null && !$store.home.failed" x-cloak>{{ t("Loading…") }}</p>
+      <div class="empty" x-show="$store.home.failed" x-cloak>
+        <svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>
+        <span x-text="t('Could not load Home: {error}', { error: $store.home.failed })"></span>
+        <button class="btn small" @click="$store.home.load()">{{ t("Try again") }}</button>
+      </div>
+      <div class="empty" x-show="$store.home.sections && !$store.home.sections.length" x-cloak>
+        <svg class="ic" aria-hidden="true"><use href="#i-books"/></svg>
+        <span x-text="$store.home.emptyText"></span>
+        <a class="btn small primary" href="#/settings/display" x-show="$store.home.allHidden">{{ t("Show the rows") }}</a>
+        <a class="btn small primary" href="#/library" x-show="!$store.home.allHidden">{{ t("Open the Library") }}</a>
+      </div>
+      {% endblock %}
+    </div>

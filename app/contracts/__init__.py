@@ -57,6 +57,8 @@ register(Job("view:library", N_("Library page"), required=True,
              description=N_("The library: its filters' buttons, the cards, paging and multi-select, from MangaVibe.library")))
 register(Job("view:continue", N_("Continue reading page"), required=True,
              description=N_("The series in progress, from MangaVibe.continue")))
+register(Job("view:home", N_("Home page"), required=True,
+             description=N_("The first page's rows of what's new, from MangaVibe.home")))
 register(Job("view:series", N_("Series page"), required=True,
              description=N_("The page a series opens on, drawn from MangaVibe.series")))
 

@@ -401,6 +401,10 @@ msgstr "自動：{mode}"
 msgid "Back"
 msgstr "戻る"
 
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Back in {row}"
+msgstr "{row}：前へ"
+
 #: app/web/static/js/reader.js
 msgid "Back to series"
 msgstr "シリーズに戻る"
@@ -746,7 +750,7 @@ msgstr "制限あり"
 msgid "Continue"
 msgstr "続きを読む"
 
-#: app/plugins/builtin/continue_page/templates/views/continue.html app/web/static/js/app.js
+#: app/api/home.py app/plugins/builtin/continue_page/templates/views/continue.html app/web/static/js/app.js
 msgid "Continue reading"
 msgstr "続きを読む"
 
@@ -777,6 +781,10 @@ msgstr "以前のコピー"
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copy path"
 msgstr "パスをコピー"
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Could not load Home: {error}"
+msgstr "ホームを読み込めませんでした：{error}"
 
 #: app/plugins/builtin/image_reader/image_reader.js
 msgid "Could not load page {n}"
@@ -969,6 +977,10 @@ msgstr "スキップしない"
 msgid "Done"
 msgstr "完了"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Down"
+msgstr "下へ"
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "down"
 msgstr "停止中"
@@ -1008,6 +1020,10 @@ msgstr "編集ダイアログを表示します。外部には接続しません
 #: app/plugins/builtin/dialogs/__init__.py
 msgid "Draws the Fix match dialog; the searches are the metadata sources'"
 msgstr "照合の修正ダイアログを表示します。検索はメタデータのソースが行います"
+
+#: app/plugins/builtin/home_page/__init__.py
+msgid "Draws the Home page; connects to nothing"
+msgstr "ホームページを描画します。どこにも接続しません"
 
 #: app/plugins/builtin/library_page/__init__.py
 msgid "Draws the library page; connects to nothing"
@@ -1124,6 +1140,10 @@ msgstr "すべてのライブラリがロックされています。上のタブ
 #: app/web/templates/settings/plugins.html
 msgid "Every plugin loaded."
 msgstr "すべてのプラグインを読み込みました。"
+
+#: app/web/static/js/app.js
+msgid "Every row of Home is hidden. Show them again in Settings → Display → Home page."
+msgstr "ホームの行はすべて非表示です。設定 → 表示 → ホームページでもう一度表示できます。"
 
 #: app/plugins/builtin/optimize/__init__.py
 msgid "Every series is optimized already"
@@ -1393,6 +1413,10 @@ msgstr "種類"
 msgid "From"
 msgstr "開始日"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "From a plugin"
+msgstr "プラグインから"
+
 #: app/plugins/builtin/anilist_recommendations/panel.html
 msgid "From AniList readers' recommendations."
 msgstr "AniList の読者のおすすめから。"
@@ -1541,6 +1565,10 @@ msgstr "メタデータあり"
 msgid "Hiatus"
 msgstr "休載中"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Hidden"
+msgstr "非表示"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Hidden (older revision)"
 msgstr "非表示（古い版）"
@@ -1580,6 +1608,14 @@ msgstr "操作ボタンと一緒に隠す"
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Highest first"
 msgstr "高い順"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/web/static/js/app.js
+msgid "Home"
+msgstr "ホーム"
+
+#: app/contracts/__init__.py app/plugins/builtin/home_page/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Home page"
+msgstr "ホームページ"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "How"
@@ -1776,6 +1812,10 @@ msgstr "あなただけの設定。全幅にすると、ライブラリと続き
 #: app/web/static/js/app.js
 msgid "Just for you. Missing words are shown in English"
 msgstr "あなただけの設定。翻訳がない言葉は英語で表示されます"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Just for you. The rows of the first page: drag them or use the arrows to change their order, untick one to hide it"
+msgstr "あなただけの設定。最初のページの行です。ドラッグするか矢印で順番を変え、チェックを外すと非表示になります"
 
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Keep entries for"
@@ -1985,7 +2025,7 @@ msgstr "AniList から読み込む"
 msgid "Loading the plugin sources…"
 msgstr "プラグインのソースを読み込み中…"
 
-#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr "読み込み中…"
 
@@ -1997,7 +2037,7 @@ msgstr "今すぐロック"
 msgid "locked"
 msgstr "ロック中"
 
-#: app/plugins/builtin/libraries/settings.html
+#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/settings.html
 msgid "Locked"
 msgstr "ロック中"
 
@@ -2114,8 +2154,8 @@ msgid "MangaVibe's own plugins"
 msgstr "MangaVibe 公式のプラグイン"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
-msgid "MangaVibe: Library"
-msgstr "MangaVibe：ライブラリ"
+msgid "MangaVibe: Home"
+msgstr "MangaVibe：ホーム"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Manhua"
@@ -2248,6 +2288,10 @@ msgstr "多いほどスムーズですが、データ量が増えます"
 msgid "More actions"
 msgstr "その他の操作"
 
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "More in {row}"
+msgstr "{row}：次へ"
+
 #: app/web/static/js/app.js
 msgid "More makes faint lines and small text stand out"
 msgstr "高めにすると薄い線や小さな文字が見やすくなります"
@@ -2272,6 +2316,14 @@ msgstr "ライブラリへ移動…"
 msgid "Move {n} series to"
 msgid_plural "Move {n} series to"
 msgstr[0] "{n} シリーズの移動先"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Move {row} down"
+msgstr "{row}を下へ移動"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Move {row} up"
+msgstr "{row}を上へ移動"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Moved to"
@@ -2304,6 +2356,10 @@ msgstr[0] "{n} シリーズを {library} に移動しました"
 msgid "Moved {n} series to {to}"
 msgid_plural "Moved {n} series to {to}"
 msgstr[0] "{n} シリーズを {to} に移動しました"
+
+#: app/web/static/js/app.js
+msgid "Moved: {row} is number {n} now"
+msgstr "移動しました：{row}は{n}番目になりました"
 
 #: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Name"
@@ -2793,7 +2849,7 @@ msgstr "{source} で開く"
 msgid "Open the downloaded MangaVibe.apk and allow installing apps from your browser when Android asks. Then come back here and tap Open app"
 msgstr "ダウンロードした MangaVibe.apk を開き、Android に聞かれたらブラウザからのインストールを許可してください。その後ここに戻って「アプリを開く」をタップします"
 
-#: app/plugins/builtin/continue_page/templates/views/continue.html
+#: app/plugins/builtin/continue_page/templates/views/continue.html app/plugins/builtin/home_page/templates/views/home.html
 msgid "Open the Library"
 msgstr "ライブラリを開く"
 
@@ -3226,7 +3282,7 @@ msgstr "ファイル名から巻・話・版を読み取ります（Vol 3、c012
 msgid "Ready to install"
 msgstr "インストールできます"
 
-#: app/plugins/builtin/library_query/__init__.py
+#: app/api/home.py app/plugins/builtin/library_query/__init__.py
 msgid "Recently added"
 msgstr "最近追加"
 
@@ -3234,7 +3290,7 @@ msgstr "最近追加"
 msgid "Recently read"
 msgstr "最近読んだ"
 
-#: app/plugins/builtin/library_query/__init__.py
+#: app/api/home.py app/plugins/builtin/library_query/__init__.py
 msgid "Recently updated"
 msgstr "最近更新"
 
@@ -3401,6 +3457,10 @@ msgstr "ローマ字"
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Romaji title"
 msgstr "ローマ字タイトル"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Rows on Home"
+msgstr "ホームの行"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Running version"
@@ -3572,6 +3632,14 @@ msgstr "秒"
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Secret"
 msgstr "秘密"
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "See all"
+msgstr "すべて表示"
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "See all: {row}"
+msgstr "すべて表示：{row}"
 
 #: app/web/templates/shell/toasts.html
 msgid "See {url}"
@@ -3753,6 +3821,14 @@ msgstr "閉じる"
 msgid "Show more"
 msgstr "もっと見る"
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Show on Home"
+msgstr "ホームに表示"
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Show the rows"
+msgstr "行を表示"
+
 #: app/web/templates/settings/plugin.html
 msgid "Show the {category} plugins"
 msgstr "{category} のプラグインを表示"
@@ -3783,6 +3859,10 @@ msgstr "無視した {n} 件を表示"
 msgid "Show {n} spoiler tag"
 msgid_plural "Show {n} spoiler tags"
 msgstr[0] "ネタバレタグ {n} 件を表示"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Show {row} on Home"
+msgstr "{row}をホームに表示"
 
 #: app/plugins/builtin/saved_searches/sheet.html
 msgid "Shown now: tap to clear it"
@@ -4019,6 +4099,14 @@ msgstr "最初のアカウントは管理者のままです"
 #: app/plugins/builtin/accounts/settings.html
 msgid "the first one: has the reading from before accounts"
 msgstr "最初のアカウント：アカウント導入前の読書記録を持っています"
+
+#: app/contracts/__init__.py
+msgid "The first page's rows of what's new, from MangaVibe.home"
+msgstr "最初のページの新着の行（MangaVibe.home から）"
+
+#: app/plugins/builtin/home_page/__init__.py
+msgid "The first page: rows of what's new, each a carousel of series. Built in; replace it with a plugin that draws Home its own way."
+msgstr "最初のページ：新着の行が並び、それぞれがシリーズのカルーセルです。組み込み。ホームを独自に描画するプラグインに置き換えられます。"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "the folder {folder}"
@@ -4376,7 +4464,7 @@ msgstr "上部バー"
 msgid "Tried in this order. Fallbacks are used when the main source has no match or is down."
 msgstr "この順に試します。メインのソースで見つからないか停止中のときは予備を使います。"
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js
 msgid "Try again"
 msgstr "再試行"
 
@@ -4480,7 +4568,7 @@ msgstr "未読の数"
 msgid "Until then a series shows the recommendations it got last time."
 msgstr "それまでは前回取得したおすすめを表示します。"
 
-#: app/web/templates/dialogs/folder-picker.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html app/web/templates/dialogs/folder-picker.html
 msgid "Up"
 msgstr "上へ"
 
@@ -5020,7 +5108,7 @@ msgstr[0] "{n} 秒"
 msgid "{n} selected"
 msgstr "{n} 件選択中"
 
-#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/static/js/app.js
+#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/static/js/app.js
 msgid "{n} series"
 msgid_plural "{n} series"
 msgstr[0] "{n} シリーズ"
@@ -5077,6 +5165,14 @@ msgstr "{plugin} は {other}（{job}）を置き換えます。"
 #: app/web/static/js/app.js
 msgid "{plugin} {version} asks for new permissions:"
 msgstr "{plugin} {version} は新しい権限を求めています："
+
+#: app/web/static/js/app.js
+msgid "{row} is hidden on Home"
+msgstr "{row}はホームで非表示です"
+
+#: app/web/static/js/app.js
+msgid "{row} shows on Home"
+msgstr "{row}をホームに表示します"
 
 #: app/plugins/builtin/optimize/__init__.py
 msgid "{started}. Left out: {blocked}"

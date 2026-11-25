@@ -189,6 +189,18 @@ def _parser_done(db, lib):
         set_setting(db, PARSER_USED, {**used, str(lib.id): _parser_now()})
 
 
+# A series' new books count as an update (books_added_at) once it has been here this long: the books of a
+# folder still being copied in, found by the scans right after the first, are part of adding it
+JUST_ADDED = timedelta(hours=1)
+
+
+def _settled(series) -> bool:
+    added = series.added_at
+    if added is None:
+        return False
+    return now() - (added if added.tzinfo else added.replace(tzinfo=timezone.utc)) > JUST_ADDED
+
+
 def scan_series(db, lib, folder: Path, recheck_errors=True, reparse=False) -> Series | None:
     """recheck_errors=False leaves unchanged broken books alone (scans after a change, see scan_folder).
     reparse: read the numbers of unchanged books again too (the parser plugin was switched)."""
@@ -197,6 +209,7 @@ def scan_series(db, lib, folder: Path, recheck_errors=True, reparse=False) -> Se
     book_paths = list(find_books(folder))
     if series is None and not book_paths:
         return None  # empty folder: not a series (yet)
+    is_new = series is None  # its first books are part of adding it, not an update
     if series is None:
         series = Series(library_id=lib.id, folder_path=path_str, folder_name=folder.name,
                         sort_title=folder.name.lower())
@@ -231,6 +244,8 @@ def scan_series(db, lib, folder: Path, recheck_errors=True, reparse=False) -> Se
             db.add(book)
             series.books.append(book)
             status["new_books"] += 1
+            if not is_new and _settled(series):
+                series.books_added_at = now()  # Home's Recently updated (#291)
         elif book.mtime != -1 and (book.file_size, book.mtime) != (size, mtime):
             status["changed_books"] += 1  # the file changed (not a forced re-read, not a broken one re-checked)
         before = (book.file_size, book.mtime, book.missing_since, book.error, book.page_count, book.format)

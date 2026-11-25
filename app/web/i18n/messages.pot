@@ -401,6 +401,10 @@ msgstr ""
 msgid "Back"
 msgstr ""
 
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Back in {row}"
+msgstr ""
+
 #: app/web/static/js/reader.js
 msgid "Back to series"
 msgstr ""
@@ -747,7 +751,7 @@ msgstr ""
 msgid "Continue"
 msgstr ""
 
-#: app/plugins/builtin/continue_page/templates/views/continue.html app/web/static/js/app.js
+#: app/api/home.py app/plugins/builtin/continue_page/templates/views/continue.html app/web/static/js/app.js
 msgid "Continue reading"
 msgstr ""
 
@@ -777,6 +781,10 @@ msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copy path"
+msgstr ""
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Could not load Home: {error}"
 msgstr ""
 
 #: app/plugins/builtin/image_reader/image_reader.js
@@ -973,6 +981,10 @@ msgstr ""
 msgid "Done"
 msgstr ""
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Down"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "down"
 msgstr ""
@@ -1011,6 +1023,10 @@ msgstr ""
 
 #: app/plugins/builtin/dialogs/__init__.py
 msgid "Draws the Fix match dialog; the searches are the metadata sources'"
+msgstr ""
+
+#: app/plugins/builtin/home_page/__init__.py
+msgid "Draws the Home page; connects to nothing"
 msgstr ""
 
 #: app/plugins/builtin/library_page/__init__.py
@@ -1127,6 +1143,10 @@ msgstr ""
 
 #: app/web/templates/settings/plugins.html
 msgid "Every plugin loaded."
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Every row of Home is hidden. Show them again in Settings → Display → Home page."
 msgstr ""
 
 #: app/plugins/builtin/optimize/__init__.py
@@ -1397,6 +1417,10 @@ msgstr ""
 msgid "From"
 msgstr ""
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "From a plugin"
+msgstr ""
+
 #: app/plugins/builtin/anilist_recommendations/panel.html
 msgid "From AniList readers' recommendations."
 msgstr ""
@@ -1545,6 +1569,10 @@ msgstr ""
 msgid "Hiatus"
 msgstr ""
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Hidden"
+msgstr ""
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Hidden (older revision)"
 msgstr ""
@@ -1583,6 +1611,14 @@ msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Highest first"
+msgstr ""
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/web/static/js/app.js
+msgid "Home"
+msgstr ""
+
+#: app/contracts/__init__.py app/plugins/builtin/home_page/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Home page"
 msgstr ""
 
 #: app/plugins/builtin/activity_log/activity_log.js
@@ -1779,6 +1815,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Just for you. Missing words are shown in English"
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Just for you. The rows of the first page: drag them or use the arrows to change their order, untick one to hide it"
 msgstr ""
 
 #: app/plugins/builtin/activity_log/settings.html
@@ -1989,7 +2029,7 @@ msgstr ""
 msgid "Loading the plugin sources…"
 msgstr ""
 
-#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr ""
 
@@ -2001,7 +2041,7 @@ msgstr ""
 msgid "locked"
 msgstr ""
 
-#: app/plugins/builtin/libraries/settings.html
+#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/settings.html
 msgid "Locked"
 msgstr ""
 
@@ -2118,7 +2158,7 @@ msgid "MangaVibe's own plugins"
 msgstr ""
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
-msgid "MangaVibe: Library"
+msgid "MangaVibe: Home"
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
@@ -2255,6 +2295,10 @@ msgstr ""
 msgid "More actions"
 msgstr ""
 
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "More in {row}"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "More makes faint lines and small text stand out"
 msgstr ""
@@ -2280,6 +2324,14 @@ msgid "Move {n} series to"
 msgid_plural "Move {n} series to"
 msgstr[0] ""
 msgstr[1] ""
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Move {row} down"
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Move {row} up"
+msgstr ""
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Moved to"
@@ -2316,6 +2368,10 @@ msgid "Moved {n} series to {to}"
 msgid_plural "Moved {n} series to {to}"
 msgstr[0] ""
 msgstr[1] ""
+
+#: app/web/static/js/app.js
+msgid "Moved: {row} is number {n} now"
+msgstr ""
 
 #: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Name"
@@ -2805,7 +2861,7 @@ msgstr ""
 msgid "Open the downloaded MangaVibe.apk and allow installing apps from your browser when Android asks. Then come back here and tap Open app"
 msgstr ""
 
-#: app/plugins/builtin/continue_page/templates/views/continue.html
+#: app/plugins/builtin/continue_page/templates/views/continue.html app/plugins/builtin/home_page/templates/views/home.html
 msgid "Open the Library"
 msgstr ""
 
@@ -3239,7 +3295,7 @@ msgstr ""
 msgid "Ready to install"
 msgstr ""
 
-#: app/plugins/builtin/library_query/__init__.py
+#: app/api/home.py app/plugins/builtin/library_query/__init__.py
 msgid "Recently added"
 msgstr ""
 
@@ -3247,7 +3303,7 @@ msgstr ""
 msgid "Recently read"
 msgstr ""
 
-#: app/plugins/builtin/library_query/__init__.py
+#: app/api/home.py app/plugins/builtin/library_query/__init__.py
 msgid "Recently updated"
 msgstr ""
 
@@ -3417,6 +3473,10 @@ msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Romaji title"
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Rows on Home"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
@@ -3591,6 +3651,14 @@ msgstr ""
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Secret"
+msgstr ""
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "See all"
+msgstr ""
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "See all: {row}"
 msgstr ""
 
 #: app/web/templates/shell/toasts.html
@@ -3773,6 +3841,14 @@ msgstr ""
 msgid "Show more"
 msgstr ""
 
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Show on Home"
+msgstr ""
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Show the rows"
+msgstr ""
+
 #: app/web/templates/settings/plugin.html
 msgid "Show the {category} plugins"
 msgstr ""
@@ -3806,6 +3882,10 @@ msgid "Show {n} spoiler tag"
 msgid_plural "Show {n} spoiler tags"
 msgstr[0] ""
 msgstr[1] ""
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Show {row} on Home"
+msgstr ""
 
 #: app/plugins/builtin/saved_searches/sheet.html
 msgid "Shown now: tap to clear it"
@@ -4041,6 +4121,14 @@ msgstr ""
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "the first one: has the reading from before accounts"
+msgstr ""
+
+#: app/contracts/__init__.py
+msgid "The first page's rows of what's new, from MangaVibe.home"
+msgstr ""
+
+#: app/plugins/builtin/home_page/__init__.py
+msgid "The first page: rows of what's new, each a carousel of series. Built in; replace it with a plugin that draws Home its own way."
 msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
@@ -4399,7 +4487,7 @@ msgstr ""
 msgid "Tried in this order. Fallbacks are used when the main source has no match or is down."
 msgstr ""
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js
 msgid "Try again"
 msgstr ""
 
@@ -4503,7 +4591,7 @@ msgstr ""
 msgid "Until then a series shows the recommendations it got last time."
 msgstr ""
 
-#: app/web/templates/dialogs/folder-picker.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html app/web/templates/dialogs/folder-picker.html
 msgid "Up"
 msgstr ""
 
@@ -5055,7 +5143,7 @@ msgstr[1] ""
 msgid "{n} selected"
 msgstr ""
 
-#: app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/static/js/app.js
+#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/static/js/app.js
 msgid "{n} series"
 msgid_plural "{n} series"
 msgstr[0] ""
@@ -5117,6 +5205,14 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "{plugin} {version} asks for new permissions:"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "{row} is hidden on Home"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "{row} shows on Home"
 msgstr ""
 
 #: app/plugins/builtin/optimize/__init__.py

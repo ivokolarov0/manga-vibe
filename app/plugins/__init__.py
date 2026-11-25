@@ -55,7 +55,7 @@ from app.i18n import N_
 from app.i18n import forget as _forget_translations
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 29
+API_VERSION = 30
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
@@ -159,6 +159,24 @@ class McpTool:
 
 
 @dataclass
+class HomeSection:
+    """A row of the Home page (Plugin API 30, issue #291), filled by home_section(). kind "series": a
+    carousel of series cards (home_section() returns Series rows, the newest first); "tiles": cards of the
+    plugin's own, each a dict {id, title, subtitle, image, href} (e.g. the libraries). `title` is marked N_()
+    and shown in the person's language. `see_all`: where "See all" goes (a #/ address, e.g. "#/library?sort=added"),
+    "" for none. `shape` (tiles): "poster", as tall as a series card, or "wide", a 16:9 card with the
+    title written across its picture (e.g. the libraries). Its id on the page and in the settings is
+    "<plugin id>:<key>". `order`: where it comes by default (lower first; the app's own rows are 20, 30 and
+    40, e.g. the libraries are 10: at the top); each person can move it in Settings → Display."""
+    key: str
+    title: str
+    kind: str = "series"
+    see_all: str = ""
+    shape: str = "poster"
+    order: int = 100
+
+
+@dataclass
 class Candidate:
     """A search result from a metadata provider."""
     provider_id: str
@@ -228,6 +246,9 @@ class Plugin:
     # not only admins), android (only on Android phones). The section's markup is the plugin's own: a
     # settings:<section> view, or its html in the "settings" slot
     settings_pages: list[dict] = []
+    # rows it adds to the Home page (Plugin API 30): HomeSection(key, title, kind, see_all), filled by
+    # home_section(). Everyone can move and hide them in Settings → Display, like the app's own
+    home_sections: list["HomeSection"] = []
 
     # --- assistants (MCP, Plugin API 13)---------------------------------------------
     def run_mcp_tool(self, ctx, name, args: dict):
@@ -259,6 +280,13 @@ class Plugin:
         """A default reading mode for a series that has none of its own: (mode, why), e.g.
         ("vertical", "the mode of Webtoons"). mode is paged or vertical; None: no opinion."""
         return None
+
+    def home_section(self, ctx, request, key, limit) -> list:
+        """What one of `home_sections` shows to the person asking (users.current()), at most `limit`: Series
+        rows for a "series" section (the app leaves out what this request may not see, and draws the
+        cards), dicts {id, title, subtitle, image, href} for "tiles". [] hides the row. A failure is
+        logged and hides the row; keep it fast (GET /api/home asks every row at once). Plugin API 30."""
+        return []
 
     def on_start(self, ctx):
         """The plugin starts working: at app start, after Reload plugins and when switched on."""
@@ -379,7 +407,7 @@ def implements(plugin, hook):
 # what a plugin can set besides css; a plugin with css and none of these is a theme
 _FEATURES = ("fields", "actions", "choices", "settings_fields", "global_actions", "book_actions",
              "overlay_label", "router", "js", "html", "middleware", "is_provider", "mcp_tools", "reads",
-             "provides")
+             "provides", "home_sections")
 # the hooks that do something, so a theme overriding one isn't only a theme. status() only shows a line,
 # and search()/fetch() count only for providers (is_provider is in _FEATURES)
 _HOOKS = tuple(k for k, v in vars(Plugin).items()

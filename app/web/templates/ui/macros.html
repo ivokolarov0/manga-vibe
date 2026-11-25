@@ -49,6 +49,24 @@
 </a>
 {%- endmacro %}
 
+{#- A series card in a Home row (`s` from a row's items, `sec` the row, MangaVibe.home): its link and the
+    card view, Continue reading's for that row (sec.layout "continue"), the library's for the others. One
+    element (.home-item), so it can be what an x-for repeats. Import it `with context`. -#}
+{% macro home_card() -%}
+<div class="home-item">
+  <template x-if="sec.layout === 'continue'">
+    <a class="card" :href="'#/series/' + s.id">
+      {{ view("card", layout="continue") }}
+    </a>
+  </template>
+  <template x-if="sec.layout !== 'continue'">
+    <a class="card" :class="{ done: s.reading_status === 'completed', dropped: s.reading_status === 'dropped' }" :href="'#/series/' + s.id">
+      {{ view("card", layout="library") }}
+    </a>
+  </template>
+</div>
+{%- endmacro %}
+
 {#- Metadata matching in progress (Settings → Metadata and the Needs attention lists). -#}
 {% macro meta_progress() -%}
 <template x-if="$store.app.metaProgress">

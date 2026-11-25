@@ -28,17 +28,24 @@
 
 {% block topbar %}{{ view("nav") }}{% endblock %}
 
-  <!-- home: the Library and Continue grids, which Settings → Display → Page width may let fill the screen
-       (series-page: so may the series page, when that's ticked too) -->
-  <main x-data :class="{ home: ['library', 'continue'].includes($store.app.view), 'series-page': $store.app.view === 'series' }">
+  <!-- home: Home and the Library and Continue grids, which Settings → Display → Page width may let fill the
+       screen (series-page: so may the series page, when that's ticked too) -->
+  <main x-data :class="{ home: ['home', 'library', 'continue'].includes($store.app.view), 'series-page': $store.app.view === 'series' }">
 {% include "shell/banners.html" %}
 
-    <!-- ============ above the library grid and Continue: what plugins add, e.g. the library tabs ============ -->
+    <!-- ============ above Home, the library grid and Continue: what plugins add, e.g. the library tabs ============ -->
     {{ slot("home-top") }}
+
+{% block home %}
+    <!-- ============ home: the view:home plugin's (built in: Home page), from MangaVibe.home ============ -->
+    <section class="view home-view" x-show="$store.app.view === 'home'" x-cloak>
+      {{ view("home") }}
+    </section>
+{% endblock %}
 
 {% block library %}
     <!-- ============ library: the view:library plugin's (built in: Library page), from MangaVibe.library ============ -->
-    <section id="library-view" class="view" x-show="$store.app.view === 'library'">
+    <section id="library-view" class="view" x-show="$store.app.view === 'library'" x-cloak>
       {{ view("library") }}
     </section>
 {% endblock %}
@@ -82,6 +89,8 @@
   <script src="/static/js/common.js"></script>
   <script src="/static/js/reader.js"></script>
   <script src="/static/js/app.js"></script>
+  <!-- Embla Carousel 8.5.2 (MIT, https://www.embla-carousel.com): Home's rows; window.EmblaCarousel for views too -->
+  <script src="/static/js/vendor/embla-carousel.umd.js"></script>
   {{ plugin_scripts }}
   <script defer src="/static/js/vendor/alpine.min.js"></script>
 </body>

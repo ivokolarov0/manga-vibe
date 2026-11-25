@@ -5,7 +5,7 @@
     ($store.app.view === 'read'). -#}
   <!-- ============ top bar ============ -->
   <header id="topbar" x-data="topbar()" x-show="$store.app.view !== 'read'">
-    <a href="#/" class="brand" aria-label="{{ t('MangaVibe: Library') }}">
+    <a href="#/" class="brand" aria-label="{{ t('MangaVibe: Home') }}">
       <svg class="logo" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" width="8" height="20" rx="2"/><rect x="11" width="8" height="20" rx="2"/></svg>
       <span>MangaVibe</span></a>
     <label class="search-box">
@@ -22,7 +22,9 @@
   <!-- ============ Library / Continue: fixed at the bottom, or under the top bar
        (Settings → Display → Navigation bar), so it comes right after the top bar ============ -->
   <nav id="bottomnav" x-data x-show="$store.app.view !== 'read'" aria-label="{{ t('Main') }}">
-    <a href="#/" :class="{ active: $store.app.view === 'library' }" :aria-current="$store.app.view === 'library' ? 'page' : null">
+    <a href="#/" :class="{ active: $store.app.view === 'home' }" :aria-current="$store.app.view === 'home' ? 'page' : null">
+      <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg></span>{{ t('Home') }}</a>
+    <a href="#/library" :class="{ active: $store.app.view === 'library' }" :aria-current="$store.app.view === 'library' ? 'page' : null">
       <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></span>{{ t('Library') }}</a>
     <a href="#/continue" :class="{ active: $store.app.view === 'continue' }" :aria-current="$store.app.view === 'continue' ? 'page' : null">
       <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-play"/></svg></span>{{ t('Continue') }}</a>

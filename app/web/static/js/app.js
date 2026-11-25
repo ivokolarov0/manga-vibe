@@ -3,7 +3,8 @@
    this file holds the data and actions. The reader is plain JS in reader.js.
 
    Routes use the URL hash:
-     #/?genre=..&read=..  library (filters in the URL)   #/series/12?tab=files  series page
+     #/                   Home (rows of what's new)
+     #/library?genre=..   library (filters in the URL)   #/series/12?tab=files  series page
      #/continue           continue reading               #/attention?tab=..     needs attention
      #/settings           settings                       #/read/34?page=5       reader
      #/settings/plugin-mal_profile_sync  one plugin's settings page                                   */
@@ -98,17 +99,22 @@ function setList(p, k, values) {
   if (lib().repeated.includes(k)) values.forEach((v) => p.append(k, v));
   else if (values.length) p.set(k, values.join(","));
 }
+/* The library's address, with its filters: #/library?genre=Isekai (#/ is Home) */
+function libraryAt(params) {
+  const qs = new URLSearchParams(params).toString();
+  return "#/library" + (qs ? "?" + qs : "");
+}
+// the library's query, while the address is the library's
 function libParams() {
   const [path, query] = location.hash.slice(1).split("?");
-  return (path || "/") === "/" ? new URLSearchParams(query || "") : new URLSearchParams();
+  return path === "/library" ? new URLSearchParams(query || "") : new URLSearchParams();
 }
 // filter, sort and search changes go back to page 1
 function navigateLibrary(p) {
   p.delete("page");
-  const qs = p.toString();
-  location.replace("#/" + (qs ? "?" + qs : ""));
+  location.replace(libraryAt(p));
 }
-const libraryUrl = (params) => "#/?" + new URLSearchParams(params).toString();
+const libraryUrl = (params) => "#/library?" + new URLSearchParams(params).toString();
 const scoreCls = (s) => (s >= 90 ? "hi" : s >= 70 ? "mid" : "lo");
 const kindOf = (s) => s.format === "NOVEL" ? t("Novel") : s.format === "ONE_SHOT" ? t("One-shot") : COUNTRY[s.country_of_origin];
 
@@ -189,7 +195,7 @@ document.addEventListener("alpine:init", () => {
   alpineStarted = true;  // plugin scripts loaded from now on run MangaVibe.onStart() at once
   Alpine.store("app", {
     pluginSlots: filledSlots(),  // the page's slots plugins put something in (see window.MangaVibe)
-    view: null,          // library | series | continue | attention | settings | read
+    view: null,          // home | library | series | continue | settings | read
     id: null,            // series id for the series page
     params: {},          // query params of the current route
     query: "",           // raw query string (library filters)
@@ -251,11 +257,12 @@ document.addEventListener("alpine:init", () => {
   // the library page's and Continue reading's (MangaVibe.library, MangaVibe.continue)
   Alpine.store("library", libraryController());
   Alpine.store("continue", continueController());
+  Alpine.store("home", homeController());  // the Home page's rows (MangaVibe.home)
 
   window.addEventListener("mv-theme", (e) => (Alpine.store("app").theme = e.detail));
 
-  let lastView = null, libraryScroll = 0;
-  history.scrollRestoration = "manual";  // we restore the library position ourselves
+  let lastView = null, libraryScroll = 0, homeScroll = 0;
+  history.scrollRestoration = "manual";  // we restore the library's and Home's positions ourselves
   function route() {
     const app = Alpine.store("app");
     const [path, query] = location.hash.slice(1).split("?");
@@ -264,7 +271,10 @@ document.addEventListener("alpine:init", () => {
     if (parts[0] === "attention") {  // old address: Needs attention now lives in Settings
       return location.replace(`#/settings/att-${params.get("tab") || "unreadable"}`);
     }
-    const view = parts[0] || "library";
+    // #/ is Home and the library is #/library: an old library address with filters (#/?genre=…, a bookmark or
+    // a plugin's link) opens the library with them
+    if (!parts[0] && query) return location.replace(libraryAt(params));
+    const view = parts[0] || "home";
     if (view === "read") Reader.open(+parts[1], params.get("page"),
       lastView === "read" ? undefined : lastView !== null);  // next book: keep where the reader was opened from
     else Reader.close()?.then(() => app.progressDirty++);  // pages refresh once the server has the progress
@@ -280,7 +290,8 @@ document.addEventListener("alpine:init", () => {
     let scrollTarget = null;
     if (view !== lastView || newId !== app.id || (view === "settings" && newSub !== app.sub)) {
       if (lastView === "library") libraryScroll = scrollY;
-      scrollTarget = view === "library" ? libraryScroll : 0;
+      if (lastView === "home") homeScroll = scrollY;  // back from a series opened on Home: the same row
+      scrollTarget = view === "library" ? libraryScroll : view === "home" ? homeScroll : 0;
     }
     // a series opened from another page can go back to it; one opened directly (link, fresh tab) has
     // nowhere to go back to. Coming back from the reader or switching tabs keeps what it was.
@@ -503,7 +514,7 @@ function topbar() {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => {
         const q = this.q.trim();
-        if (this.$store.app.view !== "library") return (location.hash = "#/" + (q ? "?q=" + encodeURIComponent(q) : ""));
+        if (this.$store.app.view !== "library") return (location.hash = libraryAt(q ? { q } : {}));
         const p = libParams();
         q ? p.set("q", q) : p.delete("q");
         navigateLibrary(p);
@@ -672,7 +683,7 @@ function libraryController() {
       n = Math.min(Math.max(1, n), this.pages());
       const p = libParams();
       n > 1 ? p.set("page", n) : p.delete("page");
-      const url = "#/" + (p.toString() ? "?" + p : "");
+      const url = libraryAt(p);
       replace ? location.replace(url) : (location.hash = url);  // a new history entry, so Back returns to the last page
     },
     /* "Try again" after a load failed or timed out */
@@ -1073,7 +1084,7 @@ window.MangaVibe = {
     haveText,      // a collection: "8 / 8 volumes · complete"
     editionText,   // an edition: "Kanzenban · 18 volumes (regular: 27)"
     icon,          // icon("star") -> the icon's <svg> as HTML (for x-html)
-    libraryUrl,    // libraryUrl({ genre: "Isekai" }) -> "#/?genre=Isekai"
+    libraryUrl,    // libraryUrl({ genre: "Isekai" }) -> "#/library?genre=Isekai" (#/ is Home, Plugin API 30)
     fileSize: (n) => {  // bytes -> "1.2 GB", "340.5 MB" (in the page's language: "1,2 GB")
       const one = (x) => fmtNum(x, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
       return n >= 1073741824 ? one(n / 1073741824) + " GB" : n >= 1048576 ? one(n / 1048576) + " MB" : fmtNum(Math.ceil(n / 1024)) + " KB";
@@ -1086,6 +1097,8 @@ window.MangaVibe = {
   // the library page's and Continue reading's (Plugin API 19): view:library and view:continue draw from them
   get library() { return Alpine.store("library"); },
   get continue() { return Alpine.store("continue"); },
+  // the Home page's rows (Plugin API 30): view:home draws from it
+  get home() { return Alpine.store("home"); },
   // a component whose names are a store's (read, write, call), e.g. Alpine.data("myLibrary", () =>
   // MangaVibe.bind(MangaVibe.library, { extra: 1 })): markup can say `items`, `bulk(...)`
   bind(store, own = {}) {
@@ -1307,6 +1320,56 @@ function continueController() {
   };
 }
 
+/* ---------------- home ---------------- */
+
+/* MangaVibe.home (Plugin API 30, issue #291): the Home page's rows, for the view:home plugin's page (built in:
+   app/plugins/builtin/home_page). GET /api/home gives every row the person shows, in their order, with the
+   newest 10 each; the empty ones are left out. Loads by itself while Home is shown, and again when what it
+   shows may have changed (the reader closed, another library, a series matched). */
+function homeController() {
+  return {
+    sections: null,  // [{ id, plugin, title, kind ("series" | "tiles"), layout, see_all, items }]; null until loaded
+    failed: "",      // why the last load failed, else ""
+    allHidden: false,  // the person hid every row (Settings → Display → Home page)
+    asked: 0,        // the number of the newest load: an older answer that comes in after it is dropped
+    init() {
+      const app = () => Alpine.store("app");
+      watchValue(() => app().view, (v) => v === "home" && this.load());
+      watchValue(() => app().progressDirty, () => this.load());
+      watchValue(() => app().libraryDirty, () => this.load());
+      watchValue(() => app().listKey, () => this.load());
+      queueMicrotask(() => this.load());
+    },
+    async load() {
+      if (Alpine.store("app").view !== "home") return;
+      document.title = t("Home");
+      const mine = ++this.asked;  // e.g. two library tabs picked quickly: only the last one's answer counts
+      try {
+        // everything the person may see, not the library picked on the Library page (no list scope): Home
+        // is across the libraries, its Libraries row opens one (a locked one stays out all the same)
+        const r = await api("/api/home");
+        if (mine !== this.asked) return;
+        this.allHidden = !!r.all_hidden;
+        // the same rows again (e.g. back from a series): left as they are, so nothing is drawn again
+        if (JSON.stringify(r.sections) !== JSON.stringify(this.sections)) this.sections = r.sections;
+        this.failed = "";
+      } catch (e) { if (mine === this.asked && this.sections === null) this.failed = e.message; }
+    },
+    get emptyText() {
+      if (this.allHidden) return t("Every row of Home is hidden. Show them again in Settings → Display → Home page.");
+      // a plugin may know why (e.g. libraries: this one is locked), as on the library page
+      return collectPlugins("empty-library")[0] || t("No series yet. The first scan may still be running; see Settings.");
+    },
+    // a tile of a plugin's row (e.g. a library): the plugin's "home-tile" handler opens it, else its link
+    async openTile(e, sec, item) {
+      if (!sec.plugin) return;
+      e.preventDefault();
+      const done = await emitPlugins("home-tile", [item, sec], { only: sec.plugin });
+      if (!done.length && item.href) location.hash = item.href;
+    },
+  };
+}
+
 /* ---------------- series page ---------------- */
 
 /* MangaVibe.series (Plugin API 18, issue #206): the series page's data and everything it does, for the view
@@ -1361,7 +1424,7 @@ function seriesController() {
     back() {
       const app = Alpine.store("app");
       if (app.seriesBack) history.back();
-      else location.replace("#/" + (app.query ? "?" + app.query : ""));
+      else location.replace(libraryAt(app.query));
     },
     get backLabel() { return Alpine.store("app").seriesBack ? t("Back") : t("Library"); },
     // the plugins' labels on the books (e.g. "Translated 12/40") stay live while the page is open:
@@ -1585,7 +1648,7 @@ function seriesController() {
           toast(t("The series folder is gone, so the series was removed from the library"));
           Alpine.store("app").libraryDirty++;
           refreshAttentionCount();
-          location.hash = "#/";
+          location.hash = "#/library";
           return;
         }
         const files = tn("{n} file", "{n} files", r.books);
@@ -1607,7 +1670,7 @@ function seriesController() {
         toast(t("Deleted: {title}", { title }));
         Alpine.store("app").libraryDirty++;
         refreshAttentionCount();
-        location.hash = "#/";
+        location.hash = "#/library";
         return true;
       } catch (e) {
         toast(e.message, 8000, "error");
@@ -1887,6 +1950,73 @@ function loadPluginView() {
       builtinOpen: typeof v.builtinOpen === "boolean" ? v.builtinOpen : undefined,
     }).filter(([, x]) => x !== undefined));
   } catch { return {}; }
+}
+
+/* Settings → Display → Home page (#291): each person's own. The rows (the app's and the plugins'), in
+   their order: dragged, or moved with the arrow buttons (keyboard too), and shown or hidden one by one.
+   Saved as home_layout ({ order, hidden }) through PUT /api/settings. Inside Settings' component (st, save). */
+function homeSettings() {
+  let saving = Promise.resolve();  // the saves, one after the other (not in Alpine's data: a Promise can't be proxied)
+  return {
+    sections: [],  // GET /api/home/sections: [{ id, title, hidden }] in the person's order
+    dragging: null,  // the id of the row being dragged
+    init() {
+      // only while Settings → Display is open (the section is in the page all the time, hidden): not at
+      // every start, and again each time it opens (e.g. a plugin with a row was switched on since)
+      const open = () => this.$store.app.view === "settings" && this.$store.app.sub === "display";
+      this.$watch("$store.app.sub", () => open() && this.load());
+      this.$watch("$store.app.view", () => open() && this.load());
+      if (open()) this.load();
+    },
+    async load() {
+      if (this.dragging !== null) return;  // never under a drag: it would lose the row being dragged
+      this.sections = await api("/api/home/sections").catch(() => this.sections);
+    },
+    // Each save sends the order as it is when its turn comes, after the one before has answered: quick
+    // clicks can't have an older order answer last and win
+    saveLayout(message = t("Saved")) {
+      saving = saving.then(async () => {
+        const home_layout = { order: this.sections.map((s) => s.id), hidden: this.sections.filter((s) => s.hidden).map((s) => s.id) };
+        try {
+          await api("/api/settings", { method: "PUT", body: { home_layout } });
+          await loadSettings();
+          toast(message);
+        } catch (e) { toast(e.message, 6000, "error"); await this.load(); }
+      });
+      return saving;
+    },
+    move(i, by) {
+      const j = i + by;
+      if (j < 0 || j >= this.sections.length) return;
+      const [s] = this.sections.splice(i, 1);
+      this.sections.splice(j, 0, s);
+      this.saveLayout(t("Moved: {row} is number {n} now", { row: s.title, n: fmtNum(j + 1) }));
+    },
+    toggle(s) {
+      s.hidden = !s.hidden;
+      this.saveLayout(s.hidden ? t("{row} is hidden on Home", { row: s.title }) : t("{row} shows on Home", { row: s.title }));
+    },
+    // dragging a row over another puts it there; dropping it saves the order
+    dragStart(e, s) {
+      this.dragging = s.id;
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", s.title);  // Firefox starts no drag without data
+    },
+    dragOver(s) {
+      if (this.dragging === null || this.dragging === s.id) return;
+      const from = this.sections.findIndex((x) => x.id === this.dragging), to = this.sections.indexOf(s);
+      if (from < 0 || to < 0) return;  // not in the list (any more): move nothing, never the last row
+      const [moved] = this.sections.splice(from, 1);
+      this.sections.splice(to, 0, moved);
+    },
+    dragEnd() {
+      if (this.dragging === null) return;
+      const s = this.sections.find((x) => x.id === this.dragging);
+      this.dragging = null;
+      if (!s) return;
+      this.saveLayout(t("Moved: {row} is number {n} now", { row: s.title, n: fmtNum(this.sections.indexOf(s) + 1) }));
+    },
+  };
 }
 
 function settingsView() {
@@ -2638,7 +2768,7 @@ function editSeries() {
           toast(leave.message, 6000);
           this.close();
           this.$store.app.libraryDirty++;
-          location.hash = "#/";
+          location.hash = "#/library";
           return;
         }
         toast(metadata ? t("Saved. Your changes are kept when metadata is refreshed.")

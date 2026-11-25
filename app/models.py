@@ -101,6 +101,9 @@ class Series(Base):
     has_duplicates: Mapped[bool] = mapped_column(Boolean, default=False)
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, index=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    # when a scan last found a new book in it after it was added (not the books it came with, nor books
+    # going missing or being read again): Home's Recently updated and the library's "updated" sort
+    books_added_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     missing_since: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # what the books' numbers say (app/api/common.py numbering()), stored whenever they change;
     # None until worked out

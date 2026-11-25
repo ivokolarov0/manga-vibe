@@ -74,7 +74,7 @@ app/web/templates/      the page, as Jinja templates of Alpine markup (see "The 
                         continue_page, series_page, dialogs, nav, settings_pages), drawn with view()
 app/web/static/css/     styles: main.css imports one file per feature (CSS layers)
 app/web/static/js/      app.js (Alpine data), reader.js (plain-JS reader), common.js,
-                        vendor/alpine.min.js
+                        vendor/alpine.min.js, vendor/embla-carousel.umd.js (Home's carousels)
 app/web/static/icons/   app icons; manifest.json next to them
 android/                the Android app: MangaVibe in a fullscreen WebView (android/README.md)
 examples/plugins/       example plugins

@@ -143,7 +143,8 @@ MCP_FILTERS = {
 MCP_SORTS = ["title", "added", "updated", "read", "score", "year", "unread"]
 MCP_SETTINGS = [
     "language", "title_language", "theme", "card_size", "grid_columns", "page_width", "page_width_series", "card_width",
-    "nav_position", "library_listing", "library_page_size", "library_view", "reader_mode", "reader_fit",
+    "nav_position", "library_listing", "library_page_size", "library_view", "home_layout",
+    "reader_mode", "reader_fit",
     "reader_spread", "auto_fullscreen", "preload", "reader_autohide", "reader_top_bar", "reader_drawer_side", "reader_tap_layout",
     "reader_volume_keys", "overlay_opacity", "overlay_outline", "reader_brightness", "reader_contrast",
     "reader_colors", "auto_match", "match_threshold", "include_adult", "auto_update",
