@@ -5,9 +5,9 @@ switched on, after a backup import), and again if it's missing when an entry com
 name at the time, so the entries of an account that was removed still read well. Indexes on `at`, on
 `user_id` and on `kind`: the page lists the newest first and filters by person and by kind.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Column, DateTime, Index, Integer, MetaData, String, Table, or_, select
+from sqlalchemy import JSON, Column, DateTime, Index, Integer, MetaData, String, Table, cast, func, or_, select
 from sqlalchemy.exc import OperationalError
 
 from app.plugins import activity
@@ -68,12 +68,31 @@ def as_dict(row) -> dict:
             "details": row.details or {}}
 
 
-def page(db, before=None, user=None, kind=None, group=None, limit=50) -> dict:
+def _utc(value: datetime | None):
+    """A time as the table keeps it: UTC, without a time zone."""
+    if value is None:
+        return None
+    return value.astimezone(timezone.utc).replace(tzinfo=None) if value.tzinfo else value
+
+
+def page(db, before=None, user=None, kind=None, group=None, limit=50, q_text=None, since=None,
+         until=None) -> dict:
     """Entries, newest first: {"entries": [...], "more": whether there are older ones}. `user` an id or
-    "system"; `kind` one kind, or a prefix ending in "." ("account."); `before` an entry id."""
+    "system"; `kind` one kind, or a prefix ending in "." ("account."); `before` an entry id; `q_text`
+    words that must all be in the summary, the name, the kind or the details; `since` / `until` times
+    (from, and before)."""
     q = select(table)
     if before:
         q = q.where(table.c.id < before)
+    if since is not None:
+        q = q.where(table.c.at >= _utc(since))
+    if until is not None:
+        q = q.where(table.c.at < _utc(until))
+    for word in (q_text or "").split()[:8]:
+        like = "%" + "".join("\\" + c if c in "\\%_" else c for c in word) + "%"
+        q = q.where(or_(table.c.summary.ilike(like, escape="\\"), table.c.user_name.ilike(like, escape="\\"),
+                        table.c.kind.ilike(like, escape="\\"), table.c.ip.ilike(like, escape="\\"),
+                        cast(table.c.details, String).ilike(like, escape="\\")))
     if user == "system":
         q = q.where(table.c.user_id.is_(None))
     elif user not in (None, ""):
@@ -91,3 +110,16 @@ def page(db, before=None, user=None, kind=None, group=None, limit=50) -> dict:
     except OperationalError:  # no table yet: nothing was logged
         return {"entries": [], "more": False}
     return {"entries": [as_dict(r) for r in rows[:limit]], "more": len(rows) > limit}
+
+
+def people(db) -> list[dict]:
+    """Everyone with entries, for the page's filter: [{id, name}], the latest name each had; System
+    (id None) and not logged in (id 0) included when they have entries."""
+    latest = (select(table.c.user_id, func.max(table.c.id).label("last"))
+              .group_by(table.c.user_id).subquery())
+    q = (select(table.c.user_id, table.c.user_name)
+         .join(latest, table.c.id == latest.c.last).order_by(table.c.user_name))
+    try:
+        return [{"id": r.user_id, "name": r.user_name} for r in db.execute(q)]
+    except OperationalError:
+        return []

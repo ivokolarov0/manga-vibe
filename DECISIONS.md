@@ -1373,3 +1373,30 @@ Plugin API version, and the app works after every one.
   (manga-vibe-mcp): it can log `account.key_created` / `account.key_removed` itself.
 - **Switching the Activity log off isn't in it**: the entry is written by the plugin, which is off by
   the time it would be. Switching it on again is its first entry.
+
+### Settings → Activity (issue #279, step 3 #282)
+
+- **The plugin's page**, added from its script (`MangaVibe.settingsPage` in "start", right after Plugins,
+  only when `$store.app.admin`), like Accounts: switching the plugin on or off adds or removes it without
+  a reload. Not `settings_pages`, which only counts when the page loads. The API is admins only anyway.
+- **Sentences in the page, not on the server**: an entry keeps its kind and values; activity_log.js says
+  it (`SAID`, one `MV.t()` per kind, so the extractor finds them) in the reader's language. Who comes
+  first, in bold, and the sentence has no subject ("Ivo · Deleted the series X"), so one text works for
+  everyone. A plugin's own kind shows as its kind and summary. A test checks every kind of the app has
+  its sentence.
+- **Days and times in the browser**: grouped by the local day (Today, Yesterday, then the date); the time
+  is relative for the last six hours (`Intl.RelativeTimeFormat`, moving on every 30 s), else the clock
+  time; the full date is the `<time>`'s title. The date filter sends the local day's start and end as
+  UTC moments, so "today" means the admin's today.
+- **Each entry a `<details>`**: native, keyboard and screen reader friendly; the marker sits right before
+  the time, no heading inside the summary, and the link to the target goes in the opened part (an
+  interactive element inside `<summary>` is a trap). The details' common names and values are
+  translated; others show as they are.
+- **Failures stand out**: kinds ending in `.failed` or `_failed` (a failed login or unlock, a plugin that
+  didn't start, an update that went wrong) get a warning tint and bar.
+- **Paging by scrolling**: an `IntersectionObserver` near the end loads the next 50 (`before`), with a
+  Show more button as a fallback; an answer to an older filter is dropped (a sequence number).
+- **Search on the server**, every word anywhere (summary, name, kind, address, details as JSON text),
+  with `%` and `_` escaped; the people filter comes from the log itself (System and "not logged in" too,
+  and accounts that are gone, under their last name).
+- **Dividers between entries** (`.activity-entry ~ .activity-entry`), never under the last one (#245).

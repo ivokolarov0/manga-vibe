@@ -57,6 +57,10 @@ msgstr ""
 msgid "A month"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "A name, a series, an address…"
+msgstr ""
+
 #: app/web/templates/shell/toasts.html
 msgid "A new MangaVibe version needs a new Docker image"
 msgstr ""
@@ -133,7 +137,7 @@ msgstr ""
 msgid "Account: {name}"
 msgstr ""
 
-#: app/plugins/builtin/accounts/__init__.py app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/accounts/__init__.py app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Accounts"
 msgstr ""
 
@@ -143,6 +147,10 @@ msgstr ""
 
 #: app/api/books.py app/api/series.py app/api/system.py
 msgid "Action not found"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+msgid "Activity"
 msgstr ""
 
 #: app/plugins/builtin/activity_log/__init__.py
@@ -185,14 +193,38 @@ msgstr ""
 msgid "Add to favorites"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the account {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the folder {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the library {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Added the plugin source {name}"
+msgstr ""
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Added {n} series to favorites"
 msgid_plural "Added {n} series to favorites"
 msgstr[0] ""
 msgstr[1] ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Address"
+msgstr ""
+
 #: app/plugins/builtin/random_manga/__init__.py
 msgid "Adds a Random series button to the library page, the Sidebar and the picked series' page"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Adds Settings → Activity, for admins only"
 msgstr ""
 
 #: app/plugins/builtin/libraries/__init__.py
@@ -203,8 +235,12 @@ msgstr ""
 msgid "Adds the Saved and Save search buttons to the library page"
 msgstr ""
 
-#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/accounts/menu.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Admin"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "After"
 msgstr ""
 
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/tabs.html app/web/static/js/app.js app/web/templates/settings/plugins.html
@@ -227,6 +263,14 @@ msgstr ""
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Also switched off"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Also switched on"
+msgstr ""
+
 #: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Always"
 msgstr ""
@@ -237,6 +281,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "an earlier update"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "An update failed"
 msgstr ""
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/shell/toasts.html
@@ -357,6 +405,10 @@ msgstr ""
 msgid "Backup"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Before"
+msgstr ""
+
 #: app/contracts/__init__.py app/plugins/builtin/book_labels/__init__.py
 msgid "Book labels"
 msgstr ""
@@ -369,8 +421,12 @@ msgstr ""
 msgid "Book not in this series"
 msgstr ""
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/series_page/templates/views/series.html
 msgid "Books"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Books gone"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -501,6 +557,34 @@ msgstr ""
 msgid "Change your password"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed books"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed the folder {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed the library {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed their password"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed which libraries {name} sees"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Changed {name} from {old} to {new}"
+msgstr ""
+
 #: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/reader.js
 msgid "Chapter"
 msgstr ""
@@ -537,6 +621,10 @@ msgstr ""
 msgid "Clear all"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Clear filters"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Clear progress for every book in this series? It will also be removed from Continue reading."
 msgstr ""
@@ -547,6 +635,14 @@ msgstr ""
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear the search"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Cleared"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Cleared {name}"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -645,6 +741,10 @@ msgstr ""
 msgid "Copy"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Copy from before"
+msgstr ""
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Copy path"
 msgstr ""
@@ -683,6 +783,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Darker pages are easier on the eyes, e.g. at night"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Database"
 msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py
@@ -736,6 +840,18 @@ msgid "Delete {n} series and files"
 msgid_plural "Delete {n} series and files"
 msgstr[0] ""
 msgstr[1] ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Deleted the account {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Deleted the library {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Deleted the series {name} and its folder"
+msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Deleted {done} of {total}. {error}"
@@ -931,6 +1047,10 @@ msgstr ""
 msgid "Edit · {title}"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Edited {name}"
+msgstr ""
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/web/static/js/app.js
 msgid "Edition"
 msgstr ""
@@ -955,7 +1075,11 @@ msgstr ""
 msgid "Enter the first chapter of the range"
 msgstr ""
 
-#: app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Error"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
 msgid "Errors"
 msgstr ""
 
@@ -975,12 +1099,20 @@ msgstr ""
 msgid "Every series is optimized already"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Everyone"
+msgstr ""
+
 #: app/plugins/builtin/accounts/settings.html
 msgid "Everyone logs in. Each account has its own reading progress, favorites, Continue reading, saved searches and Settings → Reader. Admins also manage the app: settings, folders, metadata, plugins, deleting, and these accounts."
 msgstr ""
 
 #: app/plugins/builtin/accounts/__init__.py
 msgid "Everyone logs in; each account has its own progress, favorites, saved searches and reader settings. Admins manage the app and pick the libraries each account sees. Built in."
+msgstr ""
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Everything"
 msgstr ""
 
 #: app/plugins/builtin/series_page/templates/views/series.html
@@ -1003,6 +1135,10 @@ msgstr ""
 msgid "Export"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Exported a backup"
+msgstr ""
+
 #: app/plugins/builtin/book_labels/__init__.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "extra"
 msgstr ""
@@ -1023,6 +1159,14 @@ msgstr ""
 msgid "Failed to load"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Failed to log in as {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Failed to unlock the library {name}"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Fallback"
 msgstr ""
@@ -1041,6 +1185,14 @@ msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Fewest first"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Fields"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "File"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1071,6 +1223,10 @@ msgstr ""
 msgid "Files alone are not enough for it. See {url}"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Files left"
+msgstr ""
+
 #: app/plugins/builtin/mangaupdates.py
 msgid "Fills in series metadata"
 msgstr ""
@@ -1085,6 +1241,10 @@ msgstr ""
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Filter by first letter"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Filter the activity"
 msgstr ""
 
 #: app/web/templates/sheets/library.html
@@ -1143,7 +1303,7 @@ msgstr ""
 msgid "Fix match…"
 msgstr ""
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Folder"
 msgstr ""
 
@@ -1189,6 +1349,10 @@ msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Format"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+msgid "From"
 msgstr ""
 
 #: app/plugins/builtin/anilist_recommendations/panel.html
@@ -1303,6 +1467,10 @@ msgstr ""
 msgid "Go back to {version}? MangaVibe restarts with it. {current} won't be offered again until a newer version is out."
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Going back"
+msgstr ""
+
 #: app/web/templates/shell/toasts.html
 msgid "Going back failed"
 msgstr ""
@@ -1371,6 +1539,10 @@ msgstr ""
 msgid "Highest first"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "How"
+msgstr ""
+
 #: app/plugins/builtin/cards/__init__.py
 msgid "How a series looks in the library and Continue reading: poster, badges, title and progress. Built in; replace it with a plugin that draws the cards its own way."
 msgstr ""
@@ -1379,7 +1551,7 @@ msgstr ""
 msgid "How a series looks in the library grid, its list view and Continue reading"
 msgstr ""
 
-#: app/plugins/builtin/anilist_recommendations/__init__.py
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "How many"
 msgstr ""
 
@@ -1413,6 +1585,14 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first."
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Imported a backup"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Imported a backup made {name}"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -1489,6 +1669,10 @@ msgstr ""
 
 #: app/web/templates/settings/plugins.html
 msgid "Installed v{version}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Installed {name} {to}"
 msgstr ""
 
 #: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
@@ -1575,6 +1759,14 @@ msgstr ""
 msgid "Keeps the log in MangaVibe's database; connects to nothing"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "key"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Kind"
+msgstr ""
+
 #: app/web/static/js/app.js
 msgid "Language"
 msgstr ""
@@ -1619,6 +1811,10 @@ msgstr ""
 msgid "Left back, right forward"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Left safe mode"
+msgstr ""
+
 #: app/plugins/builtin/image_reader/image_reader.js
 msgid "Left to right"
 msgstr ""
@@ -1643,11 +1839,11 @@ msgstr ""
 msgid "Letter"
 msgstr ""
 
-#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/account_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "Libraries"
 msgstr ""
 
-#: app/plugins/__init__.py app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Library"
 msgstr ""
 
@@ -1735,7 +1931,7 @@ msgstr ""
 msgid "Loading the plugin sources…"
 msgstr ""
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr ""
 
@@ -1775,6 +1971,14 @@ msgstr ""
 msgid "Log out"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Logged in"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Logged out"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Look again"
 msgstr ""
@@ -1793,6 +1997,14 @@ msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Lowest first"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Made a key for {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Made {name} an admin"
 msgstr ""
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
@@ -1837,6 +2049,10 @@ msgstr ""
 
 #: app/plugins/builtin/optimize/__init__.py
 msgid "MangaVibe shows all three in every browser. Other comic apps may not open JPEG XL or AVIF."
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "MangaVibe was updated from {from} to {to}"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -1905,6 +2121,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Matched by you"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Matched {name}"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -2003,6 +2223,24 @@ msgid_plural "Move {n} series to"
 msgstr[0] ""
 msgstr[1] ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved to"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {name} back to its folder's library"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {name} to {to}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {n} series back to their folders' libraries"
+msgid_plural "Moved {n} series back to their folders' libraries"
+msgstr[0] ""
+msgstr[1] ""
+
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Moved {n} series to their folders' libraries"
 msgid_plural "Moved {n} series to their folders' libraries"
@@ -2015,7 +2253,13 @@ msgid_plural "Moved {n} series to {library}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Moved {n} series to {to}"
+msgid_plural "Moved {n} series to {to}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
 msgid "Name"
 msgstr ""
 
@@ -2071,6 +2315,14 @@ msgstr ""
 msgid "Never"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Never match"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "New books"
+msgstr ""
+
 #: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "New library"
 msgstr ""
@@ -2093,6 +2345,10 @@ msgstr ""
 
 #: app/web/templates/settings/plugins.html
 msgid "New plugin source"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "New series"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
@@ -2119,7 +2375,7 @@ msgstr ""
 msgid "Next: {book}"
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "No"
 msgstr ""
 
@@ -2207,6 +2463,10 @@ msgstr ""
 msgid "No series yet. The first scan may still be running; see Settings."
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "No such account"
+msgstr ""
+
 #: app/api/books.py app/api/edit.py
 msgid "No such page"
 msgstr ""
@@ -2291,6 +2551,10 @@ msgstr ""
 msgid "Notes"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Nothing has happened yet."
+msgstr ""
+
 #: app/web/templates/settings/attention.html
 msgid "Nothing here. All good."
 msgstr ""
@@ -2301,6 +2565,10 @@ msgstr ""
 
 #: app/plugins/builtin/libraries/libraries.js
 msgid "Nothing in {library} yet. Move series here with Edit, or select several (hold a card) and use ⋯ → Move to library. A whole folder: Settings → Library folders."
+msgstr ""
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Nothing matches these filters."
 msgstr ""
 
 #: app/plugins/builtin/optimize/__init__.py
@@ -2447,7 +2715,7 @@ msgstr ""
 msgid "Only {library}, the library picked on the home screen"
 msgstr ""
 
-#: app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/attention_lists/templates/attention/duplicates.html app/plugins/builtin/attention_lists/templates/attention/same.html
 msgid "Open"
 msgstr ""
 
@@ -2477,6 +2745,10 @@ msgstr ""
 
 #: app/plugins/builtin/continue_page/templates/views/continue.html
 msgid "Open the Library"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Opened the app in safe mode"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
@@ -2533,7 +2805,7 @@ msgstr ""
 msgid "Original size"
 msgstr ""
 
-#: app/plugins/__init__.py app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Other"
 msgstr ""
 
@@ -2555,6 +2827,10 @@ msgstr ""
 
 #: app/web/static/js/app.js
 msgid "Overlay text outline"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Owner"
 msgstr ""
 
 #: app/web/templates/settings/plugins.html
@@ -2617,6 +2893,10 @@ msgstr ""
 msgid "Paginated"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Partly"
+msgstr ""
+
 #: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
 msgid "Password"
 msgstr ""
@@ -2637,7 +2917,7 @@ msgstr ""
 msgid "Password saved. This browser stays unlocked until “Lock now” or a new tab."
 msgstr ""
 
-#: app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Path outside Docker"
 msgstr ""
 
@@ -2647,6 +2927,10 @@ msgstr ""
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Per page"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Permissions accepted"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -2689,7 +2973,7 @@ msgstr ""
 msgid "Please choose an image file"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/app.js
 msgid "Plugin"
 msgstr ""
 
@@ -2725,7 +3009,7 @@ msgstr ""
 msgid "Plugin tools"
 msgstr ""
 
-#: app/plugins/web.py app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/web.py app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html app/web/templates/shell/banners.html
 msgid "Plugins"
 msgstr ""
 
@@ -2741,7 +3025,7 @@ msgstr ""
 msgid "Plugins from this source run inside MangaVibe with full access to its data. Only add sources you trust. Add it?"
 msgstr ""
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Poster"
 msgstr ""
 
@@ -2767,6 +3051,10 @@ msgstr ""
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Previous page"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Provider"
 msgstr ""
 
 #: app/api/edit.py app/api/series.py
@@ -2909,6 +3197,16 @@ msgstr ""
 msgid "Refresh metadata"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Refreshed the metadata of {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Refreshed the metadata of {n} series"
+msgid_plural "Refreshed the metadata of {n} series"
+msgstr[0] ""
+msgstr[1] ""
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Refreshing metadata for {n} series in the background"
 msgid_plural "Refreshing metadata for {n} series in the background"
@@ -2963,11 +3261,27 @@ msgstr ""
 msgid "Remove “{name}” ({path}) from MangaVibe?"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed a key of {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed the folder {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed the plugin source {name}"
+msgstr ""
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Removed {n} series from favorites"
 msgid_plural "Removed {n} series from favorites"
 msgstr[0] ""
 msgstr[1] ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Renamed the account {old} to {new}"
+msgstr ""
 
 #: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/libraries/libraries.js
 msgid "Renamed to {name}"
@@ -3145,8 +3459,16 @@ msgstr ""
 msgid "Scan"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Scan finished"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
 msgid "Scan for new files"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Scan of {name} finished"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-library.html
@@ -3169,7 +3491,7 @@ msgstr ""
 msgid "Score"
 msgstr ""
 
-#: app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_query/__init__.py app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/library_query/__init__.py app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Search"
 msgstr ""
 
@@ -3187,6 +3509,14 @@ msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Searching {source}…"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Seconds"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Secret"
 msgstr ""
 
 #: app/web/templates/shell/toasts.html
@@ -3217,8 +3547,16 @@ msgstr ""
 msgid "Separate libraries (Manga, Comics...) with tabs on the home screen, a reading mode and an optional password each. Built in."
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Series"
+msgstr ""
+
 #: app/contracts/__init__.py app/plugins/builtin/cards/__init__.py
 msgid "Series cards"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Series gone"
 msgstr ""
 
 #: app/api/common.py app/api/series.py app/plugins/builtin/anilist_recommendations/api.py
@@ -3241,6 +3579,14 @@ msgstr ""
 msgid "Server"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Set a new password for {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Set a password on the library {name}"
+msgstr ""
+
 #: app/plugins/builtin/libraries/settings.html
 msgid "Set a password…"
 msgstr ""
@@ -3257,7 +3603,11 @@ msgstr ""
 msgid "set for this series"
 msgstr ""
 
-#: app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Setting"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/app.js app/web/templates/ui/macros.html app/web/templates/views/settings.html
 msgid "Settings"
 msgstr ""
 
@@ -3345,7 +3695,7 @@ msgstr ""
 msgid "Show less"
 msgstr ""
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Show more"
 msgstr ""
 
@@ -3399,6 +3749,10 @@ msgstr ""
 msgid "Sidebar"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Size"
+msgstr ""
+
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/templates/settings/plugin.html app/web/templates/shell/toasts.html
 msgid "Skip this version"
 msgstr ""
@@ -3415,6 +3769,10 @@ msgstr ""
 msgid "some missing"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Someone not logged in"
+msgstr ""
+
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/templates/sheets/library.html
 msgid "Sort"
 msgstr ""
@@ -3427,7 +3785,7 @@ msgstr ""
 msgid "Sort: {sort}"
 msgstr ""
 
-#: app/web/templates/settings/plugins.html
+#: app/plugins/builtin/activity_log/activity_log.js app/web/templates/settings/plugins.html
 msgid "Source"
 msgstr ""
 
@@ -3453,6 +3811,22 @@ msgstr ""
 
 #: app/web/static/js/reader.js
 msgid "Start of book. Previous: {book}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started a scan of every folder"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started a scan of {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started an update to {to}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Started going back to {to}"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -3499,7 +3873,15 @@ msgstr ""
 msgid "Switch {overlay} on above to hear its text."
 msgstr ""
 
-#: app/plugins/__init__.py
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Switched {name} off"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Switched {name} on"
+msgstr ""
+
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js
 msgid "System"
 msgstr ""
 
@@ -3531,6 +3913,10 @@ msgstr ""
 msgid "That is MangaVibe's own data folder, not a manga folder"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "The app"
+msgstr ""
+
 #: app/plugins/builtin/accounts/api.py
 msgid "The current password is wrong"
 msgstr ""
@@ -3549,6 +3935,10 @@ msgstr ""
 
 #: app/contracts/__init__.py
 msgid "The Display page of Settings"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "The first account"
 msgstr ""
 
 #: app/plugins/builtin/accounts/api.py
@@ -3851,7 +4241,7 @@ msgstr ""
 msgid "This was the last book in the series."
 msgstr ""
 
-#: app/plugins/builtin/library_query/__init__.py
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/library_query/__init__.py
 msgid "Title"
 msgstr ""
 
@@ -3871,12 +4261,32 @@ msgstr ""
 msgid "Title starts with {letter}"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+msgid "To"
+msgstr ""
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "to chapter"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Today"
+msgstr ""
+
 #: app/api/attention.py
 msgid "Too many ignored rows"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Too many tries"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Took admin rights from {name}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Took the password off the library {name}"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -3971,12 +4381,16 @@ msgstr ""
 msgid "unlocked"
 msgstr ""
 
-#: app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/app.js
 msgid "Unlocked"
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Unmatch (use folder name)"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Unmatched {name}"
 msgstr ""
 
 #: app/plugins/builtin/library_query/__init__.py app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
@@ -4045,6 +4459,10 @@ msgstr ""
 
 #: app/web/templates/settings/plugins.html
 msgid "Update {version}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Updated {name} from {from} to {to}"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -4119,6 +4537,10 @@ msgstr ""
 msgid "Uses:"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Version"
+msgstr ""
+
 #: app/api/system.py
 msgid "version must be a text"
 msgstr ""
@@ -4179,6 +4601,14 @@ msgstr ""
 msgid "Webtoons, long strips"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Went back to {name} {to}"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "What"
+msgstr ""
+
 #: app/contracts/__init__.py
 msgid "What a book is called in the lists, the reader and Continue (Vol 3, Ch 12-14)"
 msgstr ""
@@ -4197,6 +4627,10 @@ msgstr ""
 
 #: app/web/templates/settings/plugin.html
 msgid "What's new"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "When"
 msgstr ""
 
 #: app/web/static/js/app.js
@@ -4231,6 +4665,26 @@ msgstr ""
 msgid "Which version? Send it as version"
 msgstr ""
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Who"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged."
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Why"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "With a key (e.g. an assistant)"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "With the tokens"
+msgstr ""
+
 #: app/web/templates/settings/plugins.html
 msgid "Without {job}"
 msgstr ""
@@ -4243,7 +4697,7 @@ msgstr ""
 msgid "Wrong name or password"
 msgstr ""
 
-#: app/plugins/builtin/libraries/api.py
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/api.py
 msgid "Wrong password"
 msgstr ""
 
@@ -4251,8 +4705,12 @@ msgstr ""
 msgid "Year"
 msgstr ""
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Yes"
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Yesterday"
 msgstr ""
 
 #: app/plugins/builtin/accounts/settings.html
@@ -4363,6 +4821,10 @@ msgstr ""
 
 #: app/plugins/builtin/accounts/accounts.js
 msgid "{name} can log in now."
+msgstr ""
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "{name} failed to start"
 msgstr ""
 
 #: app/plugins/builtin/accounts/settings.html
