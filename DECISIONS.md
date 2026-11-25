@@ -1400,3 +1400,26 @@ Plugin API version, and the app works after every one.
   with `%` and `_` escaped; the people filter comes from the log itself (System and "not logged in" too,
   and accounts that are gone, under their last name).
 - **Dividers between entries** (`.activity-entry ~ .activity-entry`), never under the last one (#245).
+
+### Keeping, clearing and exporting the activity log (issue #279, step 4 #283)
+
+- **Keep entries for 30 days, 90 (default), a year or forever**: the plugin's own setting (`keep_days`),
+  set on the Activity page, not on the plugin's page in Settings → Plugins: it's where the admin looks
+  at the log. Changing it is logged like any plugin setting.
+- **The clean-up is the plugin's thread** (`ctx.run_in_thread`): at start, then every 24 hours, checking
+  `should_stop()` every second, so a reload, switching off or a backup import (which waits for plugin
+  threads) never waits long. A shorter time removes at once, in the request. Removing old entries isn't
+  logged: it would be an entry a day about nothing.
+- **Clearing is logged**: after the delete, `activity.cleared` with the count, by the person who did it,
+  so an empty log always says why. Asked first with the app's usual confirm(); the toast says how many.
+- **CSV on the server, streamed**: what the filters show, read in batches of 500 by id, so a long log
+  never sits in memory; a session of its own, as the response outlives the request's. The column names
+  and "System" are translated before streaming (the language belongs to the request). Times in UTC and
+  in the admin's zone: its IANA name when the server knows it (the Docker image has tzdata), else the
+  browser's current offset. A byte order mark for spreadsheet programs, and a `'` before a cell starting
+  with `= + - @` (CSV injection: a summary is what someone typed, e.g. a login name).
+- **The backup leaves the log out by default** ("Include the activity log", off): it holds addresses and
+  failed logins, which a file kept elsewhere shouldn't carry unasked. The copy keeps the table, emptied,
+  and is VACUUMed. app/backup.py names the table (`ACTIVITY_TABLE`): the one place the core knows a
+  plugin's table, as the backup is the core's. Importing a file without the log empties this server's,
+  like everything else an import replaces; the import itself is then the first entry.

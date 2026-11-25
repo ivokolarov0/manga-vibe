@@ -3,9 +3,10 @@
 The plugin's own table, not one of the app's models: made when the plugin starts (at app start, when
 switched on, after a backup import), and again if it's missing when an entry comes. It keeps the user's
 name at the time, so the entries of an account that was removed still read well. Indexes on `at`, on
-`user_id` and on `kind`: the page lists the newest first and filters by person and by kind.
+`user_id` and on `kind`: the page lists the newest first and filters by person and by kind; the
+clean-up removes by `at`.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import JSON, Column, DateTime, Index, Integer, MetaData, String, Table, cast, func, or_, select
 from sqlalchemy.exc import OperationalError
@@ -75,15 +76,16 @@ def _utc(value: datetime | None):
     return value.astimezone(timezone.utc).replace(tzinfo=None) if value.tzinfo else value
 
 
-def page(db, before=None, user=None, kind=None, group=None, limit=50, q_text=None, since=None,
-         until=None) -> dict:
-    """Entries, newest first: {"entries": [...], "more": whether there are older ones}. `user` an id or
-    "system"; `kind` one kind, or a prefix ending in "." ("account."); `before` an entry id; `q_text`
-    words that must all be in the summary, the name, the kind or the details; `since` / `until` times
-    (from, and before)."""
+class NoMatch(Exception):
+    """A filter nothing can match (e.g. a user that isn't a number)."""
+
+
+def filtered(user=None, kind=None, group=None, q_text=None, since=None, until=None):
+    """The entries the filters let through, as a query. `user` an id or "system"; `kind` one kind, or a
+    prefix ending in "." ("account."); `group` one or more, comma-separated; `q_text` words that must all be
+    in the summary, the name, the kind, the address or the details; `since` / `until` times (from, and
+    before). Raises NoMatch."""
     q = select(table)
-    if before:
-        q = q.where(table.c.id < before)
     if since is not None:
         q = q.where(table.c.at >= _utc(since))
     if until is not None:
@@ -99,17 +101,66 @@ def page(db, before=None, user=None, kind=None, group=None, limit=50, q_text=Non
         try:
             q = q.where(table.c.user_id == int(user))
         except ValueError:
-            return {"entries": [], "more": False}
+            raise NoMatch from None
     if kind:
         q = q.where(table.c.kind.startswith(kind, autoescape=True) if kind.endswith(".")
                     else table.c.kind == kind)
     if group:
         q = q.where(or_(*[table.c.grp == g for g in group.split(",")]))
+    return q
+
+
+def page(db, before=None, limit=50, **filters) -> dict:
+    """Entries, newest first: {"entries": [...], "more": whether there are older ones}. `before` an
+    entry id; the filters as filtered() takes them."""
+    try:
+        q = filtered(**filters)
+    except NoMatch:
+        return {"entries": [], "more": False}
+    if before:
+        q = q.where(table.c.id < before)
     try:
         rows = db.execute(q.order_by(table.c.id.desc()).limit(limit + 1)).all()
     except OperationalError:  # no table yet: nothing was logged
         return {"entries": [], "more": False}
     return {"entries": [as_dict(r) for r in rows[:limit]], "more": len(rows) > limit}
+
+
+def each(db, batch=500, **filters):
+    """Every entry the filters let through, newest first, a batch at a time (an export of a long log
+    never holds it all in memory)."""
+    try:
+        base = filtered(**filters)
+    except NoMatch:
+        return
+    before = None
+    while True:
+        q = base.where(table.c.id < before) if before else base
+        try:
+            rows = db.execute(q.order_by(table.c.id.desc()).limit(batch)).all()
+        except OperationalError:
+            return
+        yield from rows
+        if len(rows) < batch:
+            return
+        before = rows[-1].id
+
+
+def remove_older_than(db, days: int) -> int:
+    """Remove the entries older than `days` days. Not committed. Returns how many went."""
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+    try:
+        return db.execute(table.delete().where(table.c.at < cutoff)).rowcount or 0
+    except OperationalError:
+        return 0
+
+
+def clear(db) -> int:
+    """Remove every entry. Not committed. Returns how many went."""
+    try:
+        return db.execute(table.delete()).rowcount or 0
+    except OperationalError:
+        return 0
 
 
 def people(db) -> list[dict]:

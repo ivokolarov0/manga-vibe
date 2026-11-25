@@ -55,7 +55,7 @@ KINDS = {
     # settings: the app's (not each person's own, like the theme) and the plugins'
     "setting.changed": "settings",
     # the app
-    "backup.exported": "app", "backup.imported": "app",
+    "backup.exported": "app", "backup.imported": "app", "activity.cleared": "app",
     "update.started": "app", "update.finished": "app", "update.failed": "app",
 }
 KIND = re.compile(r"^[a-z0-9_-]+(\.[a-z0-9_-]+)+$")

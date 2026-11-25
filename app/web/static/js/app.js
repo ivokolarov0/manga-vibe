@@ -2153,7 +2153,7 @@ function settingsView() {
       installUpdate(v.sha, { rollback: true, label: v.short });
     },
     // ---- Settings → Backup (app/backup.py)
-    backupTokens: "false", exporting: false, importing: false,
+    backupTokens: "false", backupActivity: "false", exporting: false, importing: false,
     uploaded: null,  // while an import's file goes up: 0-100; null once the server works on it
     // the server makes the file first (a spinner meanwhile: it can take a while), then the browser
     // downloads the ready file
@@ -2161,7 +2161,8 @@ function settingsView() {
       if (this.exporting || this.importing) return;
       this.exporting = true;
       try {
-        const r = await api(`/api/backup/export?tokens=${this.backupTokens}`, { method: "POST" });
+        const r = await api(`/api/backup/export?tokens=${this.backupTokens}&activity_log=${this.backupActivity}`,
+                            { method: "POST" });
         const a = document.createElement("a");
         a.href = `/api/backup/download/${encodeURIComponent(r.id)}`;
         a.download = r.file;

@@ -47,6 +47,22 @@ msgstr "({n} без метаданни са пропуснати)"
 msgid "+{n} more"
 msgstr "+ още {n}"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "1 year"
+msgstr "1 година"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "30 days"
+msgstr "30 дни"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "90 days"
+msgstr "90 дни"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "A CSV file of what the filters below show. Clearing removes every entry and writes one saying who did it."
+msgstr "CSV файл с това, което показват филтрите отдолу. Изчистването премахва всички записи и записва един, който казва кой го е направил."
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "A day"
 msgstr "Ден"
@@ -217,7 +233,7 @@ msgid_plural "Added {n} series to favorites"
 msgstr[0] "{n} поредица е добавена в любими"
 msgstr[1] "{n} поредици са добавени в любими"
 
-#: app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/export.py
 msgid "Address"
 msgstr "Адрес"
 
@@ -631,9 +647,17 @@ msgstr "Изчисти филтрите"
 msgid "Clear progress for every book in this series? It will also be removed from Continue reading."
 msgstr "Да се изчисти ли напредъкът за всички книги от поредицата? Тя ще бъде премахната и от Продължи четенето."
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Clear the activity log? Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."
+msgstr "Да се изчисти ли дневникът на действията? Всички записи се премахват завинаги; изнесете го първо, за да запазите копие. След това дневникът започва с един запис, че сте го изчистили."
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Clear the filters"
 msgstr "Изчисти филтрите"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Clear the log…"
+msgstr "Изчисти дневника…"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear the search"
@@ -642,6 +666,12 @@ msgstr "Изчисти търсенето"
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Cleared"
 msgstr "Изчистено"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Cleared the activity log ({n} entry)"
+msgid_plural "Cleared the activity log ({n} entries)"
+msgstr[0] "Изчисти дневника на действията ({n} запис)"
+msgstr[1] "Изчисти дневника на действията ({n} записа)"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Cleared {name}"
@@ -897,7 +927,7 @@ msgstr "Низходящо"
 msgid "Description"
 msgstr "Описание"
 
-#: app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/activity_log/export.py app/plugins/builtin/series_page/templates/views/series.html
 msgid "Details"
 msgstr "Подробности"
 
@@ -1078,6 +1108,10 @@ msgid "Enter the first chapter of the range"
 msgstr "Въведете първата глава от диапазона"
 
 #: app/plugins/builtin/activity_log/activity_log.js
+msgid "Entries"
+msgstr "Записи"
+
+#: app/plugins/builtin/activity_log/activity_log.js
 msgid "Error"
 msgstr "Грешка"
 
@@ -1136,6 +1170,10 @@ msgstr "Изход от цял екран"
 #: app/web/templates/settings/backup.html
 msgid "Export"
 msgstr "Експорт"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Export as CSV"
+msgstr "Изнеси като CSV"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Exported a backup"
@@ -1337,6 +1375,10 @@ msgstr "За поредиците ѝ, които нямат собствен"
 msgid "For new series after each scan"
 msgstr "За нови поредици след всяко сканиране"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Forever"
+msgstr "Завинаги"
+
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "Forget every saved recommendation and cover? They are asked for again when a series page opens."
 msgstr "Да се забравят ли всички запазени препоръки и корици? Ще се поискат отново при отваряне на страница на поредица."
@@ -1493,6 +1535,10 @@ msgstr "Решетка"
 msgid "Grid columns"
 msgstr "Колони"
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "Group"
+msgstr "Група"
+
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Has metadata"
 msgstr "С метаданни"
@@ -1634,6 +1680,10 @@ msgid "Include adult titles"
 msgstr "Включи заглавия за възрастни"
 
 #: app/web/templates/settings/backup.html
+msgid "Include the activity log"
+msgstr "С дневника на действията"
+
+#: app/web/templates/settings/backup.html
 msgid "Include tokens"
 msgstr "Включи токените"
 
@@ -1733,6 +1783,14 @@ msgstr "Само за вас. При цяла ширина Библиотека�
 msgid "Just for you. Missing words are shown in English"
 msgstr "Само за вас. Липсващите думи се показват на английски"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Keep entries for"
+msgstr "Пази записите"
+
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Keep entries for 30, 90 or 365 days, or forever (0)"
+msgstr "Пазете записите 30, 90 или 365 дни, или завинаги (0)"
+
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "Keep the library page's filters and sort under a name (e.g. Isekai) and pick them again from the Saved button. Built in."
 msgstr "Запазва филтрите и подредбата на библиотеката под име (напр. Isekai) и ги избира отново от бутона Запазени. Вградена."
@@ -1765,7 +1823,7 @@ msgstr "Пази дневника в базата данни на MangaVibe; н�
 msgid "key"
 msgstr "ключ"
 
-#: app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/export.py
 msgid "Kind"
 msgstr "Вид"
 
@@ -2629,6 +2687,10 @@ msgstr "Изкл."
 msgid "Off (swipe only)"
 msgstr "Изкл. (само плъзгане)"
 
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Older entries are removed once a day."
+msgstr "По-старите записи се премахват веднъж на ден."
+
 #: app/plugins/builtin/library_query/__init__.py
 msgid "Oldest first"
 msgstr "Първо най-старите"
@@ -3275,6 +3337,12 @@ msgstr "Премахна папката {name}"
 msgid "Removed the plugin source {name}"
 msgstr "Премахна източника на добавки {name}"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Removed {n} entry"
+msgid_plural "Removed {n} entries"
+msgstr[0] "Премахнат е {n} запис"
+msgstr[1] "Премахнати са {n} записа"
+
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Removed {n} series from favorites"
 msgid_plural "Removed {n} series from favorites"
@@ -3389,7 +3457,7 @@ msgstr "Запази търсенето"
 msgid "Save this search"
 msgstr "Запази това търсене"
 
-#: app/plugins/builtin/libraries/libraries.js app/plugins/builtin/saved_searches/tool.html app/web/static/js/app.js
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/libraries.js app/plugins/builtin/saved_searches/tool.html app/web/static/js/app.js
 msgid "Saved"
 msgstr "Запазено"
 
@@ -3448,6 +3516,12 @@ msgstr "Запазен. Обновленията от частни хранил�
 #: app/web/static/js/app.js
 msgid "Saved. Your changes are kept when metadata is refreshed."
 msgstr "Запазено. Промените ви остават и при обновяване на метаданните."
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Saved. {n} older entry was removed."
+msgid_plural "Saved. {n} older entries were removed."
+msgstr[0] "Запазено. Премахнат е {n} по-стар запис."
+msgstr[1] "Запазено. Премахнати са {n} по-стари записа."
 
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "Saved: downloaded once and kept, so they show offline and your browser only talks to MangaVibe. Loaded from AniList: no disk space, but your browser asks AniList for every cover."
@@ -3863,6 +3937,10 @@ msgstr "Спри"
 msgid "Stop selecting"
 msgstr "Спри избирането"
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "Summary"
+msgstr "Обобщение"
+
 #: app/web/static/js/app.js
 msgid "Switch it on?"
 msgstr "Да се включи ли?"
@@ -3883,13 +3961,17 @@ msgstr "Изключи {name}"
 msgid "Switched {name} on"
 msgstr "Включи {name}"
 
-#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/export.py
 msgid "System"
 msgstr "Система"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/sheets/library.html
 msgid "Tags"
 msgstr "Етикети"
+
+#: app/plugins/builtin/activity_log/settings.html
+msgid "Take it out of the app"
+msgstr "Изнасяне от приложението"
 
 #: app/web/templates/sheets/library.html
 msgid "Tap once to include, again to exclude, again to clear."
@@ -3902,6 +3984,14 @@ msgstr "Докоснете страницата, за да започне чет
 #: app/web/static/js/app.js
 msgid "Tap zones"
 msgstr "Зони за докосване"
+
+#: app/plugins/builtin/activity_log/export.py
+msgid "Target"
+msgstr "Обект"
+
+#: app/plugins/builtin/activity_log/export.py
+msgid "Target ID"
+msgstr "ID на обекта"
 
 #: app/web/static/js/reader.js
 msgid "Text outline"
@@ -4243,6 +4333,14 @@ msgstr "Тази версия изисква нов Docker образ. Вижт�
 msgid "This was the last book in the series."
 msgstr "Това беше последната книга от поредицата."
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "Time (local)"
+msgstr "Час (местен)"
+
+#: app/plugins/builtin/activity_log/export.py
+msgid "Time (UTC)"
+msgstr "Час (UTC)"
+
 #: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/library_query/__init__.py
 msgid "Title"
 msgstr "Заглавие"
@@ -4535,6 +4633,14 @@ msgstr "Използвай тази страница"
 msgid "Use {plugin} for {job}"
 msgstr "Използвай {plugin} за {job}"
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "User"
+msgstr "Потребител"
+
+#: app/plugins/builtin/activity_log/export.py
+msgid "User ID"
+msgstr "ID на потребителя"
+
 #: app/web/templates/settings/plugin.html
 msgid "Uses:"
 msgstr "Използва:"
@@ -4671,6 +4777,10 @@ msgstr "Коя версия? Изпратете я като version"
 msgid "Who"
 msgstr "Кой"
 
+#: app/web/templates/settings/backup.html
+msgid "Who did what, and when, with the addresses they came from. Off: the file has an empty log, and importing it empties this server's."
+msgstr "Кой какво е направил и кога, с адресите, от които е дошъл. Изключено: файлът е с празен дневник, а внасянето му изпразва дневника на този сървър."
+
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged."
 msgstr "Кой какво е направил и кога: влизания, акаунти, папки и сканирания, изтрити поредици, добавки и настройки. Само администраторите виждат тази страница. Четенето никога не се записва."
@@ -4679,9 +4789,17 @@ msgstr "Кой какво е направил и кога: влизания, а�
 msgid "Why"
 msgstr "Защо"
 
+#: app/plugins/builtin/activity_log/export.py
+msgid "With a key"
+msgstr "С ключ"
+
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "With a key (e.g. an assistant)"
 msgstr "С ключ (например асистент)"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "With the activity log"
+msgstr "С дневника на действията"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "With the tokens"
@@ -4707,7 +4825,7 @@ msgstr "Грешна парола"
 msgid "Year"
 msgstr "Година"
 
-#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/export.py app/plugins/builtin/settings_pages/templates/views/settings-metadata.html
 msgid "Yes"
 msgstr "Да"
 
