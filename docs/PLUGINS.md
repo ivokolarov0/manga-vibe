@@ -1134,7 +1134,8 @@ The library page **must keep** the slots `library-tools`, `library-filters`, `se
 
 Plugin API 30 (issue #291). The Home page. Built in: "Home page" (`app/plugins/builtin/home_page/`: blocks
 `rows` and `empty`; its script gives each row `homeRow()`, the carousel's arrow buttons: `canPrev`,
-`canNext`, `step(dir)`). The page keeps the `<section>` around it and `home-top` above it. Which rows there
+`canNext`, `step(dir)`, and swiping with the mouse: `press`, `pull`, `release` and `swallow` on the row's
+pointer and click events). The page keeps the `<section>` around it and `home-top` above it. Which rows there
 are is the app's and the plugins' ([Rows on the Home page](#rows-on-the-home-page)), not the view's.
 
 | `MangaVibe.home.` | |

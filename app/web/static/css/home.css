@@ -107,6 +107,24 @@
       display: none;
     }
 
+    /* a mouse swipes the row too (home_page.js): a hand to grab it; while it's held, no snapping (it
+       glides to a card when let go), no selecting text and no hover zoom on the cards it passes */
+    @media (pointer: fine) {
+      cursor: grab;
+      user-select: none;  /* else a press on a title starts selecting text instead of swiping */
+    }
+
+    &.dragging {
+      scroll-snap-type: none;
+      cursor: grabbing;
+      user-select: none;
+
+      & .card,
+      & .home-tile {
+        pointer-events: none;
+      }
+    }
+
     @media (min-width: 700px) {
       --gap-x: 16px;
       --side: 20px;

@@ -1453,6 +1453,11 @@ Plugin API version, and the app works after every one.
   keyboard and touch (`aria-disabled` at the ends, so focus stays on the button) and a show box.
 - **Carousels in CSS**: a grid row (`grid-auto-flow: column`, cards as wide as `--card`) with scroll
   snapping, reaching into the page's side padding so cards scroll to the screen's edge. The arrows only
-  with a mouse (`hover: hover`) and only while there's somewhere to go; Tab walks the cards. The cards are
+  with a mouse (`hover: hover`) and only while there's somewhere to go; Tab walks the cards.
+- **A mouse swipes the rows too** (pointer events, mouse only: touch scrolls natively). A press becomes a
+  drag after 6 px (so a click still opens a card), with pointer capture and snapping off while held; let
+  go, it glides on with the last moves' speed (not after a pause, not with reduced motion) and stops at the
+  nearest card, then snapping comes back (`scrollend`, or 600 ms). The click a drag ends with is swallowed
+  (capture phase), and native link and image dragging is prevented. The cards are
   the card view (`home_card()` draws Continue reading's for that row, the library's for the others), with
   `content-visibility` off so cards out of sight aren't blank while swiping.

@@ -2,7 +2,8 @@
     "The view:home job"): the rows are MangaVibe.home.sections ($store.home), each {id, plugin, title, kind,
     layout, see_all, items}, in the person's order, the empty and hidden ones left out. A "series" row's
     cards are {{ home_card() }} (with `s` and `sec`); a "tiles" row's open with $store.home.openTile($event,
-    sec, item). homeRow() (home_page.js) gives a row its arrow buttons. Keep the slots home-end and
+    sec, item). homeRow() (home_page.js) gives a row its arrow buttons and mouse swiping (press, pull,
+    release, swallow on the row). Keep the slots home-end and
     card-badges. A plugin's page can {% extends "@home-page/views/home.html" %} and change a block. -#}
 {% from "ui/macros.html" import home_card with context %}
     <div class="home-page-view" x-data>
@@ -21,7 +22,9 @@
                       :aria-label="t('More in {row}', { row: sec.title })"><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
             </div>
           </div>
-          <div class="home-track" :class="'home-' + sec.kind" x-ref="track" @scroll.passive="update()">
+          <div class="home-track" :class="'home-' + sec.kind" x-ref="track" @scroll.passive="update()"
+               @pointerdown="press($event)" @pointermove="pull($event)" @pointerup="release($event)"
+               @pointercancel="release($event)" @click.capture="swallow($event)" @dragstart.prevent>
             <template x-if="sec.kind === 'series'">
               <template x-for="s in sec.items" :key="s.id">
                 {{ home_card() }}
