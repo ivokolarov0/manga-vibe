@@ -4,6 +4,8 @@
    - GETs are answered from rec/manifest.json (the same key as build.py's key_of()).
    - GET /api/series (the library) is worked out from rec/list.json: the ids each filter value and
      each sort gave when the demo was built, combined here.
+   - GET /api/home and /api/home/sections (the Home page) are the recorded rows, in the order and with
+     the rows hidden that the visitor picked in Settings → Display.
    - Plugin switches, settings, reading progress, favorites and reading status are kept in this
      worker's memory only: they last until the browser stops the worker (closing the tab, or after a
      while). Nothing is saved anywhere.
@@ -116,6 +118,37 @@ function cardPatch(id) {
   return Object.fromEntries(Object.entries(p).filter(([k]) => k in S.list.cards[id]));
 }
 
+/* ------------------------------------------------------------------ the Home page */
+
+/* Home's rows (app/api/home.py) as recorded, with what the visitor changed in this visit: the order and the
+   hidden rows from Settings → Display (home_layout), the rows of plugins switched off left out, and the
+   cards' favorites and reading status. home_sections(): the list Settings shows; home(): the page's rows. */
+async function homeRows() {
+  const all = (await recordedJson("GET /api/home/sections")) || [];
+  const layout = S.settings.home_layout || {};
+  const order = Array.isArray(layout.order) ? layout.order : [];
+  const hidden = new Set(Array.isArray(layout.hidden) ? layout.hidden : []);
+  const on = (s) => !s.plugin || S.plugins.plugins.find((p) => p.id === s.plugin)?.enabled !== false;
+  const rank = (s) => (order.includes(s.id) ? order.indexOf(s.id) : order.length);
+  return all.filter(on).map((s, i) => ({ ...s, i, hidden: hidden.has(s.id) }))
+    .sort((a, b) => rank(a) - rank(b) || a.i - b.i).map(({ i, ...s }) => s);
+}
+
+async function homeSections() {
+  return json(await homeRows());
+}
+
+async function home() {
+  const rows = await homeRows();
+  const recorded = (await recordedJson("GET /api/home"))?.sections || [];
+  const byId = Object.fromEntries(recorded.map((s) => [s.id, s]));
+  const sections = rows.filter((s) => !s.hidden && byId[s.id])
+    .map((s) => ({ ...byId[s.id], items: byId[s.id].kind === "series"
+      ? byId[s.id].items.map((card) => (S.list.cards[card.id] ? { ...card, ...cardPatch(card.id) } : card))
+      : byId[s.id].items }));
+  return json({ sections, all_hidden: rows.length > 0 && rows.every((s) => s.hidden) });
+}
+
 /* ------------------------------------------------------------------ plugins */
 
 function switchPlugin(id, enabled) {
@@ -151,6 +184,8 @@ async function handle(request, url) {
     if (path === "/api/series") return seriesList(url);
     if (path === "/api/plugins") return json(S.plugins);
     if (path === "/api/settings") return json(S.settings);
+    if (path === "/api/home") return home();
+    if (path === "/api/home/sections") return homeSections();
     if ((m = path.match(/^\/api\/plugins\/([^/]+)\/ui$/)) && S.switches[m[1]]?.ui) return json(S.switches[m[1]].ui);
     if ((m = path.match(/^\/api\/books\/(\d+)\/progress$/)) && S.progress[m[1]]) return json(S.progress[m[1]]);
     // a book as the reader opens it: with the reading mode picked for its series in the reader's

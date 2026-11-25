@@ -191,6 +191,15 @@ def set_up(c: TestClient):
         for s in db.query(Series):
             s.match_status, s.match_confidence = "auto", 100
         db.commit()
+        # Home's Recently updated (#291): the demo's library comes from one scan, so nothing got new books
+        # after it was added. A few long series did here: added a month ago, a new book in the last days
+        from datetime import datetime, timedelta, timezone
+        now = datetime.now(timezone.utc)
+        longest = sorted(db.query(Series), key=lambda s: (-len(s.books), s.folder_name))[:4]
+        for days, s in enumerate(longest, start=1):
+            s.added_at = now - timedelta(days=30 + days)
+            s.books_added_at = now - timedelta(days=days)
+        db.commit()
 
 
 def record_lists(rec: Recorder, scopes):
@@ -293,6 +302,10 @@ def record(rec: Recorder):
                 "/api/plugins/saved-searches/api/searches", "/api/plugins/accounts/api/me",
                 "/api/plugins/available"):
         rec.get(url)
+    # the Home page (#291): every row as the demo starts (none hidden) and the list Settings → Display
+    # shows; sw.js puts the visitor's order and hidden rows on them
+    for url in ("/api/home", "/api/home/sections"):
+        rec.get(url, must=True)
     for p in rec.json("/api/plugins")["plugins"]:
         rec.get(f"/api/plugins/{p['id']}/ui")
     shelves = rec.json("/api/plugins/libraries/api/shelves", must=False) or []
