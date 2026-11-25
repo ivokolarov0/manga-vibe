@@ -553,6 +553,42 @@ class Dropper(Plugin):
         return f"Was {ctx.reading_status(series)}"
 ```
 
+## The activity log
+
+Plugin API 29. Admins see who did what, and when (the built-in Activity log plugin keeps the entries).
+`activity.log(kind, summary, target=, details=)` writes one: the time and who (the person asking, or
+*System* for background work) are filled in. Name your own kinds after your plugin. Never put a password,
+key or token in `details`.
+
+```python
+# Write an entry when a button does something an admin should know about
+from app.plugins import Action, Plugin, activity
+
+class Cleaner(Plugin):
+    id = "cleaner"
+    actions = [Action("clean", "Clean up")]
+
+    def run_action(self, ctx, action_key, series):
+        activity.log("cleaner.cleaned", series.folder_name, target=("series", series.id),
+                     details={"files": 3})
+        return "Cleaned"
+```
+
+`on_activity(ctx, entry)` hears every entry, in the background. `entry` has `at` (UTC), `user_id`
+(`None`: System), `user_name`, `kind`, `group`, `summary`, `target` and `details`.
+
+```python
+# Warn in the log when someone fails to log in
+from app.plugins import Plugin
+
+class LoginWatch(Plugin):
+    id = "login-watch"
+
+    def on_activity(self, ctx, entry):
+        if entry["kind"] == "account.login_failed":
+            ctx.log.warning("Failed login as %s from %s", entry["summary"], entry["ip"])
+```
+
 ---
 
 ## The reader

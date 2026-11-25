@@ -147,6 +147,10 @@ msgstr "Konten sind eingeschaltet. Lege das erste Konto an: einen Admin, der die
 msgid "Action not found"
 msgstr "Aktion nicht gefunden"
 
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Activity log"
+msgstr "Aktivitätsprotokoll"
+
 #: app/plugins/builtin/accounts/settings.html
 msgid "Add"
 msgstr "Hinzufügen"
@@ -1557,6 +1561,10 @@ msgstr "Die neuere Datenbank behalten? {version} versteht vielleicht nicht, was 
 msgid "Keep these filters under a name: the Saved button brings them back"
 msgstr "Diese Filter unter einem Namen speichern: der Button Gespeichert holt sie zurück"
 
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Keeps a log of who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins can see it. Built in."
+msgstr "Protokolliert, wer was wann getan hat: Anmeldungen, Konten, Ordner und Scans, gelöschte Serien, Plugins und Einstellungen. Nur Admins können es sehen. Eingebaut."
+
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "Keeps its searches in MangaVibe's database; connects to nothing"
 msgstr "Speichert seine Suchen in der Datenbank von MangaVibe; verbindet sich mit nichts"
@@ -1564,6 +1572,10 @@ msgstr "Speichert seine Suchen in der Datenbank von MangaVibe; verbindet sich mi
 #: app/plugins/builtin/accounts/__init__.py
 msgid "Keeps the accounts (password hashes) in MangaVibe's database; connects to nothing"
 msgstr "Speichert die Konten (Passwort-Hashes) in der Datenbank von MangaVibe; verbindet sich mit nichts"
+
+#: app/plugins/builtin/activity_log/__init__.py
+msgid "Keeps the log in MangaVibe's database; connects to nothing"
+msgstr "Speichert das Protokoll in der Datenbank von MangaVibe; verbindet sich mit nichts"
 
 #: app/web/static/js/app.js
 msgid "Language"

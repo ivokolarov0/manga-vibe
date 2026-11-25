@@ -11,6 +11,7 @@ What a plugin can do:
 - dropdowns:          declare `choices`, implement get_choice() and set_choice()
 - styling:            set `css` to change how the app looks (see examples/plugins/sakura_theme.py)
 - reading events:     on_book_started(), on_book_completed(), on_series_status_changed()
+- the activity log:   activity.log() writes who did what; on_activity() hears every entry (Plugin API 29)
 - settings:           declare `settings_fields`, `global_actions` (buttons in Settings) and status()
 - web callback:       handle_web() answers GET /api/plugins/<id>/web/<path> (e.g. an OAuth login)
 - permissions:        list what it uses in `permissions`; an update that adds one asks first
@@ -49,12 +50,12 @@ import traceback
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app import config
+from app import activity, config  # noqa: F401 - activity: plugins log with `from app.plugins import activity`
 from app.i18n import N_
 from app.i18n import forget as _forget_translations
 
 log = logging.getLogger("mangavibe.plugins")
-API_VERSION = 28
+API_VERSION = 29
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
@@ -298,6 +299,14 @@ class Plugin:
     def on_series_status_changed(self, ctx, series, old, new):
         """The series' reading status changed. Values: unread, reading, completed,
         plan_to_read, on_hold, dropped. `series.publication_status` says whether it has ended."""
+
+    # --- the activity log (Plugin API 29, issue #279) ------------------------
+    def on_activity(self, ctx, entry: dict):
+        """Someone (or the app itself) did something an admin may want to know: activity.log() was
+        called. `entry` is a dict: at (UTC, ISO), user_id (None: System, the app's own background
+        work; 0: not logged in), user_name, ip, via ("key": a request that came with a key), kind
+        (e.g. "series.deleted"), group, summary, target ([type, id] or None), details. Runs in the
+        background, in order, like the reading events; every entry, whoever's it is."""
 
     # --- custom actions ---------------------------------------------------
     def run_action(self, ctx, action_key, series):
@@ -1100,8 +1109,8 @@ class PluginManager:
 
     # --- background worker for reading events and run_in_background() ------
     def emit(self, event, *args):
-        """Queue a reading event: (book_id) for book events, (series_id, old, new) for status.
-        The worker loads fresh rows. Costs nothing when no plugin listens."""
+        """Queue a reading event: (book_id) for book events, (series_id, old, new) for status, (entry)
+        for on_activity. The worker loads fresh rows. Costs nothing when no plugin listens."""
         if any(implements(p, event) for p in self.enabled()):
             self._put(("event", event, args))
 
@@ -1143,7 +1152,9 @@ class PluginManager:
             if not implements(p, event):
                 continue
             with SessionLocal() as db:
-                if event == "on_series_status_changed":
+                if event == "on_activity":
+                    hook_args = (dict(args[0]),)  # a copy each: one plugin can't change another's
+                elif event == "on_series_status_changed":
                     series_id, old, new = args
                     series = db.get(Series, series_id)
                     if series is None:
