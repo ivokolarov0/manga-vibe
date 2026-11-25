@@ -1,7 +1,7 @@
-<!-- the libraries: the library grid and Continue show the one picked here; on Home a tab opens that library
-     in the Library (store.choose); + adds one -->
+<!-- the libraries: the library grid and Continue show the one picked here; + adds one. Not on Home: it shows
+     every library, and its Libraries row opens one -->
 <div class="tabs shelf-tabs" x-data role="tablist" :aria-label="t('Libraries')" x-cloak
-     x-show="['home', 'library', 'continue'].includes($store.app.view) && $store.libraries.list.length">
+     x-show="['library', 'continue'].includes($store.app.view) && $store.libraries.list.length">
   <button role="tab" x-show="$store.libraries.showAll" :class="{ active: $store.libraries.picked === 0 }"
           :aria-selected="$store.libraries.picked === 0" @click="$store.libraries.choose(0)" x-text="t('All')"></button>
   <template x-for="s in $store.libraries.list" :key="s.id">

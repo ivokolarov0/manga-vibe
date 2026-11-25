@@ -1345,7 +1345,9 @@ function homeController() {
       document.title = t("Home");
       const mine = ++this.asked;  // e.g. two library tabs picked quickly: only the last one's answer counts
       try {
-        const r = await api(`/api/home?${scopeParam()}`);
+        // everything the person may see, not the library picked on the Library page (no list scope): Home
+        // is across the libraries, its Libraries row opens one (a locked one stays out all the same)
+        const r = await api("/api/home");
         if (mine !== this.asked) return;
         this.allHidden = !!r.all_hidden;
         // the same rows again (e.g. back from a series): left as they are, so nothing is drawn again

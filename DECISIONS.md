@@ -1455,12 +1455,13 @@ Plugin API version, and the app works after every one.
   card's width, the big poster cut to fit (from its upper part, where faces and titles mostly are) and
   darkened so the library's name, written large across it, reads on any cover; the count under the card. The
   name under it stays for screen readers only (the one on the picture is `aria-hidden`).
-- **On Home, a library tab opens that library** (the owner: picking one there "doesn't go anywhere"
-  otherwise). The tabs, the sidebar's libraries and the Libraries row's cards all call the plugin's
-  `choose(id)`: on the library and Continue it only switches what they show, anywhere else it picks the
-  library and opens `#/library` (a locked one asks for its password first). Home's rows still send the list
-  scope, so they match the tab that's highlighted. The Libraries row shows from two libraries on: with one,
-  it would be the Library button again.
+- **Home is across the libraries, with no tabs**: the library tabs show on the Library and Continue only,
+  and Home's call sends no list scope, so its rows are everything the person may see (a locked library's
+  series stay out: the plugin's `series_filter()` still runs). The Libraries row is how Home opens one.
+  Its cards and the sidebar's libraries call the plugin's `choose(id)`: on the library and Continue it
+  only switches what they show, anywhere else it picks the library and opens `#/library` (a locked one asks
+  for its password first). The Libraries row shows from two libraries on: with one, it would be the Library
+  button again.
 - **Per person**: `home_layout` (`{order, hidden}`) is a personal setting. A row someone never put in
   order (a plugin switched on later) comes after theirs, in the default order.
 - **Settings → Display → Home page**: the rows as setting rows (dividers between
