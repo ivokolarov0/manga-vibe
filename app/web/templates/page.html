@@ -45,7 +45,7 @@
 
 {% block library %}
     <!-- ============ library: the view:library plugin's (built in: Library page), from MangaVibe.library ============ -->
-    <section id="library-view" class="view" x-show="$store.app.view === 'library'">
+    <section id="library-view" class="view" x-show="$store.app.view === 'library'" x-cloak>
       {{ view("library") }}
     </section>
 {% endblock %}

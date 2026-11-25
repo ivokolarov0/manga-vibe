@@ -163,7 +163,7 @@ class HomeSection:
     """A row of the Home page (Plugin API 30, issue #291), filled by home_section(). kind "series": a
     carousel of series cards (home_section() returns Series rows, the newest first); "tiles": cards of the
     plugin's own, each a dict {id, title, subtitle, image, href} (e.g. the libraries). `title` is marked N_()
-    and shown in the person's language. `see_all`: where "See all" goes (a #/ address, e.g. "#/?sort=added"),
+    and shown in the person's language. `see_all`: where "See all" goes (a #/ address, e.g. "#/library?sort=added"),
     "" for none. Its id on the page and in the settings is "<plugin id>:<key>"."""
     key: str
     title: str

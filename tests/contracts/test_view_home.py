@@ -89,7 +89,7 @@ from app.plugins.sdk import N_, Series
 class Rows(Plugin):
     id = "my-rows"
     name = "My rows"
-    home_sections = [HomeSection("az", N_("A to Z"), see_all="#/?sort=title"),
+    home_sections = [HomeSection("az", N_("A to Z"), see_all="#/library?sort=title"),
                      HomeSection("links", N_("Links"), kind="tiles"),
                      HomeSection("broken", N_("Broken")),
                      HomeSection("nothing", N_("Nothing"))]
@@ -109,7 +109,7 @@ def test_rows_from_a_plugin(client, install, caplog):
     install("my_rows", ROWS)
     found = rows(client)
     az = found["my-rows:az"]
-    assert az["plugin"] == "my-rows" and az["kind"] == "series" and az["see_all"] == "#/?sort=title"
+    assert az["plugin"] == "my-rows" and az["kind"] == "series" and az["see_all"] == "#/library?sort=title"
     assert 0 < len(az["items"]) <= 10 and {"title", "poster"} <= set(az["items"][0])
     assert found["my-rows:links"]["items"] == [{"id": "1", "title": "Docs", "subtitle": "", "image": "",
                                                  "href": "#/settings", "icon": ""}]

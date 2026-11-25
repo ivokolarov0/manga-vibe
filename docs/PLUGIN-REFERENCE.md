@@ -1189,7 +1189,7 @@ class Shortcuts(Plugin):
     home_sections = [HomeSection("links", N_("Shortcuts"), kind="tiles")]
 
     def home_section(self, ctx, request, key, limit):
-        return [{"id": "fav", "title": "Favorites", "subtitle": "", "icon": "star", "href": "#/?fav=1"}]
+        return [{"id": "fav", "title": "Favorites", "subtitle": "", "icon": "star", "href": "#/library?fav=1"}]
 ```
 
 ```js

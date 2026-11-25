@@ -6,12 +6,10 @@
           <h2>{{ t("Display") }}</h2>
           <!-- part of the page's settings: a dropdown each (SETTING_ROWS in app.js) -->
           {{ setting_rows("displayRows") }}
-          <!-- the Home page and its rows (#291): everyone's own; homeSettings() in app.js -->
+          <!-- the Home page's rows (#291): everyone's own order and which show; homeSettings() in app.js -->
           <div class="home-settings" x-data="homeSettings()">
-            <label class="setting-row"><span class="label"><span>{{ t("Home page") }}</span>
-              <small>{{ t("Just for you. The first page, with rows of what's new. Off: the Library is the first page") }}</small></span>
-              <input type="checkbox" :checked="st.home_page === 'true'" @change="st.home_page = String($event.target.checked); save('home_page')"></label>
-            <template x-if="st.home_page === 'true'">
+            <div class="setting-row"><span class="label"><span>{{ t("Home page") }}</span>
+              <small>{{ t("Just for you. The rows of the first page: drag them or use the arrows to change their order, untick one to hide it") }}</small></span></div>
               <div class="home-rows" role="list" :aria-label="t('Rows on Home')">
                 <template x-for="(s, i) in sections" :key="s.id">
                   <div class="setting-row sub home-row-setting" role="listitem" :class="{ off: s.hidden, dragging: dragging === s.id }"
@@ -29,6 +27,5 @@
                   </div>
                 </template>
               </div>
-            </template>
           </div>
         </section>

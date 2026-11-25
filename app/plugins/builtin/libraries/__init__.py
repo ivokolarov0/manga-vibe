@@ -103,7 +103,7 @@ class Libraries(Plugin):
             newest = None if s.id in locked else (
                 db.query(Series).filter(col == s.id, Series.missing_since.is_(None))
                 .order_by(Series.added_at.desc(), Series.id.desc()).first())
-            out.append({"id": s.id, "title": s.name, "href": "#/",
+            out.append({"id": s.id, "title": s.name, "href": "#/library",
                         "subtitle": t("Locked") if s.id in locked else tn("{n} series", "{n} series", n.get(s.id, 0)),
                         "image": f"/api/series/{newest.id}/poster?size=sm&v={poster_version(newest)}" if newest else "",
                         "icon": "lock" if s.id in locked else "books"})

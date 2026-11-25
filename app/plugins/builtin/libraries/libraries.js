@@ -246,7 +246,7 @@ MangaVibe.onStart(() => {
   });
   // Home's Libraries row (#291): a library's card shows that library in the Library (a locked one asks first)
   MV.on(ID, "home-tile", (item) => {
-    const id = +item.id, open = () => { store.set(id); location.hash = "#/"; };
+    const id = +item.id, open = () => { store.set(id); location.hash = "#/library"; };
     if (store.list.find((s) => s.id === id)?.locked) store.openUnlock(id, open);
     else open();
     return true;

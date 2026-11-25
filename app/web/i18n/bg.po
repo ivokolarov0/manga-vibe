@@ -1816,8 +1816,8 @@ msgid "Just for you. Missing words are shown in English"
 msgstr "Само за вас. Липсващите думи се показват на английски"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html
-msgid "Just for you. The first page, with rows of what's new. Off: the Library is the first page"
-msgstr "Само за вас. Първата страница, с редове от новото. Изключено: библиотеката е първата страница"
+msgid "Just for you. The rows of the first page: drag them or use the arrows to change their order, untick one to hide it"
+msgstr "Само за вас. Редовете на първата страница: плъзнете ги или използвайте стрелките, за да смените реда им; махнете отметката, за да скриете ред"
 
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Keep entries for"
@@ -2158,10 +2158,6 @@ msgstr "Собствените добавки на MangaVibe"
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "MangaVibe: Home"
 msgstr "MangaVibe: Начало"
-
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
-msgid "MangaVibe: Library"
-msgstr "MangaVibe: Библиотека"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Manhua"

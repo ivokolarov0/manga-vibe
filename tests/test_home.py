@@ -1,5 +1,5 @@
 """The Home page's rows (issue #291, app/api/home.py): GET /api/home and /api/home/sections, the rows' order and
-which are hidden (home_layout), Home on or off (home_page), and the libraries plugin's Libraries row."""
+which are hidden (home_layout), and the libraries plugin's Libraries row."""
 from datetime import timedelta
 
 import pytest
@@ -27,7 +27,7 @@ def rows(client, **params):
 @pytest.fixture(autouse=True)
 def fresh_layout(client):
     yield
-    client.put("/api/settings", json={"home_page": True, "home_layout": {}})
+    client.put("/api/settings", json={"home_layout": {}})
 
 
 def test_the_rows_and_their_default_order(client):
@@ -36,7 +36,7 @@ def test_the_rows_and_their_default_order(client):
     assert found[0] == {"id": "continue", "plugin": None, "title": "Continue reading", "kind": "series",
                         "layout": "continue", "see_all": "#/continue", "hidden": False}
     added = next(s for s in found if s["id"] == "added")
-    assert added["see_all"] == "#/?sort=added" and added["layout"] == "library"
+    assert added["see_all"] == "#/library?sort=added" and added["layout"] == "library"
 
 
 def test_recently_added_newest_first(client):
@@ -89,17 +89,12 @@ def test_a_saved_layout_is_cleaned():
     assert clean_layout({"order": ["a", 3, "a", "", "b"], "hidden": "x", "other": 1}) == {"order": ["a", "b"], "hidden": []}
 
 
-def test_home_on_and_off(client):
-    assert client.get("/api/settings").json()["home_page"] is True
-    assert client.put("/api/settings", json={"home_page": False}).json()["home_page"] is False
-    assert client.put("/api/settings", json={"home_page": "false"}).json()["home_page"] is False
-    assert client.put("/api/settings", json={"home_page": True}).json()["home_page"] is True
-
-
 def test_the_page_has_home(client):
     page = client.get("/").text
     assert 'x-show="$store.app.view === \'home\'"' in page and 'class="home-page-view"' in page
-    assert 'href="#/home"' in page and 'x-data="homeSettings()"' in page
+    # Home is #/ and always there; the library is #/library
+    assert 'href="#/library"' in page and 'x-data="homeSettings()"' in page
+    assert "home_page" not in client.get("/api/settings").json()  # no switch: Home can't be turned off
 
 
 def test_the_libraries_row(client, comics):  # noqa: F811
@@ -108,7 +103,7 @@ def test_the_libraries_row(client, comics):  # noqa: F811
     tiles = {t["title"]: t for t in rows(client)["libraries:libraries"]["items"]}
     assert set(tiles) == {"manga", "comics"}
     assert tiles["comics"]["subtitle"] == "2 series" and tiles["comics"]["image"].startswith("/api/series/")
-    assert tiles["comics"]["href"] == "#/"
+    assert tiles["comics"]["href"] == "#/library"
     cid = int(tiles["comics"]["id"])
     client.put(f"{L}/shelves/{cid}/password", json={"password": "secret"})
     client.post(f"{L}/shelves/{cid}/lock")

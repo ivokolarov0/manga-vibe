@@ -5,8 +5,8 @@ own with `home_sections` and home_section() (Plugin API 30), e.g. the libraries 
 page (the view:home plugin's, built in: app/plugins/builtin/home_page) asks GET /api/home once for every row
 it shows, not once per row.
 
-Each person picks, in Settings → Display, whether there's a Home page at all (`home_page`) and the rows'
-order and which are hidden (`home_layout`: {"order": [ids], "hidden": [ids]}); both personal settings.
+Home is always the first page (#/; the library is #/library). Each person picks, in Settings → Display, the
+rows' order and which are hidden (`home_layout`: {"order": [ids], "hidden": [ids]}), a personal setting.
 A row's id is its key for the app's own, "<plugin id>:<key>" for a plugin's.
 """
 import logging
@@ -32,8 +32,8 @@ LIMIT = 10  # cards per row
 JUST_ADDED_DAYS = 1 / 24  # an hour
 
 CORE = [HomeSection("continue", N_("Continue reading"), see_all="#/continue"),
-        HomeSection("added", N_("Recently added"), see_all="#/?sort=added"),
-        HomeSection("updated", N_("Recently updated"), see_all="#/?sort=updated")]
+        HomeSection("added", N_("Recently added"), see_all="#/library?sort=added"),
+        HomeSection("updated", N_("Recently updated"), see_all="#/library?sort=updated")]
 KINDS = ("series", "tiles")
 TILE_KEYS = ("id", "title", "subtitle", "image", "href", "icon")
 

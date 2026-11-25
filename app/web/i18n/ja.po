@@ -1810,8 +1810,8 @@ msgid "Just for you. Missing words are shown in English"
 msgstr "あなただけの設定。翻訳がない言葉は英語で表示されます"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html
-msgid "Just for you. The first page, with rows of what's new. Off: the Library is the first page"
-msgstr "あなただけの設定。新着の行が並ぶ最初のページです。オフ：ライブラリが最初のページになります"
+msgid "Just for you. The rows of the first page: drag them or use the arrows to change their order, untick one to hide it"
+msgstr "あなただけの設定。最初のページの行です。ドラッグするか矢印で順番を変え、チェックを外すと非表示になります"
 
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Keep entries for"
@@ -2152,10 +2152,6 @@ msgstr "MangaVibe 公式のプラグイン"
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "MangaVibe: Home"
 msgstr "MangaVibe：ホーム"
-
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
-msgid "MangaVibe: Library"
-msgstr "MangaVibe：ライブラリ"
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Manhua"

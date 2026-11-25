@@ -359,7 +359,8 @@ class Manhwa(Plugin):
 - `[]` hides the row. One that raises is logged and left out: Home still shows. `GET /api/home` asks every
   row at once (one call for the page), so keep it fast.
 - Everyone can move and hide the rows, yours too, in Settings → Display → Home page (their own
-  `home_layout`), or turn Home off (`home_page`): then the library is the first page.
+  `home_layout`). Home is always there, at `#/`; the library is `#/library` (an old `#/?genre=…` address
+  opens it too), so link to the library with `MangaVibe.ui.libraryUrl(params)`.
 
 ## Drawing on pages
 

@@ -1814,7 +1814,7 @@ msgid "Just for you. Missing words are shown in English"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html
-msgid "Just for you. The first page, with rows of what's new. Off: the Library is the first page"
+msgid "Just for you. The rows of the first page: drag them or use the arrows to change their order, untick one to hide it"
 msgstr ""
 
 #: app/plugins/builtin/activity_log/settings.html
@@ -2155,10 +2155,6 @@ msgstr ""
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "MangaVibe: Home"
-msgstr ""
-
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
-msgid "MangaVibe: Library"
 msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js

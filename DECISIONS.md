@@ -1426,10 +1426,11 @@ Plugin API version, and the app works after every one.
 
 ### The Home page (Plugin API 30, issue #291)
 
-- **Home at `#/home`, the library stays at `#/`**: the app opened without an address goes to Home (or the
-  library, with Home off). Making `#/` Home would have broken every library link (`#/?genre=…`, saved
-  searches, "See all", plugins' `libraryUrl()`); only the first page changed. `#/home` with Home off goes
-  to the library. The logo goes to the first page.
+- **Home is `#/` and always there; the library moved to `#/library`** (the owner's choice: no switch to turn
+  Home off, which made every library address depend on a setting). Every library address is built in one
+  place (`libraryAt()` / `libraryUrl()` in app.js), so filters, sorts, the search box, paging and saved
+  searches (they keep only the query) all go to `#/library?…`. An old `#/?genre=…` address (a bookmark, a
+  plugin's link) is replaced with `#/library?genre=…`, so nothing saved breaks.
 - **The rows are the app's and the plugins', the page is a view**: `view:home` (built in: `home_page/`) only
   draws `MangaVibe.home.sections`. A plugin that replaces the page keeps every row; one that adds a row
   (`home_sections` + `home_section()`) works with any page. The app's own rows (Continue reading, Recently
@@ -1445,9 +1446,9 @@ Plugin API version, and the app works after every one.
   scope. The Libraries row (the libraries plugin's, a `"tiles"` row) opens a library in the Library tab
   through the plugin's `home-tile` handler (a locked one asks for its password first). It shows from two
   libraries on: with one, it would be the Library button again.
-- **Per person**: `home_page` and `home_layout` (`{order, hidden}`) are personal settings. A row someone
-  never put in order (a plugin switched on later) comes after theirs, in the default order.
-- **Settings → Display → Home page**: the on/off switch and the rows as setting rows (dividers between
+- **Per person**: `home_layout` (`{order, hidden}`) is a personal setting. A row someone never put in
+  order (a plugin switched on later) comes after theirs, in the default order.
+- **Settings → Display → Home page**: the rows as setting rows (dividers between
   rows, #245), each with a drag handle (HTML drag and drop, `setData` for Firefox), up / down buttons for the
   keyboard and touch (`aria-disabled` at the ends, so focus stays on the button) and a show box.
 - **Carousels in CSS**: a grid row (`grid-auto-flow: column`, cards as wide as `--card`) with scroll

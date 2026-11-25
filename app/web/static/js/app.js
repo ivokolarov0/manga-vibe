@@ -3,9 +3,8 @@
    this file holds the data and actions. The reader is plain JS in reader.js.
 
    Routes use the URL hash:
-     (none)               the first page: Home, or the library with Home off (Settings → Display)
-     #/home               home (rows of what's new)
-     #/?genre=..&read=..  library (filters in the URL)   #/series/12?tab=files  series page
+     #/                   Home (rows of what's new)
+     #/library?genre=..   library (filters in the URL)   #/series/12?tab=files  series page
      #/continue           continue reading               #/attention?tab=..     needs attention
      #/settings           settings                       #/read/34?page=5       reader
      #/settings/plugin-mal_profile_sync  one plugin's settings page                                   */
@@ -100,17 +99,22 @@ function setList(p, k, values) {
   if (lib().repeated.includes(k)) values.forEach((v) => p.append(k, v));
   else if (values.length) p.set(k, values.join(","));
 }
+/* The library's address, with its filters: #/library?genre=Isekai (#/ is Home) */
+function libraryAt(params) {
+  const qs = new URLSearchParams(params).toString();
+  return "#/library" + (qs ? "?" + qs : "");
+}
+// the library's query, while the address is the library's
 function libParams() {
   const [path, query] = location.hash.slice(1).split("?");
-  return (path || "/") === "/" ? new URLSearchParams(query || "") : new URLSearchParams();
+  return path === "/library" ? new URLSearchParams(query || "") : new URLSearchParams();
 }
 // filter, sort and search changes go back to page 1
 function navigateLibrary(p) {
   p.delete("page");
-  const qs = p.toString();
-  location.replace("#/" + (qs ? "?" + qs : ""));
+  location.replace(libraryAt(p));
 }
-const libraryUrl = (params) => "#/?" + new URLSearchParams(params).toString();
+const libraryUrl = (params) => "#/library?" + new URLSearchParams(params).toString();
 const scoreCls = (s) => (s >= 90 ? "hi" : s >= 70 ? "mid" : "lo");
 const kindOf = (s) => s.format === "NOVEL" ? t("Novel") : s.format === "ONE_SHOT" ? t("One-shot") : COUNTRY[s.country_of_origin];
 
@@ -192,7 +196,6 @@ document.addEventListener("alpine:init", () => {
   Alpine.store("app", {
     pluginSlots: filledSlots(),  // the page's slots plugins put something in (see window.MangaVibe)
     view: null,          // home | library | series | continue | settings | read
-    homeOn: true,        // Settings → Display → Home page: Home is the first page and in the navigation
     id: null,            // series id for the series page
     params: {},          // query params of the current route
     query: "",           // raw query string (library filters)
@@ -268,10 +271,10 @@ document.addEventListener("alpine:init", () => {
     if (parts[0] === "attention") {  // old address: Needs attention now lives in Settings
       return location.replace(`#/settings/att-${params.get("tab") || "unreadable"}`);
     }
-    // the app opened without an address: the first page, Home (Settings → Display) or the library
-    if (!location.hash.slice(1)) return location.replace(app.homeOn ? "#/home" : "#/");
-    if (parts[0] === "home" && !app.homeOn) return location.replace("#/");
-    const view = parts[0] || "library";
+    // #/ is Home and the library is #/library: an old library address with filters (#/?genre=…, a bookmark or
+    // a plugin's link) opens the library with them
+    if (!parts[0] && query) return location.replace(libraryAt(params));
+    const view = parts[0] || "home";
     if (view === "read") Reader.open(+parts[1], params.get("page"),
       lastView === "read" ? undefined : lastView !== null);  // next book: keep where the reader was opened from
     else Reader.close()?.then(() => app.progressDirty++);  // pages refresh once the server has the progress
@@ -327,9 +330,7 @@ document.addEventListener("alpine:init", () => {
     } catch {}
   }
   queueMicrotask(async () => {
-    await loadSettings().then((s) => s.me && (Alpine.store("app").me = s.me)).catch(() => {});
-    Alpine.store("app").homeOn = settings.home_page !== false;
-    await loadLibrarySchema();  // before plugins start: e.g. saved searches label their filters with it
+    await loadSettings().then((s) => s.me && (Alpine.store("app").me = s.me)).catch(() => {});    await loadLibrarySchema();  // before plugins start: e.g. saved searches label their filters with it
     // plugins get ready before anything is shown, e.g. accounts: the login; libraries: lock them on a
     // new tab, pick one
     await emitPlugins("start");
@@ -511,7 +512,7 @@ function topbar() {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => {
         const q = this.q.trim();
-        if (this.$store.app.view !== "library") return (location.hash = "#/" + (q ? "?q=" + encodeURIComponent(q) : ""));
+        if (this.$store.app.view !== "library") return (location.hash = libraryAt(q ? { q } : {}));
         const p = libParams();
         q ? p.set("q", q) : p.delete("q");
         navigateLibrary(p);
@@ -680,7 +681,7 @@ function libraryController() {
       n = Math.min(Math.max(1, n), this.pages());
       const p = libParams();
       n > 1 ? p.set("page", n) : p.delete("page");
-      const url = "#/" + (p.toString() ? "?" + p : "");
+      const url = libraryAt(p);
       replace ? location.replace(url) : (location.hash = url);  // a new history entry, so Back returns to the last page
     },
     /* "Try again" after a load failed or timed out */
@@ -1081,7 +1082,7 @@ window.MangaVibe = {
     haveText,      // a collection: "8 / 8 volumes · complete"
     editionText,   // an edition: "Kanzenban · 18 volumes (regular: 27)"
     icon,          // icon("star") -> the icon's <svg> as HTML (for x-html)
-    libraryUrl,    // libraryUrl({ genre: "Isekai" }) -> "#/?genre=Isekai"
+    libraryUrl,    // libraryUrl({ genre: "Isekai" }) -> "#/library?genre=Isekai" (#/ is Home, Plugin API 30)
     fileSize: (n) => {  // bytes -> "1.2 GB", "340.5 MB" (in the page's language: "1,2 GB")
       const one = (x) => fmtNum(x, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
       return n >= 1073741824 ? one(n / 1073741824) + " GB" : n >= 1048576 ? one(n / 1048576) + " MB" : fmtNum(Math.ceil(n / 1024)) + " KB";
@@ -1411,7 +1412,7 @@ function seriesController() {
     back() {
       const app = Alpine.store("app");
       if (app.seriesBack) history.back();
-      else location.replace("#/" + (app.query ? "?" + app.query : ""));
+      else location.replace(libraryAt(app.query));
     },
     get backLabel() { return Alpine.store("app").seriesBack ? t("Back") : t("Library"); },
     // the plugins' labels on the books (e.g. "Translated 12/40") stay live while the page is open:
@@ -1635,7 +1636,7 @@ function seriesController() {
           toast(t("The series folder is gone, so the series was removed from the library"));
           Alpine.store("app").libraryDirty++;
           refreshAttentionCount();
-          location.hash = "#/";
+          location.hash = "#/library";
           return;
         }
         const files = tn("{n} file", "{n} files", r.books);
@@ -1657,7 +1658,7 @@ function seriesController() {
         toast(t("Deleted: {title}", { title }));
         Alpine.store("app").libraryDirty++;
         refreshAttentionCount();
-        location.hash = "#/";
+        location.hash = "#/library";
         return true;
       } catch (e) {
         toast(e.message, 8000, "error");
@@ -2172,9 +2173,7 @@ function settingsView() {
       // the page is drawn in its language on the server: draw it again, staying where we are
       if (key === "language") { location.reload(); return; }
       if (key === "theme") setTheme(v);
-      await loadSettings();
-      this.$store.app.homeOn = settings.home_page !== false;  // Home in the navigation, or not
-      if (["title_language", "library_listing", "library_page_size", "grid_columns"].includes(key)) this.$store.app.libraryDirty++;
+      await loadSettings();      if (["title_language", "library_listing", "library_page_size", "grid_columns"].includes(key)) this.$store.app.libraryDirty++;
       toast(t("Saved"));
     },
     async rescan(lib) {
@@ -2741,7 +2740,7 @@ function editSeries() {
           toast(leave.message, 6000);
           this.close();
           this.$store.app.libraryDirty++;
-          location.hash = "#/";
+          location.hash = "#/library";
           return;
         }
         toast(metadata ? t("Saved. Your changes are kept when metadata is refreshed.")
