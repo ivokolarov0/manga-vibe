@@ -1451,10 +1451,12 @@ Plugin API version, and the app works after every one.
   scroll when you come back; Settings' saves go one after another, each with the order as it is then;
   every row hidden says so on Home, with a button to Settings.
 - **The Libraries cards show a random series' cover**, a different one each time Home loads.
-- **Home follows the library tabs**, like Continue reading: the tabs show on Home and its rows send the list
-  scope. The Libraries row (the libraries plugin's, a `"tiles"` row) opens a library in the Library tab
-  through the plugin's `home-tile` handler (a locked one asks for its password first). It shows from two
-  libraries on: with one, it would be the Library button again.
+- **On Home, a library tab opens that library** (the owner: picking one there "doesn't go anywhere"
+  otherwise). The tabs, the sidebar's libraries and the Libraries row's cards all call the plugin's
+  `choose(id)`: on the library and Continue it only switches what they show, anywhere else it picks the
+  library and opens `#/library` (a locked one asks for its password first). Home's rows still send the list
+  scope, so they match the tab that's highlighted. The Libraries row shows from two libraries on: with one,
+  it would be the Library button again.
 - **Per person**: `home_layout` (`{order, hidden}`) is a personal setting. A row someone never put in
   order (a plugin switched on later) comes after theirs, in the default order.
 - **Settings → Display → Home page**: the rows as setting rows (dividers between
