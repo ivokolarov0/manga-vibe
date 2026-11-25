@@ -85,21 +85,14 @@
     }
   }
 
-  /* the row: one line of cards that scrolls sideways and stops at a card */
+  /* the row: one line of cards, a carousel (Embla Carousel, home_page.js). .home-track is its viewport,
+     .home-slides what it moves, each .home-item a card as wide as --card. Without the script (.carousel not
+     set) the row scrolls sideways by itself and stops at a card */
   .home-track {
     --gap-x: 10px;
-    --side: 12px;  /* main's side padding (layout.css) */
-    display: grid;
-    grid-auto-columns: var(--card);
-    grid-auto-flow: column;
-    gap: var(--gap-x);
-    /* into main's side padding, so the first card lines up with the heading and the cards scroll to the
-       screen's edge; the scrollbar is hidden (swipe, the wheel with Shift, the arrows, Tab) */
-    margin: 0 calc(-1 * var(--side));
-    padding: 2px var(--side) 6px;
+    padding: 2px 0 6px;  /* room for the cards' shadow */
     overflow-x: auto;
     overscroll-behavior-x: contain;
-    scroll-padding-inline: var(--side);
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
 
@@ -107,30 +100,39 @@
       display: none;
     }
 
-    /* a mouse swipes the row too (home_page.js): a hand to grab it; while it's held, no snapping (it
-       glides to a card when let go), no selecting text and no hover zoom on the cards it passes */
-    @media (pointer: fine) {
-      cursor: grab;
-      user-select: none;  /* else a press on a title starts selecting text instead of swiping */
+    @media (min-width: 700px) {
+      --gap-x: 16px;
     }
 
-    &.dragging {
+    /* Embla moves the cards: it drags with the mouse and a finger swipes it sideways, while the page
+       still scrolls up and down; no text selected or pictures dragged by a press */
+    &.carousel {
+      overflow: hidden;
       scroll-snap-type: none;
-      cursor: grabbing;
+      touch-action: pan-y pinch-zoom;
       user-select: none;
+      -webkit-user-select: none;
 
-      & .card,
-      & .home-tile {
-        pointer-events: none;
+      @media (pointer: fine) {
+        cursor: grab;
+
+        &:active {
+          cursor: grabbing;
+        }
+      }
+
+      & img {
+        -webkit-user-drag: none;
       }
     }
 
-    @media (min-width: 700px) {
-      --gap-x: 16px;
-      --side: 20px;
+    & .home-slides {
+      display: flex;
+      gap: var(--gap-x);
     }
 
     & .home-item {
+      flex: 0 0 var(--card);
       min-width: 0;
       scroll-snap-align: start;
     }

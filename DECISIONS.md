@@ -1451,13 +1451,16 @@ Plugin API version, and the app works after every one.
 - **Settings → Display → Home page**: the rows as setting rows (dividers between
   rows, #245), each with a drag handle (HTML drag and drop, `setData` for Firefox), up / down buttons for the
   keyboard and touch (`aria-disabled` at the ends, so focus stays on the button) and a show box.
-- **Carousels in CSS**: a grid row (`grid-auto-flow: column`, cards as wide as `--card`) with scroll
-  snapping, reaching into the page's side padding so cards scroll to the screen's edge. The arrows only
-  with a mouse (`hover: hover`) and only while there's somewhere to go; Tab walks the cards.
-- **A mouse swipes the rows too** (pointer events, mouse only: touch scrolls natively). A press becomes a
-  drag after 6 px (so a click still opens a card), with pointer capture and snapping off while held; let
-  go, it glides on with the last moves' speed (not after a pause, not with reduced motion) and stops at the
-  nearest card, then snapping comes back (`scrollend`, or 600 ms). The click a drag ends with is swallowed
-  (capture phase), and native link and image dragging is prevented. The cards are
+- **The carousels are Embla Carousel** (8.5.2, MIT, vendored as `static/js/vendor/embla-carousel.umd.js`
+  like Alpine: no CDN, works offline). A hand-made drag on a scrolling row was buggy (snapping fighting the
+  drag, clicks after drags); Embla does mouse and touch dragging with momentum, stopping at a card, no click
+  after a drag, and keeps up with cards added or removed. Chosen over Swiper: about 7 KB gzipped against
+  ~40 KB plus CSS, no styles of its own, no framework. Options: `align: "start"`, `containScroll:
+  "trimSnaps"`, `slidesToScroll: "auto"` (the arrows move a screen of cards), `skipSnaps` (a strong swipe goes
+  past several), `watchFocus` (Tab brings the card into view; the viewport's own scroll, which the browser
+  also does on focus, is undone), a short `duration` with reduced motion. The viewport is found in the row's
+  own element on the next tick (its `$refs` aren't there yet in `init()`), and the instance stays out of
+  Alpine's reactive data. Without the script the row still scrolls natively, with CSS snapping.
+- The arrows only with a mouse (`hover: hover`) and only while there's somewhere to go. The cards are
   the card view (`home_card()` draws Continue reading's for that row, the library's for the others), with
   `content-visibility` off so cards out of sight aren't blank while swiping.

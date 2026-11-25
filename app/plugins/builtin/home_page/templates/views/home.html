@@ -2,15 +2,14 @@
     "The view:home job"): the rows are MangaVibe.home.sections ($store.home), each {id, plugin, title, kind,
     layout, see_all, items}, in the person's order, the empty and hidden ones left out. A "series" row's
     cards are {{ home_card() }} (with `s` and `sec`); a "tiles" row's open with $store.home.openTile($event,
-    sec, item). homeRow() (home_page.js) gives a row its arrow buttons and mouse swiping (press, pull,
-    release, swallow on the row). Keep the slots home-end and
-    card-badges. A plugin's page can {% extends "@home-page/views/home.html" %} and change a block. -#}
+    sec, item). homeRow() (home_page.js) makes a row a carousel (Embla Carousel): x-ref "track" is its
+    viewport, .home-slides what moves, each .home-item a card; canPrev, canNext and step(dir) are its arrows.
+    Keep the slots home-end and card-badges. A plugin's page can {% extends "@home-page/views/home.html" %} and change a block. -#}
 {% from "ui/macros.html" import home_card with context %}
     <div class="home-page-view" x-data>
       {% block rows %}
       <template x-for="sec in $store.home.sections || []" :key="sec.id">
-        <section class="home-row" x-data="homeRow()" x-effect="sec.items.length; $nextTick(() => update())"
-                 :aria-labelledby="'home-row-' + sec.id">
+        <section class="home-row" x-data="homeRow()" :aria-labelledby="'home-row-' + sec.id">
           <div class="home-row-head">
             <h2 :id="'home-row-' + sec.id" x-text="sec.title"></h2>
             <a class="home-see-all" x-show="sec.see_all" :href="sec.see_all"
@@ -22,9 +21,8 @@
                       :aria-label="t('More in {row}', { row: sec.title })"><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
             </div>
           </div>
-          <div class="home-track" :class="'home-' + sec.kind" x-ref="track" @scroll.passive="update()"
-               @pointerdown="press($event)" @pointermove="pull($event)" @pointerup="release($event)"
-               @pointercancel="release($event)" @click.capture="swallow($event)" @dragstart.prevent>
+          <div class="home-track" :class="'home-' + sec.kind" x-ref="track">
+           <div class="home-slides">
             <template x-if="sec.kind === 'series'">
               <template x-for="s in sec.items" :key="s.id">
                 {{ home_card() }}
@@ -44,6 +42,7 @@
                 </div>
               </template>
             </template>
+           </div>
           </div>
         </section>
       </template>
