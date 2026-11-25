@@ -35,7 +35,8 @@ def fresh_layout(client):
 
 def test_the_rows_and_their_default_order(client):
     found = client.get("/api/home/sections").json()
-    assert [s["id"] for s in found][:3] == CORE
+    assert [s["id"] for s in found][:4] == ["libraries:libraries", *CORE]  # the libraries at the top
+    found = [s for s in found if s["id"] in CORE]
     assert found[0] == {"id": "continue", "plugin": None, "title": "Continue reading", "kind": "series",
                         "layout": "continue", "shape": "poster", "see_all": "#/continue", "hidden": False}
     added = next(s for s in found if s["id"] == "added")
@@ -98,7 +99,7 @@ def test_order_and_hidden_rows(client):
     assert r.status_code == 200 and r.json()["home_layout"] == {"order": ["updated", "added"], "hidden": ["continue"]}
     found = client.get("/api/home/sections").json()
     # the ones put in order first, the rest after them in the default order
-    assert [s["id"] for s in found][:3] == ["updated", "added", "continue"]
+    assert [s["id"] for s in found][:4] == ["updated", "added", "libraries:libraries", "continue"]
     assert next(s for s in found if s["id"] == "continue")["hidden"]
     assert "continue" not in rows(client) and "added" in rows(client)
     assert client.get("/api/home").json()["all_hidden"] is False
@@ -153,5 +154,8 @@ def test_the_libraries_row(client, comics):  # noqa: F811
     assert "libraries:libraries" not in [s["id"] for s in client.get("/api/home/sections").json()]
 
 
-def test_one_library_has_no_libraries_row(client):
-    assert "libraries:libraries" not in rows(client)
+def test_one_library_has_its_card_at_the_top(client):
+    """Even with a single library, Home starts with the Libraries row and that library's card."""
+    found = rows(client)
+    assert list(found)[0] == "libraries:libraries"
+    assert [t["title"] for t in found["libraries:libraries"]["items"]] == ["manga"]

@@ -347,7 +347,9 @@ class Manhwa(Plugin):
                 .order_by(Series.added_at.desc()).limit(limit).all())
 ```
 
-- `HomeSection(key, title, kind="series", see_all="", shape="poster")`: `title` is marked `N_()` and shown in
+- `HomeSection(key, title, kind="series", see_all="", shape="poster", order=100)`: `order` is where the row
+  comes until the person moves it (lower first: the Libraries row is 10, the app's own rows 20, 30 and 40,
+  so 100 is after them). `title` is marked `N_()` and shown in
   each person's language; `see_all` is where "See all" goes (a `#/` address, e.g. the library with a sort or
   filter), `""` for none. `shape` is for a `"tiles"` row: `"poster"` cards are as tall as a series card,
   `"wide"` ones are 16:9 with the title written large across the picture and the `subtitle` under it (the

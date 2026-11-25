@@ -86,17 +86,16 @@ class Libraries(Plugin):
                 "folder_shelf": shelf_of(folder.shelf_id if folder else None)}
 
     # --- the Home page's Libraries row (#291) ----------------------------------------------------------
-    home_sections = [HomeSection("libraries", N_("Libraries"), kind="tiles", shape="wide")]
+    # at the top of Home: a card for each library, even when there's just one
+    home_sections = [HomeSection("libraries", N_("Libraries"), kind="tiles", shape="wide", order=10)]
 
     def home_section(self, ctx, request, key, limit):
         """A card per library this person sees (with accounts, the ones an admin shares with them), with
         the cover of one of its series (a random one, a different one each time) and how many it has; a locked one without either. Opening one shows
-        it in the Library (libraries.js, "home-tile"). Only once there are two: one is just the Library."""
+        it in the Library (libraries.js, "home-tile"). Every library, even when there's only one."""
         db = ctx.db
         locked, hidden = core.locked_for(db, request), core.hidden_ids(db)
         found = [s for s in db.query(Shelf).order_by(Shelf.id) if s.id not in hidden]
-        if len(found) < 2:
-            return []
         n, col = api.counts(db, locked), core.shelf_column()
         out = []
         for s in found[:limit]:

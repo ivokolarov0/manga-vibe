@@ -166,12 +166,14 @@ class HomeSection:
     and shown in the person's language. `see_all`: where "See all" goes (a #/ address, e.g. "#/library?sort=added"),
     "" for none. `shape` (tiles): "poster", as tall as a series card, or "wide", a 16:9 card with the
     title written across its picture (e.g. the libraries). Its id on the page and in the settings is
-    "<plugin id>:<key>"."""
+    "<plugin id>:<key>". `order`: where it comes by default (lower first; the app's own rows are 20, 30 and
+    40, e.g. the libraries are 10: at the top); each person can move it in Settings → Display."""
     key: str
     title: str
     kind: str = "series"
     see_all: str = ""
     shape: str = "poster"
+    order: int = 100
 
 
 @dataclass

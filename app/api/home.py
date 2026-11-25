@@ -27,17 +27,17 @@ log = logging.getLogger("mangavibe.plugins")
 
 LIMIT = 10  # cards per row
 
-CORE = [HomeSection("continue", N_("Continue reading"), see_all="#/continue"),
-        HomeSection("added", N_("Recently added"), see_all="#/library?sort=added"),
-        HomeSection("updated", N_("Recently updated"), see_all="#/library?sort=updated")]
+CORE = [HomeSection("continue", N_("Continue reading"), see_all="#/continue", order=20),
+        HomeSection("added", N_("Recently added"), see_all="#/library?sort=added", order=30),
+        HomeSection("updated", N_("Recently updated"), see_all="#/library?sort=updated", order=40)]
 KINDS = ("series", "tiles")
 SHAPES = ("poster", "wide")  # how a tiles row's cards look: as tall as a series card, or 16:9 with the title on it
 TILE_KEYS = ("id", "title", "subtitle", "image", "href", "icon")
 
 
 def all_sections() -> list[tuple[str, object, HomeSection]]:
-    """[(id, plugin or None, section)] of every row there is, in the default order: the app's, then the
-    running plugins'."""
+    """[(id, plugin or None, section)] of every row there is, in the default order: by each row's `order`
+    (the libraries first, then the app's own, then the plugins' that say nothing)."""
     out = [(s.key, None, s) for s in CORE]
     seen = {s.key for s in CORE}
     for p in plugins.enabled():
@@ -46,12 +46,12 @@ def all_sections() -> list[tuple[str, object, HomeSection]]:
             # a row that's made wrong (or twice) is left out and logged; it never takes Home down
             if not (isinstance(s, HomeSection) and s.kind in KINDS and s.key and isinstance(s.key, str)
                     and isinstance(s.title, str) and s.title and isinstance(s.see_all, str)
-                    and s.shape in SHAPES) or sid in seen:
+                    and s.shape in SHAPES and isinstance(s.order, int)) or sid in seen:
                 log.error("Plugin %s: its Home row %r is left out (made wrong, or there twice)", p.id, s)
                 continue
             seen.add(sid)
             out.append((sid, p, s))
-    return out
+    return sorted(out, key=lambda x: x[2].order)  # stable: the same order keeps the plugins' order
 
 
 def clean_layout(value) -> dict:

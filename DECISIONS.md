@@ -1460,8 +1460,8 @@ Plugin API version, and the app works after every one.
   series stay out: the plugin's `series_filter()` still runs). The Libraries row is how Home opens one.
   Its cards and the sidebar's libraries call the plugin's `choose(id)`: on the library and Continue it
   only switches what they show, anywhere else it picks the library and opens `#/library` (a locked one asks
-  for its password first). The Libraries row shows from two libraries on: with one, it would be the Library
-  button again.
+  for its password first). The Libraries row is at the top of Home by default (`HomeSection.order`: 10, the
+  app's own rows 20–40) and has a card for every library, even when there's only one (the owner's call).
 - **Per person**: `home_layout` (`{order, hidden}`) is a personal setting. A row someone never put in
   order (a plugin switched on later) comes after theirs, in the default order.
 - **Settings → Display → Home page**: the rows as setting rows (dividers between
