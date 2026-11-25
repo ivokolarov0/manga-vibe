@@ -10,7 +10,7 @@ import shutil
 import stat
 from pathlib import Path
 
-from app import config
+from app import activity, config
 from app.db import SessionLocal, get_setting, set_setting
 from app.models import Library, Series
 from app.plugins import manager as plugins
@@ -106,6 +106,8 @@ def delete_series(series_id: int):
                 left, _ = _size(folder)
                 log.warning("Deleting %s left %d files: %s", folder, left, errors[0] if errors else "?")
                 rescan = True
+                activity.log("series.deleted", name, target=("series", series_id),
+                             details={"folder": str(folder), "partly": True, "files_left": left})
                 return {"deleted": False, "left": left,
                         "error": errors[0] if errors else "Some files could not be deleted."}
             book_ids = [b.id for b in series.books]
@@ -114,6 +116,8 @@ def delete_series(series_id: int):
             db.commit()
             remove_cached_files(series_id, book_ids)
             log.info("Deleted series %s (%s) and its folder", name, folder)
+            activity.log("series.deleted", name, target=("series", series_id),
+                         details={"folder": str(folder), "books": len(book_ids)})
             return {"deleted": True}
     finally:
         walker._lock.release()

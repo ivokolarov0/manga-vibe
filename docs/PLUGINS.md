@@ -292,6 +292,18 @@ own (`activity`) and answers admins only: `GET /api/plugins/activity-log/api/ent
 filters `user` (an id, or `system`), `kind` (one, or a prefix ending in a dot: `account.`) and `group`
 (one or more, comma-separated). Switched off, nothing is kept, and `activity.log()` costs nothing.
 
+What the app logs (issue #281), each with the person who did it:
+
+| Group | Kinds |
+|---|---|
+| accounts | `account.login`, `account.logout`, `account.login_failed` (the name tried and why: `wrong_password`, `no_such_account`, `too_many_tries`; the address is the entry's `ip`), `account.added`, `account.removed`, `account.renamed` (old, new), `account.admin_given`, `account.admin_taken`, `account.password_changed` (one's own), `account.password_reset` (an admin's), `account.access_changed` (the libraries an account sees). `account.key_created` and `account.key_removed` are for the Remote control plugin's keys |
+| library | `folder.added`, `folder.removed`, `folder.changed`, `scan.started` (only when someone starts one), `scan.finished` (counts: `new_series`, `new_books`, `changed_books`, `missing_series`, `missing_books`, `errors`; the app's own scans only when they changed something), `series.deleted`, `series.moved`, `metadata.changed` (`fields`), `metadata.matched`, `metadata.unmatched`, `metadata.refetched`, `library.added`, `library.changed`, `library.removed`, `library.password_set`, `library.password_removed`, `library.unlock_failed` |
+| plugins | `plugin.installed`, `plugin.enabled`, `plugin.disabled`, `plugin.updated`, `plugin.restored` (`from` and `to` versions), `plugin.failed` (didn't load, or failed in `on_start`), `plugin_source.added`, `plugin_source.removed`, `safe_mode.on`, `safe_mode.off` |
+| settings | `setting.changed`: the app's settings (`setting`, `old`, `new`) and the plugins' (`plugin`, `setting`; a secret one says only that it changed). Not each person's own (theme, reader) |
+| app | `backup.exported`, `backup.imported`, `update.started`, `update.finished` (seen at the next start), `update.failed` |
+
+Reading is never logged (opening a book, turning pages, progress, favorites): it's each person's own.
+
 ## Drawing on pages
 
 In the reader's options each plugin is one row under **Plugins**; it opens a panel with everything the

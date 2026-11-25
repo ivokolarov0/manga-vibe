@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 
-from app import backup, config
+from app import activity, backup, config
 from app.i18n import t
 from app.users import manage
 
@@ -53,6 +53,7 @@ def _build(tokens: bool, prefix="tmp") -> Path:
 def export(tokens: bool = False):
     """The export as a download. `tokens`: the GitHub token and the plugins' secret settings go along."""
     path = _build(tokens)
+    _exported(path, tokens)
     return FileResponse(path, media_type="application/zip", filename=_file_name(),
                         background=BackgroundTask(path.unlink, missing_ok=True))
 
@@ -69,7 +70,14 @@ def prepare_export(tokens: bool = False):
         except OSError:
             pass
     path = _build(tokens, READY_PREFIX)
+    _exported(path, tokens)
     return {"id": path.name, "file": _file_name(), "size": path.stat().st_size}
+
+
+def _exported(path, tokens):
+    # whether the tokens went along is worth knowing (named so the log's secret filter keeps it: it isn't one)
+    activity.log("backup.exported", _file_name(), details={"private_settings_included": bool(tokens),
+                                                           "size": path.stat().st_size})
 
 
 @router.get("/download/{export_id}")
@@ -92,7 +100,11 @@ async def import_(request: Request):
         with open(path, "wb") as out:
             async for chunk in request.stream():
                 out.write(chunk)
-        return await run_in_threadpool(backup.import_from, path)
+        result = await run_in_threadpool(backup.import_from, path)
+        # written after the import, so it's in the database now in use
+        activity.log("backup.imported", (result.get("from") or {}).get("created") or "",
+                     details={"from": result.get("from"), "safety_copy": result.get("safety_copy")})
+        return result
     except backup.ImportRefused as e:
         raise HTTPException(400, t(e.text, **e.values))
     except backup.Busy as e:

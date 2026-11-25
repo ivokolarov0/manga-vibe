@@ -49,6 +49,8 @@ async def lifespan(app):
         plugins.load()
         plugins.load_switches(s)
         plugins.start(s)  # e.g. libraries: every folder gets one, CLEAR_LIBRARY_PASSWORD
+        plugins.log_load_errors()
+        log_update_finished(s)
     if config.START_WORKERS:
         metadata_worker.start()
     walker.start_scan_in_background()
@@ -62,6 +64,30 @@ async def lifespan(app):
         threading.Thread(target=plugin_updates.daily_loop, daemon=True, name="plugin-updates").start()
     updater.mark_started()
     yield
+
+
+RUNNING_VERSION = "running_version"  # the version the app started with last time: {sha, version}
+
+
+def log_update_finished(db):
+    """Another version runs than at the last start (an update, going back, a new Docker image): the
+    activity log says from which to which."""
+    try:
+        now = updater.current()
+        mine = {"sha": now.get("sha"), "version": now.get("version")}
+        if not mine["sha"]:
+            return  # not a build that knows its version (running from a checkout)
+        before = database.get_setting(db, RUNNING_VERSION)
+        if before == mine:
+            return
+        if before and before.get("sha") != mine["sha"]:
+            activity.log("update.finished", mine["version"] or mine["sha"][:7],
+                         details={"from": before.get("version") or (before.get("sha") or "")[:7],
+                                  "to": mine["version"] or mine["sha"][:7]})
+        database.set_setting(db, RUNNING_VERSION, mine)
+        db.commit()
+    except Exception:  # noqa: BLE001 - only the log's business: never stop the app starting
+        log.exception("Could not note the running version")
 
 
 class _TooLarge(Exception):
@@ -302,10 +328,14 @@ def index(request: Request, safe: str = ""):
     page = plugin_web.render_index(safe=on)
     response = HTMLResponse(page, headers={"Cache-Control": "no-cache", "Content-Language": lang,
                                            "Vary": "Accept-Language"})
+    was_safe = SAFE_COOKIE in request.cookies
     if on:
         response.set_cookie(SAFE_COOKIE, "1", httponly=True, samesite="strict")  # for /custom.css
-    elif SAFE_COOKIE in request.cookies:  # out of safe mode
+        if not was_safe:
+            activity.log("safe_mode.on")
+    elif was_safe:  # out of safe mode
         response.delete_cookie(SAFE_COOKIE)
+        activity.log("safe_mode.off")
     return response
 
 

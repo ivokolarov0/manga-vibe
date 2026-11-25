@@ -7,7 +7,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from app import config, images
+from app import activity, config, images
 from app.api.common import book_numbers, numbering
 from app.db import SessionLocal
 from app.models import Book, Library, PluginPage, Series
@@ -23,7 +23,10 @@ KEEP_MISSING_DAYS = 30
 
 # library_id is set when only one library is scanned, None for a full scan
 status = {"running": False, "library_id": None, "library": None, "current": None, "done": 0, "total": 0,
-          "started_at": None, "finished_at": None, "new_books": 0, "errors": 0}
+          "started_at": None, "finished_at": None, "new_books": 0, "errors": 0,
+          # what the last scan changed, for the activity log (the series and books found, re-read, gone)
+          "new_series": 0, "changed_books": 0, "missing_series": 0, "missing_books": 0}
+CHANGE_COUNTS = ("new_series", "new_books", "changed_books", "missing_series", "missing_books")
 _lock = threading.Lock()
 
 
@@ -65,16 +68,36 @@ def start_scan_in_background(lib_id: int | None = None):
     """Scan every library, or only one when lib_id is given. False if a scan is already running."""
     if status["running"]:
         return False
-    threading.Thread(target=scan_all, args=(lib_id,), daemon=True, name="scanner").start()
+    # someone pressed Scan (or added a folder): logged as theirs, and its end too. The app's own scans
+    # (at start, every few hours) only log their end, when they changed something
+    by = activity.in_request()
+    if by:
+        activity.log("scan.started", _library_name(lib_id), target=("folder", lib_id) if lib_id else None)
+    threading.Thread(target=scan_all, args=(lib_id, by), daemon=True, name="scanner").start()
     return True
 
 
-def scan_all(lib_id: int | None = None):
+def _counts() -> dict:
+    """The scan's counts, to put back after a scan of one series (they describe the last full scan)."""
+    return {k: status[k] for k in (*CHANGE_COUNTS, "errors")}
+
+
+def _library_name(lib_id):
+    """The folder's path, or "" for every folder."""
+    if lib_id is None:
+        return ""
+    with SessionLocal() as db:
+        lib = db.get(Library, lib_id)
+        return lib.root_path if lib else ""
+
+
+def scan_all(lib_id: int | None = None, by_person=False):
     if not _lock.acquire(blocking=False):
         return
+    started = time.monotonic()
     try:
         status.update(running=True, library_id=lib_id, library=None, started_at=now().isoformat(),
-                      finished_at=None, done=0, total=0, new_books=0, errors=0)
+                      finished_at=None, done=0, total=0, errors=0, **dict.fromkeys(CHANGE_COUNTS, 0))
         db = SessionLocal()
         try:
             libs = db.query(Library)
@@ -89,6 +112,9 @@ def scan_all(lib_id: int | None = None):
     finally:
         status.update(running=False, current=None, finished_at=now().isoformat())
         _lock.release()
+    if by_person or any(status[k] for k in CHANGE_COUNTS):
+        activity.log("scan.finished", _library_name(lib_id), target=("folder", lib_id) if lib_id else None,
+                     details={**_counts(), "series": status["total"], "seconds": round(time.monotonic() - started)})
     from app import db as database
     database.refresh_stats()  # the library may have grown a lot: the query planner's numbers again
     try:
@@ -127,6 +153,7 @@ def scan_library(db, lib: Library):
     for s in db.query(Series).filter(Series.library_id == lib.id):
         if s.id not in seen and s.missing_since is None:
             s.missing_since = now()
+            status["missing_series"] += 1
     gone = _purge_missing(db, lib.id)
     _parser_done(db, lib)
     db.commit()
@@ -175,6 +202,7 @@ def scan_series(db, lib, folder: Path, recheck_errors=True, reparse=False) -> Se
                         sort_title=folder.name.lower())
         db.add(series)
         db.flush()
+        status["new_series"] += 1
         log.info("New series: %s", folder.name)
     series.missing_since = None
 
@@ -203,6 +231,8 @@ def scan_series(db, lib, folder: Path, recheck_errors=True, reparse=False) -> Se
             db.add(book)
             series.books.append(book)
             status["new_books"] += 1
+        elif book.mtime != -1 and (book.file_size, book.mtime) != (size, mtime):
+            status["changed_books"] += 1  # the file changed (not a forced re-read, not a broken one re-checked)
         before = (book.file_size, book.mtime, book.missing_since, book.error, book.page_count, book.format)
         if book.id is not None and before[1] != -1 and (book.file_size, book.mtime) != (size, mtime):
             # the file was replaced: what plugins saved per page (e.g. translations) belongs to the old one.
@@ -218,6 +248,7 @@ def scan_series(db, lib, folder: Path, recheck_errors=True, reparse=False) -> Se
     for key, book in existing.items():
         if key not in found and book.missing_since is None:
             book.missing_since = now()
+            status["missing_books"] += 1
             changed = True
 
     if changed or any(b.sort_index == 0 for b in series.books):
@@ -362,11 +393,11 @@ def rescan_series(series_id: int):
             for b in series.books:
                 b.mtime = -1  # forces each file to be opened and parsed again
             archives._pages_cached.cache_clear()
-            errors_before = status["errors"]  # the last full scan's count must not change
+            before = _counts()  # the last full scan's counts must not change
             try:
                 scan_series(db, lib, folder)
             finally:
-                status["errors"] = errors_before
+                status.update(before)
             apply_order(series)
             db.commit()
             books = active_books(series)
@@ -389,7 +420,7 @@ def scan_folder(lib_id: int, folder: Path):
             lib = db.get(Library, lib_id)
             if lib is None or not Path(lib.root_path).is_dir():
                 return False  # folder removed from the app, or the share isn't mounted: change nothing
-            counts = status["new_books"], status["errors"]  # they describe the last full scan
+            counts = _counts()  # they describe the last full scan
             try:
                 if folder.is_dir():
                     known = db.query(Series.id).filter_by(folder_path=str(folder)).first() is not None
@@ -402,7 +433,7 @@ def scan_folder(lib_id: int, folder: Path):
                         series.missing_since = now()
                 db.commit()
             finally:
-                status["new_books"], status["errors"] = counts
+                status.update(counts)
     finally:
         _lock.release()
     if new:

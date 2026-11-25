@@ -17,7 +17,7 @@ from app.api.common import (READING_STATUSES, book_dict, continue_target, contin
                             visible_books_query)
 from app.api.common import load_states, my_progress, retry_on_conflict
 from app.api.filters import visible_series
-from app import config, users
+from app import activity, config, users
 from app.users import manage
 from app.db import get_db
 from app.direction import MODES, reading_direction
@@ -231,7 +231,7 @@ def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db)):
     s = get_or_404(db, Series, series_id)
     if body.reader_mode is not None and not users.current().can_manage:
         raise HTTPException(403, "Only an admin can change the series' reading mode")
-    old_status = status_of(db, s)
+    old_status, was_mode = status_of(db, s), s.reader_mode
     if body.reading_status is not None:
         if body.reading_status not in READING_STATUSES:
             raise HTTPException(400, "Unknown reading status")
@@ -248,6 +248,9 @@ def patch_series(series_id: int, body: SeriesPatch, db=Depends(get_db)):
         s.favorite = body.favorite
     db.commit()
     emit_reading_events(db, s, old_status)
+    if body.reader_mode is not None and s.reader_mode != was_mode:  # the series' own, for everyone
+        activity.log("metadata.changed", s.folder_name, target=("series", s.id),
+                     details={"fields": ["reader_mode"], "old": was_mode, "new": s.reader_mode})
     return {"ok": True}
 
 
@@ -408,6 +411,8 @@ def bulk(body: BulkBody, request: Request, db=Depends(get_db)):
     db.commit()  # once for the whole batch: committing per series made big selections slow
     for s, old_status, newly_read in events:
         emit_reading_events(db, s, old_status, completed=newly_read)
+    if body.action == "refresh" and done:  # reading and favorites are each person's own: not logged
+        activity.log("metadata.refetched", "", details={"count": done})
     return {"done": done, "skipped": len(ids) - done}
 
 
@@ -577,18 +582,26 @@ def match(series_id: int, body: MatchBody, db=Depends(get_db)):
     if not body.url and not (body.provider and body.provider_id):
         raise HTTPException(400, "Give a provider and id, or a URL")
     _metadata_call(db, metadata.manual_match, s, body.provider, body.provider_id, body.url)
+    src = s.metadata_source or {}
+    activity.log("metadata.matched", s.folder_name, target=("series", s.id),
+                 details={"provider": src.get("provider") or body.provider, "id": src.get("id") or body.provider_id,
+                          "url": body.url, "title": s.title_english or s.title_romaji})
     return get_series(series_id, db)
 
 
 @router.post("/series/{series_id}/unmatch", dependencies=[manage])
 def unmatch(series_id: int, db=Depends(get_db)):
-    _metadata_call(db, metadata.unmatch, get_or_404(db, Series, series_id))
+    s = get_or_404(db, Series, series_id)
+    _metadata_call(db, metadata.unmatch, s)
+    activity.log("metadata.unmatched", s.folder_name, target=("series", s.id))
     return {"ok": True}
 
 
 @router.post("/series/{series_id}/ignore-match", dependencies=[manage])
 def ignore_match(series_id: int, db=Depends(get_db)):
-    _metadata_call(db, metadata.unmatch, get_or_404(db, Series, series_id), ignore=True)
+    s = get_or_404(db, Series, series_id)
+    _metadata_call(db, metadata.unmatch, s, ignore=True)
+    activity.log("metadata.unmatched", s.folder_name, target=("series", s.id), details={"ignore": True})
     return {"ok": True}
 
 
@@ -604,7 +617,10 @@ def retry_auto_match(series_id: int, db=Depends(get_db)):
 
 @router.post("/series/{series_id}/refresh", dependencies=[manage])
 def refresh(series_id: int, db=Depends(get_db)):
-    _metadata_call(db, metadata.refresh, get_or_404(db, Series, series_id))
+    s = get_or_404(db, Series, series_id)
+    _metadata_call(db, metadata.refresh, s)
+    activity.log("metadata.refetched", s.folder_name, target=("series", s.id),
+                 details={"provider": (s.metadata_source or {}).get("provider")})
     return get_series(series_id, db)
 
 

@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func
 
 from app import users
+from app.plugins import activity, manager
 from app.plugins.sdk import READING_MODES as MODES, Library, Series, Shelf, get_db, get_or_404, t
 from app.users import manage
 
@@ -72,6 +73,7 @@ def add_shelf(body: ShelfBody, db=Depends(get_db)):
     db.add(shelf)
     db.commit()
     shelves.invalidate()  # a limited account doesn't see it: the guard's list of libraries changed
+    activity.log("library.added", shelf.name, target=("library", shelf.id))
     return {"id": shelf.id, "name": shelf.name}
 
 
@@ -87,6 +89,7 @@ def patch_shelf(shelf_id: int, body: ShelfPatch, request: Request, db=Depends(ge
     shelf = get_or_404(db, Shelf, shelf_id)
     _unlocked_or_403(db, request, shelf)
     shelf.made_for_folder = None
+    was = {"name": shelf.name, "reader_mode": shelf.reader_mode}
     if body.name is not None:
         shelf.name = _check_name(db, body.name, shelf.id)
     if body.reader_mode is not None:
@@ -94,6 +97,9 @@ def patch_shelf(shelf_id: int, body: ShelfPatch, request: Request, db=Depends(ge
             raise HTTPException(400, "Unknown reading mode")
         shelf.reader_mode = None if body.reader_mode == "default" else body.reader_mode
     db.commit()
+    changes = {k: {"old": v, "new": getattr(shelf, k)} for k, v in was.items() if getattr(shelf, k) != v}
+    if changes:
+        activity.log("library.changed", shelf.name, target=("library", shelf.id), details=changes)
     return {"ok": True}
 
 
@@ -117,6 +123,8 @@ def delete_shelf(shelf_id: int, request: Request, db=Depends(get_db)):
     db.delete(shelf)
     db.commit()
     shelves.invalidate()
+    activity.log("library.removed", shelf.name, target=("library", shelf_id),
+                 details={"moved_to": other.name})
     return {"ok": True, "moved_to": {"id": other.id, "name": other.name}}
 
 
@@ -128,8 +136,12 @@ class PasswordBody(BaseModel):
 def _verify_or_403(shelf, password):
     try:
         if not shelves.verify(shelf, password):
+            activity.log("library.unlock_failed", shelf.name, target=("library", shelf.id),
+                         details={"reason": "wrong_password"})
             raise HTTPException(403, "Wrong password")
     except shelves.TooManyTries as e:
+        activity.log("library.unlock_failed", shelf.name, target=("library", shelf.id),
+                     details={"reason": "too_many_tries"})
         raise HTTPException(429, str(e)) from None
 
 
@@ -152,6 +164,8 @@ def set_password(shelf_id: int, body: PasswordBody, request: Request, response: 
     db.commit()
     shelves.invalidate()
     _set_cookie(response, cookie)
+    activity.log("library.password_set" if shelf.password_hash else "library.password_removed", shelf.name,
+                 target=("library", shelf.id))
     return {"ok": True, "has_password": bool(shelf.password_hash)}
 
 
@@ -210,7 +224,14 @@ def move_series(series_id: int, body: PlaceBody, request: Request, db=Depends(ge
     s.shelf_id = _shelf_choice(db, body.shelf_id)
     db.commit()
     shelves.invalidate()  # LockGuard's idea of where it is
+    activity.log("series.moved", s.folder_name, target=("series", s.id), details={"to": _shelf_name(db, s.shelf_id)})
     return {"ok": True}
+
+
+def _shelf_name(db, shelf_id):
+    """The library's name, for the log; None: each series' folder's library."""
+    shelf = db.get(Shelf, shelf_id) if shelf_id else None
+    return shelf.name if shelf else None
 
 
 class MoveBody(BaseModel):
@@ -230,6 +251,11 @@ def move_many(body: MoveBody, request: Request, db=Depends(get_db)):
         s.shelf_id = shelf_id
     db.commit()
     shelves.invalidate()
+    if found:
+        activity.log("series.moved", found[0].folder_name if len(found) == 1 else "",
+                     target=("series", found[0].id) if len(found) == 1 else None,
+                     details={"to": _shelf_name(db, shelf_id), "count": len(found),
+                              "series": [s.folder_name for s in found[:20]]})
     return {"done": len(found), "skipped": len(ids) - len(found)}
 
 
@@ -245,6 +271,8 @@ def folder_shelf(folder_id: int, body: PlaceBody, request: Request, db=Depends(g
         folder.shelf_id = body.shelf_id
         db.commit()
         shelves.invalidate()
+        activity.log("folder.changed", folder.root_path, target=("folder", folder.id),
+                     details={"library": _shelf_name(db, folder.shelf_id)})
     return {"ok": True}
 
 
@@ -267,8 +295,14 @@ def put_access(user_id: int, body: AccessBody, db=Depends(get_db)):
         known = {sid for (sid,) in db.query(Shelf.id)}
         if not set(body.shelves) <= known:
             raise HTTPException(404, "Library not found")
+    before = shelves.access_rules(db).get(str(user_id))
     shelves.set_access(db, user_id, body.shelves)
     db.commit()
+    after = None if body.shelves is None else sorted(set(body.shelves))
+    if before != after:
+        user = manager.find_user(db, user_id)  # the accounts plugin knows the name
+        activity.log("account.access_changed", user.name if user else "", target=("account", user_id),
+                     details={"libraries": None if after is None else [_shelf_name(db, i) for i in after]})
     return {"ok": True}
 
 
