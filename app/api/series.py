@@ -420,6 +420,12 @@ def bulk(body: BulkBody, request: Request, db=Depends(get_db)):
 def continue_reading(request: Request, limit: int = 30, db=Depends(get_db)):
     """Series the current user is reading, the last read first, of the series the request may see (e.g.
     one library)."""
+    return continue_cards(db, request, limit)
+
+
+def continue_cards(db, request, limit):
+    """Continue reading's cards (also the Home page's row, app/api/home.py), each with the book and page
+    to go on with."""
     # from the user's own rows (index user_id, last_read_at), not a look at every series
     rows = (db.query(Series)
             .join(SeriesState, and_(SeriesState.series_id == Series.id, SeriesState.user_id == users.current_id()))

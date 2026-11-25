@@ -25,13 +25,14 @@ def test_slot_names_match():
 
 
 def test_repeated_slots_are_filled_everywhere(client, monkeypatch):  # client: the plugins are loaded (views)
-    """card-badges is in both card lists (library and Continue), book-row in each book's row."""
+    """card-badges is in every card list (library, Continue, and Home's two kinds of card), book-row in each
+    book's row."""
     plugin = SimpleNamespace(id="tags", js="", html={"card-badges": '<span class="badge">EN</span>',
                                                      "book-row": '<span class="book-badge" x-text="b.id"></span>',
                                                      "series-menu": "<button>Sync</button>"})
     monkeypatch.setattr(web, "page_plugins", lambda safe=False: [plugin])
     out = web.render_index()
-    assert out.count('<span class="badge">EN</span>') == 2
+    assert out.count('<span class="badge">EN</span>') == 4
     assert out.count('x-text="b.id"') == 1 and out.count("<button>Sync</button>") == 1
     assert '<div class="plugin-slot" data-slot="continue-top"></div>' in out  # empty, kept for later
     assert "<!-- slot:" not in out

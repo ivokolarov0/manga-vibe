@@ -38,6 +38,8 @@ DEFAULT_SETTINGS = {
     "library_listing": "lazy",     # lazy (infinite scroll) | paged (numbered pages)
     "library_page_size": 80,       # series per page in paged mode: 40 | 80 | 120 (see PAGE_SIZES)
     "library_view": "grid",        # grid (poster cards) | list (one series per row)
+    "home_page": True,             # the Home page (rows of what's new) is the first page; off: the Library is
+    "home_layout": {},             # Home's rows: {"order": [row ids], "hidden": [row ids]} (app/api/home.py)
     "reader_mode": "paged",        # paged | vertical
     "reader_fit": "screen",        # width | height | screen | original
     "reader_spread": "off",        # off | auto (two pages side by side on wide screens) | on (always two)
@@ -215,7 +217,9 @@ PERSONAL_SETTINGS = {"theme", "language", "reader_mode", "reader_fit", "reader_s
                      # the library page's own "per page" picker and grid/list switch, there for everyone
                      "library_page_size", "library_view",
                      # what suits depends on the person's screen
-                     "grid_columns", "card_width", "page_width", "page_width_series"}
+                     "grid_columns", "card_width", "page_width", "page_width_series",
+                     # the Home page and its rows (#291)
+                     "home_page", "home_layout"}
 
 # The "per page" choices: they divide evenly by 2, 4, 5, 8 and 10 columns (120 also by 3, 6 and 12), so
 # the last row of a page is full at most widths. Sizes saved before (30, 60) map to the next one up.
@@ -288,6 +292,11 @@ def put_settings(body: dict, db=Depends(get_db)):
             raise HTTPException(400, t("Hide controls after: 0 (never) or {min} to {max} seconds",
                                        min=AUTOHIDE_MIN, max=AUTOHIDE_MAX))
         known["reader_autohide"] = n
+    if "home_page" in known:
+        known["home_page"] = known["home_page"] is not False and known["home_page"] != "false"
+    if "home_layout" in known:
+        from app.api.home import clean_layout
+        known["home_layout"] = clean_layout(known["home_layout"])
     # the app's settings in the activity log, with the old and new value; each person's own (the theme,
     # the reader) are theirs, not the admin's business
     changed = {k: (get_setting(db, k, DEFAULT_SETTINGS[k]), v) for k, v in known.items()

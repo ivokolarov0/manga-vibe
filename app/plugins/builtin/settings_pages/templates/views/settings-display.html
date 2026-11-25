@@ -6,4 +6,29 @@
           <h2>{{ t("Display") }}</h2>
           <!-- part of the page's settings: a dropdown each (SETTING_ROWS in app.js) -->
           {{ setting_rows("displayRows") }}
+          <!-- the Home page and its rows (#291): everyone's own; homeSettings() in app.js -->
+          <div class="home-settings" x-data="homeSettings()">
+            <label class="setting-row"><span class="label"><span>{{ t("Home page") }}</span>
+              <small>{{ t("Just for you. The first page, with rows of what's new. Off: the Library is the first page") }}</small></span>
+              <input type="checkbox" :checked="st.home_page === 'true'" @change="st.home_page = String($event.target.checked); save('home_page')"></label>
+            <template x-if="st.home_page === 'true'">
+              <div class="home-rows" role="list" :aria-label="t('Rows on Home')">
+                <template x-for="(s, i) in sections" :key="s.id">
+                  <div class="setting-row sub home-row-setting" role="listitem" :class="{ off: s.hidden, dragging: dragging === s.id }"
+                       draggable="true" @dragstart="dragStart($event, s)" @dragenter.prevent="dragOver(s)" @dragover.prevent @drop.prevent="dragEnd()" @dragend="dragEnd()">
+                    <svg class="ic grip" aria-hidden="true"><use href="#i-grip"/></svg>
+                    <span class="label"><span x-text="s.title"></span>
+                      <small x-text="s.hidden ? t('Hidden') : (s.plugin ? t('From a plugin') : '')" x-show="s.hidden || s.plugin"></small></span>
+                    <span class="home-row-tools">
+                      <button type="button" class="iconbtn" :aria-disabled="String(i === 0)" @click="move(i, -1)"
+                              :aria-label="t('Move {row} up', { row: s.title })" :title="t('Up')"><svg class="ic" aria-hidden="true"><use href="#i-arrow-up"/></svg></button>
+                      <button type="button" class="iconbtn" :aria-disabled="String(i === sections.length - 1)" @click="move(i, 1)"
+                              :aria-label="t('Move {row} down', { row: s.title })" :title="t('Down')"><svg class="ic" aria-hidden="true"><use href="#i-arrow-down"/></svg></button>
+                      <input type="checkbox" :checked="!s.hidden" @change="toggle(s)" :aria-label="t('Show {row} on Home', { row: s.title })" :title="t('Show on Home')">
+                    </span>
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
         </section>

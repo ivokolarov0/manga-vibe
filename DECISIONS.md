@@ -1423,3 +1423,35 @@ Plugin API version, and the app works after every one.
   and is VACUUMed. app/backup.py names the table (`ACTIVITY_TABLE`): the one place the core knows a
   plugin's table, as the backup is the core's. Importing a file without the log empties this server's,
   like everything else an import replaces; the import itself is then the first entry.
+
+### The Home page (Plugin API 30, issue #291)
+
+- **Home at `#/home`, the library stays at `#/`**: the app opened without an address goes to Home (or the
+  library, with Home off). Making `#/` Home would have broken every library link (`#/?genre=…`, saved
+  searches, "See all", plugins' `libraryUrl()`); only the first page changed. `#/home` with Home off goes
+  to the library. The logo goes to the first page.
+- **The rows are the app's and the plugins', the page is a view**: `view:home` (built in: `home_page/`) only
+  draws `MangaVibe.home.sections`. A plugin that replaces the page keeps every row; one that adds a row
+  (`home_sections` + `home_section()`) works with any page. The app's own rows (Continue reading, Recently
+  added, Recently updated) are the core's (app/api/home.py), like Continue reading's API.
+- **One call for the page** (`GET /api/home`): every shown row with its 10 cards, the empty and hidden
+  ones left out. A plugin's row that fails is logged and left out. A plugin's series row gives `Series` rows
+  and the core makes the cards, filtered again with `visible_series()`, so a plugin can't show a locked
+  library's series by mistake, and every card looks like the library's.
+- **Recently updated leaves out what was only just added**: a series counts as updated once its books
+  changed more than an hour after it was added (`updated_at` against `added_at`), so a new series isn't in
+  both rows; the first scan's books are part of adding it.
+- **Home follows the library tabs**, like Continue reading: the tabs show on Home and its rows send the list
+  scope. The Libraries row (the libraries plugin's, a `"tiles"` row) opens a library in the Library tab
+  through the plugin's `home-tile` handler (a locked one asks for its password first). It shows from two
+  libraries on: with one, it would be the Library button again.
+- **Per person**: `home_page` and `home_layout` (`{order, hidden}`) are personal settings. A row someone
+  never put in order (a plugin switched on later) comes after theirs, in the default order.
+- **Settings → Display → Home page**: the on/off switch and the rows as setting rows (dividers between
+  rows, #245), each with a drag handle (HTML drag and drop, `setData` for Firefox), up / down buttons for the
+  keyboard and touch (`aria-disabled` at the ends, so focus stays on the button) and a show box.
+- **Carousels in CSS**: a grid row (`grid-auto-flow: column`, cards as wide as `--card`) with scroll
+  snapping, reaching into the page's side padding so cards scroll to the screen's edge. The arrows only
+  with a mouse (`hover: hover`) and only while there's somewhere to go; Tab walks the cards. The cards are
+  the card view (`home_card()` draws Continue reading's for that row, the library's for the others), with
+  `content-visibility` off so cards out of sight aren't blank while swiping.

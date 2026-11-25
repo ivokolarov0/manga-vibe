@@ -7,7 +7,8 @@
     (sidebar.css). -#}
   <!-- ============ top bar: logo, search, plugins' buttons ============ -->
   <header id="topbar" class="with-sidebar" x-data="topbar()" x-show="$store.app.view !== 'read'">
-    <a href="#/" class="brand" aria-label="{{ t('MangaVibe: Library') }}">
+    <a :href="$store.app.homeOn ? '#/home' : '#/'" href="#/" class="brand"
+       :aria-label="$store.app.homeOn ? t('MangaVibe: Home') : t('MangaVibe: Library')" aria-label="{{ t('MangaVibe: Library') }}">
       <svg class="logo" viewBox="0 0 20 20" aria-hidden="true"><rect x="1" width="8" height="20" rx="2"/><rect x="11" width="8" height="20" rx="2"/></svg>
       <span>MangaVibe</span></a>
     <label class="search-box">
@@ -22,6 +23,8 @@
 
   <!-- ============ the sidebar: Library, Continue, what plugins add and, at the end, Settings ============ -->
   <nav id="bottomnav" class="sidebar" x-data x-show="$store.app.view !== 'read'" aria-label="{{ t('Main') }}">
+    <a href="#/home" x-show="$store.app.homeOn" x-cloak :class="{ active: $store.app.view === 'home' }" :aria-current="$store.app.view === 'home' ? 'page' : null">
+      <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg></span><span class="nav-label">{{ t('Home') }}</span></a>
     <a href="#/" :class="{ active: $store.app.view === 'library' }" :aria-current="$store.app.view === 'library' ? 'page' : null">
       <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></span><span class="nav-label">{{ t('Library') }}</span></a>
     <a href="#/continue" :class="{ active: $store.app.view === 'continue' }" :aria-current="$store.app.view === 'continue' ? 'page' : null">

@@ -3,6 +3,8 @@
    this file holds the data and actions. The reader is plain JS in reader.js.
 
    Routes use the URL hash:
+     (none)               the first page: Home, or the library with Home off (Settings → Display)
+     #/home               home (rows of what's new)
      #/?genre=..&read=..  library (filters in the URL)   #/series/12?tab=files  series page
      #/continue           continue reading               #/attention?tab=..     needs attention
      #/settings           settings                       #/read/34?page=5       reader
@@ -189,7 +191,8 @@ document.addEventListener("alpine:init", () => {
   alpineStarted = true;  // plugin scripts loaded from now on run MangaVibe.onStart() at once
   Alpine.store("app", {
     pluginSlots: filledSlots(),  // the page's slots plugins put something in (see window.MangaVibe)
-    view: null,          // library | series | continue | attention | settings | read
+    view: null,          // home | library | series | continue | settings | read
+    homeOn: true,        // Settings → Display → Home page: Home is the first page and in the navigation
     id: null,            // series id for the series page
     params: {},          // query params of the current route
     query: "",           // raw query string (library filters)
@@ -251,6 +254,7 @@ document.addEventListener("alpine:init", () => {
   // the library page's and Continue reading's (MangaVibe.library, MangaVibe.continue)
   Alpine.store("library", libraryController());
   Alpine.store("continue", continueController());
+  Alpine.store("home", homeController());  // the Home page's rows (MangaVibe.home)
 
   window.addEventListener("mv-theme", (e) => (Alpine.store("app").theme = e.detail));
 
@@ -264,6 +268,9 @@ document.addEventListener("alpine:init", () => {
     if (parts[0] === "attention") {  // old address: Needs attention now lives in Settings
       return location.replace(`#/settings/att-${params.get("tab") || "unreadable"}`);
     }
+    // the app opened without an address: the first page, Home (Settings → Display) or the library
+    if (!location.hash.slice(1)) return location.replace(app.homeOn ? "#/home" : "#/");
+    if (parts[0] === "home" && !app.homeOn) return location.replace("#/");
     const view = parts[0] || "library";
     if (view === "read") Reader.open(+parts[1], params.get("page"),
       lastView === "read" ? undefined : lastView !== null);  // next book: keep where the reader was opened from
@@ -321,6 +328,7 @@ document.addEventListener("alpine:init", () => {
   }
   queueMicrotask(async () => {
     await loadSettings().then((s) => s.me && (Alpine.store("app").me = s.me)).catch(() => {});
+    Alpine.store("app").homeOn = settings.home_page !== false;
     await loadLibrarySchema();  // before plugins start: e.g. saved searches label their filters with it
     // plugins get ready before anything is shown, e.g. accounts: the login; libraries: lock them on a
     // new tab, pick one
@@ -1086,6 +1094,8 @@ window.MangaVibe = {
   // the library page's and Continue reading's (Plugin API 19): view:library and view:continue draw from them
   get library() { return Alpine.store("library"); },
   get continue() { return Alpine.store("continue"); },
+  // the Home page's rows (Plugin API 30): view:home draws from it
+  get home() { return Alpine.store("home"); },
   // a component whose names are a store's (read, write, call), e.g. Alpine.data("myLibrary", () =>
   // MangaVibe.bind(MangaVibe.library, { extra: 1 })): markup can say `items`, `bulk(...)`
   bind(store, own = {}) {
@@ -1303,6 +1313,46 @@ function continueController() {
       if (Alpine.store("app").view !== "continue") return;
       document.title = t("Continue reading");
       this.items = await api(`/api/continue-reading?${scopeParam()}`).catch(() => this.items);
+    },
+  };
+}
+
+/* ---------------- home ---------------- */
+
+/* MangaVibe.home (Plugin API 30, issue #291): the Home page's rows, for the view:home plugin's page (built in:
+   app/plugins/builtin/home_page). GET /api/home gives every row the person shows, in their order, with the
+   newest 10 each; the empty ones are left out. Loads by itself while Home is shown, and again when what it
+   shows may have changed (the reader closed, another library, a series matched). */
+function homeController() {
+  return {
+    sections: null,  // [{ id, plugin, title, kind ("series" | "tiles"), layout, see_all, items }]; null until loaded
+    failed: "",      // why the last load failed, else ""
+    init() {
+      const app = () => Alpine.store("app");
+      watchValue(() => app().view, (v) => v === "home" && this.load());
+      watchValue(() => app().progressDirty, () => this.load());
+      watchValue(() => app().libraryDirty, () => this.load());
+      watchValue(() => app().listKey, () => this.load());
+      queueMicrotask(() => this.load());
+    },
+    async load() {
+      if (Alpine.store("app").view !== "home") return;
+      document.title = t("Home");
+      try {
+        this.sections = (await api(`/api/home?${scopeParam()}`)).sections;
+        this.failed = "";
+      } catch (e) { if (this.sections === null) this.failed = e.message; }
+    },
+    get emptyText() {
+      // a plugin may know why (e.g. libraries: this one is locked), as on the library page
+      return collectPlugins("empty-library")[0] || t("No series yet. The first scan may still be running; see Settings.");
+    },
+    // a tile of a plugin's row (e.g. a library): the plugin's "home-tile" handler opens it, else its link
+    async openTile(e, sec, item) {
+      if (!sec.plugin) return;
+      e.preventDefault();
+      const done = await emitPlugins("home-tile", [item, sec], { only: sec.plugin });
+      if (!done.length && item.href) location.hash = item.href;
     },
   };
 }
@@ -1889,6 +1939,58 @@ function loadPluginView() {
   } catch { return {}; }
 }
 
+/* Settings → Display → Home page (#291): each person's own. The rows (the app's and the plugins'), in
+   their order: dragged, or moved with the arrow buttons (keyboard too), and shown or hidden one by one.
+   Saved as home_layout ({ order, hidden }) through PUT /api/settings. Inside Settings' component (st, save). */
+function homeSettings() {
+  return {
+    sections: [],  // GET /api/home/sections: [{ id, title, hidden }] in the person's order
+    dragging: null,  // the id of the row being dragged
+    init() {
+      this.load();
+      this.$watch("$store.app.sub", (s) => s === "display" && this.load());  // e.g. a plugin switched on since
+    },
+    async load() { this.sections = await api("/api/home/sections").catch(() => this.sections); },
+    async saveLayout(message = t("Saved")) {
+      const home_layout = { order: this.sections.map((s) => s.id), hidden: this.sections.filter((s) => s.hidden).map((s) => s.id) };
+      try {
+        await api("/api/settings", { method: "PUT", body: { home_layout } });
+        await loadSettings();
+        toast(message);
+      } catch (e) { toast(e.message, 6000, "error"); await this.load(); }
+    },
+    move(i, by) {
+      const j = i + by;
+      if (j < 0 || j >= this.sections.length) return;
+      const [s] = this.sections.splice(i, 1);
+      this.sections.splice(j, 0, s);
+      this.saveLayout(t("Moved: {row} is number {n} now", { row: s.title, n: fmtNum(j + 1) }));
+    },
+    toggle(s) {
+      s.hidden = !s.hidden;
+      this.saveLayout(s.hidden ? t("{row} is hidden on Home", { row: s.title }) : t("{row} shows on Home", { row: s.title }));
+    },
+    // dragging a row over another puts it there; dropping it saves the order
+    dragStart(e, s) {
+      this.dragging = s.id;
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", s.title);  // Firefox starts no drag without data
+    },
+    dragOver(s) {
+      if (this.dragging === null || this.dragging === s.id) return;
+      const from = this.sections.findIndex((x) => x.id === this.dragging), to = this.sections.indexOf(s);
+      const [moved] = this.sections.splice(from, 1);
+      this.sections.splice(to, 0, moved);
+    },
+    dragEnd() {
+      if (this.dragging === null) return;
+      const s = this.sections.find((x) => x.id === this.dragging);
+      this.dragging = null;
+      this.saveLayout(t("Moved: {row} is number {n} now", { row: s.title, n: fmtNum(this.sections.indexOf(s) + 1) }));
+    },
+  };
+}
+
 function settingsView() {
   return {
     // everything for an admin; for others (accounts) only their own pages (Reader...), not the app's
@@ -2071,6 +2173,7 @@ function settingsView() {
       if (key === "language") { location.reload(); return; }
       if (key === "theme") setTheme(v);
       await loadSettings();
+      this.$store.app.homeOn = settings.home_page !== false;  // Home in the navigation, or not
       if (["title_language", "library_listing", "library_page_size", "grid_columns"].includes(key)) this.$store.app.libraryDirty++;
       toast(t("Saved"));
     },

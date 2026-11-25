@@ -23,6 +23,7 @@
 
 /* pages */
 @import url("library.css");
+@import url("home.css");
 @import url("series.css");
 @import url("settings.css");
 @import url("attention.css");

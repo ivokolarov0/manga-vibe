@@ -98,6 +98,9 @@ VIEWS = {
                           "card-badges": "badges on the cards"}},
     "continue": {"job": "view:continue", "template": "views/continue.html",
                  "slots": {"continue-top": "what goes above Continue reading", "card-badges": "badges on the cards"}},
+    # Plugin API 30 (issue #291): the Home page's rows
+    "home": {"job": "view:home", "template": "views/home.html",
+             "slots": {"home-end": "what goes after Home's rows", "card-badges": "badges on the cards"}},
     "series": {"job": "view:series", "template": "views/series.html",
                "slots": {"series-actions": "buttons next to Continue", "series-menu": "entries in the ⋯ menu",
                          "series-panels": "panels on the series page", "series-end": "wide panels and dialogs",
@@ -125,7 +128,8 @@ PAGE_JOBS = {spec["job"] for spec in VIEWS.values()}
 # where plugin markup can go: slot name -> where it is in the page
 SLOTS = {
     "topbar": "the top bar, before the Settings button (e.g. the account menu)",
-    "home-top": "above the library grid and Continue reading (e.g. the library tabs)",
+    "home-top": "above the library grid, Continue reading and Home (e.g. the library tabs)",
+    "home-end": "the Home page, after its rows",
     "nav-items": "the sidebar, after Library and Continue (e.g. the libraries); a nav may leave it out",
     "library-tools": "the library page's buttons, after Filter / Sort / Letter",
     "library-filters": "the row of filters on, after Clear all (shown while filters are on)",
@@ -137,7 +141,7 @@ SLOTS = {
     "series-panels": "the series page's side column of panels, after Plugin tools (can use s)",
     "series-end": "the end of the series page, after the Books panel: wide panels and dialogs (s, books)",
     "book-row": "each book in the series page's Books list, before its buttons (can use b: the book, s)",
-    "card-badges": "each series card's poster in the library and Continue (can use s: the card's series)",
+    "card-badges": "each series card's poster in the library, Continue and Home (can use s: the card's series)",
     "continue-top": "the Continue reading page, above its grid",
     "settings": "Settings' pages: a plugin's own (MangaVibe.settingsPage), shown with section === '<key>'",
     "folder-row": "each folder in Settings → Library folders (can use l: the folder)",

@@ -18,8 +18,8 @@ from fastapi import HTTPException
 from sqlalchemy import func
 
 from app import config
-from app.plugins import Plugin
-from app.plugins.sdk import Library, Series, Shelf, t
+from app.plugins import HomeSection, Plugin
+from app.plugins.sdk import N_, Library, Series, Shelf, poster_version, t, tn
 
 from . import api, core
 
@@ -84,6 +84,30 @@ class Libraries(Plugin):
 
         return {"shelf": shelf_of(core.shelf_id_of(db, series)), "shelf_override": series.shelf_id is not None,
                 "folder_shelf": shelf_of(folder.shelf_id if folder else None)}
+
+    # --- the Home page's Libraries row (#291) ----------------------------------------------------------
+    home_sections = [HomeSection("libraries", N_("Libraries"), kind="tiles")]
+
+    def home_section(self, ctx, request, key, limit):
+        """A card per library this person sees (with accounts, the ones an admin shares with them), with
+        the cover of its newest series and how many it has; a locked one without either. Opening one shows
+        it in the Library (libraries.js, "home-tile"). Only once there are two: one is just the Library."""
+        db = ctx.db
+        locked, hidden = core.locked_for(db, request), core.hidden_ids(db)
+        found = [s for s in db.query(Shelf).order_by(Shelf.id) if s.id not in hidden]
+        if len(found) < 2:
+            return []
+        n, col = api.counts(db, locked), core.shelf_column()
+        out = []
+        for s in found[:limit]:
+            newest = None if s.id in locked else (
+                db.query(Series).filter(col == s.id, Series.missing_since.is_(None))
+                .order_by(Series.added_at.desc(), Series.id.desc()).first())
+            out.append({"id": s.id, "title": s.name, "href": "#/",
+                        "subtitle": t("Locked") if s.id in locked else tn("{n} series", "{n} series", n.get(s.id, 0)),
+                        "image": f"/api/series/{newest.id}/poster?size=sm&v={poster_version(newest)}" if newest else "",
+                        "icon": "lock" if s.id in locked else "books"})
+        return out
 
     def reading_mode(self, ctx, series):
         """Its library's reading mode, for series without their own."""

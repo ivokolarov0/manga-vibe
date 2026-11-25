@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.datastructures import Headers
 
 from app import activity, config, db as database, i18n, plugin_updates, updater
-from app.api import attention, backup, books, edit, series, system, update
+from app.api import attention, backup, books, edit, home, series, system, update
 from app.lanes import QuickLane
 from app.metadata import worker as metadata_worker
 from app.plugins import manager as plugins, web as plugin_web
@@ -267,6 +267,7 @@ app.include_router(attention.router)
 app.include_router(edit.router)
 app.include_router(update.router)
 app.include_router(backup.router)
+app.include_router(home.router)
 # a plugin's own API (Plugin.router), e.g. the built-in saved searches
 app.mount("/api/plugins/{plugin_id}/api", plugin_web.PluginApi())
 

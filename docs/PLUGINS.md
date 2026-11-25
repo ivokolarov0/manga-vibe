@@ -27,7 +27,8 @@
 | [Reading events](#reading-events) | [A reader of its own](#a-reader-of-its-own) | [Saved searches](#the-saved-searches-job) |
 | [Updates](#updates) | [Styling](#styling-plugins-and-your-own-customcss) | [Parser, matcher, labels](#server-jobs-the-parser-the-matcher-and-book-labels) |
 | [Publish in a source](#publish-your-plugins-in-a-source) | [Example](#example) | [Image reader](#the-readerimages-job) |
-| [The SDK](#the-sdk) | [The activity log](#the-activity-log) | |
+| [The SDK](#the-sdk) | [The activity log](#the-activity-log) | [Home page](#the-viewhome-job) |
+| | [Rows on Home](#rows-on-the-home-page) | |
 
 </details>
 
@@ -126,6 +127,7 @@ class Hello(Plugin):
 | **Tools for assistants and voice control** (MCP) | `mcp_tools = [McpTool(...)]` and `run_mcp_tool(ctx, name, args)` on the server, `MangaVibe.screenCommand()` in the page (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
 | **A reader of its own** for books the page reader can't show (light novels) | `reads = ["epub-text"]`, `ctx.text_sections(book)` on the server, `MangaVibe.registerReader()` in the page (see [A reader of its own](#a-reader-of-its-own)). Plugin API 14 |
 | **Do a part of the app, replacing the built-in one** (e.g. the filters, a page) | `provides = {"<job>": 1}`, and `requires` for what it needs another plugin to do (see [Jobs](#jobs-replacing-a-part-of-the-app)). Plugin API 15 |
+| **A row on the Home page** (e.g. "Unread", "Favourites", a library) | `home_sections = [HomeSection("key", N_("Title"))]` and `home_section(ctx, request, key, limit)` returning series (see [Rows on the Home page](#rows-on-the-home-page)). Plugin API 30 |
 | **Speak the reader's language** | `t("…")` in markup, `MangaVibe.t()` in scripts, `N_()` / `t()` from `app.plugins.sdk` in Python, and `i18n/<lang>.po` files next to its `__init__.py` (see [Translations](#translations)). Plugin API 27 |
 
 ## Translations
@@ -323,6 +325,43 @@ What the app logs (issue #281), each with the person who did it:
 | app | `backup.exported`, `backup.imported`, `update.started`, `update.finished` (seen at the next start), `update.failed`, `activity.cleared` |
 
 Reading is never logged (opening a book, turning pages, progress, favorites): it's each person's own.
+
+## Rows on the Home page
+
+Plugin API 30 (issue #291). Home is the first page: rows of what's new, each a carousel of the newest 10
+with "See all". The app's own are Continue reading, Recently added and Recently updated; the built-in
+Libraries plugin adds a Libraries row. A plugin adds rows of its own:
+
+```python
+from app.plugins import HomeSection, Plugin
+from app.plugins.sdk import N_, Series
+
+
+class Manhwa(Plugin):
+    id = "manhwa-row"
+    name = "Manhwa row"
+    home_sections = [HomeSection("manhwa", N_("New manhwa"))]
+
+    def home_section(self, ctx, request, key, limit):
+        return (ctx.db.query(Series).filter(Series.country_of_origin == "KR", Series.missing_since.is_(None))
+                .order_by(Series.added_at.desc()).limit(limit).all())
+```
+
+- `HomeSection(key, title, kind="series", see_all="")`: `title` is marked `N_()` and shown in each person's
+  language; `see_all` is where "See all" goes (a `#/` address, e.g. the library with a sort or filter), `""`
+  for none. On the page and in the settings the row's id is `<plugin id>:<key>`.
+- `home_section(ctx, request, key, limit)` gives what the row shows to the person asking (`users.current()`),
+  at most `limit`: **`Series` rows** for a `"series"` row. The app leaves out what the request may not see
+  (e.g. a locked library, [`series_filter()`](#your-own-api-and-ui)) and draws the cards (the card view, as in
+  the library). A `"tiles"` row gives **dicts** `{id, title, subtitle, image, href, icon}` instead: cards of
+  your own, e.g. the libraries (`image` a cover's address, else `icon` names a built-in icon). A tile opens
+  its `href`, unless your script's `home-tile` handler returns `true` (see the events above).
+- `[]` hides the row. One that raises is logged and left out: Home still shows. `GET /api/home` asks every
+  row at once (one call for the page), so keep it fast.
+- Everyone can move and hide the rows, yours too, in Settings → Display → Home page (their own
+  `home_layout`), or turn Home off (`home_page`): then the library is the first page.
+
+## Drawing on pages
 
 ## Drawing on pages
 
@@ -574,7 +613,8 @@ Settings. Plugin API 11.
 
 | Slot | Where |
 |---|---|
-| `home-top` | above the library grid and Continue reading (the library tabs). Not inside a component: give your markup `x-data` |
+| `home-top` | above Home, the library grid and Continue reading (the library tabs). Not inside a component: give your markup `x-data` |
+| `home-end` | the Home page, after its rows. Not inside a component of yours: give it `x-data`. For a row, [`home_sections`](#rows-on-the-home-page) is simpler. Plugin API 30 |
 | `nav-items` | the Sidebar's column, after Library and Continue (the libraries). Entries: `<a>` or `<button class="nav-entry">` with a `.nav-ic` and a `.nav-label`; a titled group: `.nav-section` with a `.nav-section-head`, shown in the column only. Give your markup `x-data`. A nav may leave this slot out (the top bar does). Plugin API 25 |
 | `library-tools` | the library page's buttons, after Filter / Sort / Letter |
 | `library-filters` | the row of filters on, after Clear all (the row shows while filters are on) |
@@ -590,7 +630,7 @@ Settings. Plugin API 11.
 | `series-panels` | the series page's column of panels (Links, Metadata, Folder…), after Plugin tools: a `<section class="panel"><h2>…</h2>…</section>`. `s` is the series. Plugin API 11 |
 | `series-end` | the end of the series page, after the Books panel: a `<section class="panel wide">`, or dialogs. `s` is the series, `books` its books. Plugin API 11 |
 | `book-row` | each book in the series page's Books list, before its Read button. `b` is the book (`b.id`, `b.label`, `b.completed`, `b.page`), `s` the series. For a short label, `book_badges()` is simpler. Plugin API 11 |
-| `card-badges` | each series card in the library and on Continue reading. `s` is the card's series (`s.id`, `s.title`, `s.reading_status`). A `<span class="badge">` is stacked in the poster's bottom-right corner. Plugin API 11 |
+| `card-badges` | each series card in the library, on Continue reading and on Home. `s` is the card's series (`s.id`, `s.title`, `s.reading_status`). A `<span class="badge">` is stacked in the poster's bottom-right corner. Plugin API 11 |
 | `continue-top` | the Continue reading page, above its grid. Not inside a component of yours: give it `x-data`. Plugin API 11 |
 
 More slots are added as more of the app becomes plugins.
@@ -632,6 +672,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `ui.*` | to show things as the app does, in your markup or a view: `ui.cardSub(s)` ("Reading · 3/10"), `ui.updated(s)`, `ui.ago(ms)`, `ui.status(st)`, `ui.publication(p)`, `ui.kind(s)` ("Manhwa"), `ui.scoreCls(n)`, `ui.haveText(c)`, `ui.editionText(c)`, `ui.icon(name)`, `ui.libraryUrl(params)`. Plugin API 17. And `ui.fileSize(bytes)`, `ui.number(v)` ("–" for none), `ui.text(description)` (as HTML, escaped). Plugin API 18 |
 | `series` | the series page's data and actions: see [The view:series job](#the-viewseries-job). Plugin API 18 |
 | `library`, `continue` | the library page's and Continue reading's: see [The view:library and view:continue jobs](#the-viewlibrary-and-viewcontinue-jobs). Plugin API 19 |
+| `home` | the Home page's rows: see [The view:home job](#the-viewhome-job). Plugin API 30 |
 | `bind(store, own)` | a component whose names are a store's, to read, set and call from markup: `Alpine.data("myLibrary", () => MangaVibe.bind(MangaVibe.library, { extra: 1 }))`, then `items`, `bulk(…)`. Plugin API 19 |
 
 **Events** (`MangaVibe.on(pluginId, event, fn)`). `fn` may be async unless it says otherwise.
@@ -649,6 +690,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `settings-open ()` | Settings opened: refresh what you show there |
 | `book-action (key, at)` | one of your `book_actions` buttons was pressed in the reader; `at` is `MangaVibe.reader.where()`. Return `true` if your script does it (e.g. opens an editor): then `run_book_action` isn't called. Plugin API 12 |
 | `folders-changed ()` | a library folder was added or removed |
+| `home-tile (item, row)` | a card of one of your `"tiles"` rows on Home was opened (only your own rows'): return `true` if you open it yourself (the libraries plugin picks that library and shows it); else its `href` opens. Plugin API 30 |
 
 Switching the plugin on or off in Settings adds or takes out its markup in place, without reloading the
 page. Once your script has run it stays loaded until the next page load, so keep what it does to its
@@ -889,6 +931,7 @@ is the place to start when you write a replacement:
 | `view:card` | Series cards | exclusive, required | `cards/` | [view:card](#the-viewcard-job) |
 | `view:library` | Library page | exclusive, required | `library_page/` | [view:library](#the-viewlibrary-and-viewcontinue-jobs) |
 | `view:continue` | Continue reading page | exclusive, required | `continue_page/` | [view:continue](#the-viewlibrary-and-viewcontinue-jobs) |
+| `view:home` | Home page | exclusive, required | `home_page/` | [view:home](#the-viewhome-job) |
 | `view:series` | Series page | exclusive, required | `series_page/` | [view:series](#the-viewseries-job) |
 | `view:nav` | Navigation | exclusive, required | `nav/` (Top bar), `nav_sidebar/` (Sidebar) | [view:nav](#the-viewnav-job) |
 | `dialog:edit`, `dialog:fix-match` | Edit and Fix match dialogs | exclusive, required | `dialogs/` | [The dialogs](#the-dialogs) |
@@ -1085,6 +1128,25 @@ page to go on with.
 The library page **must keep** the slots `library-tools`, `library-filters`, `select-menu` and
 `library-end`, which can use `selCount`, `selMenu` and `bulk()` as names (bind gives them), and the cards'
 `card-badges`. Continue reading keeps `continue-top`.
+
+#### The view:home job
+
+Plugin API 30 (issue #291). The Home page. Built in: "Home page" (`app/plugins/builtin/home_page/`: blocks
+`rows` and `empty`; its script gives each row `homeRow()`, the carousel's arrow buttons: `canPrev`,
+`canNext`, `step(dir)`). The page keeps the `<section>` around it and `home-top` above it. Which rows there
+are is the app's and the plugins' ([Rows on the Home page](#rows-on-the-home-page)), not the view's.
+
+| `MangaVibe.home.` | |
+|---|---|
+| `sections` | the rows this person shows, in their order (`null` until loaded; the empty and hidden ones left out): `{ id, plugin, title, kind, layout, see_all, items }`. `kind` is `"series"` (`items` are cards, as `GET /api/series` gives them; Continue reading's with `continue`) or `"tiles"` (`{ id, title, subtitle, image, href, icon }`) |
+| `failed`, `load()` | why the last load failed, and load again |
+| `emptyText` | what to say when there's nothing to show (a plugin may say why, as on the library page) |
+| `openTile(event, row, item)` | open a tile (`@click`): the row's plugin's `home-tile` handler, else its `href` |
+
+**The cards are the card view**: `{% from "ui/macros.html" import home_card with context %}`, then
+`{{ home_card() }}` inside an `x-for` over a row's `items` (`s`) with the row as `sec`. It draws Continue
+reading's card for that row (`sec.layout === "continue"`) and the library's for the others, in one
+`.home-item`. The view **must keep** the slots `home-end` and the cards' `card-badges`.
 
 #### The dialogs
 
@@ -1300,7 +1362,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 29 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 30 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

@@ -1135,7 +1135,8 @@ the same as a string. The names are listed in [PLUGINS.md](PLUGINS.md#icons).
 
 | Slot | Where |
 |---|---|
-| `home-top` | above the library and Continue reading (give your markup `x-data`) |
+| `home-top` | above Home, the library and Continue reading (give your markup `x-data`) |
+| `home-end` | the Home page, after its rows (give your markup `x-data`) |
 | `library-tools` | the library's buttons, after Filter / Sort / Letter |
 | `library-filters` | the row of filters that are on |
 | `select-menu` | the ⋯ menu of the library's multi-select |
@@ -1154,6 +1155,53 @@ the same as a string. The names are listed in [PLUGINS.md](PLUGINS.md#icons).
 | `topbar` | the top bar, before Settings |
 | `nav-items` | the Sidebar's column, after Library and Continue (give your markup `x-data`) |
 | `sheets` | the end of the page, for sheets and dialogs |
+
+### A row on the Home page
+
+`home_sections` adds rows to Home; `home_section()` fills one with series (the app leaves out what the
+person may not see and draws the cards). Everyone can move and hide it in Settings → Display.
+
+```python
+# A row of the newest manhwa on the Home page
+from app.plugins import HomeSection, Plugin
+from app.plugins.sdk import N_, Series
+
+class ManhwaRow(Plugin):
+    id = "manhwa-row"
+    home_sections = [HomeSection("manhwa", N_("New manhwa"))]
+
+    def home_section(self, ctx, request, key, limit):
+        return (ctx.db.query(Series).filter(Series.country_of_origin == "KR")
+                .order_by(Series.added_at.desc()).limit(limit).all())
+```
+
+### Cards of its own on the Home page
+
+A `"tiles"` row gives dicts instead of series; a tile opens its `href`, or the plugin's script opens it.
+
+```python
+# A row of links on the Home page
+from app.plugins import HomeSection, Plugin
+from app.plugins.sdk import N_
+
+class Shortcuts(Plugin):
+    id = "shortcuts"
+    home_sections = [HomeSection("links", N_("Shortcuts"), kind="tiles")]
+
+    def home_section(self, ctx, request, key, limit):
+        return [{"id": "fav", "title": "Favorites", "subtitle": "", "icon": "star", "href": "#/?fav=1"}]
+```
+
+```js
+// Open a tile from the plugin's script instead of following its href
+MangaVibe.onStart(() => {
+  MangaVibe.on("shortcuts", "home-tile", (item) => {
+    if (item.id !== "fav") return false;
+    MangaVibe.showLibrary({ fav: "1" });
+    return true;
+  });
+});
+```
 
 ---
 
@@ -1506,7 +1554,7 @@ class CompactCards(Plugin):
 ```
 
 The views: `view:card` (`card.html`), `view:library` (`library.html`), `view:continue` (`continue.html`),
-`view:series` (`series.html`), `view:nav` (`nav.html`), `dialog:edit` (`edit.html`), `dialog:fix-match`
+`view:home` (`home.html`), `view:series` (`series.html`), `view:nav` (`nav.html`), `dialog:edit` (`edit.html`), `dialog:fix-match`
 (`fix-match.html`). A view must keep the slots its contract lists. `examples/plugins/compact_cards/` is a
 complete one.
 
