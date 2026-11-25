@@ -40,8 +40,8 @@ class ListQuery:
     def reading(self):
         """The current user's per-series reading counts (a subquery with sid, total, done, started,
         total_main, done_main). The core joins it onto the query once the plugin is done (result()), so
-        use it anywhere in a filter or sort. Adding up every series' books is the expensive part: ask
-        only when a filter or sort needs it."""
+        use it anywhere in a filter or sort. The counts are stored (the database keeps them up to date),
+        so it's cheap; it's still only joined when a filter or sort asks for it."""
         if self._reading is None:
             self._reading = _core.reading_aggregates()
         return self._reading

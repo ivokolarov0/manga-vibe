@@ -892,7 +892,7 @@ whole number, 422 for anything else) and `flag()` (`1`/`true`/`yes`/`on`). `lq` 
 |---|---|
 | `lq.query` | the query on `models.Series`: filter it, join to it; don't take conditions away |
 | `lq.title` | the displayed title in lower case, for sorting and the first letter |
-| `lq.reading_status()`, `lq.unread_count()`, `lq.reading()` | the person's reading status, unread books, and the per-series counts behind them, as SQL. The counts are joined once your plugin is done, only if you used them: they're the slow part |
+| `lq.reading_status()`, `lq.unread_count()`, `lq.reading()` | the person's reading status, unread books, and the per-series counts behind them, as SQL. The counts are stored (the database keeps them up to date as people read), and joined once your plugin is done, only if you used them |
 | `lq.my_state("favorite")` | the person's own favorite, `last_read_at` or hand-picked `reading_status` |
 | `lq.collections(rows)` | complete / incomplete / unknown per series |
 

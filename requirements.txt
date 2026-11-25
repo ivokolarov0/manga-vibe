@@ -1,5 +1,9 @@
 fastapi==0.156.8          # web framework / API
 uvicorn==0.54.0           # web server
+# uvicorn uses these when they're there: a faster event loop and HTTP parser (many small requests:
+# posters, thumbnails, pages). uvloop doesn't run on Windows; there uvicorn keeps Python's own loop.
+uvloop==0.23.0; sys_platform != "win32"
+httptools==0.9.0
 sqlalchemy==2.1.5         # database (SQLite)
 pillow==13.0.0            # thumbnails and page resizing
 pillow-jxl-plugin==1.3.8  # JPEG XL pages (Pillow can't read them by itself)

@@ -108,7 +108,99 @@ MIGRATIONS = [
         "WHERE key = :old OR (key LIKE :each AND key NOT LIKE :done)"),
         {"old": "saved_searches", "new": "jobs:saved-searches", "each": "user:%:saved_searches",
          "done": "%jobs:%"}),
+    # 19: the reading counts per series and user, kept by triggers from now on (READING_COUNT_TRIGGERS);
+    # the tables come from create_all, this fills them from what's read so far
+    lambda conn: rebuild_reading_counts(conn),
 ]
+
+
+# ---------------------------------------------------------------- reading counts (series_total, series_read)
+# What a book adds to its series' counts, as SQL on a book row (`b` is new, old or an alias): it's shown,
+# and it isn't an extra. What a progress row adds: the book is read, or started and not read.
+def _shown(b):
+    return f"({b}.missing_since IS NULL AND {b}.hidden IS 0)"
+
+
+def _main(b):
+    return f"({_shown(b)} AND coalesce({b}.override_extra, {b}.extra) IS 0)"
+
+
+def _done(p):
+    return f"({p}.completed IS 1)"
+
+
+def _started(p):
+    return f"({p}.completed IS NOT 1 AND {p}.page > 0)"
+
+
+def _book_of(p, what):
+    """`what` (SQL on book row b) for the progress row p's book."""
+    return f"(SELECT {what} FROM book b WHERE b.id = {p}.book_id)"
+
+
+def _add_progress(p, sign):
+    """Statements adding (sign "+") or taking off ("-") progress row p's share of its series' counts.
+    Taking off never makes a row: the series may be going (a cascade), and its rows with it."""
+    made = [] if sign == "-" else [
+        f"INSERT OR IGNORE INTO series_read (user_id, series_id, done, started, done_main) "
+        f"SELECT {p}.user_id, b.series_id, 0, 0, 0 FROM book b WHERE b.id = {p}.book_id"]
+    return made + [
+        f"UPDATE series_read SET done = done {sign} {_book_of(p, _shown('b'))} * {_done(p)}, "
+        f"started = started {sign} {_book_of(p, _shown('b'))} * {_started(p)}, "
+        f"done_main = done_main {sign} {_book_of(p, _main('b'))} * {_done(p)} "
+        f"WHERE user_id = {p}.user_id AND series_id = {_book_of(p, 'b.series_id')}"]
+
+
+def _add_book(b, sign):
+    """Statements adding or taking off book row b's share: of its series' totals, and of each reader's
+    counts (one progress row per reader)."""
+    reader = f"(SELECT {{}} FROM progress p WHERE p.book_id = {b}.id AND p.user_id = series_read.user_id)"
+    made = [] if sign == "-" else [  # taking off never makes a row (see _add_progress)
+        f"INSERT OR IGNORE INTO series_total (series_id, total, main) VALUES ({b}.series_id, 0, 0)",
+        f"INSERT OR IGNORE INTO series_read (user_id, series_id, done, started, done_main) "
+        f"SELECT p.user_id, {b}.series_id, 0, 0, 0 FROM progress p WHERE p.book_id = {b}.id"]
+    return made + [
+        f"UPDATE series_total SET total = total {sign} {_shown(b)}, main = main {sign} {_main(b)} "
+        f"WHERE series_id = {b}.series_id",
+        f"UPDATE series_read SET done = done {sign} {_shown(b)} * {reader.format(_done('p'))}, "
+        f"started = started {sign} {_shown(b)} * {reader.format(_started('p'))}, "
+        f"done_main = done_main {sign} {_main(b)} * {reader.format(_done('p'))} "
+        f"WHERE series_id = {b}.series_id AND user_id IN (SELECT user_id FROM progress WHERE book_id = {b}.id)"]
+
+
+def _trigger(name, when, body):
+    return name, f"CREATE TRIGGER {name} {when} BEGIN {'; '.join(body)}; END"
+
+
+# SQLite keeps the counts itself, whatever writes the rows (the API, a scan, a plugin, removing an account).
+# They're made again at every start (migrate()), so a change here takes effect without a migration; one
+# that counts differently needs rebuild_reading_counts() in a migration too. So does a migration that
+# rebuilds the book or progress table (that drops their triggers).
+READING_COUNT_TRIGGERS = [
+    _trigger("mv_progress_insert", "AFTER INSERT ON progress", _add_progress("new", "+")),
+    _trigger("mv_progress_delete", "AFTER DELETE ON progress", _add_progress("old", "-")),
+    _trigger("mv_progress_update", "AFTER UPDATE OF user_id, book_id, page, completed ON progress",
+             _add_progress("old", "-") + _add_progress("new", "+")),
+    _trigger("mv_book_insert", "AFTER INSERT ON book", _add_book("new", "+")),
+    # before: its progress rows go first (taking their share off while the book is still there), so the
+    # database's own cascade finds none
+    _trigger("mv_book_delete", "BEFORE DELETE ON book",
+             ["DELETE FROM progress WHERE book_id = old.id"] + _add_book("old", "-")),
+    _trigger("mv_book_update", "AFTER UPDATE OF series_id, missing_since, hidden, extra, override_extra ON book",
+             _add_book("old", "-") + _add_book("new", "+")),
+]
+
+
+def rebuild_reading_counts(conn):
+    """Count everything again (the migration that added the counts, and after rebuilding a table)."""
+    conn.execute(text("DELETE FROM series_total"))
+    conn.execute(text("DELETE FROM series_read"))
+    conn.execute(text(f"INSERT INTO series_total (series_id, total, main) "
+                      f"SELECT series_id, sum({_shown('book')}), sum({_main('book')}) FROM book GROUP BY series_id"))
+    conn.execute(text(f"INSERT INTO series_read (user_id, series_id, done, started, done_main) "
+                      f"SELECT p.user_id, b.series_id, sum({_shown('b')} * {_done('p')}), "
+                      f"sum({_shown('b')} * {_started('p')}), sum({_main('b')} * {_done('p')}) "
+                      f"FROM progress p JOIN book b ON b.id = p.book_id GROUP BY p.user_id, b.series_id"))
 
 
 CUSTOM_CSS_TEMPLATE = """/*
@@ -223,6 +315,9 @@ def migrate(eng):
                 log.info("Running database migration %d", i + 1)
                 MIGRATIONS[i](conn)
                 conn.execute(text("UPDATE schema_version SET version=:v"), {"v": i + 1})
+        for name, trigger in READING_COUNT_TRIGGERS:  # a brand-new database gets them here too
+            conn.execute(text(f"DROP TRIGGER IF EXISTS {name}"))
+            conn.execute(text(trigger))
 
 
 def get_setting(db, key, default=None):
