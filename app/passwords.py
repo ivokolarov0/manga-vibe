@@ -14,12 +14,20 @@ import time
 
 SCRYPT = (2 ** 14, 8, 1)  # n, r, p: about 50 ms and 16 MB per try
 MAX_TRIES = 5             # wrong passwords before each try has to wait (30 s, then doubling, up to 15 min)
+# Tries run at most this many at once: a flood of logins (each with another name, so the per-name wait
+# doesn't stop it) would otherwise take 16 MB on each of the web server's 40 threads, a lot on a small NAS
+_slots = threading.BoundedSemaphore(2)
+
+
+def _scrypt(password: str, salt: bytes, n: int, r: int, p: int, dklen: int) -> bytes:
+    with _slots:
+        return hashlib.scrypt(password.encode(), salt=salt, n=n, r=r, p=p, dklen=dklen)
 
 
 def hash_password(password: str) -> str:
     salt = secrets.token_bytes(16)
     n, r, p = SCRYPT
-    digest = hashlib.scrypt(password.encode(), salt=salt, n=n, r=r, p=p, dklen=32)
+    digest = _scrypt(password, salt, n, r, p, 32)
     return f"scrypt${n}${r}${p}${salt.hex()}${digest.hex()}"
 
 
@@ -28,8 +36,7 @@ def check_password(password: str, stored: str | None) -> bool:
         kind, n, r, p, salt, digest = (stored or "").split("$")
         if kind != "scrypt":
             return False
-        got = hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=int(n), r=int(r), p=int(p),
-                             dklen=len(digest) // 2)
+        got = _scrypt(password, bytes.fromhex(salt), int(n), int(r), int(p), len(digest) // 2)
     except ValueError:
         return False
     return hmac.compare_digest(got.hex(), digest)

@@ -129,6 +129,7 @@ class Rows:
         live = _live(self.db, self.shown)
         errors = [b for b in self.db.query(Book).filter(Book.error.is_not(None), Book.missing_since.is_(None))
                   if b.series_id in live]
+        self.series({b.series_id for b in errors})  # their names, in one query
         out = []
         for b in errors:
             not_yet = b.format not in SUPPORTED or b.error.startswith(TEXT_EPUB)
@@ -136,16 +137,20 @@ class Rows:
                 out.append({"key": f"err:{b.id}", "series_id": b.series_id, "series": self.name(b.series_id),
                             "book_id": b.id, "file": b.file_name, "path": b.path, "error": b.error, "format": b.format})
         if kind == "unsupported" and not manager.reader_for(TEXT_BOOK):
-            for b in self.db.query(Book).filter(Book.format == TEXT_BOOK, Book.missing_since.is_(None)):
-                if b.series_id in live:
-                    out.append({"key": f"err:{b.id}", "series_id": b.series_id, "series": self.name(b.series_id),
-                                "book_id": b.id, "file": b.file_name, "path": b.path, "format": b.format,
-                                "error": N_("A text book (a light novel). Add a reader for text books in Settings → Plugins to read it (e.g. Light novel reader).")})
+            texts = [b for b in self.db.query(Book).filter(Book.format == TEXT_BOOK, Book.missing_since.is_(None))
+                     if b.series_id in live]
+            self.series({b.series_id for b in texts})
+            for b in texts:
+                out.append({"key": f"err:{b.id}", "series_id": b.series_id, "series": self.name(b.series_id),
+                            "book_id": b.id, "file": b.file_name, "path": b.path, "format": b.format,
+                            "error": N_("A text book (a light novel). Add a reader for text books in Settings → Plugins to read it (e.g. Light novel reader).")})
         return out
 
     def duplicates(self):
         out = []
-        for sid, books in _flagged(self.db, _live(self.db, self.shown)).items():
+        flagged = _flagged(self.db, _live(self.db, self.shown))
+        self.series(flagged)
+        for sid, books in flagged.items():
             s = self.series([sid])[sid]
             for part, group in duplicate_groups(books):
                 out.append({"key": f"dup:{sid}:{part}", "series_id": sid, "series": self.name(sid),
@@ -158,6 +163,7 @@ class Rows:
         rows = self.db.query(Series.id, Series.numbering).filter(
             Series.missing_since.is_(None), *self.shown, Series.collection_complete.is_not(True)).all()
         found = {sid: g for sid, num in numberings(self.db, rows).items() if (g := chapter_gaps(num))}
+        self.series(found)
         return [{"key": f"gap:{sid}", "series_id": sid, "series": self.name(sid),
                  "gaps": [str(a + 1) if b - a == 2 else f"{a + 1}–{b - 1}" for a, b in g]}
                 for sid, g in found.items()]
@@ -165,6 +171,7 @@ class Rows:
     def matches(self):
         failed = [sid for (sid,) in self.db.query(Series.id).filter(
             Series.match_status == "failed", Series.missing_since.is_(None), *self.shown)]
+        self.series(failed)  # in one query, not one per row
         out = []
         for sid in failed:
             s = self.series([sid])[sid]

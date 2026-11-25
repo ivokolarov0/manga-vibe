@@ -308,6 +308,8 @@ document.addEventListener("alpine:init", () => {
   async function refreshAttentionCount() {
     const app = Alpine.store("app");
     if (!app.admin) return (app.attentionCount = 0);  // accounts: only admins fix what needs attention
+    // a tab in the background asks nothing (the next minute's check in view brings it up to date)
+    if (document.hidden) return;
     try {
       if (app.view === "settings") {
         app.att = await api(`/api/attention?${scopeParam()}${app.showIgnored ? "ignored=true" : ""}`);

@@ -30,6 +30,10 @@
   The log says `Watching /manga for changes` or `checking it every 30 seconds`. If nothing shows up,
   set `WATCH_FOLDERS=poll`, or tap **Rescan all** in **Settings**. Either way a full scan runs every
   6 hours (`RESCAN_HOURS`).
+- **"Refused: this request came from another website":** MangaVibe only takes changes (saving,
+  deleting, installing) from its own page, so another website open in your browser can't make them.
+  Scripts and tools that call the API directly (no browser) aren't affected. Behind a reverse proxy
+  that changes the address, let it pass the original one on (`X-Forwarded-Host`).
 - **A file is broken or can't be read:** it's listed in **Settings → Needs attention → Errors**, with
   what's inside it. Replace the file; the next scan picks the new one up.
 - **A new version doesn't start:** after 3 failed starts in a row, MangaVibe goes back to the previous

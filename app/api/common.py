@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from fastapi import HTTPException
-from sqlalchemy import and_, case, func, select
+from sqlalchemy import and_, case, func, or_, select
 from sqlalchemy.exc import IntegrityError
 
 from app import users
@@ -175,6 +175,7 @@ def poster_version(series):
 
 def series_card(series, counts, lang):
     total, done = counts[0], counts[1]
+    v = poster_version(series)  # a look at the poster file: once per card
     return {
         "id": series.id,
         "title": display_title(series, lang),
@@ -184,8 +185,8 @@ def series_card(series, counts, lang):
         "publication_status": series.publication_status,
         "reading_status": derived_status(series, counts),
         "favorite": series.favorite,
-        "poster": f"/api/series/{series.id}/poster?size=sm&v={poster_version(series)}",
-        "poster_large": f"/api/series/{series.id}/poster?v={poster_version(series)}",
+        "poster": f"/api/series/{series.id}/poster?size=sm&v={v}",
+        "poster_large": f"/api/series/{series.id}/poster?v={v}",
         "match_status": series.match_status,
     }
 
@@ -221,22 +222,43 @@ def book_dict(b: Book, progress: Progress | None = None):
 
 def continue_target(db, series_id):
     """(book, page) to continue reading, or (None, 0) when everything is read."""
-    books = visible_books_query(db, series_id).filter(Book.error.is_(None)).all()
-    if not books:
-        return None, 0
-    prog = {p.book_id: p for p in db.query(Progress).filter(Progress.book_id.in_([b.id for b in books]),
-                                                             my_progress())}
-    if not prog:
-        return books[0], 0
-    latest = max(prog.values(), key=lambda p: p.updated_at)
-    idx = next(i for i, b in enumerate(books) if b.id == latest.book_id)
-    if not latest.completed:
-        return books[idx], latest.page
-    for b in books[idx + 1:]:
-        p = prog.get(b.id)
-        if not (p and p.completed):
-            return b, p.page if p else 0
-    return None, 0
+    return continue_targets(db, [series_id])[series_id]
+
+
+def continue_targets(db, series_ids):
+    """{series id: (book, page)} to continue reading in each, (None, 0) when everything is read: the book
+    last read if it isn't finished, else the next one not read yet; nothing read yet, the first. Of the
+    readable books (visible, no error), in reading order. A few queries for any number of series, without
+    loading every book of each (Continue reading asks for dozens of long series at once)."""
+    ids = list(dict.fromkeys(series_ids))
+    if not ids:
+        return {}
+    readable = and_(Book.missing_since.is_(None), Book.hidden.is_(False), Book.error.is_(None))
+    # per series, the user's progress row read last. SQLite takes the other columns from the row with
+    # the max() (its "bare columns"), so this is one pass over the series' progress rows.
+    latest = {sid: (book_id, page, done) for sid, book_id, page, done, _ in (
+        db.query(Book.series_id, Progress.book_id, Progress.page, Progress.completed, func.max(Progress.updated_at))
+        .join(Progress, my_progress_join()).filter(Book.series_id.in_(ids), readable)
+        .group_by(Book.series_id))}
+    books = {b.id: b for b in db.query(Book).filter(Book.id.in_([v[0] for v in latest.values()]))} if latest else {}
+    out = {}
+    for sid in ids:
+        found = latest.get(sid)
+        if found is None:  # nothing read yet: the first book
+            out[sid] = (visible_books_query(db, sid).filter(Book.error.is_(None)).order_by(Book.id).first(), 0)
+            continue
+        book_id, page, done = found
+        last = books[book_id]
+        if not done:
+            out[sid] = (last, page)
+            continue
+        # finished: the next book in reading order that isn't read
+        after = or_(Book.sort_index > last.sort_index, and_(Book.sort_index == last.sort_index, Book.id > last.id))
+        row = (db.query(Book, Progress.page).outerjoin(Progress, my_progress_join())
+               .filter(Book.series_id == sid, readable, after, Progress.completed.is_not(True))
+               .order_by(Book.sort_index, Book.id).first())
+        out[sid] = (row[0], row[1] or 0) if row else (None, 0)
+    return out
 
 
 def get_or_404(db, model, id_):

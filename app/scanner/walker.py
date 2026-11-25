@@ -89,6 +89,8 @@ def scan_all(lib_id: int | None = None):
     finally:
         status.update(running=False, current=None, finished_at=now().isoformat())
         _lock.release()
+    from app import db as database
+    database.refresh_stats()  # the library may have grown a lot: the query planner's numbers again
     try:
         from app.metadata import worker
         worker.enqueue_unmatched()  # new series get metadata in the background
