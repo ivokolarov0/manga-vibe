@@ -12,12 +12,12 @@
           <h2>{{ t("Android app") }}</h2>
           <template x-if="$store.app.inApp">
             <div>
-              <div class="setting-row">
+              <div x-field class="setting-row">
                 <div class="label"><span>{{ t("Server") }}</span><small x-text="appServer"></small></div>
                 <button class="btn small" @click="changeServer()">{{ t("Change server") }}</button>
               </div>
               {{ setting_rows("rows.app") }}
-              <div class="setting-row">
+              <div x-field class="setting-row">
                 <div class="label"><span>{{ t("App version") }}</span><small x-text="appVersion"></small></div>
                 <a class="btn small" :href="apkUrl()">{{ t("Download newest") }}</a>
               </div>
@@ -26,12 +26,12 @@
           <template x-if="!$store.app.inApp">
             <div>
               <p class="muted">{{ t("Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same.") }}</p>
-              <div class="setting-row">
+              <div x-field class="setting-row">
                 <div class="label"><span>{{ t("Open in the app") }}</span>
                   <small>{{ t("Opens the app and connects it to this server. If it isn't installed, the app is downloaded instead") }}</small></div>
                 <button class="btn small primary" @click="openAndroidApp(location.origin + '/')">{{ t("Open app") }}</button>
               </div>
-              <div class="setting-row">
+              <div x-field class="setting-row">
                 <div class="label"><span>{{ t("Install the app") }}</span>
                   <small>{{ t("Open the downloaded MangaVibe.apk and allow installing apps from your browser when Android asks. Then come back here and tap Open app") }}</small></div>
                 <a class="btn small" :href="apkUrl()">{{ t("Download") }}</a>

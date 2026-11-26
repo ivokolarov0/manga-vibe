@@ -27,7 +27,7 @@
                 <div class="plugin-uses"><small>{{ t("Uses:") }}</small>
                   <ul><template x-for="x in plugin.permissions"><li x-text="x"></li></template></ul></div>
               </template>
-              <label class="setting-row">
+              <label x-field class="setting-row">
                 <span class="label"><span>{{ t("On") }}</span>
                   <!-- the only plugin doing a job the app needs: it stays on until another one does it -->
                   <small x-show="requiredText(plugin)" x-text="requiredText(plugin)"></small></span>
@@ -40,7 +40,7 @@
               <template x-if="plugin.enabled">
                 <div>
                   <template x-for="f in plugin.settings" :key="f.key">
-                    <label class="setting-row">
+                    <label x-field class="setting-row">
                       <span class="label"><span x-text="f.label"></span><small x-show="f.help" x-text="f.help"></small></span>
                       <template x-if="f.options.length">
                         <select x-model="f.value" @change="savePluginSetting(plugin, f)">

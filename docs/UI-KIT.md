@@ -2,7 +2,7 @@
 
 The pieces MangaVibe and its plugins share: buttons, fields, chips, tabs, menus, dialogs, toasts… Use them in
 a plugin's markup and it looks and works like the rest of the app, and it follows the owner's theme and
-`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33; tabs and choices (`x-tabs`, `x-choice`), API 34.
+`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33; tabs and choices (`x-tabs`, `x-choice`), API 34; fields and setting rows (`x-field`), API 35.
 
 **See them all at `/kit`** (e.g. `http://localhost:8000/kit`): every piece in its variants, dark and light,
 with your plugins' CSS and `custom.css` applied.
@@ -41,9 +41,9 @@ change is a normal CSS rule: `.my-panel .btn { font-weight: 700 }` wins over the
 
 ## Changing the behaviour: `MangaVibe.kit`
 
-An interactive piece (the dialog, the menu, tabs and choices: `dialog`, `menu`, `tabs`, `choice`) is an
-object `{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`, `x-tabs`, `x-choice`) asks
-`MangaVibe.kit` for it each time an element starts, so:
+An interactive piece (the dialog, the menu, tabs, choices and fields: `dialog`, `menu`, `tabs`,
+`choice`, `field`) is an object `{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`, `x-tabs`,
+`x-choice`, `x-field`) asks `MangaVibe.kit` for it each time an element starts, so:
 
 | | |
 |---|---|
@@ -113,16 +113,66 @@ stops what the piece was about to do (a dialog stays open).
 ### Fields
 
 ```html
+<div class="field" x-field>
+  <label>Year</label> <small class="hint">four digits</small>
+  <input x-model="year">
+  <p class="error" x-show="bad" x-text="t('A year has four digits')"></p>
+</div>
+
 <input type="text" placeholder="Name" aria-label="Name">
-<select aria-label="Order">…</select>
-<label class="row"><input type="checkbox" class="switch"> Show spoilers</label>
+<label class="row"><input type="checkbox" class="switch" role="switch"> Show spoilers</label>
 ```
 
 - Text fields, `select` and `textarea` are styled as they are, no class needed. A checkbox is a rounded box;
-  with `.switch` (or in a `.setting-row`) it's a switch.
-- Every field needs a name a screen reader can read: a `<label>` around it or `aria-label`.
+  with `.switch` (or right in a `.setting-row`) it's a switch.
+- **`.field` with `x-field`**: a field with its name. A `<label>` (the name), an optional `.hint`, the
+  control, an optional `.error`. The name and the hint sit on one line, the control under them, so
+  fields side by side line up (the Edit dialog's form). `x-field`:
+  - ties the name to the control (`for`/`id`), so a click on it focuses the control and a screen reader
+    reads it as the control's name;
+  - describes the control with the hint and, while it shows, the error (`aria-describedby`), so the hint
+    isn't read as part of the name;
+  - gives the error `role="alert"`, so it's read out when it appears, and the control
+    `aria-invalid="true"` (a red border) while it shows;
+  - makes a switch checkbox `role="switch"`;
+  - looks again when something inside changes (an error appears, an `x-if` adds the control).
+- A field without a `.field` still needs a name: a `<label>` around it or `aria-label`. A form-wide error
+  (not one field's): `<p class="err" role="alert">`.
+- A plugin can change one part only: the methods are `control(el)`, `name(el)`, `hint(el)`, `error(el)`
+  and `wire(el)`.
 - Custom properties: `--field-bg`, `--field-border`, `--field-radius`, `--field-height`, `--field-focus`,
   `--check-on`, `--switch-off`, `--switch-on`.
+
+### Setting rows
+
+```html
+<section class="settings-card">
+  <label x-field class="setting-row">
+    <span class="label"><span>Find metadata automatically</span><small>For new series after each scan</small></span>
+    <input type="checkbox">
+  </label>
+  <div x-field class="setting-row">
+    <div class="label"><span>Scan for new files</span><small>Runs by itself every 6 hours.</small></div>
+    <div class="row-buttons"><button class="btn small">Rescan all</button></div>
+  </div>
+</section>
+```
+
+- A setting per row: a `.label` with its name (**in an element of its own**, a `<span>`) and an optional
+  `<small>` hint, then its control: a checkbox (drawn as a switch), a select, a field, or buttons in a
+  `.row-buttons`. `.sub`: a follow-up to the row above, indented.
+- `x-field` as for Fields: the control is named by the name alone and described by the hint, and the
+  checkbox is a switch for screen readers.
+- `.settings-card`: the card they sit in. Settings' pages (`section` in the settings content, a plugin's
+  page included) are cards by themselves.
+- The dividers go **between** rows: a line on top of each row that has a shown row before it. Never a
+  `border-bottom` taken off the last row with `:last-child` (it came back whenever something followed the
+  last row, #126, #245); `tests/test_web_parts.py` checks.
+- Plugins' settings (`settings` on a plugin) are drawn as setting rows on the plugin's page.
+- A folder card's options (`.lib-option` with a `.lib-option-text`, the `folder-row` slot) are rows of the
+  same shape: give them `x-field` too.
+- Custom properties: `--card-bg`, `--card-border`, `--card-radius`, `--card-padding`, `--row-height`,
+  `--row-divider`.
 
 ### Chips
 

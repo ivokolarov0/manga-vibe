@@ -14,7 +14,7 @@
              :autocomplete="$store.accounts.setup ? 'new-password' : 'current-password'"></label>
     <label x-show="$store.accounts.setup"><span x-text="t('Password again')"></span>
       <input type="password" x-model="again" autocomplete="new-password" maxlength="200"></label>
-    <p class="err" x-show="error" x-text="error"></p>
+    <p class="err" role="alert" x-show="error" x-text="error"></p>
     <button class="btn primary" type="submit" :class="{ busy }" :disabled="busy || !name || !password"
             x-text="$store.accounts.setup ? t('Make the admin account') : t('Log in')"></button>
   </form>

@@ -1,7 +1,49 @@
 /* UI kit: text fields, selects, textareas, checkboxes and switches (docs/UI-KIT.md, "Fields").
+   .field: a field with its name: <label>, an optional .hint, the control, an optional .error, with
+   x-field (js/kit.js) tying them together. The name and its hint on one line, the control under them,
+   so fields side by side line up.
    Custom properties: --field-bg, --field-border, --field-radius, --field-height, --field-focus,
    --check-on, --switch-off, --switch-on. */
 @layer kit {
+  .field {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: start;
+    gap: 4px 6px;
+    color: var(--muted);
+    font-size: 13px;
+
+    & > .hint {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    & > :is(input, select, textarea) {
+      flex: 1 0 100%;
+      width: 100%;
+      color: var(--text);
+    }
+
+    & > textarea {
+      padding: 8px 10px;
+      line-height: 1.4;
+      resize: vertical;
+    }
+
+    & > .error {
+      flex-basis: 100%;
+      margin: 0;
+      color: var(--danger);
+      font-size: 12px;
+    }
+  }
+
+  /* a field with an error (x-field sets aria-invalid while one shows) */
+  :is(input, select, textarea)[aria-invalid="true"] {
+    border-color: var(--danger);
+  }
+
   input,
   select,
   textarea {

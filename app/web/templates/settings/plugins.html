@@ -105,7 +105,7 @@
                               {% call plugin_row("p") %}
                             <!-- the only plugin doing a job the app needs: it stays on until another one does it -->
                             <span class="chip required" x-show="requiredText(p)" :title="requiredText(p)">{{ t("Required") }}</span>
-                            <input type="checkbox" x-model="p.enabled" @change="togglePlugin(p)" @click.stop
+                            <input type="checkbox" role="switch" x-model="p.enabled" @change="togglePlugin(p)" @click.stop
                                    :disabled="!!requiredText(p)" :title="requiredText(p) || null" :aria-label="t('{name} on', { name: p.name })">
                               {% endcall %}
                             </div>
@@ -249,13 +249,13 @@
               </form>
               <small class="muted">{{ t("Only add sources you trust: a plugin runs inside MangaVibe with full access to its data.") }}</small>
             </div>
-            <div class="setting-row">
+            <div x-field class="setting-row">
               <div class="label"><span>{{ t("Plugins and custom styles") }}</span>
                 <small>{{ t("Plugins (a .py file or a folder) go in docker/mangavibe/plugins; your CSS goes in docker/mangavibe/custom.css") }}</small></div>
               <button class="btn small" @click="reloadPlugins()">{{ t("Reload plugins") }}</button>
             </div>
             <!-- a token lets updates come from private GitHub repos; it is never shown again -->
-            <form class="setting-row" @submit.prevent="saveGitHubToken(false)">
+            <form x-field class="setting-row" @submit.prevent="saveGitHubToken(false)">
               <span class="label"><span>{{ t("GitHub token for private plugins") }}</span>
                 <small x-text="{ settings: t('Saved. Updates from private repos use it.'),
                                  env: t('Set by GITHUB_TOKEN. A token saved here is used instead.') }[ghTokenFrom]

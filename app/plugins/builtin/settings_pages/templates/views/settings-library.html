@@ -18,7 +18,7 @@
               </div>
               <!-- what plugins add for each folder (they can use l), e.g. its library -->
               {{ slot("folder-row") }}
-              <label class="lib-option">
+              <label x-field class="lib-option">
                 <span class="lib-option-text"><span>{{ t("Path outside Docker") }}</span>
                   <small>{{ t("What {path} is on your NAS or computer, e.g. {example1} or {example2}. The series page shows and copies it.",
                               path='<code x-text="l.root_path"></code>'|safe, example1='<code class="ex">/volume1/manga</code>'|safe,
@@ -28,12 +28,12 @@
                        @keydown.enter="$event.target.blur()" :aria-label="t('Path outside Docker for {name}', { name: l.name })"></label>
             </div>
           </template>
-          <div class="setting-row">
+          <div x-field class="setting-row">
             <div class="label"><span>{{ t("Add a folder") }}</span>
               <small>{{ t("Only folders mounted in the container are visible (e.g. /library2).") }}</small></div>
             <button class="btn small primary" @click="$store.app.folderPicker = true"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>{{ t("Add folder") }}</button>
           </div>
-          <div class="setting-row">
+          <div x-field class="setting-row">
             <div class="label"><span x-text="scanText || t('Scan for new files')"></span>
               <small>{{ t("Runs by itself every 6 hours and on start.") }}</small></div>
             <button class="btn small" :class="{ busy: !!scan.running }" :disabled="!!scan.running" @click="rescan()">{{ t("Rescan all") }}</button>

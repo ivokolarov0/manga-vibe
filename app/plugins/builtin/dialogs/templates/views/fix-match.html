@@ -11,9 +11,9 @@
               <button :class="{ active: provider === p.id }" @click="setProvider(p.id)" x-text="p.available ? p.name : t('{name} (offline)', { name: p.name })"></button>
             </template>
           </div>
-          <div class="row"><input x-model="q" style="flex:1" @keydown.enter="search()"><button class="btn primary" @click="search()">{{ t("Search") }}</button></div>
+          <div class="row"><input x-model="q" style="flex:1" @keydown.enter="search()" aria-label="{{ t('Search') }}"><button class="btn primary" @click="search()">{{ t("Search") }}</button></div>
           <p class="muted" x-show="searching" x-text="t('Searching {source}…', { source: $store.app.providerName(provider) })"></p>
-          <p class="err" x-show="error" x-text="error"></p>
+          <p class="err" role="alert" x-show="error" x-text="error"></p>
           <p class="muted" x-show="results && !results.length && !searching">{{ t("No results. Try a different spelling or the English/Japanese title.") }}</p>
           <template x-for="c in results || []" :key="c.provider_id">
             <div class="cand">

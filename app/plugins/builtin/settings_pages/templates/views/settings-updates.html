@@ -4,12 +4,12 @@
           <template x-if="upd && !upd.supported">
             <p class="muted">{{ t("Updates work only in the MangaVibe Docker image. Here, update with git.") }}</p>
           </template>
-          <div class="setting-row">
+          <div x-field class="setting-row">
             <div class="label"><span>{{ t("Running version") }}</span><small x-text="versionText(upd?.current)"></small></div>
           </div>
-          <label class="setting-row"><span class="label">{{ t("Check for updates every day") }}<small x-text="t('Asks GitHub ({repo}) for its newest release and shows a message when one is out', { repo: upd?.repo || '' })"></small></span>
+          <label x-field class="setting-row"><span class="label"><span>{{ t("Check for updates every day") }}</span><small x-text="t('Asks GitHub ({repo}) for its newest release and shows a message when one is out', { repo: upd?.repo || '' })"></small></span>
             <select x-model="st.auto_update" @change="save('auto_update')"><option value="true">{{ t("On") }}</option><option value="false">{{ t("Off") }}</option></select></label>
-          <div class="setting-row">
+          <div x-field class="setting-row">
             <div class="label">
               <span x-text="upd?.available ? t('New version: {version}', { version: upd.available.short }) : t('You have the newest version')"></span>
               <small x-show="upd?.available" x-text="versionText(upd?.available)"></small>
@@ -24,7 +24,7 @@
                     x-text="checking ? t('Checking…') : t('Check now')"></button>
           </div>
           <template x-if="upd?.available">
-            <div class="setting-row">
+            <div x-field class="setting-row">
               <div class="label">
                 <span x-show="upd.available.needs_image">{{ t("This version needs a new Docker image") }}</span>
                 <span x-show="!upd.available.needs_image && upd.available.failed">{{ t("This version did not start, so MangaVibe went back") }}</span>
@@ -42,7 +42,7 @@
             </div>
           </template>
           <!-- going back (GET /api/update/versions asks GitHub, so only on a press) -->
-          <div class="setting-row" x-show="upd?.supported">
+          <div x-field class="setting-row" x-show="upd?.supported">
             <div class="label">
               <span>{{ t("Go back to an earlier version") }}</span>
               <small>{{ t("If a new version has a problem. The version you leave isn't offered again until a newer one is out.") }}</small>
@@ -55,7 +55,7 @@
             <p class="muted">{{ t("No earlier version found.") }}</p>
           </template>
           <template x-for="v in older || []" :key="v.sha">
-            <div class="setting-row">
+            <div x-field class="setting-row">
               <div class="label"><span x-text="v.short"></span><small x-text="olderText(v)"></small></div>
               <div class="btn-row">
                 <a class="btn small" x-show="v.url" :href="v.url" target="_blank" rel="noopener">{{ t("Notes") }}<svg class="ic" aria-hidden="true"><use href="#i-external"/></svg></a>

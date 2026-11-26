@@ -64,6 +64,9 @@ function directive(name) {
 }
 
 const shown = (el) => el.isConnected && el.getClientRects().length > 0;  // not display: none (x-show)
+// not hidden by its own x-show or `hidden`, whether or not what's around it is on screen (a closed sheet's
+// content is read while hidden, and nothing in it changes when the sheet opens)
+const there = (el) => !el.hidden && el.style.display !== "none";
 
 /* ---------------- the app's pieces ---------------- */
 
@@ -378,9 +381,6 @@ const group = {
   setup(ctx) {
     const piece = this, { el, options } = ctx;
     if (!el.hasAttribute("role")) el.setAttribute("role", piece.role);
-    // not hidden by its own x-show or `hidden` (whether the group is on screen doesn't matter: a closed
-    // sheet's group is read while hidden, and nothing in it changes when the sheet opens)
-    const there = (i) => !i.hidden && i.style.display !== "none";
     const update = () => {
       const all = piece.items(el);
       const picked = all.find((i) => piece.isPicked(i) && there(i));
@@ -438,6 +438,63 @@ own.set("tabs", {
     tab.setAttribute("aria-controls", panel.id);
     panel.setAttribute("role", "tabpanel");
     panel.setAttribute("aria-labelledby", tab.id);
+  },
+});
+
+/* x-field on a .field or a .setting-row: ties a control to its name, its hint and its error, for screen
+   readers. A .field is <label> (the name), an optional .hint, the control, an optional .error; a
+   .setting-row is a .label holding the name (its first element) and an optional <small> hint, then the
+   control (a folder card's .lib-option, with its .lib-option-text, the same). The kit:
+   - names the control by the name alone (for/id, or aria-labelledby in a setting row, so a hint inside the
+     row's <label> isn't read as part of the name);
+   - describes it with the hint and, while it shows, the error (aria-describedby); the error gets
+     role="alert" so it's read when it appears, and the control aria-invalid="true" while it shows;
+   - makes a checkbox that looks like a switch (.switch, or right in a setting row) role="switch".
+   A setting row's name is the .label's first element: wrap a bare text in a <span>.
+   It looks again when something in it changes (an error appears, x-if adds the control).
+   control(), name(), hint(), error() and wire() are methods, so a plugin can change one of them alone. */
+own.set("field", {
+  options: {},
+  control: (el) => el.querySelector("input:not([type='hidden']), select, textarea"),
+  name: (el) => el.querySelector(":scope > label, :scope > :is(.label, .lib-option-text) > :first-child:not(small)"),
+  hint: (el) => el.querySelector(":scope > .hint, :scope > :is(.label, .lib-option-text) > small"),
+  error: (el) => el.querySelector(":scope > .error"),
+  wire(el) {
+    const control = this.control(el);
+    if (!control) return;
+    const id = (e, what) => (e.id ||= `kit-${what}-${++uid}`);
+    id(control, "field");
+    // the checkboxes css/kit/fields.css draws as switches
+    if (control.type === "checkbox" && !control.hasAttribute("role")
+        && control.matches(".switch, :is(.setting-row, .row-buttons, .lib-option) > *")) {
+      control.setAttribute("role", "switch");
+    }
+    const name = this.name(el);
+    if (name?.tagName === "LABEL") {
+      if (!name.contains(control)) name.htmlFor = control.id;
+    } else if (name && !control.hasAttribute("aria-label")) {
+      control.setAttribute("aria-labelledby", id(name, "name"));
+    }
+    const said = [];
+    const hint = this.hint(el);
+    if (hint && there(hint) && hint.textContent.trim()) said.push(id(hint, "hint"));
+    const error = this.error(el);
+    if (error && !error.hasAttribute("role")) error.setAttribute("role", "alert");
+    const bad = error && there(error) && error.textContent.trim();
+    if (bad) said.push(id(error, "error"));
+    if (said.length) control.setAttribute("aria-describedby", said.join(" "));
+    else control.removeAttribute("aria-describedby");
+    if (bad) control.setAttribute("aria-invalid", "true");
+    else control.removeAttribute("aria-invalid");
+  },
+  setup(ctx) {
+    const piece = this, { el } = ctx;
+    const update = () => piece.wire(el);
+    const watch = new MutationObserver(update);
+    watch.observe(el, { subtree: true, childList: true, characterData: true, attributes: true,
+                        attributeFilter: ["style", "hidden"] });
+    queueMicrotask(update);
+    return () => watch.disconnect();
   },
 });
 

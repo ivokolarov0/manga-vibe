@@ -65,6 +65,10 @@
       }
     }
 
+    .kit-fields {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    }
+
     .kit-popover {
       gap: 10px;
       padding: 12px;
@@ -129,18 +133,43 @@
 
   <section data-piece="fields">
     <h2>Fields</h2>
-    <p class="muted">Text fields, selects, textareas, checkboxes, and a checkbox with <code>.switch</code>.</p>
+    <p class="muted">Text fields, selects, textareas, checkboxes, and a checkbox with <code>.switch</code>. A
+      <code>.field</code> with <code>x-field</code>: a <code>&lt;label&gt;</code>, a <code>.hint</code>, the
+      control and an <code>.error</code>, tied together for screen readers.</p>
     <div class="kit-demo">
       <input type="text" placeholder="Text" aria-label="Text">
       <input type="text" value="Disabled" disabled aria-label="Disabled">
       <select aria-label="Select"><option>First choice</option><option>Second choice</option></select>
       <label class="row"><input type="checkbox" checked> Checkbox</label>
       <label class="row"><input type="checkbox"> Not ticked</label>
-      <label class="row"><input type="checkbox" class="switch" checked> Switch</label>
-      <label class="row"><input type="checkbox" class="switch"> Switch off</label>
+      <label class="row"><input type="checkbox" class="switch" role="switch" checked> Switch</label>
+      <label class="row"><input type="checkbox" class="switch" role="switch"> Switch off</label>
     </div>
-    <div class="kit-demo column">
-      <textarea rows="3" placeholder="Textarea" aria-label="Textarea"></textarea>
+    <div class="kit-demo column kit-fields">
+      <div class="field" x-field><label>Title</label>
+        <input x-model="fieldTitle"></div>
+      <div class="field" x-field><label>Other titles</label> <small class="hint">one per line</small>
+        <textarea rows="3"></textarea></div>
+      <div class="field" x-field><label>Year</label> <small class="hint">four digits</small>
+        <input x-model="fieldYear" inputmode="numeric">
+        <p class="error" x-show="fieldYear && !/^\d{4}$/.test(fieldYear)">A year has four digits, e.g. 1999.</p></div>
+    </div>
+  </section>
+
+  <section data-piece="setting-rows">
+    <h2>Setting rows</h2>
+    <p class="muted"><code>.setting-row</code> with <code>x-field</code> in a <code>.settings-card</code>: a
+      <code>.label</code> (the name in a <code>&lt;span&gt;</code>, a <code>&lt;small&gt;</code> hint) and its
+      control. Dividers go between rows, never under the last one.</p>
+    <div class="settings-card">
+      <label x-field class="setting-row"><span class="label"><span>Find metadata automatically</span>
+        <small>For new series after each scan</small></span>
+        <input type="checkbox" checked></label>
+      <label x-field class="setting-row"><span class="label"><span>Reading direction</span></span>
+        <select><option>Right to left</option><option>Left to right</option></select></label>
+      <div x-field class="setting-row"><div class="label"><span>Scan for new files</span>
+        <small>Runs by itself every 6 hours and on start.</small></div>
+        <div class="row-buttons"><button class="btn small">Rescan all</button></div></div>
     </div>
   </section>
 
@@ -335,6 +364,7 @@
   document.addEventListener("alpine:init", () => {
     Alpine.data("kitPage", () => ({
       theme: document.documentElement.dataset.theme,
+      fieldTitle: "Alive", fieldYear: "19999",
       tab: "books", small: "one", seg: "asc", opt: "rtl",
       menuOpen: false, picked: "", dialogOpen: false, keepOpen: false, innerOpen: false,
       toastText: "", toastKind: "", toastTimer: 0,
