@@ -241,6 +241,70 @@ def test_tabs_and_choices_use_the_kit():
     assert counts["tabs"] >= 6 and counts["choice"] >= 6, counts
 
 
+BUILTIN = ROOT / "app" / "plugins" / "builtin"
+# the kit's classes, and what makes a piece look the way it does: a plugin changes those with the piece's
+# custom properties (--btn-bg…), not by drawing the piece again (#301)
+KIT_CLASSES = {"btn", "iconbtn", "icon-btn", "link-btn", "chip", "chips", "tabs", "segmented", "options", "panel",
+               "menu", "menu-pop", "modal", "sheet", "sheet-head", "setting-row", "settings-card", "field", "empty",
+               "loading-line", "progress", "skeleton", "skeleton-card", "tooltip"}
+LOOK = {"background", "background-color", "border", "border-color", "border-radius", "border-width", "color",
+        "padding", "height", "min-height", "font-size", "font-weight", "box-shadow"}
+
+
+def css_rules(css):
+    """(selector, set of properties) for every rule, CSS nesting resolved (& and descendants)."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    rules, stack, buf = [], [], ""
+    for ch in css:
+        if ch == "{":
+            sel, parent = buf.strip(), (stack[-1][0] if stack else "")
+            if sel.startswith("@"):
+                full = parent
+            else:
+                full = ", ".join(s.replace("&", parent) if "&" in s else f"{parent} {s}".strip()
+                                 for s in (x.strip() for x in sel.split(",")))
+            stack.append([full, set()])
+            rules.append(stack[-1])
+            buf = ""
+        elif ch == "}":
+            if ":" in buf:
+                stack[-1][1].add(buf.split(":")[0].strip())
+            stack.pop()
+            buf = ""
+        elif ch == ";":
+            if stack and ":" in buf:
+                stack[-1][1].add(buf.split(":")[0].strip())
+            buf = ""
+        else:
+            buf += ch
+    return [(sel, props) for sel, props in rules]
+
+
+def test_built_in_plugins_restyle_kit_pieces_only_with_custom_properties():
+    wrong = []
+    for path in sorted(BUILTIN.rglob("*.css")):
+        for sel, props in css_rules(path.read_text(encoding="utf-8")):
+            look = props & LOOK
+            for s in sel.split(","):
+                subject = re.split(r"\s+|>|\+|~", s.strip())[-1]
+                if look and set(re.findall(r"\.([a-z][\w-]*)", subject)) & KIT_CLASSES:
+                    wrong.append(f"{path.relative_to(ROOT).as_posix()}: {s.strip()} sets {sorted(look)}")
+    assert not wrong, "Use the piece's custom properties (docs/UI-KIT.md):\n" + "\n".join(wrong)
+
+
+def test_css_rules_reads_nesting():
+    rules = dict(css_rules(".a { color: red; & .btn { background: x; --btn-bg: y; } }"))
+    assert rules[".a .btn"] == {"background", "--btn-bg"} and rules[".a"] == {"color"}
+
+
+def test_built_in_plugins_draw_icons_from_the_sprite():
+    """The app's icons are one sprite (templates/shell/icons.html); a plugin's own <svg viewBox> copy of one
+    goes out of step with it. The image reader keeps its own set (its controls' icons aren't in the sprite)."""
+    own = [p.relative_to(ROOT).as_posix() for p in sorted([*BUILTIN.rglob("*.html"), *BUILTIN.rglob("*.py")])
+           if "<svg viewBox" in p.read_text(encoding="utf-8")]
+    assert not own, own
+
+
 def test_setting_rows_and_fields_use_x_field():
     """Every .setting-row and .field has x-field (#299), and a setting row's name is an element of its own
     (the .label's first element), not a bare text the hint would be read with."""

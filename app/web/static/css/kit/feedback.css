@@ -7,7 +7,8 @@
    .loading-line: "Loading…" with a spinner. .skeleton: a grey shape where something is loading;
    .skeleton-card: a card's poster and two lines.
    .tooltip: the bubble of x-tooltip (js/kit.js).
-   Custom properties: --toast-bg, --toast-text, --progress-color, --progress-track, --skeleton. */
+   Custom properties: --toast-bg, --toast-text, --progress-color, --progress-track, --skeleton,
+   --empty-gap, --empty-padding. */
 @layer kit {
   /* the toast's button (an action: "Undo"); while one is there, the toast can be clicked */
   #toast .toast-action {
@@ -156,8 +157,8 @@
   .empty {
     display: grid;
     justify-items: center;
-    gap: 12px;
-    padding: 56px 16px;
+    gap: var(--empty-gap, 12px);
+    padding: var(--empty-padding, 56px 16px);
     color: var(--muted);
     text-align: center;
 

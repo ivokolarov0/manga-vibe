@@ -5,8 +5,9 @@
     <div class="sheet-head"><b x-text="t('Saved searches')"></b>
       <span class="btn-row"><button class="btn small primary" x-show="store.canSave" @click="store.save()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span x-text="t('Save this search')"></span></button>
         <button class="btn small" @click="$store.app.sheet = null" x-text="t('Done')"></button></span></div>
-    <div class="saved-empty" x-show="!store.items.length">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+    <!-- nothing saved yet: the UI kit's empty state, a little smaller in the sheet -->
+    <div class="empty saved-empty" x-show="!store.items.length">
+      <svg class="ic" aria-hidden="true"><use href="#i-bookmark"/></svg>
       <b x-text="t('No saved searches yet')"></b>
       <span x-text="t('Pick filters (for example the tag Isekai) and a sort, then save them here. A saved search works in every library.')"></span>
     </div>
@@ -16,7 +17,7 @@
           <button class="saved-main" :aria-pressed="isOn(x)" @click="pick(x)"
                   :title="isOn(x) ? t('Shown now: tap to clear it') : t('Show these series')">
             <span class="saved-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg></span>
+              <svg class="ic"><use href="#i-bookmark"/></svg></span>
             <span class="saved-text">
               <b x-text="x.name"></b>
               <span class="saved-pills"><template x-for="(p, i) in parts(x.query)" :key="i">
@@ -24,8 +25,8 @@
             </span>
             <span class="saved-check" x-show="isOn(x)" aria-hidden="true"><svg class="ic"><use href="#i-check"/></svg></span>
           </button>
-          <button class="saved-del" :aria-label="t('Delete {name}', { name: x.name })" :title="t('Delete')" @click="store.remove(x)">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          <button class="saved-del" :aria-label="t('Delete {name}', { name: x.name })" x-tooltip="t('Delete')" @click="store.remove(x)">
+            <svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
         </div>
       </template>
     </div>

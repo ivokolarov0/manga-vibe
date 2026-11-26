@@ -2,5 +2,5 @@
 <button type="button" class="btn ctl random-again" x-show="$store.randomManga.picked === s.id" x-cloak
         @click="$store.randomManga.pick(s.id)" :disabled="$store.randomManga.busy"
         :title="t('Open another series picked at random')">
-  <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3.5c2 0 3.2 1 4.3 2.7l2.4 4.6C14.3 16 15.5 17 17.5 17H21M18 14l3 3-3 3M3 17h3.5c1.4 0 2.4-.5 3.2-1.4M14.3 8.4c.8-.9 1.8-1.4 3.2-1.4H21M18 4l3 3-3 3"/></svg>
+  <svg class="ic" aria-hidden="true"><use href="#i-shuffle"/></svg>
   <span x-text="t('Pick another')"></span></button>
