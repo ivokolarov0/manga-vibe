@@ -37,8 +37,8 @@
               <button class="btn small" id="edit-series" x-show="$store.app.admin" @click="editInfo()">
                 <svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>{{ t("Edit") }}</button>
               <!-- reading mode, rescan, match, delete: admins (with accounts) -->
-              <div class="menu" x-show="$store.app.admin" @click.outside="menuOpen = false" @keydown.escape="menuOpen = false">
-                <button class="icon-btn" aria-label="{{ t('More') }}" title="{{ t('More') }}" @click="menuOpen = !menuOpen">
+              <div class="menu" x-show="$store.app.admin" x-menu="menuOpen">
+                <button class="icon-btn" aria-label="{{ t('More') }}" title="{{ t('More') }}">
                   <svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg>
                 </button>
                 <div class="menu-pop" x-show="menuOpen" x-transition.opacity x-cloak>

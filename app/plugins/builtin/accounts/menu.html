@@ -1,7 +1,6 @@
 <!-- the account menu in the top bar: who's logged in, Change password, Log out -->
-<div class="menu account-menu" x-show="$store.accounts.me" x-cloak @click.outside="$store.accounts.menuOpen = false"
-     @keydown.escape="$store.accounts.menuOpen = false">
-  <button class="iconbtn account-btn" @click="$store.accounts.menuOpen = !$store.accounts.menuOpen"
+<div class="menu account-menu" x-show="$store.accounts.me" x-cloak x-menu="$store.accounts.menuOpen">
+  <button class="iconbtn account-btn"
           :title="$store.accounts.me?.name" :aria-label="t('Account: {name}', { name: $store.accounts.me?.name })">
     <span x-text="($store.accounts.me?.name || '?').slice(0, 1).toUpperCase()"></span></button>
   <div class="menu-pop" x-show="$store.accounts.menuOpen" x-transition.opacity>
