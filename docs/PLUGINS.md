@@ -1372,7 +1372,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 36 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 37 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 
@@ -1410,12 +1410,13 @@ In a script, `icon("star")` gives the same as a string (for `x-html`). They take
 scale with the font size; add the class `fill` for a filled one. Names: `search` `x` `plus` `check`
 `check-up` `check-circle` `circle` `ban` `alert` `info` `chevron-left` `chevron-right` `chevron-down`
 `arrow-up` `arrow-down` `grip` `external` `dots` `home` `library` `list` `play` `book-open` `books` `star`
-`bookmark` `filter` `sort` `settings` `palette` `tag` `blocks` `download` `upload` `refresh` `phone`
+`bookmark` `filter` `shuffle` (Plugin API 37) `sort` `settings` `palette` `tag` `blocks` `download` `upload` `refresh` `phone`
 `folder` `copy` `pencil` `trash` `lock` `unlock` `key` `log-out` `user` `users` `shield` `image`.
 
 ## Example
 
-`examples/plugins/sakura_theme.py` only changes the look (pink accent, rounder corners).
+`examples/plugins/sakura_theme.py` only changes the look (pink accent, rounder corners, and pill-shaped
+buttons through the UI kit's custom properties).
 
 `examples/plugins/reading_log.py` uses the reading events, a settings box, Settings buttons, a status
 line and its own web page.

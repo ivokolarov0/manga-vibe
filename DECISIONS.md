@@ -1630,3 +1630,26 @@ Plugin API version, and the app works after every one.
 - **The progress bar is the kit's `.progress`**, named by the line above it (`aria-labelledby` through
   Alpine's `x-id`) with its value as a percentage; without `aria-valuenow` it slides (kept moving slowly
   with "reduce motion", like the spinners).
+
+### The built-in plugins on the kit (Plugin API 37, issue #294, step 7 #301)
+
+- **Most of it was done by the earlier steps**: the menus, tabs, choices, fields, dialogs, tooltips and
+  toasts the built-in plugins draw were moved onto the kit as each piece was made. What was left was looked
+  for with a scan of the plugins' CSS (any rule on a kit class setting a look property) and of their
+  markup (own SVG icons). It found Saved searches (its own button, empty state and icons) and Random manga
+  (its icon, three copies).
+- **Saved searches**: the Save search button is a `.btn.small` made a dashed pill with `--btn-bg`,
+  `--btn-border` and `--btn-radius` (pixel-identical, at rest and on hover); its empty state is the kit's
+  `.empty` (the one visible change: its icon in a soft circle like every other empty state), tightened in
+  the sheet with the new `--empty-gap` / `--empty-padding`; the delete button got `x-tooltip`; its icons are
+  the sprite's.
+- **A `shuffle` icon in the sprite** for Random manga, which had the same SVG three times.
+- **Two tests keep it so**: a built-in plugin's CSS may only change a kit piece through custom properties,
+  and its markup takes icons from the sprite (the image reader's JS keeps its own set).
+- **The reader stays as it is**: its bar, options drawer and panels are a design of their own over the page
+  (large touch targets, dark over any page), not copies of kit pieces, and they already do what the kit
+  does (`aria-expanded`, `inert` while closed, Escape closing the panel, then the drawer, then the reader;
+  the options' switches are `aria-pressed` buttons with their state written next to them). Its end card's
+  button was already the kit's `.btn`.
+- **Examples**: the Sakura theme shows the two ways to restyle (tokens, and a piece's custom properties);
+  the plugin reference has a menu, a field and a tooltip in a slot.

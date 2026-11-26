@@ -1099,6 +1099,42 @@ properties in `css`; change what an interactive one does with `MangaVibe.kit`, i
 MangaVibe.kit.extend("notes", "dialog", (base) => ({ ...base, options: { ...base.options, backdrop: false } }));
 ```
 
+```python
+# Round buttons in this plugin's panel only: the kit's custom properties, not a new .btn
+from app.plugins import Plugin
+
+class Notes(Plugin):
+    id = "notes"
+    css = ".notes-panel { --btn-radius: 999px; --btn-bg: transparent; }"
+```
+
+### A menu, tabs, a field, a tooltip
+
+The kit's pieces are markup: write them in a slot and the kit makes them work with the keyboard and screen
+readers.
+
+```python
+# A ⋯ menu on the series page, a field with a hint, and an icon button with a tooltip
+from app.plugins import Plugin
+
+PANEL = """
+<section class="panel" x-data="{ open: false, note: '' }">
+  <h2>Notes</h2>
+  <div class="menu" x-menu="open">
+    <button class="icon-btn" x-tooltip="t('More')"><svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg></button>
+    <div class="menu-pop" x-show="open" x-cloak>
+      <button @click="note = ''">Clear</button>
+    </div>
+  </div>
+  <div class="field" x-field><label>Note</label> <small class="hint">only you see it</small>
+    <textarea x-model="note"></textarea></div>
+</section>"""
+
+class Notes(Plugin):
+    id = "notes"
+    html = {"series-panels": PANEL}
+```
+
 ### A Settings page of its own
 
 `settings_pages` adds an entry to Settings' menu; the page's markup goes in the `settings` slot, shown

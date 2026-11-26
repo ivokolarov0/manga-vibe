@@ -387,7 +387,8 @@ MangaVibe.toast(t("Marked 3 series as read"), 3000, "", { label: t("Undo"), run:
 ```
 
 - Nothing to show: a quiet icon, a sentence that says why, and what to do about it (a button), the same on
-  every page (Home, the library, Continue reading, Needs attention).
+  every page (Home, the library, Continue reading, Needs attention, the saved searches).
+- Custom properties: `--empty-gap`, `--empty-padding` (tighter in a sheet).
 
 ### Loading
 
@@ -431,3 +432,7 @@ MangaVibe.toast(t("Marked 3 series as read"), 3000, "", { label: t("Undo"), run:
   here, and a `data-piece="name"` section on the kit page (`app/web/kit/kit.html`).
   `tests/test_ui_kit.py` checks the last two match.
 - Settings cards keep no divider under their last row: dividers go *between* rows (see `CLAUDE.md`).
+- The built-in plugins use the kit as any plugin would: their CSS changes a kit piece only through its
+  custom properties (a rule on `.btn`, `.chip`, `.modal`… may set `--btn-bg` but not `background`), and
+  their icons come from the sprite. `tests/test_ui_kit.py` checks both. The reader's own controls (the bar,
+  the options drawer and its panels over the page) are a design of their own, not copies of kit pieces.
