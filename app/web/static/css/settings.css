@@ -1031,20 +1031,7 @@
     }
   }
 
-  .meta-bar {
-    height: 6px;
-    overflow: hidden;
-    background: color-mix(in srgb, var(--text) 12%, transparent);
-    border-radius: 3px;
-
-    & i {
-      display: block;
-      height: 100%;
-      background: var(--accent);
-      border-radius: inherit;
-      transition: width 0.4s var(--ease);
-    }
-  }
+  /* its bar is the UI kit's .progress (css/kit/feedback.css) */
 
   /* metadata sources (Settings > Metadata) */
   .meta-sources {

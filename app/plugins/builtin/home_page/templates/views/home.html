@@ -16,9 +16,9 @@
                :aria-label="t('See all: {row}', { row: sec.title })">{{ t("See all") }}<svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
             <div class="home-arrows" x-show="canPrev || canNext">
               <button type="button" class="iconbtn" :disabled="!canPrev" @click="step(-1)"
-                      :aria-label="t('Back in {row}', { row: sec.title })"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
+                      :aria-label="t('Back in {row}', { row: sec.title })" x-tooltip="t('Back in {row}', { row: sec.title })"><svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg></button>
               <button type="button" class="iconbtn" :disabled="!canNext" @click="step(1)"
-                      :aria-label="t('More in {row}', { row: sec.title })"><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
+                      :aria-label="t('More in {row}', { row: sec.title })" x-tooltip="t('More in {row}', { row: sec.title })"><svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
             </div>
           </div>
           <div class="home-track" :class="['home-' + sec.kind, 'shape-' + (sec.shape || 'poster')]" x-ref="track">
@@ -51,7 +51,20 @@
       {% endblock %}
       {{ slot("home-end") }}
       {% block empty %}
-      <p class="muted loading-line" x-show="$store.home.sections === null && !$store.home.failed" x-cloak>{{ t("Loading…") }}</p>
+      <!-- not loaded yet: two grey rows where the rows will be (the UI kit's skeletons), "Loading…" read out -->
+      <div class="home-skeleton" x-show="$store.home.sections === null && !$store.home.failed" x-cloak>
+        <p class="sr-only" role="status">{{ t("Loading…") }}</p>
+        <template x-for="row in 2" :key="row">
+          <div class="home-row" aria-hidden="true">
+            <div class="home-row-head"><div class="skeleton title-shape"></div></div>
+            <div class="home-skeleton-cards">
+              <template x-for="i in 8" :key="i">
+                <div class="skeleton-card"><div class="poster-shape"></div><div class="line"></div><div class="line"></div></div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
       <div class="empty" x-show="$store.home.failed" x-cloak>
         <svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>
         <span x-text="t('Could not load Home: {error}', { error: $store.home.failed })"></span>

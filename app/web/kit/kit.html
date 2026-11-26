@@ -69,6 +69,12 @@
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     }
 
+    .kit-skeletons {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+      gap: 14px 10px;
+    }
+
     .kit-popover {
       gap: 10px;
       padding: 12px;
@@ -115,9 +121,9 @@
     <div class="kit-demo">
       <button class="btn small">Small</button>
       <button class="btn small primary">Small primary</button>
-      <button class="iconbtn" aria-label="Settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button>
-      <button class="iconbtn" aria-label="Filter" title="Filter"><svg class="ic" aria-hidden="true"><use href="#i-filter"/></svg><span class="count">3</span></button>
-      <button class="icon-btn" aria-label="More" title="More"><svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg></button>
+      <button class="iconbtn" x-tooltip="'Settings'"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button>
+      <button class="iconbtn" x-tooltip="'Filter, 3 on'"><svg class="ic" aria-hidden="true"><use href="#i-filter"/></svg><span class="count" aria-hidden="true">3</span></button>
+      <button class="icon-btn" x-tooltip="'More'"><svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg></button>
       <button class="link-btn">Link button</button>
     </div>
     <div class="kit-demo kit-custom">
@@ -334,12 +340,38 @@
 
   <section data-piece="toast">
     <h2>Toast</h2>
-    <p class="muted"><code>#toast</code>, shown with <code>MangaVibe.toast(text, ms, kind)</code> in the app.</p>
+    <p class="muted"><code>MangaVibe.toast(text, ms, kind, action)</code>: read out by screen readers (an error at
+      once); an action adds a button, and the toast waits while the mouse or the focus is on it.</p>
     <div class="kit-demo">
-      <button class="btn" @click="toast('Saved')">Show a toast</button>
-      <button class="btn danger" @click="toast('That didn’t work', 'error')">Show an error</button>
+      <button class="btn" @click="MangaVibe.kit.get('toast').show('Saved')">Show a toast</button>
+      <button class="btn danger" @click="MangaVibe.kit.get('toast').show('That didn’t work', 3000, 'error')">Show an error</button>
+      <button class="btn" @click="MangaVibe.kit.get('toast').show('Marked 3 series as read', 3000, '', { label: 'Undo', run: () => (picked = 'Undone') })">With Undo</button>
     </div>
-    <div id="toast" :class="{ show: toastText, error: toastKind === 'error' }" role="status" x-text="toastText"></div>
+    <div id="toast"><span class="toast-text"></span><button class="toast-action" type="button" hidden></button></div>
+    <div id="toast-say" class="sr-only" role="status"></div>
+    <div id="toast-alert" class="sr-only" role="alert"></div>
+  </section>
+
+  <section data-piece="progress">
+    <h2>Progress</h2>
+    <p class="muted"><code>.progress</code> with <code>role="progressbar"</code>, its value and a name; without
+      <code>aria-valuenow</code> it's busy with no known end.</p>
+    <div class="kit-demo column">
+      <b id="kit-progress-name">Matching metadata: 4 of 10 series</b>
+      <div class="progress" role="progressbar" aria-valuenow="4" aria-valuemin="0" aria-valuemax="10"
+           aria-labelledby="kit-progress-name" aria-valuetext="40%"><i style="width: 40%"></i></div>
+      <div class="progress" role="progressbar" aria-label="Working"><i></i></div>
+    </div>
+  </section>
+
+  <section data-piece="badges">
+    <h2>Badges</h2>
+    <p class="muted"><code>.count</code> in a tab or on an icon button; a badge that is only an icon or a number is
+      <code>role="img"</code> with an <code>aria-label</code>, so it's read as words.</p>
+    <div class="kit-demo">
+      <div class="tabs small" x-tabs aria-label="Plugins"><button class="active">Installed <span class="count">12</span></button>
+        <button>Get plugins <span class="count" role="img" aria-label="3 not installed yet">3</span></button></div>
+    </div>
   </section>
 
   <section data-piece="empty">
@@ -352,9 +384,27 @@
 
   <section data-piece="loading">
     <h2>Loading</h2>
-    <p class="muted"><code>.loading-line</code>: “Loading…” with a spinner.</p>
+    <p class="muted"><code>.loading-line</code>: “Loading…” with a spinner. <code>.skeleton-card</code> (and
+      <code>.skeleton</code> for any shape): grey cards where cards are on their way, with “Loading…” for screen
+      readers in a <code>.sr-only</code> status.</p>
     <div class="kit-demo column">
       <div class="loading-line">Loading…</div>
+      <div class="kit-skeletons">
+        <p class="sr-only" role="status">Loading…</p>
+        <template x-for="i in 5" :key="i">
+          <div class="skeleton-card" aria-hidden="true"><div class="poster-shape"></div><div class="line"></div><div class="line"></div></div>
+        </template>
+      </div>
+    </div>
+  </section>
+
+  <section data-piece="tooltip">
+    <h2>Tooltip</h2>
+    <p class="muted"><code>x-tooltip="text"</code> on an icon button: shown on hover and on keyboard focus, and the
+      button's name when it has none. Plain <code>x-tooltip</code> takes the button's <code>title</code>.</p>
+    <div class="kit-demo">
+      <button class="iconbtn" x-tooltip="'Add to favorites'"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg></button>
+      <button class="iconbtn" title="Download" x-tooltip><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg></button>
     </div>
   </section>
 </main>
@@ -367,16 +417,9 @@
       fieldTitle: "Alive", fieldYear: "19999",
       tab: "books", small: "one", seg: "asc", opt: "rtl",
       menuOpen: false, picked: "", dialogOpen: false, keepOpen: false, innerOpen: false,
-      toastText: "", toastKind: "", toastTimer: 0,
       toggleTheme() {
         this.theme = this.theme === "dark" ? "light" : "dark";
         document.documentElement.dataset.theme = this.theme;
-      },
-      toast(text, kind = "") {
-        this.toastText = text;
-        this.toastKind = kind;
-        clearTimeout(this.toastTimer);
-        this.toastTimer = setTimeout(() => (this.toastText = ""), 3000);
       },
     }));
   });

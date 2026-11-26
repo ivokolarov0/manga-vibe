@@ -195,7 +195,7 @@ def test_a_plugin_can_change_a_piece(tmp_path):
     assert out["pluginOff"] == 1                         # switched off: the plain dialog again
     assert out["optionEscape"] == 0                      # data-kit-options on one dialog
     assert out["prevented"] == 0                         # kit-close with preventDefault() keeps it open
-    assert out["names"] == ["dialog", "menu", "choice", "tabs", "field"]
+    assert out["names"] == ["dialog", "menu", "choice", "tabs", "field", "toast", "tooltip"]
 
 
 MARKUP = sorted([*(ROOT / "app" / "web" / "templates").rglob("*.html"),

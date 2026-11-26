@@ -2,7 +2,7 @@
 
 The pieces MangaVibe and its plugins share: buttons, fields, chips, tabs, menus, dialogs, toasts… Use them in
 a plugin's markup and it looks and works like the rest of the app, and it follows the owner's theme and
-`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33; tabs and choices (`x-tabs`, `x-choice`), API 34; fields and setting rows (`x-field`), API 35.
+`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33; tabs and choices (`x-tabs`, `x-choice`), API 34; fields and setting rows (`x-field`), API 35; toasts with an action, tooltips (`x-tooltip`), API 36.
 
 **See them all at `/kit`** (e.g. `http://localhost:8000/kit`): every piece in its variants, dark and light,
 with your plugins' CSS and `custom.css` applied.
@@ -41,9 +41,10 @@ change is a normal CSS rule: `.my-panel .btn { font-weight: 700 }` wins over the
 
 ## Changing the behaviour: `MangaVibe.kit`
 
-An interactive piece (the dialog, the menu, tabs, choices and fields: `dialog`, `menu`, `tabs`,
-`choice`, `field`) is an object `{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`, `x-tabs`,
-`x-choice`, `x-field`) asks `MangaVibe.kit` for it each time an element starts, so:
+An interactive piece (`dialog`, `menu`, `tabs`, `choice`, `field`, `tooltip`) is an object
+`{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`, `x-tabs`, `x-choice`, `x-field`,
+`x-tooltip`) asks `MangaVibe.kit` for it each time an element starts, so the changes below reach every use.
+(`toast` is a piece without a directive: `MangaVibe.toast` calls its `show()`.)
 
 | | |
 |---|---|
@@ -332,24 +333,95 @@ stops what the piece was about to do (a dialog stays open).
 
 ### Toast
 
-- `MangaVibe.toast(text, ms, kind)`: a short message at the bottom; `kind = "error"` for a red one.
-- Custom properties: `--toast-bg`, `--toast-text`.
+```js
+MangaVibe.toast(t("Saved"));
+MangaVibe.toast(e.message, 6000, "error");
+MangaVibe.toast(t("Marked 3 series as read"), 3000, "", { label: t("Undo"), run: () => undo() });
+```
+
+- `MangaVibe.toast(text, ms, kind, action)`: a short message at the bottom; `kind = "error"` for a red one.
+- **Read out**: the text also goes to a hidden live region, `role="status"` (read when the screen reader is
+  free) or, for an error, `role="alert"` (read at once). The same message twice is read twice.
+- **An action** (`{ label, run }`, Plugin API 36) adds a button, e.g. Undo. The toast then stays at least 6
+  seconds, and it waits while the mouse or the focus is on it.
+- The piece is `toast` in `MangaVibe.kit`: `show()`, `say()`, `hide()`, `pause()` and `resume()`, and
+  `options.ms` (3000) and `options.actionMs` (6000), so a plugin can change how long toasts stay.
+- Custom properties: `--toast-bg`, `--toast-text` (the tooltip uses them too).
+
+### Progress
+
+```html
+<b id="matching">Matching metadata: 4 of 10 series</b>
+<div class="progress" role="progressbar" aria-labelledby="matching" aria-valuenow="4" aria-valuemin="0"
+     aria-valuemax="10" aria-valuetext="40%"><i style="width: 40%"></i></div>
+```
+
+- A bar: its `<i>` is the filled part. Give it a name (`aria-labelledby` or `aria-label`) and its value
+  (`aria-valuenow`, and `aria-valuetext` to say it the way it shows).
+- Without `aria-valuenow` it's busy with no known end: a piece of the bar slides across (slowly with
+  "reduce motion").
+- A bar that only repeats what the text next to it says (a card's reading progress) is `aria-hidden`.
+- Custom properties: `--progress-color`, `--progress-track`.
+
+### Badges
+
+```html
+<span class="count">12</span>
+<span class="badge done" role="img" aria-label="Completed" title="Completed"><svg class="ic" aria-hidden="true">…</svg></span>
+<span class="dot" role="img" aria-label="needs attention"></span>
+```
+
+- `.count`: a number in a tab or on an icon button; a series card's `.badge`s sit in the poster's corner.
+- A badge that's only an icon, a number or a dot needs words for screen readers: `role="img"` with an
+  `aria-label` (an `aria-label` on a plain `<span>` isn't read). A number that's already in the button's
+  name (the filter count) is `aria-hidden`.
 
 ### Empty
 
 ```html
-<div class="empty"><svg class="ic" aria-hidden="true"><use href="#i-books"/></svg><span>Nothing here yet.</span></div>
+<div class="empty">
+  <svg class="ic" aria-hidden="true"><use href="#i-books"/></svg>
+  <span>Nothing in progress. Start a series and it shows up here.</span>
+  <a class="btn small primary" href="#/library">Open the Library</a>
+</div>
 ```
 
-- Nothing to show: a quiet icon above a line of text.
+- Nothing to show: a quiet icon, a sentence that says why, and what to do about it (a button), the same on
+  every page (Home, the library, Continue reading, Needs attention).
 
 ### Loading
 
 ```html
 <div class="loading-line">Loading…</div>
+
+<div class="grid">
+  <template x-for="i in (items === null ? 12 : 0)" :key="i">
+    <div class="skeleton-card" aria-hidden="true"><div class="poster-shape"></div><div class="line"></div><div class="line"></div></div>
+  </template>
+</div>
+<p class="sr-only" role="status" x-show="items === null">Loading…</p>
 ```
 
-- “Loading…” with a spinner before it.
+- `.loading-line`: “Loading…” with a spinner before it (more cards at the end of a list).
+- `.skeleton-card`: a grey card (a poster and two lines) where cards are on their way, in the grid they'll
+  fill; `.skeleton` for any other shape. The library, Continue reading and Home show them on their first
+  load. They're `aria-hidden`: say “Loading…” in a `.sr-only` `role="status"` instead.
+- `.sr-only`: there for screen readers, not on the screen.
+- Custom property: `--skeleton`.
+
+### Tooltip
+
+```html
+<button class="iconbtn" x-tooltip="t('Add to favorites')"><svg class="ic" aria-hidden="true">…</svg></button>
+<button class="icon-btn" aria-label="More" title="More" x-tooltip>…</button>
+```
+
+- `x-tooltip="text"`: a small bubble above the button while the mouse is on it or it has the keyboard's
+  focus (not after a tap), placed below it when there's no room above. Escape hides it.
+- It's the button's name when it has none (an icon-only button: `aria-label`), so you write the words once.
+- Plain `x-tooltip` takes the button's `title` (and removes it, so the browser's own tooltip doesn't show
+  too).
+- The piece is `tooltip` in `MangaVibe.kit`: `bubble()`, `place()`, and `options.delay` (400 ms).
 
 ## Working on the kit
 

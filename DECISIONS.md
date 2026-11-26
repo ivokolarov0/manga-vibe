@@ -1604,3 +1604,29 @@ Plugin API version, and the app works after every one.
 - **Plugins' old `.edit-form label` fields keep working**: `edit.css` keeps those rules, so a plugin's
   `series-edit` field written the old way still lines up; the built-in ones are `.field`s now.
 - **No range piece**: the only range is the reader's page slider, which has its name and shows the page.
+
+### Toasts, progress, badges, loading and tooltips (Plugin API 36, issue #294, step 6 #300)
+
+- **The toast isn't its own live region any more**: the visible `#toast` (with its Undo button) is plain,
+  and the text goes to two hidden regions, `#toast-say` (`role="status"`) and `#toast-alert`
+  (`role="alert"`, for errors). Switching one element's `aria-live` or role between messages isn't read
+  reliably, and a live region with a button in it reads the button too. A region is emptied before the new
+  text, 50 ms later, so the same message twice is read twice.
+- **An action makes the toast wait**: at least 6 s, and paused while the mouse or the focus is on it, so
+  it can be reached (WCAG 2.2.1). Only then can it be clicked (`pointer-events`), so a plain toast never
+  sits in the way of a tap.
+- **`toast.timer` is now a number per toast**, not a timer: the reader's "start of book" toast compares it
+  to know its toast is still the one showing.
+- **Badges with words**: an `aria-label` on a plain `<span>` isn't read (no role), so the cards' icon and
+  number badges and the plugins' "needs attention" dot are `role="img"`. A card's reading bar is
+  `aria-hidden`: its line of text already says "Reading · 3/10".
+- **Skeletons only for the first load**, in the grid they fill (the library, Continue reading, Home's
+  rows), `aria-hidden`, with "Loading…" in a hidden status. Later pages keep the spinner line.
+- **`x-tooltip` replaces `title` on icon buttons**: a `title` never shows on keyboard focus nor on a
+  phone, and is read by some screen readers after the name. The tooltip shows on hover (after 400 ms) and
+  on keyboard focus (`:focus-visible`), not after a tap; it's `aria-hidden`, and the button's name is the
+  same words (it fills in `aria-label` when there is none). A click the keyboard made (`detail === 0`, the
+  grid/list switch's arrows) leaves it showing.
+- **The progress bar is the kit's `.progress`**, named by the line above it (`aria-labelledby` through
+  Alpine's `x-id`) with its value as a percentage; without `aria-valuenow` it slides (kept moving slowly
+  with "reduce motion", like the spinners).

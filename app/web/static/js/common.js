@@ -101,14 +101,11 @@ async function api(path, opts = {}) {
   }
 }
 
-/* Short message at the bottom. kind "error" marks it as an error (red stripe). */
-function toast(msg, ms = 3000, kind = "") {
-  const t = $("#toast");
-  t.textContent = msg;
-  t.classList.toggle("error", kind === "error");
-  t.classList.add("show");
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => t.classList.remove("show"), ms);
+/* Short message at the bottom, read out by screen readers. kind "error" marks it as an error (red dot, read
+   at once). action { label, run }: a button on it, e.g. Undo. The UI kit's toast (js/kit.js) shows it;
+   toast.timer is new for every toast, so the reader knows whether its own is still the one showing. */
+function toast(msg, ms = 3000, kind = "", action = null) {
+  toast.timer = kit.get("toast").show(msg, ms, kind, action);
 }
 
 /* Copy text. The Clipboard API only works on https or localhost; MangaVibe on a NAS is

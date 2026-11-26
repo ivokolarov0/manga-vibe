@@ -1053,7 +1053,7 @@ window.MangaVibe = {
   // run fn when Alpine starts (Alpine.store, Alpine.data), or now if it already has
   onStart(fn) { alpineStarted ? fn() : document.addEventListener("alpine:init", fn); },
   api,             // api(path, { method, body }) -> the JSON answer; throws Error(detail) on 4xx/5xx
-  toast,           // toast(text, ms = 3000, kind = "" | "error")
+  toast,           // toast(text, ms = 3000, kind = "" | "error", action = { label, run }), read out (Plugin API 36)
   // the UI kit's pieces (Plugin API 31, docs/UI-KIT.md): get(name), define(pluginId, name, piece),
   // extend(pluginId, name, fn), names() (js/kit.js)
   kit,

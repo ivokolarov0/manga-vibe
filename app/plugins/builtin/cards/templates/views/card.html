@@ -10,7 +10,7 @@
 {% if layout == "continue" %}
             <div class="poster">{% block continue_poster %}<img :src="s.poster" loading="lazy" alt="">
               {{ slot("card-badges") }}
-              <div class="bar"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>{% endblock %}</div>
+              <div class="bar" aria-hidden="true"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>{% endblock %}</div>
             {% block continue_text %}
             <div class="card-title" x-text="s.title"></div>
             <div class="card-sub reading" x-text="s.continue.label + ' · ' + t('p{page}/{pages}', { page: s.continue.page + 1, pages: s.continue.page_count })"></div>
@@ -21,18 +21,19 @@
               <img :src="s.poster" loading="lazy" alt="" draggable="false">
               <span class="pick" x-show="selecting" aria-hidden="true"></span>
               {% block badges %}
-              <span class="badge done" x-show="s.reading_status === 'completed'" title="{{ t('Completed') }}" aria-label="{{ t('Completed') }}">
+              <!-- an icon or a bare number: role="img" with a label, so a screen reader says what it means -->
+              <span class="badge done" x-show="s.reading_status === 'completed'" title="{{ t('Completed') }}" role="img" aria-label="{{ t('Completed') }}">
                 <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
-              <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="{{ t('Dropped') }}" aria-label="{{ t('Dropped') }}">
+              <span class="badge dropped" x-show="s.reading_status === 'dropped'" title="{{ t('Dropped') }}" role="img" aria-label="{{ t('Dropped') }}">
                 <svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></span>
-              <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count"
-                    :title="t('{n} unread', { n: s.unread_count })"></span>
-              <span class="badge status" x-show="s.favorite" title="{{ t('Favorite') }}" aria-label="{{ t('Favorite') }}">
+              <span class="badge" x-show="s.reading_status === 'reading' && s.unread_count" x-text="s.unread_count" role="img"
+                    :title="t('{n} unread', { n: s.unread_count })" :aria-label="t('{n} unread', { n: s.unread_count })"></span>
+              <span class="badge status" x-show="s.favorite" title="{{ t('Favorite') }}" role="img" aria-label="{{ t('Favorite') }}">
                 <svg class="ic fill" aria-hidden="true"><use href="#i-star"/></svg></span>
               <span class="badge missing" x-show="s.incomplete" title="{{ t('Finished series with volumes or chapters missing') }}">{{ t("Incomplete") }}</span>
               {% endblock %}
               {{ slot("card-badges") }}
-              <div class="bar" x-show="s.reading_status === 'reading'"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
+              <div class="bar" x-show="s.reading_status === 'reading'" aria-hidden="true"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>
               {% endblock %}
             </div>
             {% block text %}

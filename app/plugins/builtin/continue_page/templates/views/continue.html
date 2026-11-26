@@ -11,7 +11,12 @@
         <template x-for="s in $store.continue.items || []" :key="s.id">
           {{ continue_card() }}
         </template>
+        <!-- not loaded yet: grey cards where they'll be (the UI kit's skeletons) -->
+        <template x-for="i in ($store.continue.items === null ? 6 : 0)" :key="'skeleton-' + i">
+          <div class="skeleton-card" aria-hidden="true"><div class="poster-shape"></div><div class="line"></div><div class="line"></div></div>
+        </template>
       </div>
+      <p class="sr-only" role="status" x-show="$store.continue.items === null">{{ t("Loading…") }}</p>
       <div class="empty" x-show="$store.continue.items && !$store.continue.items.length">
         <svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>
         <span>{{ t("Nothing in progress. Start a series and it shows up here.") }}</span>

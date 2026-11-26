@@ -19,9 +19,9 @@
                       <small x-text="s.hidden ? t('Hidden') : (s.plugin ? t('From a plugin') : '')" x-show="s.hidden || s.plugin"></small></span>
                     <span class="home-row-tools">
                       <button type="button" class="iconbtn" :aria-disabled="String(i === 0)" @click="move(i, -1)"
-                              :aria-label="t('Move {row} up', { row: s.title })" :title="t('Up')"><svg class="ic" aria-hidden="true"><use href="#i-arrow-up"/></svg></button>
+                              :aria-label="t('Move {row} up', { row: s.title })" x-tooltip="t('Up')"><svg class="ic" aria-hidden="true"><use href="#i-arrow-up"/></svg></button>
                       <button type="button" class="iconbtn" :aria-disabled="String(i === sections.length - 1)" @click="move(i, 1)"
-                              :aria-label="t('Move {row} down', { row: s.title })" :title="t('Down')"><svg class="ic" aria-hidden="true"><use href="#i-arrow-down"/></svg></button>
+                              :aria-label="t('Move {row} down', { row: s.title })" x-tooltip="t('Down')"><svg class="ic" aria-hidden="true"><use href="#i-arrow-down"/></svg></button>
                       <input type="checkbox" :checked="!s.hidden" @change="toggle(s)" :aria-label="t('Show {row} on Home', { row: s.title })" :title="t('Show on Home')">
                     </span>
                   </div>
