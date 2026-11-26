@@ -647,7 +647,10 @@ The page itself is put together from Jinja templates (`app/web/templates/`), whe
 
 **Dialogs and sheets.** Give a `.modal` or `.sheet` of your own `x-dialog="<how to close it>"`, e.g.
 `<div class="modal" x-show="$store.notes.open" x-dialog="$store.notes.open = false">`. A click on the
-backdrop, Escape and the Android app's back button then close it, like the app's own.
+backdrop, Escape and the Android app's back button then close it, like the app's own. While it shows,
+it's a named dialog for screen readers, the focus is in it and the page behind can't be reached; when it
+closes, the focus goes back (Plugin API 32). Put its title in a `.sheet-head` `<b>` so it has a name. See
+[UI-KIT.md](UI-KIT.md#dialog) for its options and events.
 
 **Script.** `js` runs after the app's own scripts: before Alpine starts when the page loads, or later
 when the owner switches the plugin on. Register your stores and components in `MangaVibe.onStart(() => {
@@ -1369,7 +1372,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 31 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 32 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

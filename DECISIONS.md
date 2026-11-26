@@ -1511,3 +1511,29 @@ Plugin API version, and the app works after every one.
 - **The kit page is `/kit`, not a view of the app**: a page of its own (`app/web/kit/kit.html`), so the
   app's page doesn't carry it, open without logging in (no data on it, only public files). It loads the
   app's CSS with plugins' and `custom.css`, so a theme shows there; it's in English, like the docs.
+
+### Dialogs for the keyboard and screen readers (Plugin API 32, issue #294, step 2 #296)
+
+- **The markup stays; `x-dialog` does the rest.** Moving to a native `<dialog>` with `showModal()` would
+  have given the focus and the page behind for free, but every dialog of the app and of plugins'
+  (`.modal`/`.sheet` shown with `x-show`) would have had to change. Instead `x-dialog` watches its element
+  (a MutationObserver on `style`, `hidden`, `class`, `x-cloak`, and its cleanup for `x-if`) and sees it show
+  and hide, so plugins get it without changing anything.
+- **The page behind is `inert`**: everything beside the dialog and beside each of its parents, given back
+  when it hides. Live regions (the toast) are left out, so they're still read. A dialog opened from another
+  takes itself out of what the first made inert. Tab also goes round inside the box: `inert` keeps the focus
+  out of the page, not out of the browser's own bar.
+- **The focus goes to the box, not the first field**, unless something has `autofocus` (or the option
+  `focus: "field"`): on a phone a focused field opens the keyboard over half of the dialog (the Edit
+  dialog's title). A screen reader still reads the dialog's name. Focus a component put in already (the
+  library password) stays.
+- **The name is the `.sheet-head`'s `<b>`**, which every dialog already has, else `data-kit-label` or the
+  first heading; a dialog whose content waits for data (the Edit dialog's `x-if`) is named when its title
+  comes.
+- **The focus goes back** to what opened it; an item of a menu that closed is hidden by then, so it goes to
+  the menu's button.
+- **Only the top dialog closes** on Escape, a backdrop click or the Android back button (which sends
+  Escape), and a listener that called `preventDefault()` on the Escape (a menu inside the dialog, #297)
+  keeps it open.
+- **No scrolling behind**: `overflow: hidden` on the root while a modal shows, with `scrollbar-gutter:
+  stable` only when there was a scrollbar, so nothing moves sideways.

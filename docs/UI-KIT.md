@@ -2,7 +2,7 @@
 
 The pieces MangaVibe and its plugins share: buttons, fields, chips, tabs, menus, dialogs, toasts… Use them in
 a plugin's markup and it looks and works like the rest of the app, and it follows the owner's theme and
-`custom.css`. Plugin API 31 (issue #294).
+`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32.
 
 **See them all at `/kit`** (e.g. `http://localhost:8000/kit`): every piece in its variants, dark and light,
 with your plugins' CSS and `custom.css` applied.
@@ -209,11 +209,34 @@ stops what the piece was about to do (a dialog stays open).
 - `.modal` or `.sheet` is the backdrop, its `div` the box: a sheet from the bottom on phones, a centred
   dialog on wider screens. `.sheet-head`: a title and buttons that stay at the top while it scrolls.
 - `x-dialog="<how to close it>"`: a click on the backdrop, Escape and the Android app's back button run it.
-- Options: `backdrop` (a click on it closes; `true`), `escape` (`true`).
-- Event: `kit-close` with `detail.reason` `"backdrop"` or `"escape"`, before it closes; `preventDefault()`
-  keeps it open (e.g. to ask about unsaved changes).
-- Focus and screen readers (focus moves in and back, the page behind can't be reached) come in step 2 of
-  #294 (#296).
+  When several dialogs show (one opened from another), only the top one closes.
+- Show and hide it as you like (`x-show`, `x-if`): the kit sees it. While it shows:
+  - the box is a dialog for screen readers (`role="dialog"`, `aria-modal="true"`), named after its title:
+    an element with `data-kit-label`, else the `.sheet-head`'s `<b>`, else its first heading. A title that
+    comes a moment later (an `x-if` waiting for data) still names it. Set `aria-label` on the box yourself
+    if it has no title;
+  - the focus moves into it: to an element with `autofocus`, else to the box itself, so a phone doesn't
+    open its keyboard (option `focus: "field"`: the first field). If your script already put the focus
+    in it (a password field), it stays there;
+  - Tab and Shift+Tab go round inside it; the rest of the page is `inert` (no clicks, no Tab, not read
+    out; the toast still is) and doesn't scroll.
+- When it hides, the focus goes back to what opened it (or, if that was an item of a menu that closed,
+  to the menu's button).
+- Options: `backdrop` (a click on it closes; `true`), `escape` (`true`), `modal` (`false`: the page
+  behind stays usable and the focus isn't kept in; `true`), `focus` (`"box"` or `"field"`), `restoreFocus`
+  (`true`).
+- Events: `kit-open` once it shows; `kit-close` with `detail.reason` `"backdrop"` or `"escape"`, before
+  it closes, where `preventDefault()` keeps it open (e.g. to ask about unsaved changes); `kit-closed` once
+  it's hidden.
+- A plugin can change one part only, e.g. what the dialog is named after: its methods are `box(el)`,
+  `label(box)` (returns `true` once named), `focusIn(box, options)` and `opener(element)`.
+
+  ```js
+  MangaVibe.kit.extend("my-plugin", "dialog", (base) => ({
+    ...base,
+    label: (box) => base.label(box) || (box.setAttribute("aria-label", "Dialog"), true),
+  }));
+  ```
 - Custom properties: `--dialog-width`, `--dialog-bg`, `--dialog-radius`, `--dialog-backdrop`.
 
 ### Toast
