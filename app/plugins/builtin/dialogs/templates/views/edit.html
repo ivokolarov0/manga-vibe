@@ -5,13 +5,13 @@
       <template x-if="s">
         <div>
           <div class="sheet-head"><b x-text="t('Edit · {title}', { title: s.title })"></b><button class="btn small" @click="close()">{{ t("Close") }}</button></div>
-          <div class="tabs small">
-            <button :class="{ active: tab === 'info' }" @click="tab = 'info'">{{ t("Info") }}</button>
-            <button :class="{ active: tab === 'poster' }" @click="tab = 'poster'">{{ t("Poster") }}</button>
+          <div class="tabs small" x-tabs>
+            <button data-tab="info" :class="{ active: tab === 'info' }" @click="tab = 'info'">{{ t("Info") }}</button>
+            <button data-tab="poster" :class="{ active: tab === 'poster' }" @click="tab = 'poster'">{{ t("Poster") }}</button>
           </div>
 
           <!-- info -->
-          <form class="edit-form" x-show="tab === 'info'" @submit.prevent="save()">
+          <form class="edit-form" data-tab-panel="info" x-show="tab === 'info'" @submit.prevent="save()">
             <!-- plugins' fields, saved with the rest (e.g. Library) -->
             {{ slot("series-edit") }}
             <label class="wide">{{ t("English title") }}
@@ -62,7 +62,7 @@
           </form>
 
           <!-- poster -->
-          <div class="poster-edit" x-show="tab === 'poster'">
+          <div class="poster-edit" data-tab-panel="poster" x-show="tab === 'poster'">
             <div class="poster-now">
               <img :src="preview || s.poster_large" alt="">
               <small class="muted" x-text="preview ? t('Preview (not saved yet)') : ({ upload: t('Uploaded by you'), page: t('A page from a book'),

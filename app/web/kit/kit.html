@@ -161,41 +161,47 @@
 
   <section data-piece="tabs">
     <h2>Tabs</h2>
-    <p class="muted"><code>.tabs</code> of buttons, the active one with <code>.active</code>; a
-      <code>.count</code> in a tab; <code>.small</code>, <code>.scroll</code>.</p>
+    <p class="muted"><code>.tabs</code> with <code>x-tabs</code>: buttons, the active one with <code>.active</code>;
+      <code>data-tab</code> ties a tab to its <code>data-tab-panel</code>; a <code>.count</code> in a tab;
+      <code>.small</code>, <code>.scroll</code>. Left and Right move and pick.</p>
     <div class="kit-demo column">
-      <div class="tabs" role="tablist" aria-label="Tabs">
+      <div class="tabs" x-tabs aria-label="Tabs">
         <template x-for="[key, label] in [['books', 'Books'], ['files', 'Files'], ['notes', 'Notes']]" :key="key">
-          <button role="tab" :class="{ active: tab === key }" :aria-selected="tab === key" @click="tab = key">
+          <button :data-tab="key" :class="{ active: tab === key }" @click="tab = key">
             <span x-text="label"></span><span class="count" x-show="key === 'books'">12</span></button>
         </template>
       </div>
-      <div class="tabs small">
-        <button class="active">Small</button>
-        <button>Tabs</button>
+      <p data-tab-panel="books" x-show="tab === 'books'">The books.</p>
+      <p data-tab-panel="files" x-show="tab === 'files'" x-cloak>The files.</p>
+      <p data-tab-panel="notes" x-show="tab === 'notes'" x-cloak>The notes.</p>
+      <div class="tabs small" x-tabs data-kit-options="{ manual: true }" aria-label="Small tabs">
+        <button :class="{ active: small === 'one' }" @click="small = 'one'">Small</button>
+        <button :class="{ active: small === 'two' }" @click="small = 'two'">Manual: Enter picks</button>
       </div>
     </div>
   </section>
 
   <section data-piece="segmented">
     <h2>Segmented</h2>
-    <p class="muted"><code>.segmented</code>: two or three choices side by side, the chosen one <code>.on</code>.</p>
+    <p class="muted"><code>.segmented</code> with <code>x-choice</code>: two or three choices side by side, the
+      chosen one <code>.on</code>. The arrow keys move and pick.</p>
     <div class="kit-demo">
-      <div class="segmented" role="radiogroup" aria-label="Order">
-        <button role="radio" :class="{ on: seg === 'asc' }" :aria-checked="seg === 'asc'" @click="seg = 'asc'">Ascending</button>
-        <button role="radio" :class="{ on: seg === 'desc' }" :aria-checked="seg === 'desc'" @click="seg = 'desc'">Descending</button>
+      <div class="segmented" x-choice aria-label="Order">
+        <button :class="{ on: seg === 'asc' }" @click="seg = 'asc'">Ascending</button>
+        <button :class="{ on: seg === 'desc' }" @click="seg = 'desc'">Descending</button>
       </div>
     </div>
   </section>
 
   <section data-piece="options">
     <h2>Options</h2>
-    <p class="muted"><code>.options</code>: one choice per row, like radio buttons, the chosen one <code>.on</code>.</p>
+    <p class="muted"><code>.options</code> with <code>x-choice</code>: one choice per row, like radio buttons, the
+      chosen one <code>.on</code>.</p>
     <div class="kit-demo column">
-      <div class="options" role="radiogroup" aria-label="Reading direction">
+      <div class="options" x-choice aria-label="Reading direction">
         <template x-for="[key, label, small] in [['rtl', 'Right to left', 'Manga'], ['ltr', 'Left to right', 'Comics'], ['vertical', 'Vertical', 'Webtoons']]" :key="key">
-          <button role="radio" :class="{ on: opt === key }" :aria-checked="opt === key" @click="opt = key">
-            <span class="radio"></span>
+          <button :class="{ on: opt === key }" @click="opt = key">
+            <span class="radio" aria-hidden="true"></span>
             <span class="text"><span x-text="label"></span><small x-text="small"></small></span></button>
         </template>
       </div>
@@ -329,7 +335,7 @@
   document.addEventListener("alpine:init", () => {
     Alpine.data("kitPage", () => ({
       theme: document.documentElement.dataset.theme,
-      tab: "books", seg: "asc", opt: "rtl",
+      tab: "books", small: "one", seg: "asc", opt: "rtl",
       menuOpen: false, picked: "", dialogOpen: false, keepOpen: false, innerOpen: false,
       toastText: "", toastKind: "", toastTimer: 0,
       toggleTheme() {

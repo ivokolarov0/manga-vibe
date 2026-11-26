@@ -5,7 +5,8 @@
       <template x-if="s">
         <div>
           <div class="sheet-head"><b x-text="t('Fix match · {folder}', { folder: s.folder_name })"></b><button class="btn small" @click="close()">{{ t("Close") }}</button></div>
-          <div class="tabs small">
+          <!-- picking a source searches it: the arrow keys only move, Enter picks -->
+          <div class="tabs small" x-tabs data-kit-options="{ manual: true }">
             <template x-for="p in $store.app.providers" :key="p.id">
               <button :class="{ active: provider === p.id }" @click="setProvider(p.id)" x-text="p.available ? p.name : t('{name} (offline)', { name: p.name })"></button>
             </template>

@@ -357,6 +357,90 @@ own.set("menu", {
   },
 });
 
+/* A row of buttons where one is the picked one: x-choice (.segmented, .options) and x-tabs (.tabs).
+   The markup keeps choosing as it always did: its @click picks, and the picked button has a class (.on,
+   .active). The kit reads that class (and sees it change) and adds the rest:
+   - for screen readers: the group's role (radiogroup, tablist) and each button's (radio, tab) with
+     aria-checked or aria-selected;
+   - one stop for Tab: the picked button (tabindex 0, the others -1);
+   - the arrow keys move between the buttons (round), Home and End to the ends, and pick the one they
+     land on by clicking it, so your @click runs. Option manual: the arrows only move, Enter or Space
+     picks (e.g. when picking starts a search).
+   A button with data-kit-skip isn't one of them (the libraries' + button in their tab row).
+   items(), isPicked() and link() are methods, so a plugin can change one of them alone. */
+const group = {
+  options: { manual: false },
+  role: "radiogroup", itemRole: "radio", pickedClass: "on", state: "aria-checked",
+  keys: { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 },
+  items: (el) => [...el.querySelectorAll(":scope > button:not([data-kit-skip])")],
+  isPicked(item) { return item.classList.contains(this.pickedClass); },
+  link() {},  // tabs: the panel a tab shows
+  setup(ctx) {
+    const piece = this, { el, options } = ctx;
+    if (!el.hasAttribute("role")) el.setAttribute("role", piece.role);
+    // not hidden by its own x-show or `hidden` (whether the group is on screen doesn't matter: a closed
+    // sheet's group is read while hidden, and nothing in it changes when the sheet opens)
+    const there = (i) => !i.hidden && i.style.display !== "none";
+    const update = () => {
+      const all = piece.items(el);
+      const picked = all.find((i) => piece.isPicked(i) && there(i));
+      const stop = picked || all.find((i) => there(i) && !i.disabled);
+      for (const i of all) {
+        i.setAttribute("role", piece.itemRole);
+        i.setAttribute(piece.state, String(i === picked));
+        i.tabIndex = i === stop ? 0 : -1;
+        piece.link(el, i);
+      }
+    };
+    // a click changes the class, x-for adds buttons, x-show shows one: look again
+    const watch = new MutationObserver(update);
+    watch.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["class", "style"] });
+    queueMicrotask(update);
+
+    const onKey = (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const all = piece.items(el).filter((i) => shown(i) && !i.disabled);
+      const at = all.indexOf(document.activeElement);
+      if (at < 0) return;
+      const step = piece.keys[e.key];
+      const to = step !== undefined ? (at + step + all.length) % all.length
+        : e.key === "Home" ? 0 : e.key === "End" ? all.length - 1 : -1;
+      if (to < 0) return;
+      e.preventDefault();
+      all[to].focus();
+      if (!options.manual && !piece.isPicked(all[to])) all[to].click();
+    };
+    el.addEventListener("keydown", onKey);
+    return () => {
+      watch.disconnect();
+      el.removeEventListener("keydown", onKey);
+    };
+  },
+};
+
+/* x-choice on a .segmented or .options: one of a few choices, like radio buttons (the picked one .on). */
+own.set("choice", { ...group });
+
+/* x-tabs on a .tabs (the picked tab .active). Left and Right move (a row of tabs). A tab with
+   data-tab="files" shows the panel with data-tab-panel="files" next to the tabs (inside the tabs' parent):
+   they're tied together for screen readers (aria-controls, role="tabpanel", aria-labelledby). */
+own.set("tabs", {
+  ...group,
+  role: "tablist", itemRole: "tab", pickedClass: "active", state: "aria-selected",
+  keys: { ArrowRight: 1, ArrowLeft: -1 },
+  link(el, tab) {
+    const key = tab.dataset.tab;
+    if (key === undefined) return;
+    const panel = [...(el.parentElement?.querySelectorAll("[data-tab-panel]") || [])].find((p) => p.dataset.tabPanel === key);
+    if (!panel) return;
+    tab.id ||= `kit-tab-${++uid}`;
+    panel.id ||= `kit-tab-panel-${++uid}`;
+    tab.setAttribute("aria-controls", panel.id);
+    panel.setAttribute("role", "tabpanel");
+    panel.setAttribute("aria-labelledby", tab.id);
+  },
+});
+
 document.addEventListener("alpine:init", () => {
   for (const name of own.keys()) Alpine.directive(name, directive(name));
 });

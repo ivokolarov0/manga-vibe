@@ -1372,7 +1372,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 33 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 34 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

@@ -49,10 +49,10 @@
               <template x-for="n in pageSizes" :key="n"><option :value="n" x-text="n" :selected="n === pageSize"></option></template>
             </select></label>
           <!-- grid or list: the library_view setting -->
-          <div class="segmented view-switch" role="group" aria-label="{{ t('View') }}">
-            <button :class="{ on: layout === 'grid' }" :aria-pressed="layout === 'grid'" @click="setLayout('grid')"
+          <div class="segmented view-switch" x-choice aria-label="{{ t('View') }}">
+            <button :class="{ on: layout === 'grid' }" @click="setLayout('grid')"
                     aria-label="{{ t('Grid') }}" title="{{ t('Grid') }}"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></button>
-            <button :class="{ on: layout === 'list' }" :aria-pressed="layout === 'list'" @click="setLayout('list')"
+            <button :class="{ on: layout === 'list' }" @click="setLayout('list')"
                     aria-label="{{ t('List') }}" title="{{ t('List') }}"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg></button>
           </div>
         </div>

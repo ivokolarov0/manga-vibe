@@ -2,7 +2,7 @@
 
 The pieces MangaVibe and its plugins share: buttons, fields, chips, tabs, menus, dialogs, toasts… Use them in
 a plugin's markup and it looks and works like the rest of the app, and it follows the owner's theme and
-`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33.
+`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33; tabs and choices (`x-tabs`, `x-choice`), API 34.
 
 **See them all at `/kit`** (e.g. `http://localhost:8000/kit`): every piece in its variants, dark and light,
 with your plugins' CSS and `custom.css` applied.
@@ -41,9 +41,9 @@ change is a normal CSS rule: `.my-panel .btn { font-weight: 700 }` wins over the
 
 ## Changing the behaviour: `MangaVibe.kit`
 
-An interactive piece (today: the dialog and the menu; tabs and others come in the next steps of #294) is
-an object `{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`) asks `MangaVibe.kit` for it
-each time an element starts, so:
+An interactive piece (the dialog, the menu, tabs and choices: `dialog`, `menu`, `tabs`, `choice`) is an
+object `{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`, `x-tabs`, `x-choice`) asks
+`MangaVibe.kit` for it each time an element starts, so:
 
 | | |
 |---|---|
@@ -136,39 +136,57 @@ stops what the piece was about to do (a dialog stays open).
 ### Tabs
 
 ```html
-<div class="tabs" role="tablist">
-  <button role="tab" :class="{ active: tab === 'books' }" :aria-selected="tab === 'books'" @click="tab = 'books'">
-    Books <span class="count">12</span></button>
-  …
+<div class="tabs" x-tabs aria-label="Series">
+  <button data-tab="books" :class="{ active: tab === 'books' }" @click="tab = 'books'">Books <span class="count">12</span></button>
+  <button data-tab="files" :class="{ active: tab === 'files' }" @click="tab = 'files'">Files</button>
 </div>
+<div data-tab-panel="books" x-show="tab === 'books'">…</div>
+<div data-tab-panel="files" x-show="tab === 'files'">…</div>
 ```
 
-- The active tab has `.active`. `.tabs.small`: tighter; `.tabs.scroll`: scrolls sideways when it doesn't fit.
+- The active tab has `.active`, and your `@click` picks one, as always. `x-tabs` adds the rest:
+  `role="tablist"` and `role="tab"` with `aria-selected`; one stop for Tab (the active tab); Left and
+  Right move between the tabs (round), Home and End to the ends, and pick the one they land on by clicking
+  it, so your `@click` runs.
+- `data-tab` on a tab and `data-tab-panel` with the same value on what it shows (inside the tabs'
+  parent) tie them together for screen readers: `aria-controls`, `role="tabpanel"`, `aria-labelledby`.
+- Option `manual` (`data-kit-options="{ manual: true }"`): the arrows only move, Enter or Space picks.
+  For tabs whose picking does more than show something (Fix match's sources search, a locked library
+  asks for its password).
+- A button in the row that isn't a tab (the libraries' +) gets `data-kit-skip`.
+- `.tabs.small`: tighter; `.tabs.scroll`: scrolls sideways when it doesn't fit.
+- A plugin can change one part only: the methods are `items(el)`, `isPicked(item)` and `link(el, tab)`.
 - Custom properties: `--tabs-accent`, `--tabs-border`.
 
 ### Segmented
 
 ```html
-<div class="segmented" role="radiogroup" aria-label="Order">
-  <button role="radio" :class="{ on: asc }" :aria-checked="asc" @click="asc = true">Ascending</button>
-  <button role="radio" :class="{ on: !asc }" :aria-checked="!asc" @click="asc = false">Descending</button>
+<div class="segmented" x-choice aria-label="Order">
+  <button :class="{ on: asc }" @click="asc = true">Ascending</button>
+  <button :class="{ on: !asc }" @click="asc = false">Descending</button>
 </div>
 ```
 
-- Two or three choices side by side; the chosen one has `.on`.
+- Two or three choices side by side; the chosen one has `.on`, and your `@click` picks.
+- `x-choice` makes it a radio group for screen readers (`role="radiogroup"`, `role="radio"` with
+  `aria-checked`; give the group an `aria-label`), with one stop for Tab and the arrow keys (all four, round,
+  plus Home and End) moving and picking. Option `manual`, `data-kit-skip`, the methods: as for tabs.
 - Custom properties: `--choice-on`, `--choice-on-text`, `--segmented-bg`.
 
 ### Options
 
 ```html
-<div class="options" role="radiogroup" aria-label="Reading direction">
-  <button role="radio" class="on" aria-checked="true">
-    <span class="radio"></span><span class="text">Right to left<small>Manga</small></span></button>
+<div class="options" x-choice aria-label="Reading direction">
+  <button :class="{ on: dir === 'rtl' }" @click="dir = 'rtl'">
+    <span class="radio" aria-hidden="true"></span><span class="text">Right to left<small>Manga</small></span></button>
   …
 </div>
 ```
 
 - One choice per row, like radio buttons (the sort sheet, reading direction); the chosen one has `.on`.
+- `x-choice` as for Segmented. When picking one also closes something (the sort sheet, the reading mode
+  dialog), use `data-kit-options="{ manual: true }"`, so the arrows don't pick on the way.
+- A list of buttons that each *do* something (Move to library) is `.options` without `x-choice`.
 - Custom property: `--choice-on`.
 
 ### Panel
