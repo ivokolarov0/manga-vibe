@@ -631,7 +631,7 @@ Settings. Plugin API 11.
 | `attention-note` | under the explanation of a Needs attention list |
 | `sheets` | the end of the page: sheets and dialogs of your own. Open one with `$store.app.sheet = "<name>"` and show it with `x-show="$store.app.sheet === '<name>'"`. Not inside a component: give it `x-data` |
 | `series-actions` | the series page, after the Continue button and the status dropdowns. `s` is the series (`s.id`, `s.title`, `s.plugin_data[<id>]`…). Give a button or dropdown `class="ctl"` to fit the row. Plugin API 11 |
-| `series-menu` | the series page's ⋯ menu (admins only), before Delete: `<button @click="menuOpen = false; …">`. `s` is the series. Plugin API 11 |
+| `series-menu` | the series page's ⋯ menu (admins only), before Delete: `<button @click="…">`; a click on it closes the menu (Plugin API 33; `menuOpen = false` still works). `s` is the series. Plugin API 11 |
 | `series-panels` | the series page's column of panels (Links, Metadata, Folder…), after Plugin tools: a `<section class="panel"><h2>…</h2>…</section>`. `s` is the series. Plugin API 11 |
 | `series-end` | the end of the series page, after the Books panel: a `<section class="panel wide">`, or dialogs. `s` is the series, `books` its books. Plugin API 11 |
 | `book-row` | each book in the series page's Books list, before its Read button. `b` is the book (`b.id`, `b.label`, `b.completed`, `b.page`), `s` the series. For a short label, `book_badges()` is simpler. Plugin API 11 |
@@ -1372,7 +1372,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 32 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 33 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

@@ -2,7 +2,7 @@
 
 The pieces MangaVibe and its plugins share: buttons, fields, chips, tabs, menus, dialogs, toasts… Use them in
 a plugin's markup and it looks and works like the rest of the app, and it follows the owner's theme and
-`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32.
+`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33.
 
 **See them all at `/kit`** (e.g. `http://localhost:8000/kit`): every piece in its variants, dark and light,
 with your plugins' CSS and `custom.css` applied.
@@ -41,9 +41,9 @@ change is a normal CSS rule: `.my-panel .btn { font-weight: 700 }` wins over the
 
 ## Changing the behaviour: `MangaVibe.kit`
 
-An interactive piece (today: the dialog; menus, tabs and others come in the next steps of #294) is an
-object `{ options, setup(ctx) }`. Its directive (`x-dialog`) asks `MangaVibe.kit` for it each time an
-element starts, so:
+An interactive piece (today: the dialog and the menu; tabs and others come in the next steps of #294) is
+an object `{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`) asks `MangaVibe.kit` for it
+each time an element starts, so:
 
 | | |
 |---|---|
@@ -80,6 +80,8 @@ did (it runs when the element goes). `ctx` has:
 | `el` | the element |
 | `options` | the piece's `options`, then the element's `data-kit-options` |
 | `run()` | runs the directive's expression (`x-dialog="open = false"`) |
+| `expression`, `get()`, `set(value)` | the directive's expression as text, and as a value to read and set (`x-menu="open"`) |
+| `effect(fn)` | runs `fn` again whenever what it read changes (Alpine's `effect`, gone with the element) |
 | `emit(event, detail)` | sends `kit-<event>` from the element (it bubbles); `false` when a listener called `preventDefault()` |
 | `modifiers`, `value`, `name` | the directive's modifiers (`x-dialog.foo`), value (`x-dialog:foo`) and the piece's name |
 
@@ -181,18 +183,39 @@ stops what the piece was about to do (a dialog stays open).
 ### Menu
 
 ```html
-<div class="menu" @click.outside="open = false" @keydown.escape="open = false">
-  <button class="icon-btn" aria-label="More" @click="open = !open">…</button>
+<div class="menu" x-menu="open">
+  <button class="icon-btn" aria-label="More">…</button>
   <div class="menu-pop" x-show="open" x-transition.opacity x-cloak>
-    <button @click="open = false; rescan()"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Rescan</button>
-    <button class="danger">…Delete</button>
+    <button @click="rescan()"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Rescan</button>
+    <button class="danger" @click="openDelete()">…Delete</button>
   </div>
 </div>
 ```
 
 - A button that opens a list of actions, from its top right corner. A menu item can have a `<small>` second
   line and `.danger`.
-- Its keyboard and screen-reader support (an `x-menu` directive) comes in step 3 of #294 (#297).
+- `x-menu` opens and closes it: **don't put an `@click` on its button**, nor `@click.outside` or
+  `@keydown.escape` on the menu. `x-menu="open"` keeps open or closed in your own data (markup can still
+  say `open = false`); a plain `x-menu` keeps it itself, through the pop-up's `hidden`, so the pop-up
+  needs no `x-show`.
+- For screen readers: the button gets `aria-haspopup="menu"`, `aria-expanded` and `aria-controls`; the
+  pop-up `role="menu"`, named after the button; its buttons and links `role="menuitem"`. Give a button
+  that only has an icon an `aria-label`.
+- Keys: Enter, Space or Down on the button opens the menu on its first item, Up on its last; Up, Down,
+  Home and End move (round); a letter goes to the next item that starts with it; Escape closes it and puts
+  the focus back on the button (a dialog around the menu stays open, and so does the library's
+  selection); Tab closes it. A click on an item or outside closes it; with the mouse the focus stays where
+  it was.
+- It stays on the screen: from the button's left edge when its right one is too close to the screen's
+  left side, above the button when there's no room below.
+- Options: `keepOpen` (a click on an item leaves it open, e.g. for switches), `popover` (not a list of
+  actions but anything, e.g. a small form: no menu roles or arrow keys, Tab moves through it, and leaving
+  it closes it; `aria-haspopup="dialog"`).
+- Events: `kit-open`; `kit-select` with `detail.item` before a picked item closes it (`preventDefault()`
+  keeps it open); `kit-closed`.
+- A plugin can change one part only: the methods are `button(el)`, `pop(el)`, `items(pop)` and
+  `place(pop, el)`.
+- Items in a plugin slot (`series-menu`, `select-menu`) are menu items too, nothing to change.
 - Custom properties: `--menu-bg`, `--menu-width`, `--menu-radius`.
 
 ### Dialog

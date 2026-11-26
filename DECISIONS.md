@@ -1537,3 +1537,27 @@ Plugin API version, and the app works after every one.
   keeps it open.
 - **No scrolling behind**: `overflow: hidden` on the root while a modal shows, with `scrollbar-gutter:
   stable` only when there was a scrollbar, so nothing moves sideways.
+
+### Menus (Plugin API 33, issue #294, step 3 #297)
+
+- **`x-menu="menuOpen"` binds to the page's own state**, so the open flag stays where it was
+  (`menuOpen`, `selMenu`, `$store.accounts.menuOpen`) and plugins' items that say `menuOpen = false` (the
+  docs told them to) keep working. The directive reads and sets the expression (`ctx.get()`/`ctx.set()`,
+  as `x-model` does) and follows it with Alpine's `effect`. A plain `x-menu` keeps the state itself, for
+  plugins that don't want any.
+- **The kit owns the button's click**, the click outside and Escape: the markup lost its `@click`
+  toggles, `@click.outside` and `@keydown.escape` (a test checks every `.menu`). Two toggles on one
+  button would cancel out.
+- **The APG menu button pattern**: `role="menu"`/`menuitem`, the items out of the Tab order (`tabindex=-1`)
+  and reached with the arrows, Home/End and a letter; Tab closes. The focus only moves into the menu when
+  it was opened from the keyboard (a click with `detail === 0`, or Up/Down); a mouse click leaves it.
+- **Escape is used up**: the menu calls `preventDefault()`, a dialog around it leaves an Escape that was
+  already used, and the library's select bar now does too (Escape in its ⋯ menu closed the menu *and*
+  ended the selection). A dialog's own Escape is used up the same way.
+- **The click outside is a `click`**, like Alpine's `@click.outside` was, not `pointerdown`, so a click a
+  script makes still closes it.
+- **Staying on screen without anchor positioning**: after it opens, `place()` measures the pop-up and
+  flips it (`data-kit-align="start"`, `data-kit-side="top"`). A few lines that work in every browser the
+  app runs in (older Android WebViews included), without depending on CSS anchor positioning.
+- **Popovers** (`popover: true`) share the open and close but not the menu roles or keys: any content,
+  Tab moves through it, and the focus leaving it closes it.

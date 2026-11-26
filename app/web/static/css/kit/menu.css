@@ -1,6 +1,6 @@
 /* UI kit: a menu, a button that opens a list of actions (docs/UI-KIT.md, "Menu").
-   .menu > a button, then .menu-pop > buttons (an icon, the label, maybe a <small> second line; .danger).
-   It opens from its top right corner.
+   .menu[x-menu] > a button, then .menu-pop > buttons (an icon, the label, maybe a <small> second line;
+   .danger). It opens from its top right corner. The keys and roles are js/kit.js's.
    Custom properties: --menu-bg, --menu-width, --menu-radius. */
 @layer kit {
   .menu {
@@ -47,6 +47,13 @@
         background: var(--surface2);
       }
 
+      /* the arrow keys move the focus through the items: the focused one looks like the hovered one,
+         with the ring inside it */
+      &:focus-visible {
+        background: var(--surface2);
+        outline-offset: -2px;
+      }
+
       & small {
         flex-basis: 100%;
         padding-left: 27px;
@@ -62,6 +69,23 @@
       &.danger:hover {
         background: color-mix(in srgb, var(--danger) 12%, transparent);
       }
+    }
+  }
+
+  /* it would leave the screen (js/kit.js, the menu's place()): from the button's left edge, or above it */
+  .menu-pop[data-kit-align="start"] {
+    right: auto;
+    left: 0;
+    transform-origin: top left;
+  }
+
+  .menu-pop[data-kit-side="top"] {
+    top: auto;
+    bottom: calc(100% + 6px);
+    transform-origin: bottom right;
+
+    &[data-kit-align="start"] {
+      transform-origin: bottom left;
     }
   }
 

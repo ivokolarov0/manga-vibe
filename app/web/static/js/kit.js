@@ -9,9 +9,12 @@
 
    Changes count only while the plugin is switched on; the elements that start after that use them.
    A piece is { options, setup(ctx) }. setup runs when an element with the directive starts, gets
-   ctx = { el, options, run, emit, modifiers, value, name } and may return a function that undoes it:
+   ctx = { el, options, expression, run, get, set, effect, emit, modifiers, value, name } and may return a
+   function that undoes it:
      options: the piece's options, then the element's data-kit-options="{ … }" (an Alpine expression);
      run(): runs the directive's expression (x-dialog="open = false");
+     get() / set(value): the expression as a value (x-menu="menuOpen"): its value, and setting it;
+     effect(fn): runs fn again whenever what it read changes (Alpine's effect, gone with the element);
      emit(event, detail): sends "kit-<event>" from the element (bubbles); false when a listener called
        preventDefault(), to say "don't".
    Loaded before app.js, which puts `kit` in window.MangaVibe; also used alone by the kit page (/kit). */
@@ -33,15 +36,25 @@ function get(name) {
 
 // x-<name> on an element: the piece's setup, undone when the element goes
 function directive(name) {
-  return (el, { expression, modifiers, value }, { evaluateLater, cleanup }) => {
+  return (el, { expression, modifiers, value }, { evaluateLater, cleanup, effect }) => {
     const piece = get(name);
     if (!piece?.setup) return;
     const run = expression ? evaluateLater(expression) : () => {};
+    let setter = null;  // made the first time: "close()" can be run but not set
     const extra = el.dataset.kitOptions ? Alpine.evaluate(el, el.dataset.kitOptions) : null;
     const ctx = {
-      el, modifiers, value, name,
+      el, modifiers, value, name, expression, effect,
       options: { ...piece.options, ...extra },
       run: () => run(),
+      get: () => {
+        let v;
+        run((x) => (v = x));
+        return v;
+      },
+      set: (v) => {
+        setter ||= evaluateLater(`${expression} = __kitValue`);
+        setter(() => {}, { scope: { __kitValue: v } });
+      },
       emit: (event, detail = {}) => el.dispatchEvent(
         new CustomEvent(`kit-${event}`, { detail, bubbles: true, cancelable: true })),
     };
@@ -180,7 +193,10 @@ own.set("dialog", {
     const onClick = (e) => options.backdrop && e.target === el && isTop() && close("backdrop");
     const onKey = (e) => {
       if (!isTop() || e.defaultPrevented) return;  // a menu in the dialog took its Escape
-      if (e.key === "Escape" && options.escape) return close("escape");
+      if (e.key === "Escape" && options.escape) {
+        e.preventDefault();  // used: the page's own Escape (e.g. ending a selection) leaves it
+        return close("escape");
+      }
       // Tab goes round inside the box (inert keeps it out of the page, not out of the browser's bar)
       if (e.key === "Tab" && options.modal) {
         const all = focusables(box);
@@ -201,6 +217,142 @@ own.set("dialog", {
       if (open) hide();  // taken out of the page while showing (x-if)
       el.removeEventListener("click", onClick);
       window.removeEventListener("keydown", onKey);
+    };
+  },
+});
+
+/* x-menu on a .menu: its button opens the .menu-pop next to it, a list of actions. x-menu="menuOpen"
+   keeps open or closed in your own data (so markup can say menuOpen = false); plain x-menu keeps it
+   itself (the pop-up's `hidden`). Don't put an @click on the button: x-menu opens and closes it.
+   The button gets aria-haspopup, aria-expanded and aria-controls; the pop-up role="menu" and its buttons
+   and links role="menuitem". Keys: Enter, Space or Down opens on the first item, Up on the last; Up, Down,
+   Home and End move (round); a letter goes to the next item that starts with it; Escape closes and puts
+   the focus back on the button (a dialog around it stays open); Tab closes. A click on an item or outside
+   closes it. The pop-up opens from the button's right edge, and flips to its left or above it when it
+   would leave the screen.
+   Options: keepOpen (a click on an item leaves it open, for switches), popover (not a list of actions
+   but any content, e.g. a small form: no menu roles or arrow keys, Tab moves through it, and leaving it
+   closes it). Events: kit-open, kit-select { item } before an item closes it (preventDefault() keeps it
+   open), kit-closed.
+   button(), pop(), items() and place() are methods, so a plugin can change one of them alone. */
+const ITEMS = "button, a[href], [role='menuitem']";
+own.set("menu", {
+  options: { keepOpen: false, popover: false },
+  button: (el) => el.querySelector(":scope > button, :scope > [data-kit-trigger]"),
+  pop: (el) => el.querySelector(":scope > .menu-pop"),
+  items: (pop) => [...pop.querySelectorAll(ITEMS)].filter((i) => shown(i) && !i.disabled),
+  // stay on the screen: from the button's left edge when it would go past the left one, above the
+  // button when there's no room below
+  place(pop, el) {
+    delete pop.dataset.kitAlign;
+    delete pop.dataset.kitSide;
+    const r = pop.getBoundingClientRect();
+    if (r.left < 8) pop.dataset.kitAlign = "start";
+    if (r.bottom > innerHeight - 8 && el.getBoundingClientRect().top > r.height + 16) pop.dataset.kitSide = "top";
+  },
+  setup(ctx) {
+    const piece = this, { el, options } = ctx;
+    const button = piece.button(el), pop = piece.pop(el);
+    if (!button || !pop) return;
+    pop.id ||= `kit-menu-${++uid}`;
+    button.id ||= `kit-menu-button-${++uid}`;
+    button.setAttribute("aria-haspopup", options.popover ? "dialog" : "menu");
+    button.setAttribute("aria-controls", pop.id);
+    if (!options.popover) {
+      pop.setAttribute("role", "menu");
+      if (!pop.hasAttribute("aria-label")) pop.setAttribute("aria-labelledby", button.id);
+    }
+
+    let mine = false;  // open or closed, without x-menu="…"
+    const isOpen = () => (ctx.expression ? !!ctx.get() : mine);
+    const setOpen = (on) => {
+      if (ctx.expression) ctx.set(on);
+      else changed((mine = on));
+    };
+    const list = () => (options.popover ? focusables(pop) : piece.items(pop));
+    let focusTo = null, was = false;  // where the focus goes when it opens: "first" | "last" | null
+    const focusItem = (which) => {
+      const all = list();
+      (which === "last" ? all.at(-1) : all[0])?.focus();
+    };
+
+    function changed(on) {
+      button.setAttribute("aria-expanded", String(on));
+      if (!ctx.expression) pop.hidden = !on;
+      if (on === was) return;
+      was = on;
+      if (on) {
+        if (!options.popover) {
+          for (const i of pop.querySelectorAll(ITEMS)) {
+            if (!i.hasAttribute("role")) i.setAttribute("role", "menuitem");
+            i.tabIndex = -1;  // the arrow keys move between them, Tab leaves the menu
+          }
+        }
+        Alpine.nextTick(() => {  // once x-show has shown it
+          piece.place(pop, el);
+          if (focusTo) focusItem(focusTo);
+          focusTo = null;
+        });
+        ctx.emit("open");
+      } else {
+        if (pop.contains(document.activeElement)) button.focus();
+        ctx.emit("closed");
+      }
+    }
+    if (ctx.expression) ctx.effect(() => changed(isOpen()));
+    else changed(false);
+
+    const onButton = (e) => {
+      if (!button.contains(e.target)) return;
+      focusTo = e.detail === 0 ? "first" : null;  // a click from the keyboard (Enter, Space)
+      setOpen(!isOpen());
+    };
+    const onKey = (e) => {
+      const onButtonKey = button.contains(e.target);
+      if (onButtonKey && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+        e.preventDefault();
+        focusTo = e.key === "ArrowDown" ? "first" : "last";
+        return isOpen() ? focusItem(focusTo) : setOpen(true);
+      }
+      if (!isOpen()) return;
+      if (e.key === "Escape") {
+        e.preventDefault();  // a dialog around the menu stays open
+        setOpen(false);
+        return button.focus();
+      }
+      if (e.key === "Tab" && !options.popover) return setOpen(false);
+      if (options.popover || onButtonKey) return;
+      const all = list(), at = all.indexOf(document.activeElement);
+      const go = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: all.length - 1 }[e.key];
+      if (go !== undefined) {
+        e.preventDefault();
+        all.at(go % all.length)?.focus();
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && e.key !== " ") {
+        const k = e.key.toLowerCase();
+        const next = [...all.slice(at + 1), ...all.slice(0, at + 1)]
+          .find((i) => i.textContent.trim().toLowerCase().startsWith(k));
+        next?.focus();
+      }
+    };
+    const onPick = (e) => {
+      const item = options.popover ? null : e.target.closest(ITEMS);
+      if (!item || !pop.contains(item) || options.keepOpen) return;
+      if (ctx.emit("select", { item })) setOpen(false);
+    };
+    const onOutside = (e) => isOpen() && !el.contains(e.target) && setOpen(false);
+    const onLeave = (e) => isOpen() && e.relatedTarget && !el.contains(e.relatedTarget) && setOpen(false);
+
+    button.addEventListener("click", onButton);
+    el.addEventListener("keydown", onKey);
+    pop.addEventListener("click", onPick);
+    el.addEventListener("focusout", onLeave);
+    document.addEventListener("click", onOutside, true);  // a click, as @click.outside did (a script's too)
+    return () => {
+      button.removeEventListener("click", onButton);
+      el.removeEventListener("keydown", onKey);
+      pop.removeEventListener("click", onPick);
+      el.removeEventListener("focusout", onLeave);
+      document.removeEventListener("click", onOutside, true);
     };
   },
 });

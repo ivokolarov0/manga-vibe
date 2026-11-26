@@ -80,6 +80,7 @@ globalThis.stoppedPlugins = new Set();
 require(process.argv[2]);
 listeners["alpine:init"].forEach((f) => f());
 const tick = () => new Promise((r) => setTimeout(r));
+const esc = () => ({ key: "Escape", defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } });
 const notify = async () => { observers.forEach((o) => !o.off && o.f()); await tick(); };
 
 function element(more = {}) {
@@ -123,20 +124,20 @@ out.focusInBox = document.activeElement === d.box;
 out.pageInert = page.inert;
 out.locked = [...classes].sort();
 d.el.fire("click", { target: d.el });
-window.fire("keydown", { key: "Escape" });
+window.fire("keydown", esc());
 out.plain = d.closed();
 await d.show(false);
 out.focusBack = document.activeElement === opener;
 out.pageFree = !page.inert && classes.size === 0;
 out.events = d.events;
 d.undo();
-window.fire("keydown", { key: "Escape" });
+window.fire("keydown", esc());
 out.afterUndo = d.closed();
 
 let a = dialog(), b = dialog();
 await a.show();
 await b.show();
-window.fire("keydown", { key: "Escape" });
+window.fire("keydown", esc());
 out.topOnly = [a.closed(), b.closed()];
 a.undo(); b.undo();
 
@@ -145,7 +146,7 @@ d = dialog();
 await d.show();
 d.el.fire("click", { target: d.el });
 out.extendedBackdrop = d.closed();
-window.fire("keydown", { key: "Escape" });
+window.fire("keydown", esc());
 out.extendedEscape = d.closed();
 d.undo();
 
@@ -158,14 +159,14 @@ d.undo();
 
 d = dialog("{ escape: false }");
 await d.show();
-window.fire("keydown", { key: "Escape" });
+window.fire("keydown", esc());
 out.optionEscape = d.closed();
 d.undo();
 
 d = dialog();
 await d.show();
 d.el.addEventListener("kit-close", (e) => e.preventDefault());
-window.fire("keydown", { key: "Escape" });
+window.fire("keydown", esc());
 out.prevented = d.closed();
 d.undo();
 out.unlockedAtTheEnd = classes.size === 0 && !page.inert;
@@ -194,4 +195,24 @@ def test_a_plugin_can_change_a_piece(tmp_path):
     assert out["pluginOff"] == 1                         # switched off: the plain dialog again
     assert out["optionEscape"] == 0                      # data-kit-options on one dialog
     assert out["prevented"] == 0                         # kit-close with preventDefault() keeps it open
-    assert out["names"] == ["dialog"]
+    assert out["names"] == ["dialog", "menu"]
+
+
+MARKUP = sorted([*(ROOT / "app" / "web" / "templates").rglob("*.html"),
+                 *(ROOT / "app" / "plugins" / "builtin").rglob("*.html"), KIT_PAGE])
+
+
+def test_menus_use_x_menu():
+    """Every .menu is the kit's (#297): x-menu opens and closes it, so no @click toggle on its button and
+    no @click.outside or @keydown.escape of its own."""
+    found = 0
+    for path in MARKUP:
+        text = path.read_text(encoding="utf-8")
+        for m in re.finditer(r'<div class="menu[ "][^>]*>\s*<button[^>]*>', text):
+            found += 1
+            tag = m.group(0)
+            where = f"{path.relative_to(ROOT).as_posix()}: {tag[:80]}"
+            assert "x-menu" in tag, where
+            assert "@click.outside" not in tag and "@keydown.escape" not in tag, where
+            assert not re.search(r"<button[^>]*@click=", tag), where
+    assert found >= 6  # series ⋯, the library's select menu, the account menu, the kit page's

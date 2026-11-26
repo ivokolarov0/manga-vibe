@@ -65,6 +65,11 @@
       }
     }
 
+    .kit-popover {
+      gap: 10px;
+      padding: 12px;
+    }
+
     /* a box that restyles the buttons inside it with the kit's custom properties */
     .kit-custom {
       --btn-bg: color-mix(in srgb, var(--ok) 18%, var(--surface2));
@@ -211,17 +216,42 @@
 
   <section data-piece="menu">
     <h2>Menu</h2>
-    <p class="muted"><code>.menu</code>: a button, then a <code>.menu-pop</code> of buttons (an icon, the label, a
-      <code>&lt;small&gt;</code> line, <code>.danger</code>).</p>
+    <p class="muted"><code>.menu</code> with <code>x-menu</code>: a button, then a <code>.menu-pop</code> of buttons
+      (an icon, the label, a <code>&lt;small&gt;</code> line, <code>.danger</code>). Try the keyboard: Enter, the
+      arrows, Home, End, a letter, Escape.</p>
     <div class="kit-demo">
-      <div class="menu" @click.outside="menuOpen = false" @keydown.escape="menuOpen = false">
-        <button class="btn" @click="menuOpen = !menuOpen">Open the menu
+      <div class="menu" x-menu="menuOpen">
+        <button class="btn">Open the menu
           <svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
         <div class="menu-pop" x-show="menuOpen" x-transition.opacity x-cloak>
-          <button @click="menuOpen = false"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Rescan</button>
-          <button @click="menuOpen = false"><svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>Reading mode…
+          <button @click="picked = 'Rescan'"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Rescan</button>
+          <button @click="picked = 'Reading mode'"><svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>Reading mode…
             <small>Right to left</small></button>
-          <button class="danger" @click="menuOpen = false"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Delete…</button>
+          <button @click="picked = 'Fix match'"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>Fix match…</button>
+          <button class="danger" @click="picked = 'Delete'"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Delete…</button>
+        </div>
+      </div>
+      <div class="menu" x-menu>
+        <button class="btn">A menu that keeps its own state</button>
+        <div class="menu-pop">
+          <button @click="picked = 'One'">One</button>
+          <button @click="picked = 'Two'">Two</button>
+        </div>
+      </div>
+      <div class="menu" x-menu data-kit-options="{ popover: true }">
+        <button class="btn">A popover</button>
+        <div class="menu-pop kit-popover">
+          <label class="row"><input type="checkbox" class="switch" checked> Show spoilers</label>
+          <input type="text" placeholder="A note" aria-label="A note">
+        </div>
+      </div>
+      <span class="muted" x-show="picked" x-text="'Picked: ' + picked"></span>
+    </div>
+    <div class="kit-demo">
+      <div class="menu" x-menu>
+        <button class="btn">Left edge</button>
+        <div class="menu-pop">
+          <button>It opens to the right instead</button>
         </div>
       </div>
     </div>
@@ -300,7 +330,7 @@
     Alpine.data("kitPage", () => ({
       theme: document.documentElement.dataset.theme,
       tab: "books", seg: "asc", opt: "rtl",
-      menuOpen: false, dialogOpen: false, keepOpen: false, innerOpen: false,
+      menuOpen: false, picked: "", dialogOpen: false, keepOpen: false, innerOpen: false,
       toastText: "", toastKind: "", toastTimer: 0,
       toggleTheme() {
         this.theme = this.theme === "dark" ? "light" : "dark";
