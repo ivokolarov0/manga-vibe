@@ -1,0 +1,185 @@
+/* UI kit: buttons (docs/UI-KIT.md, "Buttons").
+   .btn (.small .primary .danger .on .busy), .iconbtn (square, an icon), .icon-btn (round, small),
+   .link-btn (looks like a link), .btn-row (a row of them).
+   Custom properties: --btn-bg, --btn-border, --btn-radius, --btn-height, --btn-primary-bg,
+   --btn-primary-text, --btn-danger. Set them on a box to change the buttons inside it. */
+@layer kit {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    height: var(--btn-height, var(--control-height));
+    padding: 0 14px;
+    background: var(--btn-bg, var(--surface2));
+    border: 1px solid var(--btn-border, var(--border));
+    border-radius: var(--btn-radius, var(--radius));
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+
+    &.small {
+      height: var(--control-height-small);
+      padding: 0 11px;
+      border-radius: calc(var(--btn-radius, var(--radius)) - 2px);
+      font-size: 13px;
+    }
+
+    &.primary {
+      background: var(--btn-primary-bg, var(--accent));
+      border-color: var(--btn-primary-bg, var(--accent));
+      color: var(--btn-primary-text, var(--accent-text));
+      font-weight: 600;
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--btn-primary-bg, var(--accent)) 30%, transparent);
+    }
+
+    &.danger {
+      color: var(--btn-danger, var(--danger));
+      border-color: color-mix(in srgb, var(--btn-danger, var(--danger)) 50%, var(--btn-border, var(--border)));
+    }
+
+    &.on {
+      color: var(--warn);
+      border-color: var(--warn);
+    }
+
+    &.disabled,
+    &:disabled {
+      opacity: 0.55;
+      box-shadow: none;
+      cursor: default;
+    }
+  }
+
+  .iconbtn {
+    position: relative;
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    height: var(--btn-height, var(--control-height));
+    min-width: var(--btn-height, var(--control-height));
+    padding: 0 10px;
+    background: var(--btn-bg, var(--surface2));
+    border: 1px solid var(--btn-border, var(--border));
+    border-radius: var(--btn-radius, var(--radius));
+    color: var(--muted);
+    font-size: 16px;
+
+    & .ic {
+      width: 20px;
+      height: 20px;
+    }
+
+    & .count {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      padding: 0 5px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: var(--accent-text);
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        color: var(--text);
+      }
+    }
+  }
+
+  /* round icon buttons: same height as a small button, icon exactly centred */
+  .icon-btn {
+    display: inline-grid;
+    place-items: center;
+    width: var(--control-height-small);
+    height: var(--control-height-small);
+    padding: 0;
+    background: var(--btn-bg, var(--surface2));
+    border: 1px solid var(--btn-border, var(--border));
+    border-radius: 50%;
+
+    & .ic {
+      width: 17px;
+      height: 17px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  .link-btn {
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--accent);
+    font-size: 13px;
+  }
+
+  .btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* ---------------------------------------------------------------- states
+     Hover only on devices with a real pointer (no "stuck" hover after a tap on phones). */
+  .btn,
+  .iconbtn,
+  .icon-btn,
+  .link-btn {
+    transition: background-color var(--fast), border-color var(--fast), color var(--fast),
+      filter var(--fast), box-shadow var(--fast), transform 0.08s;
+  }
+
+  @media (hover: hover) {
+    .btn:not(:disabled, .disabled, .primary):hover,
+    .iconbtn:hover,
+    .icon-btn:hover {
+      background: color-mix(in srgb, var(--text) 9%, var(--btn-bg, var(--surface2)));
+      border-color: color-mix(in srgb, var(--text) 30%, var(--btn-border, var(--border)));
+    }
+
+    .btn.primary:not(:disabled, .disabled):hover {
+      filter: brightness(1.08);
+      box-shadow: 0 4px 16px color-mix(in srgb, var(--btn-primary-bg, var(--accent)) 42%, transparent);
+    }
+
+    .btn.danger:not(:disabled):hover {
+      background: color-mix(in srgb, var(--btn-danger, var(--danger)) 15%, var(--btn-bg, var(--surface2)));
+      border-color: var(--btn-danger, var(--danger));
+    }
+
+    .link-btn:hover {
+      text-decoration: underline;
+    }
+  }
+
+  /* a button whose action is running: a spinner before the label (add .busy, and disable it) */
+  .btn.busy::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    flex: none;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  .btn.busy:disabled {
+    opacity: 1;
+    cursor: progress;
+  }
+
+  /* a small "press" so a click feels like it did something */
+  .btn:not(:disabled, .disabled):active,
+  .iconbtn:active,
+  .icon-btn:active {
+    transform: scale(0.96);
+  }
+}

@@ -30,6 +30,7 @@ DEV_PAGES = [
     ("docs/developers.md", "docs/developers/", "How it's built"),
     ("docs/PLUGIN-REFERENCE.md", "plugins/", "Plugin reference"),
     ("docs/PLUGINS.md", "docs/plugin-guide/", "The full plugin guide"),
+    ("docs/UI-KIT.md", "docs/ui-kit/", "The UI kit"),
 ]
 
 # Docs that are only on GitHub; the homepage links to them

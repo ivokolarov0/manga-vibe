@@ -1,0 +1,74 @@
+/* UI kit: a menu, a button that opens a list of actions (docs/UI-KIT.md, "Menu").
+   .menu > a button, then .menu-pop > buttons (an icon, the label, maybe a <small> second line; .danger).
+   It opens from its top right corner.
+   Custom properties: --menu-bg, --menu-width, --menu-radius. */
+@layer kit {
+  .menu {
+    position: relative;
+  }
+
+  .menu-pop {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 20;
+    display: grid;
+    min-width: var(--menu-width, 240px);
+    padding: 6px;
+    background: var(--menu-bg, var(--surface));
+    border: 1px solid var(--border);
+    border-radius: var(--menu-radius, 14px);
+    box-shadow: var(--shadow-lg);
+    transform-origin: top right;
+    animation: menu-in 0.16s var(--ease);
+
+    /* an icon, the label, and maybe a second line under the label */
+    & button {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px 10px;
+      padding: 9px 10px;
+      background: none;
+      border: 0;
+      border-radius: 9px;
+      font-size: 14px;
+      text-align: left;
+      transition: background-color var(--fast), border-color var(--fast), color var(--fast),
+        filter var(--fast), box-shadow var(--fast), transform 0.08s;
+
+      & .ic {
+        width: 17px;
+        height: 17px;
+        color: var(--muted);
+      }
+
+      &:hover {
+        background: var(--surface2);
+      }
+
+      & small {
+        flex-basis: 100%;
+        padding-left: 27px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      &.danger,
+      &.danger .ic {
+        color: var(--danger);
+      }
+
+      &.danger:hover {
+        background: color-mix(in srgb, var(--danger) 12%, transparent);
+      }
+    }
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+  }
+}

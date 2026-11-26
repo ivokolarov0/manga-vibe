@@ -175,23 +175,9 @@ function ago(ms) {
 
 /* ---------------- global store + router ---------------- */
 
-/* x-dialog="<close>" on a .modal or .sheet: a click on its backdrop (the element itself, not what's in
-   it) or Escape runs <close>, e.g. x-dialog="open = false". The Android back button sends Escape too
-   (MangaVibeApp.back). Plugins use it as well (docs/PLUGINS.md). */
-function dialogDirective(el, { expression }, { evaluateLater, cleanup }) {
-  const close = evaluateLater(expression);
-  const onClick = (e) => e.target === el && close();
-  const onKey = (e) => e.key === "Escape" && close();
-  el.addEventListener("click", onClick);
-  window.addEventListener("keydown", onKey);
-  cleanup(() => {
-    el.removeEventListener("click", onClick);
-    window.removeEventListener("keydown", onKey);
-  });
-}
+/* x-dialog and the UI kit's other pieces are in js/kit.js (MangaVibe.kit, docs/UI-KIT.md) */
 
 document.addEventListener("alpine:init", () => {
-  Alpine.directive("dialog", dialogDirective);
   alpineStarted = true;  // plugin scripts loaded from now on run MangaVibe.onStart() at once
   Alpine.store("app", {
     pluginSlots: filledSlots(),  // the page's slots plugins put something in (see window.MangaVibe)
@@ -1068,6 +1054,9 @@ window.MangaVibe = {
   onStart(fn) { alpineStarted ? fn() : document.addEventListener("alpine:init", fn); },
   api,             // api(path, { method, body }) -> the JSON answer; throws Error(detail) on 4xx/5xx
   toast,           // toast(text, ms = 3000, kind = "" | "error")
+  // the UI kit's pieces (Plugin API 31, docs/UI-KIT.md): get(name), define(pluginId, name, piece),
+  // extend(pluginId, name, fn), names() (js/kit.js)
+  kit,
   // the page's language (Plugin API 27, #263): t(text, values) and tn(singular, plural, n, values) as in
   // common.js, and dates and numbers written its way. In markup, t() and tn() work as they are
   t, tn, th, lang: LANG, fmtDate, fmtDateTime, fmtTime, fmtNum,

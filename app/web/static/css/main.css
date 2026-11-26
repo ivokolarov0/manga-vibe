@@ -2,19 +2,31 @@
  * MangaVibe styles: the one stylesheet the page (templates/page.html) loads.
  *
  * Built-in styles live in cascade layers, in this order (later layers win):
- *   tokens → base → layout → components → pages → reader
+ *   tokens → base → kit → layout → components → pages → reader
  * /custom.css (plugin CSS, then docker/mangavibe/custom.css) is imported last and *outside*
  * the layers, so your own rules always win without !important.
  */
-@layer tokens, base, layout, components, pages, reader;
+@layer tokens, base, kit, layout, components, pages, reader;
 
 /* design tokens: colours, sizes (change these to re-theme) */
 @import url("tokens.css");
 
-/* reset, buttons, inputs, chips, tabs, panels */
+/* reset, icons, helpers, motion */
 @import url("base.css");
 
-/* top bar, bottom navigation, sheets and dialogs, toast */
+/* the UI kit: the pieces the app and plugins share (docs/UI-KIT.md). Each one has custom properties
+   of its own (--btn-bg, --panel-bg, --dialog-width…) that default to the tokens */
+@import url("kit/fields.css");
+@import url("kit/buttons.css");
+@import url("kit/chips.css");
+@import url("kit/tabs.css");
+@import url("kit/choices.css");
+@import url("kit/panel.css");
+@import url("kit/menu.css");
+@import url("kit/dialog.css");
+@import url("kit/feedback.css");
+
+/* top bar, bottom navigation, banners */
 @import url("layout.css");
 
 /* shared components */

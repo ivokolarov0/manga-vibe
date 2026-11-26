@@ -127,8 +127,8 @@ def session_user(cookie):
 
 # ---------------------------------------------------------------- the guard
 
-# what works without logging in: the page itself, its files, and logging in
-PUBLIC = re.compile(r"^/(|manifest\.json|custom\.css|static/.*|plugins/[^/]+\.(js|css)|api/health"
+# what works without logging in: the page itself, its files, the UI kit page (no data on it), and logging in
+PUBLIC = re.compile(r"^/(|kit|manifest\.json|custom\.css|static/.*|plugins/[^/]+\.(js|css)|api/health"
                     r"|api/plugins/accounts/api/(me|setup|login|logout))$")
 
 

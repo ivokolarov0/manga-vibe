@@ -1480,3 +1480,34 @@ Plugin API version, and the app works after every one.
 - The arrows only with a mouse (`hover: hover`) and only while there's somewhere to go. The cards are
   the card view (`home_card()` draws Continue reading's for that row, the library's for the others), with
   `content-visibility` off so cards out of sight aren't blank while swiping.
+
+### The UI kit (Plugin API 31, issue #294; step 1 #295)
+
+- **Our own kit, not a library.** Web Awesome/Shoelace (some components behind a paid tier), Basecoat,
+  Pines and Penguin (Tailwind and a build), Pico, Oat and Kelp (a look of their own that fights
+  `tokens.css`) were looked at and turned down by the owner. The pieces were already in the app, scattered
+  over `base.css`, `layout.css` and `series.css`; the kit puts them in one place, documents them
+  (`docs/UI-KIT.md`) and shows them all at `/kit`.
+- **Plain class names stay** (`.btn`, `.panel`, `.modal`): plugins already use them, so no `mv-` prefix.
+  The kit is built with today's look; the new look (#302, #303) comes last, through the tokens and the
+  kit, so it reaches every page and plugin at once.
+- **A `kit` cascade layer between `base` and `layout`**, one file per piece in `css/kit/`. Pieces that were
+  in `base` and `layout` keep their place against the page rules (layout, components, pages still win), so
+  nothing changed on screen (Firefox screenshots of every page, dark and light, wide and phone, compared
+  pixel for pixel with main). Only the round `.icon-btn` and `.menu-pop` moved down from the `pages` layer;
+  that lets the hover the app always meant for `.icon-btn` show (the pages layer used to cover it).
+- **No `:where()`**: plugin CSS and `custom.css` are outside every layer, so they already win whatever the
+  specificity; wrapping the kit in `:where()` would only have reordered its own variants. What a plugin
+  gets instead is **custom properties per piece** (`--btn-bg`, `--panel-radius`, `--dialog-width`…) that
+  fall back to the tokens: set on a box, they change only the pieces inside it; unset, the piece follows
+  the theme.
+- **Behaviour in a registry, `MangaVibe.kit`**: a piece is `{ options, setup(ctx) }`, and its directive
+  (`x-dialog`) asks for it each time an element starts, so `extend(pluginId, name, fn)` or
+  `define(pluginId, name, piece)` reach every use without touching markup; `data-kit-options` changes one
+  use. Like `MangaVibe.on`, a plugin's changes count only while it's on. Events are `kit-close` etc. (a
+  hyphen, not a colon, so `@kit-close` works in Alpine), cancelable, so a plugin can stop a piece without
+  replacing it. `x-dialog` now ignores Escape for dialogs that aren't shown (it ran every closed dialog's
+  close before).
+- **The kit page is `/kit`, not a view of the app**: a page of its own (`app/web/kit/kit.html`), so the
+  app's page doesn't carry it, open without logging in (no data on it, only public files). It loads the
+  app's CSS with plugins' and `custom.css`, so a theme shows there; it's in English, like the docs.

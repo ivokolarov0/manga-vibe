@@ -11,7 +11,7 @@ from app.plugins import Plugin
 ROOT = Path(__file__).resolve().parent.parent
 DOC = (ROOT / "docs" / "PLUGIN-REFERENCE.md").read_text(encoding="utf-8")
 APP_JS = "\n".join((ROOT / "app" / "web" / "static" / "js" / f).read_text(encoding="utf-8")
-                   for f in ("app.js", "reader.js"))
+                   for f in ("app.js", "reader.js", "kit.js"))
 
 
 def blocks(lang):

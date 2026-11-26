@@ -1,0 +1,123 @@
+/* UI kit: choices (docs/UI-KIT.md, "Segmented" and "Options").
+   .segmented: two or three choices side by side in one frame; the chosen button has .on.
+   .options: a list of choices, one per row, like radio buttons (sort menu, reading direction): a button
+   with a .radio and a .text (a line and an optional <small>); the chosen one has .on.
+   Custom properties: --choice-on (the chosen one's colour), --choice-on-text, --segmented-bg. */
+@layer kit {
+  .segmented {
+    display: inline-flex;
+    padding: 3px;
+    background: var(--segmented-bg, var(--surface2));
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 3px);
+
+    & button {
+      min-width: 110px;
+      height: var(--control-height-small);
+      padding: 0 14px;
+      background: none;
+      border: 0;
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+
+      &.on {
+        background: var(--choice-on, var(--accent));
+        color: var(--choice-on-text, var(--accent-text));
+        font-weight: 600;
+        box-shadow: var(--shadow-sm);
+      }
+    }
+  }
+
+  .options {
+    display: grid;
+    gap: 6px;
+
+    & button {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 48px;
+      padding: 8px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-align: left;
+
+      &.on {
+        background: color-mix(in srgb, var(--choice-on, var(--accent)) 14%, var(--surface2));
+        border-color: var(--choice-on, var(--accent));
+        font-weight: 600;
+
+        & .radio {
+          border-color: var(--choice-on, var(--accent));
+
+          &::after {
+            transform: scale(1);
+          }
+        }
+      }
+    }
+
+    & .radio {
+      display: grid;
+      flex: none;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--muted);
+      border-radius: 50%;
+      transition: border-color var(--fast);
+
+      &::after {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--choice-on, var(--accent));
+        transform: scale(0);
+        transition: transform var(--slow) var(--ease);
+      }
+    }
+
+    & .text {
+      display: grid;
+      gap: 2px;
+
+      & small {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 400;
+      }
+    }
+  }
+
+  /* ---------------------------------------------------------------- states */
+  .options button,
+  .segmented button {
+    transition: background-color var(--fast), border-color var(--fast), color var(--fast),
+      filter var(--fast), box-shadow var(--fast), transform 0.08s;
+  }
+
+  @media (hover: hover) {
+    .segmented button.on:hover {
+      filter: brightness(1.08);
+    }
+
+    .segmented button:not(.on):hover {
+      color: var(--text);
+    }
+
+    .options button:not(.on):hover {
+      background: color-mix(in srgb, var(--text) 6%, var(--surface2));
+      border-color: color-mix(in srgb, var(--text) 30%, var(--border));
+    }
+  }
+
+  .options button:active,
+  .segmented button:active {
+    transform: scale(0.96);
+  }
+}

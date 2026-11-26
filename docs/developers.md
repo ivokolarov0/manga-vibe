@@ -72,8 +72,10 @@ app/web/templates/      the page, as Jinja templates of Alpine markup (see "The 
                         folder picker); ui/macros.html holds the pieces used in several places.
                         The views are the built-in plugins' templates/views/ (cards, library_page,
                         continue_page, series_page, dialogs, nav, settings_pages), drawn with view()
-app/web/static/css/     styles: main.css imports one file per feature (CSS layers)
-app/web/static/js/      app.js (Alpine data), reader.js (plain-JS reader), common.js,
+app/web/static/css/     styles: main.css imports one file per feature (CSS layers); css/kit/ is the
+                        UI kit, the pieces the app and plugins share (docs/UI-KIT.md)
+app/web/kit/            the UI kit page at /kit: every piece in its variants
+app/web/static/js/      app.js (Alpine data), reader.js (plain-JS reader), common.js, kit.js (MangaVibe.kit),
                         vendor/alpine.min.js, vendor/embla-carousel.umd.js (Home's carousels)
 app/web/static/icons/   app icons; manifest.json next to them
 android/                the Android app: MangaVibe in a fullscreen WebView (android/README.md)
