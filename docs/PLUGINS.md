@@ -661,7 +661,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 |---|---|
 | `onStart(fn)` | run `fn` when Alpine starts, or at once if it already has |
 | `api(path, { method, body })` | call the server; the JSON answer, or throws an `Error` with the server's message |
-| `toast(text, ms, kind)` | a short message at the bottom; `kind = "error"` for a red one |
+| `toast(text, ms, kind, action)` | a short message at the bottom, read out by screen readers; `kind = "error"` for a red one (read at once); `action = { label, run }` adds a button, e.g. Undo (Plugin API 36) |
 | `kit` | the UI kit's pieces: `kit.extend(pluginId, name, fn)` and `kit.define(pluginId, name, piece)` change one (e.g. every dialog) while your plugin is on, `kit.get(name)`, `kit.names()`. See [UI-KIT.md](UI-KIT.md). Plugin API 31 |
 | `libraryFilters()` | the library page's query (filters, sort, page) as `URLSearchParams`; reactive in Alpine |
 | `filterQuery(params)` | just its filters and sort, in a fixed order (`""` when none are on), to compare two. Which parameters count is the [library-query plugin's](#the-library-query-job) (Plugin API 16) |
@@ -1372,7 +1372,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 35 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 36 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

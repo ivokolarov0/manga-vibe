@@ -10,6 +10,26 @@
     }
   }
 
+  /* Home before its rows are loaded: grey rows of cards as wide as the real ones (the UI kit's skeletons) */
+  .home-skeleton {
+    & .title-shape {
+      width: min(180px, 50%);
+      height: 20px;
+    }
+  }
+
+  .home-skeleton-cards {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: var(--card);
+    gap: 10px;
+    overflow: hidden;
+
+    @media (min-width: 700px) {
+      gap: 16px;
+    }
+  }
+
   .home-row-head {
     display: flex;
     align-items: center;

@@ -29,7 +29,7 @@
             </header>
             <div class="sp-tools">
               <button class="icon-btn star" :class="{ on: s.favorite }" @click="toggleFav()"
-                      :title="s.favorite ? t('Remove from favorites') : t('Add to favorites')"
+                      x-tooltip="s.favorite ? t('Remove from favorites') : t('Add to favorites')"
                       :aria-label="s.favorite ? t('Remove from favorites') : t('Add to favorites')"
                       :aria-pressed="s.favorite">
                 <svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>
@@ -38,7 +38,7 @@
                 <svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>{{ t("Edit") }}</button>
               <!-- reading mode, rescan, match, delete: admins (with accounts) -->
               <div class="menu" x-show="$store.app.admin" x-menu="menuOpen">
-                <button class="icon-btn" aria-label="{{ t('More') }}" title="{{ t('More') }}">
+                <button class="icon-btn" aria-label="{{ t('More') }}" title="{{ t('More') }}" x-tooltip>
                   <svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg>
                 </button>
                 <div class="menu-pop" x-show="menuOpen" x-transition.opacity x-cloak>

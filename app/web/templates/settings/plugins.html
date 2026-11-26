@@ -33,10 +33,11 @@
               <button :data-tab="tab" :class="{ active: pf.tab === tab }" @click="setPluginFilter('tab', tab)">
                 <span x-text="label"></span>
                 <span class="count" x-show="tab === 'installed'" x-text="plugins.length"></span>
-                <span class="count new" x-show="tab === 'get' && availNew" :title="t('{n} not installed yet', { n: availNew })" x-text="availNew"></span>
+                <span class="count new" x-show="tab === 'get' && availNew" role="img" :title="t('{n} not installed yet', { n: availNew })"
+                      :aria-label="t('{n} not installed yet', { n: availNew })" x-text="availNew"></span>
                 <!-- something needs a look on the Installed tab while another one is open -->
                 <span class="dot" x-show="tab === 'installed' && pf.tab !== 'installed' && (pluginUpdates || pluginErrorCount)"
-                      aria-label="{{ t('needs attention') }}"></span>
+                      role="img" aria-label="{{ t('needs attention') }}"></span>
               </button>
             </template>
           </div>

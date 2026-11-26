@@ -1,9 +1,110 @@
-/* UI kit: what tells the person what's going on (docs/UI-KIT.md, "Toast", "Empty" and "Loading").
+/* UI kit: what tells the person what's going on (docs/UI-KIT.md, "Toast", "Progress", "Empty", "Loading"
+   and "Tooltip").
    #toast: the short message at the bottom (MangaVibe.toast). Inverted colours (text colour as
    background) so it stands out in both themes; the coloured dot says success/info (accent) or error (danger).
-   .empty: nothing to show, a quiet icon above a line of text. .loading-line: "Loading…" with a spinner.
-   Custom properties: --toast-bg, --toast-text. */
+   .progress: a bar (role="progressbar"); without aria-valuenow it's busy without a known end.
+   .empty: nothing to show, a quiet icon above a line of text and maybe a button.
+   .loading-line: "Loading…" with a spinner. .skeleton: a grey shape where something is loading;
+   .skeleton-card: a card's poster and two lines.
+   .tooltip: the bubble of x-tooltip (js/kit.js).
+   Custom properties: --toast-bg, --toast-text, --progress-color, --progress-track, --skeleton. */
 @layer kit {
+  /* the toast's button (an action: "Undo"); while one is there, the toast can be clicked */
+  #toast .toast-action {
+    flex: none;
+    margin-left: 6px;
+    padding: 4px 6px;
+    background: none;
+    border: 0;
+    border-radius: 6px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  #toast.show.has-action {
+    pointer-events: auto;
+  }
+
+  .progress {
+    height: 6px;
+    overflow: hidden;
+    background: var(--progress-track, color-mix(in srgb, var(--text) 12%, transparent));
+    border-radius: 3px;
+
+    & i {
+      display: block;
+      height: 100%;
+      background: var(--progress-color, var(--accent));
+      border-radius: inherit;
+      transition: width 0.4s var(--ease);
+    }
+
+    /* busy, no known end: a piece of the bar slides across */
+    &:not([aria-valuenow]) i {
+      width: 35%;
+      animation: progress-slide 1.2s ease-in-out infinite;
+    }
+  }
+
+  @keyframes progress-slide {
+    from {
+      transform: translateX(-100%);
+    }
+
+    to {
+      transform: translateX(290%);
+    }
+  }
+
+  .skeleton,
+  .skeleton-card > * {
+    background: var(--skeleton, color-mix(in srgb, var(--text) 9%, transparent));
+    border-radius: 8px;
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
+  }
+
+  .skeleton-card {
+    display: grid;
+    gap: 7px;
+    align-content: start;
+
+    & > .poster-shape {
+      aspect-ratio: 2 / 3;
+      border-radius: 12px;
+    }
+
+    & > .line {
+      height: 11px;
+      width: 85%;
+
+      & + .line {
+        width: 55%;
+      }
+    }
+  }
+
+  @keyframes skeleton-pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+
+  .tooltip {
+    position: fixed;
+    z-index: 200;
+    max-width: min(280px, 90vw);
+    padding: 5px 9px;
+    background: var(--toast-bg, var(--text));
+    color: var(--toast-text, var(--bg));
+    border-radius: 7px;
+    box-shadow: var(--shadow);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.3;
+    pointer-events: none;
+    animation: fade-in var(--fast);
+  }
+
   #toast {
     position: fixed;
     bottom: calc(88px + var(--safe-bottom));

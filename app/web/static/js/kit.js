@@ -498,6 +498,137 @@ own.set("field", {
   },
 });
 
+/* The toast: a short message at the bottom (MangaVibe.toast(text, ms, kind, action)). The visible
+   #toast isn't read out itself: the text also goes to a hidden live region, #toast-say (role="status")
+   or, for an error, #toast-alert (role="alert"), emptied first so the same message twice is read twice.
+   An action ({ label, run }) adds a button (an "Undo"): the toast then stays at least 6 seconds, and it
+   waits while the mouse or the focus is on it. show() returns a number that's new for every toast.
+   show(), say(), hide(), pause() and resume() are methods, so a plugin can change one of them alone. */
+const toastState = { seq: 0, timer: 0, left: 0, since: 0 };
+own.set("toast", {
+  options: { ms: 3000, actionMs: 6000 },
+  show(text, ms = this.options.ms, kind = "", action = null) {
+    const box = document.getElementById("toast");
+    if (!box) return 0;
+    (box.querySelector(".toast-text") || box).textContent = text;
+    box.classList.toggle("error", kind === "error");
+    const button = box.querySelector(".toast-action");
+    if (button) {
+      button.hidden = !action;
+      button.textContent = action?.label || "";
+      button.onclick = action ? () => { this.hide(); action.run(); } : null;
+    }
+    box.classList.toggle("has-action", !!action);
+    box.classList.add("show");
+    this.say(text, kind);
+    toastState.left = action ? Math.max(ms, this.options.actionMs) : ms;
+    this.resume();
+    return ++toastState.seq;
+  },
+  say(text, kind) {
+    const region = document.getElementById(kind === "error" ? "toast-alert" : "toast-say");
+    if (!region) return;
+    region.textContent = "";
+    setTimeout(() => (region.textContent = text), 50);  // a change, even for the same text
+  },
+  hide() {
+    clearTimeout(toastState.timer);
+    document.getElementById("toast")?.classList.remove("show", "has-action");
+  },
+  pause() {
+    clearTimeout(toastState.timer);
+    toastState.left -= Date.now() - toastState.since;
+  },
+  resume() {
+    clearTimeout(toastState.timer);
+    toastState.since = Date.now();
+    toastState.timer = setTimeout(() => this.hide(), Math.max(toastState.left, 1000));
+  },
+});
+document.addEventListener("DOMContentLoaded", () => {
+  const box = document.getElementById("toast");
+  if (!box) return;
+  const shownNow = () => box.classList.contains("show");
+  const pause = () => shownNow() && get("toast").pause();
+  const resume = (e) => shownNow() && !box.contains(e.relatedTarget) && !box.matches(":hover") && get("toast").resume();
+  box.addEventListener("mouseenter", pause);
+  box.addEventListener("focusin", pause);
+  box.addEventListener("mouseleave", (e) => shownNow() && !box.contains(document.activeElement) && get("toast").resume(e));
+  box.addEventListener("focusout", resume);
+});
+
+/* x-tooltip="text" on a button (an icon button above all): the text shows in a small bubble above it
+   while the mouse is on it or it has the keyboard's focus (not on a tap or click), and is the button's
+   name when it has none (aria-label). Without a value it takes the button's title, which it removes,
+   so the browser's own tooltip doesn't show as well. Escape hides it. One bubble for the page (.tooltip),
+   placed above the button, or below it when there's no room.
+   bubble() and place() are methods, so a plugin can change one of them alone. */
+let tipFor = null;
+own.set("tooltip", {
+  options: { delay: 400 },
+  bubble() {
+    let tip = document.querySelector("body > .tooltip");
+    if (!tip) {
+      tip = Object.assign(document.createElement("div"), { className: "tooltip", hidden: true });
+      tip.setAttribute("aria-hidden", "true");  // the button's name already says it
+      document.body.append(tip);
+    }
+    return tip;
+  },
+  place(tip, el) {
+    const r = el.getBoundingClientRect(), t = tip.getBoundingClientRect();
+    const left = Math.min(Math.max(8, r.left + r.width / 2 - t.width / 2), innerWidth - t.width - 8);
+    const above = r.top - t.height - 8;
+    tip.style.left = `${left}px`;
+    tip.style.top = `${above >= 8 ? above : r.bottom + 8}px`;
+  },
+  setup(ctx) {
+    const piece = this, { el, options } = ctx;
+    const text = () => String((ctx.expression ? ctx.get() : null) ?? el.dataset.kitTip ?? "");
+    if (!ctx.expression && el.title) {
+      el.dataset.kitTip = el.title;
+      el.removeAttribute("title");
+    }
+    const name = () => {
+      if (!el.hasAttribute("aria-label") && !el.textContent.trim() || el.dataset.kitNamed) {
+        el.setAttribute("aria-label", text());
+        el.dataset.kitNamed = "1";
+      }
+    };
+    if (ctx.expression) ctx.effect(name);
+    else name();
+    let wait = 0;
+    const show = () => {
+      const tip = piece.bubble(), words = text();
+      if (!words) return;
+      tip.textContent = words;
+      tip.hidden = false;
+      tipFor = el;
+      piece.place(tip, el);
+    };
+    const hide = () => {
+      clearTimeout(wait);
+      if (tipFor !== el) return;
+      piece.bubble().hidden = true;
+      tipFor = null;
+    };
+    const enter = () => {
+      clearTimeout(wait);
+      wait = setTimeout(show, options.delay);
+    };
+    const focus = () => el.matches(":focus-visible") && show();
+    const key = (e) => e.key === "Escape" && tipFor === el && (e.preventDefault(), hide());
+    const click = (e) => e.detail > 0 && hide();  // a tap or a click; not one the keyboard made (x-choice's)
+    const on = [["mouseenter", enter], ["mouseleave", hide], ["focus", focus], ["blur", hide],
+                ["click", click], ["keydown", key]];
+    on.forEach(([t, f]) => el.addEventListener(t, f));
+    return () => {
+      hide();
+      on.forEach(([t, f]) => el.removeEventListener(t, f));
+    };
+  },
+});
+
 document.addEventListener("alpine:init", () => {
   for (const name of own.keys()) Alpine.directive(name, directive(name));
 });

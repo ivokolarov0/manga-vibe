@@ -17,7 +17,7 @@
 <a href="#/settings" id="settings-link"{% if not nav %} class="iconbtn"{% endif %} :class="{ active: $store.app.view === 'settings' }"
    :aria-current="$store.app.view === 'settings' ? 'page' : null"
    :aria-label="$store.app.attentionCount ? t('Settings, {n} need attention', { n: $store.app.attentionCount }) : t('Settings')"
-   :title="$store.app.attentionCount ? t('Settings ({n} need attention)', { n: $store.app.attentionCount }) : t('Settings')">
+   x-tooltip="$store.app.attentionCount ? t('Settings ({n} need attention)', { n: $store.app.attentionCount }) : t('Settings')">
 {% if nav %}
   <span class="nav-ic"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></span><span class="nav-label">{{ t("Settings") }}</span>
 {% else %}
@@ -70,10 +70,12 @@
 {#- Metadata matching in progress (Settings → Metadata and the Needs attention lists). -#}
 {% macro meta_progress() -%}
 <template x-if="$store.app.metaProgress">
-  <div class="meta-progress" x-data="{ get p() { return $store.app.metaProgress } }">
-    <div class="head"><b x-text="tn('Matching metadata: {done} of {n} series', 'Matching metadata: {done} of {n} series', p.total, { done: p.done })"></b>
+  <div class="meta-progress" x-data="{ get p() { return $store.app.metaProgress } }" x-id="['meta-head']">
+    <div class="head"><b :id="$id('meta-head')" x-text="tn('Matching metadata: {done} of {n} series', 'Matching metadata: {done} of {n} series', p.total, { done: p.done })"></b>
       <span x-text="fmtNum(p.pct / 100, { style: 'percent' })"></span></div>
-    <div class="meta-bar" role="progressbar" :aria-valuenow="p.done" aria-valuemin="0" :aria-valuemax="p.total">
+    <!-- the UI kit's progress bar, named by the line above it, its value read as a percentage -->
+    <div class="progress" role="progressbar" :aria-valuenow="p.done" aria-valuemin="0" :aria-valuemax="p.total"
+         :aria-labelledby="$id('meta-head')" :aria-valuetext="fmtNum(p.pct / 100, { style: 'percent' })">
       <i :style="`width:${Math.max(p.pct, 1)}%`"></i></div>
     <small x-text="[p.current && t('Now: {title}', { title: p.current }), p.left].filter(Boolean).join(' · ')"></small>
   </div>

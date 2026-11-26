@@ -2025,7 +2025,7 @@ msgstr "AniList から読み込む"
 msgid "Loading the plugin sources…"
 msgstr "プラグインのソースを読み込み中…"
 
-#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
+#: app/plugins/builtin/activity_log/settings.html app/plugins/builtin/continue_page/templates/views/continue.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/dialogs/templates/views/fix-match.html app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/plugin.html
 msgid "Loading…"
 msgstr "読み込み中…"
 

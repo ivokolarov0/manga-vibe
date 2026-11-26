@@ -1,5 +1,8 @@
   <div id="reader" hidden></div>
-  <div id="toast" role="status" aria-live="polite"></div>
+  <!-- the toast (the UI kit's, js/kit.js): what shows, and the hidden live regions that read it out -->
+  <div id="toast"><span class="toast-text"></span><button class="toast-action" type="button" hidden></button></div>
+  <div id="toast-say" class="sr-only" role="status"></div>
+  <div id="toast-alert" class="sr-only" role="alert"></div>
 
   <!-- new version toast: stays until the user answers -->
   <div id="update-toast" x-data="updateToast()" x-show="show" x-cloak role="alert">

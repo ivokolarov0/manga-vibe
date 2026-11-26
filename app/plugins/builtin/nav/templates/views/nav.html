@@ -12,7 +12,7 @@
       <svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>
       <input id="search" x-ref="search" type="search" placeholder="{{ t('Search your library') }}" autocomplete="off" aria-label="{{ t('Search') }}"
              x-model="q" @input="search()" @keydown.escape="if (q) { q = ''; search() }">
-      <button type="button" class="search-clear" x-show="q" x-cloak aria-label="{{ t('Clear the search') }}" title="{{ t('Clear') }}"
+      <button type="button" class="search-clear" x-show="q" x-cloak aria-label="{{ t('Clear the search') }}" title="{{ t('Clear') }}" x-tooltip
               @click="q = ''; search(); $refs.search.focus()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
     </label>
     {{ slot("topbar") }}

@@ -51,9 +51,9 @@
           <!-- grid or list: the library_view setting -->
           <div class="segmented view-switch" x-choice aria-label="{{ t('View') }}">
             <button :class="{ on: layout === 'grid' }" @click="setLayout('grid')"
-                    aria-label="{{ t('Grid') }}" title="{{ t('Grid') }}"><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></button>
+                    aria-label="{{ t('Grid') }}" title="{{ t('Grid') }}" x-tooltip><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></button>
             <button :class="{ on: layout === 'list' }" @click="setLayout('list')"
-                    aria-label="{{ t('List') }}" title="{{ t('List') }}"><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg></button>
+                    aria-label="{{ t('List') }}" title="{{ t('List') }}" x-tooltip><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg></button>
           </div>
         </div>
       </div>
@@ -61,7 +61,7 @@
       <!-- multi-select: hold a card to start (MangaVibe.library) -->
       <div class="select-bar" x-show="selecting" x-cloak role="toolbar" aria-label="{{ t('Selected series') }}"
            @keydown.escape.window="if (!delOpen && !$event.defaultPrevented) endSelect()">
-        <button class="icon-btn" aria-label="{{ t('Stop selecting') }}" title="{{ t('Stop selecting') }}" :disabled="!!working"
+        <button class="icon-btn" aria-label="{{ t('Stop selecting') }}" title="{{ t('Stop selecting') }}" x-tooltip :disabled="!!working"
                 @click="endSelect()"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
         <b class="count" x-text="working || t('{n} selected', { n: selCount })" aria-live="polite"></b>
         <button class="btn small" :disabled="!!working" @click="selectAll()"
@@ -69,7 +69,7 @@
         <button class="btn small danger" x-show="$store.app.admin" :disabled="!!working || !selCount" @click="delOpen = true">
           <svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>{{ t("Delete") }}</button>
         <div class="menu" x-menu="selMenu">
-          <button class="icon-btn" aria-label="{{ t('More actions') }}" title="{{ t('More actions') }}" :disabled="!!working || !selCount">
+          <button class="icon-btn" aria-label="{{ t('More actions') }}" title="{{ t('More actions') }}" x-tooltip :disabled="!!working || !selCount">
             <svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg>
           </button>
           <div class="menu-pop" x-show="selMenu" x-transition.opacity x-cloak>
@@ -114,11 +114,17 @@
         <template x-for="s in items" :key="s.id">
           {{ library_card() }}
         </template>
+        <!-- the first cards are on their way: grey cards where they'll be (the UI kit's skeletons) -->
+        <template x-for="i in (loading && !failed && !items.length ? 12 : 0)" :key="'skeleton-' + i">
+          <div class="skeleton-card" aria-hidden="true"><div class="poster-shape"></div><div class="line"></div><div class="line"></div></div>
+        </template>
       </div>
       <!-- more cards are loaded as this comes near the screen (MangaVibe.library.watchEnd) -->
       <div x-init="watchEnd($el)"></div>
-      <!-- the first cards, or more at the bottom, are on their way (a new page keeps the old cards, dimmed) -->
-      <p class="muted loading-line lib-loading" x-show="loading && !failed && (!items.length || !paged && !done)" x-cloak>{{ t("Loading…") }}</p>
+      <!-- the first cards (only read out: the skeletons show them), or more at the bottom, are on their way
+           (a new page keeps the old cards, dimmed) -->
+      <p class="muted loading-line lib-loading" :class="{ 'sr-only': !items.length }" role="status"
+         x-show="loading && !failed && (!items.length || !paged && !done)" x-cloak>{{ t("Loading…") }}</p>
       <div class="empty" x-show="failed" x-cloak>
         <svg class="ic" aria-hidden="true"><use href="#i-books"/></svg>
         <span x-text="t('Could not load the library: {error}', { error: failed })"></span>
