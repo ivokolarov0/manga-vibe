@@ -4,14 +4,15 @@
     <div>
       <div class="sheet-head"><b>{{ t("Sort") }}</b><button class="btn small" @click="$store.app.sheet = null">{{ t("Done") }}</button></div>
       <h3>{{ t("Order") }}</h3>
-      <div class="segmented" role="radiogroup" aria-label="{{ t('Order') }}">
-        <button role="radio" :aria-checked="asc" :class="{ on: asc }" @click="setOrder(true)" x-text="orderLabels[0]"></button>
-        <button role="radio" :aria-checked="!asc" :class="{ on: !asc }" @click="setOrder(false)" x-text="orderLabels[1]"></button>
+      <div class="segmented" x-choice aria-label="{{ t('Order') }}">
+        <button :class="{ on: asc }" @click="setOrder(true)" x-text="orderLabels[0]"></button>
+        <button :class="{ on: !asc }" @click="setOrder(false)" x-text="orderLabels[1]"></button>
       </div>
       <h3>{{ t("Sort by") }}</h3>
-      <div class="options" role="radiogroup" aria-label="{{ t('Sort by') }}">
+      <!-- picking one closes the sheet: the arrow keys only move, Enter picks -->
+      <div class="options" x-choice data-kit-options="{ manual: true }" aria-label="{{ t('Sort by') }}">
         <template x-for="[v, label] in sorts" :key="v">
-          <button role="radio" :aria-checked="sort === v" :class="{ on: sort === v }" @click="setSort(v)">
+          <button :class="{ on: sort === v }" @click="setSort(v)">
             <span class="radio" aria-hidden="true"></span><span class="text" x-text="label"></span>
           </button>
         </template>

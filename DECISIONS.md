@@ -1561,3 +1561,23 @@ Plugin API version, and the app works after every one.
   app runs in (older Android WebViews included), without depending on CSS anchor positioning.
 - **Popovers** (`popover: true`) share the open and close but not the menu roles or keys: any content,
   Tab moves through it, and the focus leaving it closes it.
+
+### Tabs and choices (Plugin API 34, issue #294, step 4 #298)
+
+- **The markup keeps choosing**: every tab row and choice already had its picked button's class (`.active`,
+  `.on`) and an `@click` that picks, often with more behind it (`setTab()` writes the address, `choose()`
+  may ask for a password, `setSort()` closes the sheet). `x-tabs` and `x-choice` don't take that over: they
+  read the class (a MutationObserver sees it change) and, on an arrow key, move the focus and `click()`
+  the button, so the page's own `@click` runs. Nothing to bind, and the hand-written `role` /
+  `aria-selected` / `aria-checked` / `aria-pressed` are gone (a test checks).
+- **Automatic picking, `manual` where picking does more**: the APG's default for tabs and radio groups is
+  that the arrows pick. Where picking closes something or starts something (the sort-by list and the
+  reading mode close their sheet or dialog, Fix match's sources search, a locked library asks for its
+  password), `manual` makes the arrows only move and Enter pick.
+- **The grid / list switch is a radio group** now, not two `aria-pressed` buttons: it's one choice of two.
+- **Panels by `data-tab` / `data-tab-panel`** inside the tabs' parent, which is where every panel already
+  sits; ids are made when missing.
+- **Which button is picked doesn't depend on being on screen**: a group in a closed sheet or a hidden page is
+  read while hidden, and opening the sheet changes nothing inside the group, so the kit looks at the
+  button's own `x-show` / `hidden` instead.
+- **The move dialog's `.options` stay plain buttons**: each one moves the series, it's a list of actions.

@@ -28,10 +28,9 @@
              same job (the top bar and the sidebar) are one row, named after the job, that opens to pick one. -->
         <section class="plugins-section" x-show="section === 'plugins'" x-effect="pview = computePluginView()">
           <h2>{{ t("Plugins") }}</h2>
-          <div class="tabs plugin-tabs" role="tablist" aria-label="{{ t('Plugins') }}">
+          <div class="tabs plugin-tabs" x-tabs aria-label="{{ t('Plugins') }}">
             <template x-for="[tab, label] in [['installed', t('Installed')], ['get', t('Get plugins')], ['setup', t('Sources & setup')]]" :key="tab">
-              <button role="tab" :class="{ active: pf.tab === tab }" :aria-selected="pf.tab === tab"
-                      @click="setPluginFilter('tab', tab)">
+              <button :data-tab="tab" :class="{ active: pf.tab === tab }" @click="setPluginFilter('tab', tab)">
                 <span x-text="label"></span>
                 <span class="count" x-show="tab === 'installed'" x-text="plugins.length"></span>
                 <span class="count new" x-show="tab === 'get' && availNew" :title="t('{n} not installed yet', { n: availNew })" x-text="availNew"></span>
@@ -43,7 +42,7 @@
           </div>
 
           <!-- ---------------- Installed ---------------- -->
-          <div x-show="pf.tab === 'installed'">
+          <div data-tab-panel="installed" x-show="pf.tab === 'installed'">
             <!-- what needs a look, so it isn't lost in the list -->
             <div class="plugin-alerts" x-show="pluginUpdates || pluginErrorCount">
               <button class="chip-btn warn" x-show="pluginUpdates" @click="setPluginFilter('status', 'update')"
@@ -179,7 +178,7 @@
           <!-- ---------------- Get plugins ---------------- -->
           <!-- plugins the sources list (their plugins.json): installed with one button into the data
                folder's plugins/. Not installed ones first. -->
-          <div class="plugin-get" x-show="pf.tab === 'get'">
+          <div class="plugin-get" data-tab-panel="get" x-show="pf.tab === 'get'">
             <div class="plugin-tools">
               <div class="plugin-get-head">
                 <input type="search" class="plugin-search" x-model="pf.q" placeholder="{{ t('Search the plugin sources') }}"
@@ -227,7 +226,7 @@
           </div>
 
           <!-- ---------------- Sources & setup ---------------- -->
-          <div x-show="pf.tab === 'setup'">
+          <div data-tab-panel="setup" x-show="pf.tab === 'setup'">
             <!-- where Get plugins comes from: MangaVibe's own list, and the ones the owner added -->
             <div class="plugin-sources">
               <div class="label"><span>{{ t("Plugin sources") }}</span>

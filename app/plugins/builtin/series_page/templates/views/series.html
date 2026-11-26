@@ -88,10 +88,10 @@
                 <div class="sheet-head"><b>{{ t("Reading mode") }}</b>
                   <button class="btn small" @click="readerOpen = false">{{ t("Close") }}</button></div>
                 <p class="muted">{{ t("Only for this series. “Automatic” follows its library (Settings → Libraries), else Settings → Reader.") }}</p>
-                <div class="options" role="radiogroup" aria-label="{{ t('Reading mode') }}">
+                <!-- picking one closes the dialog: the arrow keys only move, Enter picks -->
+                <div class="options" x-choice data-kit-options="{ manual: true }" aria-label="{{ t('Reading mode') }}">
                   <template x-for="[v, label, hint] in readerModes" :key="v">
-                    <button role="radio" :aria-checked="(s.reader_mode || '') === v"
-                            :class="{ on: (s.reader_mode || '') === v }" @click="setReader(v)">
+                    <button :class="{ on: (s.reader_mode || '') === v }" @click="setReader(v)">
                       <span class="radio" aria-hidden="true"></span>
                       <span class="text"><span x-text="label"></span><small x-text="v ? hint : autoHint"></small></span>
                     </button>
@@ -243,12 +243,12 @@
 
               {% block books %}
               <section class="panel wide books-panel">
-                <div class="tabs">
-                  <button :class="{ active: tab !== 'files' }" @click="setTab('')">{{ t("Books") }} <span class="count" x-text="s.book_count"></span></button>
-                  <button :class="{ active: tab === 'files' }" @click="setTab('files')">{{ t("Files") }}</button>
+                <div class="tabs" x-tabs>
+                  <button data-tab="books" :class="{ active: tab !== 'files' }" @click="setTab('')">{{ t("Books") }} <span class="count" x-text="s.book_count"></span></button>
+                  <button data-tab="files" :class="{ active: tab === 'files' }" @click="setTab('files')">{{ t("Files") }}</button>
                 </div>
 
-                <div x-show="tab !== 'files'">
+                <div data-tab-panel="books" x-show="tab !== 'files'">
                   <div class="row">
                     <button class="btn small" @click="markAll(true)">
                       <svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg>{{ t("Mark all read") }}</button>
@@ -278,7 +278,7 @@
                   </ul>
                 </div>
 
-                <div x-show="tab === 'files'">
+                <div data-tab-panel="files" x-show="tab === 'files'">
                   {% set edit_word %}<b>{{ t("Edit") }}</b>{% endset %}
                   <p class="muted">{{ t("Every file in the series folder, in reading order. Faded rows are older revisions or hidden. Use {edit} when a file name has the wrong number or holds several chapters: your numbers re-order the list. The files themselves are never changed.", edit=edit_word) }}</p>
                   <table class="files"><tbody>

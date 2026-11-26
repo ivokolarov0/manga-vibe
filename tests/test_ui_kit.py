@@ -195,7 +195,7 @@ def test_a_plugin_can_change_a_piece(tmp_path):
     assert out["pluginOff"] == 1                         # switched off: the plain dialog again
     assert out["optionEscape"] == 0                      # data-kit-options on one dialog
     assert out["prevented"] == 0                         # kit-close with preventDefault() keeps it open
-    assert out["names"] == ["dialog", "menu"]
+    assert out["names"] == ["dialog", "menu", "choice", "tabs"]
 
 
 MARKUP = sorted([*(ROOT / "app" / "web" / "templates").rglob("*.html"),
@@ -216,3 +216,26 @@ def test_menus_use_x_menu():
             assert "@click.outside" not in tag and "@keydown.escape" not in tag, where
             assert not re.search(r"<button[^>]*@click=", tag), where
     assert found >= 6  # series ⋯, the library's select menu, the account menu, the kit page's
+
+
+# .options that are a list of actions (each button does something), not one choice: no x-choice
+ACTION_LISTS = {"app/plugins/builtin/libraries/move_dialog.html"}
+
+
+def test_tabs_and_choices_use_the_kit():
+    """Every .tabs has x-tabs, every .segmented and .options x-choice (#298): the kit gives the roles,
+    the picked state and the keys, so the markup has none of its own left."""
+    counts = {"tabs": 0, "choice": 0}
+    for path in MARKUP:
+        name = path.relative_to(ROOT).as_posix()
+        text = path.read_text(encoding="utf-8")
+        for m in re.finditer(r'<div class="(tabs|segmented|options)[ "][^>]*>', text):
+            want = "x-tabs" if m.group(1) == "tabs" else "x-choice"
+            if m.group(1) == "options" and name in ACTION_LISTS:
+                continue
+            counts["tabs" if want == "x-tabs" else "choice"] += 1
+            assert want in m.group(0), f"{name}: {m.group(0)[:80]}"
+            assert 'role="' not in m.group(0), f"{name}: the kit sets the role: {m.group(0)[:80]}"
+        assert not re.search(r'role="(tab|radio)"|:aria-selected=|:aria-checked=', text), \
+            f"{name}: the kit sets the tabs' and choices' roles and state"
+    assert counts["tabs"] >= 6 and counts["choice"] >= 6, counts
