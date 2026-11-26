@@ -54,43 +54,95 @@ def test_the_app_page_loads_the_kit_before_app_js(client):
     assert page.index("/static/js/kit.js") < page.index("/static/js/app.js")
 
 
-# The kit's script with a pretend Alpine: a dialog closes on Escape and on its backdrop, a plugin's
-# extend() changes every dialog while the plugin is on, data-kit-options changes one, kit-close can stop it.
+# The kit's script with a pretend Alpine and DOM. A dialog: when it shows, its box is a named dialog, gets
+# the focus, the page beside it is inert and doesn't scroll; Escape and the backdrop close only the top one;
+# when it hides, the focus goes back. A plugin's extend() changes every dialog while the plugin is on,
+# data-kit-options changes one, kit-close can stop it.
 HARNESS = r"""
-const listeners = {}, directives = {};
+const listeners = {}, directives = {}, observers = [];
 const target = () => {
   const on = {};
   return { on, addEventListener: (t, f) => ((on[t] ||= []).push(f)), removeEventListener: (t, f) => (on[t] = (on[t] || []).filter((g) => g !== f)),
            fire(t, e) { (on[t] || []).forEach((f) => f(e)); } };
 };
-globalThis.window = Object.assign(globalThis, target());
-globalThis.document = { addEventListener: (t, f) => ((listeners[t] ||= []).push(f)) };
+const classes = new Set();
+globalThis.window = Object.assign(globalThis, target(), { innerWidth: 1000 });
+globalThis.document = {
+  addEventListener: (t, f) => ((listeners[t] ||= []).push(f)), activeElement: null, body: { tagName: "BODY" },
+  documentElement: { clientWidth: 985, classList: { add: (...c) => c.forEach((x) => classes.add(x)),
+    remove: (...c) => c.forEach((x) => classes.delete(x)), toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)) } },
+};
 globalThis.Alpine = { directive: (n, f) => (directives[n] = f), evaluate: (el, expr) => Function(`return (${expr})`)() };
 globalThis.CustomEvent = class { constructor(type, init) { Object.assign(this, init, { type }); this.defaultPrevented = false; }
                                  preventDefault() { this.defaultPrevented = true; } };
+globalThis.MutationObserver = class { constructor(f) { this.f = f; observers.push(this); } observe() {} disconnect() { this.off = true; } };
 globalThis.stoppedPlugins = new Set();
 require(process.argv[2]);
 listeners["alpine:init"].forEach((f) => f());
+const tick = () => new Promise((r) => setTimeout(r));
+const notify = async () => { observers.forEach((o) => !o.off && o.f()); await tick(); };
+
+function element(more = {}) {
+  const attrs = {};
+  return Object.assign(target(), { attrs, tagName: "DIV", isConnected: true, inert: false, dataset: {},
+    hasAttribute: (k) => k in attrs, setAttribute: (k, v) => (attrs[k] = String(v)), matches: () => false,
+    getClientRects: () => [1], focus() { document.activeElement = this; }, closest: () => null,
+    querySelector: () => null, querySelectorAll: () => [], contains(x) { return x === this; } }, more);
+}
+const opener = element();
+const page = element();  // what's beside the dialogs
+const parent = element({ children: [page], parentElement: null });
 
 function dialog(options) {
-  const el = Object.assign(target(), { dataset: options ? { kitOptions: options } : {}, getClientRects: () => [1] });
+  let visible = false, closed = 0, undo = null;
+  const title = element({ id: "" });
+  const box = element({ querySelector: (s) => (s.includes(".sheet-head") ? title : null) });
+  box.contains = (x) => x === box || x === title;
+  const el = element({ getClientRects: () => (visible ? [1] : []), parentElement: parent,
+                       querySelector: (s) => (s === ":scope > div" ? box : null), contains: (x) => x === el || box.contains(x) });
+  if (options) el.dataset.kitOptions = options;
+  parent.children.push(el);
   el.dispatchEvent = (e) => { el.fire(e.type, e); return !e.defaultPrevented; };
-  let closed = 0, undo = null;
+  const events = [];
+  for (const t of ["kit-open", "kit-close", "kit-closed"]) el.addEventListener(t, () => events.push(t));
   directives.dialog(el, { expression: "x", modifiers: [], value: "" },
                     { evaluateLater: () => () => closed++, cleanup: (f) => (undo = f) });
-  return { el, closed: () => closed, undo: () => undo() };
+  return { el, box, title, events, closed: () => closed, undo: () => undo(),
+           show: async (on = true) => { visible = on; await notify(); } };
 }
+
+(async () => {
 const out = {};
+opener.focus();
 let d = dialog();
+await d.show();
+out.role = d.box.attrs.role;
+out.modal = d.box.attrs["aria-modal"];
+out.named = !!d.title.id && d.box.attrs["aria-labelledby"] === d.title.id;
+out.focusInBox = document.activeElement === d.box;
+out.pageInert = page.inert;
+out.locked = [...classes].sort();
 d.el.fire("click", { target: d.el });
 window.fire("keydown", { key: "Escape" });
 out.plain = d.closed();
+await d.show(false);
+out.focusBack = document.activeElement === opener;
+out.pageFree = !page.inert && classes.size === 0;
+out.events = d.events;
 d.undo();
 window.fire("keydown", { key: "Escape" });
 out.afterUndo = d.closed();
 
+let a = dialog(), b = dialog();
+await a.show();
+await b.show();
+window.fire("keydown", { key: "Escape" });
+out.topOnly = [a.closed(), b.closed()];
+a.undo(); b.undo();
+
 window.MangaVibe.kit.extend("p", "dialog", (base) => ({ ...base, options: { ...base.options, backdrop: false } }));
 d = dialog();
+await d.show();
 d.el.fire("click", { target: d.el });
 out.extendedBackdrop = d.closed();
 window.fire("keydown", { key: "Escape" });
@@ -99,21 +151,27 @@ d.undo();
 
 stoppedPlugins.add("p");
 d = dialog();
+await d.show();
 d.el.fire("click", { target: d.el });
 out.pluginOff = d.closed();
 d.undo();
 
 d = dialog("{ escape: false }");
+await d.show();
 window.fire("keydown", { key: "Escape" });
 out.optionEscape = d.closed();
 d.undo();
 
 d = dialog();
+await d.show();
 d.el.addEventListener("kit-close", (e) => e.preventDefault());
 window.fire("keydown", { key: "Escape" });
 out.prevented = d.closed();
+d.undo();
+out.unlockedAtTheEnd = classes.size === 0 && !page.inert;
 out.names = window.MangaVibe.kit.names();
 console.log(JSON.stringify(out));
+})();
 """
 
 
@@ -124,6 +182,13 @@ def test_a_plugin_can_change_a_piece(tmp_path):
     r = subprocess.run(["node", str(harness), str(KIT_JS)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     out = json.loads(r.stdout)
+    assert out["role"] == "dialog" and out["modal"] == "true" and out["named"]
+    assert out["focusInBox"] and out["pageInert"]
+    assert out["locked"] == ["kit-gutter", "kit-modal-open"]  # the page had a scrollbar: its room is kept
+    assert out["focusBack"] and out["pageFree"]
+    assert out["events"] == ["kit-open", "kit-close", "kit-close", "kit-closed"]
+    assert out["topOnly"] == [0, 1]                      # Escape closes the top dialog only
+    assert out["unlockedAtTheEnd"]
     assert out["plain"] == 2 and out["afterUndo"] == 2   # backdrop and Escape; nothing once undone
     assert out["extendedBackdrop"] == 0 and out["extendedEscape"] == 1
     assert out["pluginOff"] == 1                         # switched off: the plain dialog again

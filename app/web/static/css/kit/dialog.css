@@ -3,6 +3,21 @@
    with x-dialog="<how to close it>" (js/kit.js). .sheet-head: a title and buttons that stay at the top.
    Custom properties: --dialog-width, --dialog-bg, --dialog-radius, --dialog-backdrop. */
 @layer kit {
+  /* while a dialog shows, the page behind it doesn't scroll; kit-gutter keeps the scrollbar's room when
+     there was a scrollbar, so nothing moves sideways (js/kit.js, lockScroll) */
+  :root.kit-modal-open {
+    overflow: hidden;
+  }
+
+  :root.kit-modal-open.kit-gutter {
+    scrollbar-gutter: stable;
+  }
+
+  /* the box gets the focus when it opens (no field asked for it): no ring around the whole box */
+  :is(.sheet, .modal) > div:focus {
+    outline: none;
+  }
+
   .sheet,
   .modal {
     position: fixed;
