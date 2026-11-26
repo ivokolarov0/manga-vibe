@@ -11,3 +11,7 @@ docker-data/
 
 # the online demo, built by demo/build.py (published from its own repo)
 demo/site/
+
+# third-party agent skills installed with the skills CLI (not part of MangaVibe)
+.claude/skills/modern-web-guidance/
+skills-lock.json
