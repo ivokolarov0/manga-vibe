@@ -1,0 +1,78 @@
+/* UI kit: tabs, a row of buttons with an underline on the active one (docs/UI-KIT.md, "Tabs").
+   .tabs (.small .scroll) > button (.active) with an optional .count.
+   Custom properties: --tabs-accent, --tabs-border. */
+@layer kit {
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 16px;
+    border-bottom: 1px solid var(--tabs-border, var(--border));
+
+    & button {
+      position: relative;
+      padding: 9px 12px;
+      background: none;
+      border: 0;
+      border-radius: 8px 8px 0 0;
+      color: var(--muted);
+      font-weight: 500;
+      white-space: nowrap;
+      transition: background-color var(--fast), border-color var(--fast), color var(--fast),
+        filter var(--fast), box-shadow var(--fast), transform 0.08s;
+
+      /* the underline grows from the middle when a tab becomes the active one */
+      &::after {
+        content: "";
+        position: absolute;
+        right: 8px;
+        bottom: 0;  /* inside the button: 1px lower would make a scrolling row of tabs scroll up and down */
+        left: 8px;
+        height: 2px;
+        background: var(--tabs-accent, var(--accent));
+        border-radius: 2px 2px 0 0;
+        opacity: 0;
+        transform: scaleX(0.3);
+        transition: transform var(--slow) var(--ease), opacity var(--fast);
+      }
+
+      &.active {
+        color: var(--text);
+
+        &::after {
+          opacity: 1;
+          transform: none;
+        }
+
+        & .count {
+          background: var(--tabs-accent, var(--accent));
+          color: var(--accent-text);
+        }
+      }
+    }
+
+    & .count {
+      margin-left: 2px;
+      padding: 1px 7px;
+      border-radius: var(--radius-pill);
+      background: var(--surface2);
+      font-size: 12px;
+    }
+
+    &.small button {
+      padding: 7px 10px;
+    }
+
+    &.scroll {
+      margin: 0 0 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+  }
+
+  @media (hover: hover) {
+    .tabs button:not(.active):hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+  }
+}

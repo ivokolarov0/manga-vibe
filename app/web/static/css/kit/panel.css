@@ -1,0 +1,33 @@
+/* UI kit: a panel, the titled card used on the series page and elsewhere (docs/UI-KIT.md, "Panel").
+   .panel > h2 (its title, small and uppercase), h3 (a subtitle).
+   Custom properties: --panel-bg, --panel-border, --panel-radius, --panel-padding, --panel-shadow. */
+@layer kit {
+  .panel {
+    min-width: 0;
+    padding: var(--panel-padding, 16px 18px);
+    background: var(--panel-bg, var(--surface));
+    border: 1px solid var(--panel-border, var(--border));
+    border-radius: var(--panel-radius, var(--radius-panel));
+    box-shadow: var(--panel-shadow, var(--shadow-sm));
+
+    & > h2 {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    & h3 {
+      margin: 10px 0 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+
+      &:first-of-type {
+        margin-top: 0;
+      }
+    }
+  }
+}

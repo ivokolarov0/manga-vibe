@@ -1,0 +1,87 @@
+/* UI kit: dialogs and sheets (docs/UI-KIT.md, "Dialog"). A bottom sheet on phones, a centred dialog
+   on desktop (filters, sort, fix match, folder picker): .modal or .sheet (the backdrop) > div (the box),
+   with x-dialog="<how to close it>" (js/kit.js). .sheet-head: a title and buttons that stay at the top.
+   Custom properties: --dialog-width, --dialog-bg, --dialog-radius, --dialog-backdrop. */
+@layer kit {
+  .sheet,
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: var(--dialog-backdrop, var(--backdrop));
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: fade-in var(--slow);
+
+    & > div {
+      width: 100%;
+      max-width: var(--dialog-width, 720px);
+      max-height: 88vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 14px 18px calc(18px + var(--safe-bottom));
+      background: var(--dialog-bg, var(--surface));
+      border: 1px solid var(--border);
+      border-bottom: 0;
+      border-radius: var(--dialog-radius, 20px) var(--dialog-radius, 20px) 0 0;
+      box-shadow: var(--shadow-lg);
+      animation: sheet-up 0.32s var(--ease);
+    }
+
+    & h3 {
+      margin: 16px 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    & .wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    @media (min-width: 700px) {
+      align-items: center;
+      padding: 20px;
+
+      & > div {
+        border-bottom: 1px solid var(--border);
+        border-radius: var(--dialog-radius, 20px);
+        animation-name: pop-in;
+        animation-duration: 0.24s;
+      }
+    }
+  }
+
+  .sheet-head {
+    position: sticky;
+    top: -14px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 -4px 4px;
+    padding: 6px 4px;
+    background: var(--dialog-bg, var(--surface));
+
+    & > b {
+      min-width: 0;
+      overflow: hidden;
+      font-size: 17px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & .btn-row {
+      flex: none;
+      flex-wrap: nowrap;
+    }
+  }
+}

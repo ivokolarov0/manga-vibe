@@ -1089,6 +1089,16 @@ class Notes(Plugin):
     html = {"sheets": SHEET}
 ```
 
+### Changing a piece of the UI kit
+
+Buttons, dialogs, menus… are the UI kit ([UI-KIT.md](UI-KIT.md), Plugin API 31). Restyle one with its custom
+properties in `css`; change what an interactive one does with `MangaVibe.kit`, in the first lines of `js`.
+
+```js
+// Every dialog: a click on the backdrop doesn't close it any more (Escape still does)
+MangaVibe.kit.extend("notes", "dialog", (base) => ({ ...base, options: { ...base.options, backdrop: false } }));
+```
+
 ### A Settings page of its own
 
 `settings_pages` adds an entry to Settings' menu; the page's markup goes in the `settings` slot, shown

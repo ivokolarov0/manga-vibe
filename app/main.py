@@ -14,6 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from jinja2 import Environment, FileSystemLoader
 from starlette.datastructures import Headers
 
 from app import activity, config, db as database, i18n, plugin_updates, updater
@@ -317,6 +318,18 @@ def checked_text(request: Request, body: str, media_type: str) -> Response:
 @app.get("/manifest.json")
 def manifest():
     return FileResponse(config.STATIC_DIR / "manifest.json", media_type="application/manifest+json")
+
+
+# the UI kit page (app/web/kit/kit.html); it includes the app's icons from the page's templates
+KIT_PAGE = Environment(loader=FileSystemLoader([config.WEB_DIR / "kit", plugin_web.TEMPLATES_DIR]),
+                       autoescape=True, auto_reload=True)
+
+
+@app.get("/kit")
+def kit_page():
+    """Every piece of the UI kit in its variants, for plugin authors and for working on the look
+    (docs/UI-KIT.md). The app's CSS, with plugins' and custom.css, and js/kit.js; no data."""
+    return HTMLResponse(KIT_PAGE.get_template("kit.html").render(), headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/")

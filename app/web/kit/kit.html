@@ -1,0 +1,306 @@
+{#- The UI kit page at /kit (app/main.py): every piece of the kit in its variants, with the app's own CSS
+    (plugin CSS and custom.css included, so a theme shows here too) and js/kit.js. For plugin authors and for
+    working on the look (docs/UI-KIT.md). Each piece's section has data-piece="<name>": a test checks that
+    every piece in docs/UI-KIT.md is here. Not translated: it's a page for developers, like the docs. -#}
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MangaVibe UI kit</title>
+  <script>try { if (localStorage.getItem("theme-last") === "light") document.documentElement.dataset.theme = "light"; } catch (e) {}</script>
+  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/main.css">
+  <style>
+    /* the kit page's own layout, outside the layers like a plugin's CSS */
+    .kit-page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px 16px 120px;
+    }
+
+    .kit-head {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+
+      & h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+    }
+
+    .kit-page > section {
+      margin-top: 28px;
+
+      & > h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+      }
+
+      & > p {
+        margin: 0 0 12px;
+      }
+    }
+
+    .kit-demo {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+
+      & + .kit-demo {
+        margin-top: 10px;
+      }
+
+      &.column {
+        display: grid;
+        align-items: start;
+      }
+    }
+
+    /* a box that restyles the buttons inside it with the kit's custom properties */
+    .kit-custom {
+      --btn-bg: color-mix(in srgb, var(--ok) 18%, var(--surface2));
+      --btn-border: var(--ok);
+      --btn-radius: var(--radius-pill);
+      --btn-primary-bg: var(--ok);
+    }
+  </style>
+</head>
+<body>
+{% include "shell/icons.html" %}
+
+<main class="kit-page" x-data="kitPage">
+  <header class="kit-head">
+    <div>
+      <h1>UI kit</h1>
+      <p class="muted">The pieces MangaVibe and its plugins share. How to use, restyle and change them:
+        <code>docs/UI-KIT.md</code>.</p>
+    </div>
+    <button class="btn" @click="toggleTheme()">
+      <svg class="ic" aria-hidden="true"><use href="#i-palette"/></svg>
+      <span x-text="theme === 'dark' ? 'Light theme' : 'Dark theme'"></span></button>
+  </header>
+
+  <section data-piece="buttons">
+    <h2>Buttons</h2>
+    <p class="muted"><code>.btn</code> with <code>.small</code>, <code>.primary</code>, <code>.danger</code>,
+      <code>.on</code>, <code>.busy</code>; <code>.iconbtn</code>, <code>.icon-btn</code>, <code>.link-btn</code>,
+      in a <code>.btn-row</code>.</p>
+    <div class="kit-demo">
+      <button class="btn">Button</button>
+      <button class="btn primary">Primary</button>
+      <button class="btn danger">Danger</button>
+      <button class="btn on">On</button>
+      <button class="btn busy" disabled>Busy</button>
+      <button class="btn" disabled>Disabled</button>
+      <button class="btn"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>With icon</button>
+    </div>
+    <div class="kit-demo">
+      <button class="btn small">Small</button>
+      <button class="btn small primary">Small primary</button>
+      <button class="iconbtn" aria-label="Settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button>
+      <button class="iconbtn" aria-label="Filter" title="Filter"><svg class="ic" aria-hidden="true"><use href="#i-filter"/></svg><span class="count">3</span></button>
+      <button class="icon-btn" aria-label="More" title="More"><svg class="ic" aria-hidden="true"><use href="#i-dots"/></svg></button>
+      <button class="link-btn">Link button</button>
+    </div>
+    <div class="kit-demo kit-custom">
+      <span class="muted">Restyled with <code>--btn-bg</code>, <code>--btn-border</code>, <code>--btn-radius</code>,
+        <code>--btn-primary-bg</code> on the box:</span>
+      <div class="btn-row">
+        <button class="btn">Button</button>
+        <button class="btn primary">Primary</button>
+        <button class="iconbtn" aria-label="Star" title="Star"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <section data-piece="fields">
+    <h2>Fields</h2>
+    <p class="muted">Text fields, selects, textareas, checkboxes, and a checkbox with <code>.switch</code>.</p>
+    <div class="kit-demo">
+      <input type="text" placeholder="Text" aria-label="Text">
+      <input type="text" value="Disabled" disabled aria-label="Disabled">
+      <select aria-label="Select"><option>First choice</option><option>Second choice</option></select>
+      <label class="row"><input type="checkbox" checked> Checkbox</label>
+      <label class="row"><input type="checkbox"> Not ticked</label>
+      <label class="row"><input type="checkbox" class="switch" checked> Switch</label>
+      <label class="row"><input type="checkbox" class="switch"> Switch off</label>
+    </div>
+    <div class="kit-demo column">
+      <textarea rows="3" placeholder="Textarea" aria-label="Textarea"></textarea>
+    </div>
+  </section>
+
+  <section data-piece="chips">
+    <h2>Chips</h2>
+    <p class="muted"><code>.chips</code> of <code>.chip</code>, with <code>.tag</code>, <code>.warn</code>,
+      <code>.required</code>, <code>.spoiler</code>.</p>
+    <div class="kit-demo">
+      <div class="chips">
+        <span class="chip">Chip</span>
+        <span class="chip tag">Tag</span>
+        <span class="chip warn">Warn</span>
+        <span class="chip required">Required</span>
+        <span class="chip spoiler">Spoiler</span>
+      </div>
+    </div>
+  </section>
+
+  <section data-piece="tabs">
+    <h2>Tabs</h2>
+    <p class="muted"><code>.tabs</code> of buttons, the active one with <code>.active</code>; a
+      <code>.count</code> in a tab; <code>.small</code>, <code>.scroll</code>.</p>
+    <div class="kit-demo column">
+      <div class="tabs" role="tablist" aria-label="Tabs">
+        <template x-for="[key, label] in [['books', 'Books'], ['files', 'Files'], ['notes', 'Notes']]" :key="key">
+          <button role="tab" :class="{ active: tab === key }" :aria-selected="tab === key" @click="tab = key">
+            <span x-text="label"></span><span class="count" x-show="key === 'books'">12</span></button>
+        </template>
+      </div>
+      <div class="tabs small">
+        <button class="active">Small</button>
+        <button>Tabs</button>
+      </div>
+    </div>
+  </section>
+
+  <section data-piece="segmented">
+    <h2>Segmented</h2>
+    <p class="muted"><code>.segmented</code>: two or three choices side by side, the chosen one <code>.on</code>.</p>
+    <div class="kit-demo">
+      <div class="segmented" role="radiogroup" aria-label="Order">
+        <button role="radio" :class="{ on: seg === 'asc' }" :aria-checked="seg === 'asc'" @click="seg = 'asc'">Ascending</button>
+        <button role="radio" :class="{ on: seg === 'desc' }" :aria-checked="seg === 'desc'" @click="seg = 'desc'">Descending</button>
+      </div>
+    </div>
+  </section>
+
+  <section data-piece="options">
+    <h2>Options</h2>
+    <p class="muted"><code>.options</code>: one choice per row, like radio buttons, the chosen one <code>.on</code>.</p>
+    <div class="kit-demo column">
+      <div class="options" role="radiogroup" aria-label="Reading direction">
+        <template x-for="[key, label, small] in [['rtl', 'Right to left', 'Manga'], ['ltr', 'Left to right', 'Comics'], ['vertical', 'Vertical', 'Webtoons']]" :key="key">
+          <button role="radio" :class="{ on: opt === key }" :aria-checked="opt === key" @click="opt = key">
+            <span class="radio"></span>
+            <span class="text"><span x-text="label"></span><small x-text="small"></small></span></button>
+        </template>
+      </div>
+    </div>
+  </section>
+
+  <section data-piece="panel">
+    <h2>Panel</h2>
+    <p class="muted"><code>.panel</code> with an <code>h2</code> title and <code>h3</code> subtitles.</p>
+    <div class="kit-demo column">
+      <section class="panel">
+        <h2>Panel title</h2>
+        <h3>Subtitle</h3>
+        <p>What's in the panel.</p>
+      </section>
+    </div>
+  </section>
+
+  <section data-piece="menu">
+    <h2>Menu</h2>
+    <p class="muted"><code>.menu</code>: a button, then a <code>.menu-pop</code> of buttons (an icon, the label, a
+      <code>&lt;small&gt;</code> line, <code>.danger</code>).</p>
+    <div class="kit-demo">
+      <div class="menu" @click.outside="menuOpen = false" @keydown.escape="menuOpen = false">
+        <button class="btn" @click="menuOpen = !menuOpen">Open the menu
+          <svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
+        <div class="menu-pop" x-show="menuOpen" x-transition.opacity x-cloak>
+          <button @click="menuOpen = false"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Rescan</button>
+          <button @click="menuOpen = false"><svg class="ic" aria-hidden="true"><use href="#i-book-open"/></svg>Reading mode…
+            <small>Right to left</small></button>
+          <button class="danger" @click="menuOpen = false"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Delete…</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section data-piece="dialog">
+    <h2>Dialog</h2>
+    <p class="muted"><code>.modal</code> or <code>.sheet</code> with <code>x-dialog="&lt;close&gt;"</code>, a
+      <code>.sheet-head</code> at the top. A bottom sheet on phones, centred on wider screens.</p>
+    <div class="kit-demo">
+      <button class="btn" @click="dialogOpen = true">Open a dialog</button>
+      <button class="btn" @click="keepOpen = true">One that the backdrop doesn't close</button>
+    </div>
+    <div class="modal" x-show="dialogOpen" x-cloak x-dialog="dialogOpen = false">
+      <div>
+        <div class="sheet-head"><b>A dialog</b>
+          <div class="btn-row"><button class="btn small primary" @click="dialogOpen = false">Done</button></div></div>
+        <p>A click on the backdrop or Escape closes it.</p>
+        <h3>A heading in a dialog</h3>
+        <div class="wrap"><span class="chip">One</span><span class="chip">Two</span></div>
+      </div>
+    </div>
+    <div class="modal" x-show="keepOpen" x-cloak x-dialog="keepOpen = false" data-kit-options="{ backdrop: false }">
+      <div>
+        <div class="sheet-head"><b>data-kit-options="{ backdrop: false }"</b>
+          <div class="btn-row"><button class="btn small" @click="keepOpen = false">Close</button></div></div>
+        <p>Only Escape or the button close this one.</p>
+      </div>
+    </div>
+  </section>
+
+  <section data-piece="toast">
+    <h2>Toast</h2>
+    <p class="muted"><code>#toast</code>, shown with <code>MangaVibe.toast(text, ms, kind)</code> in the app.</p>
+    <div class="kit-demo">
+      <button class="btn" @click="toast('Saved')">Show a toast</button>
+      <button class="btn danger" @click="toast('That didn’t work', 'error')">Show an error</button>
+    </div>
+    <div id="toast" :class="{ show: toastText, error: toastKind === 'error' }" role="status" x-text="toastText"></div>
+  </section>
+
+  <section data-piece="empty">
+    <h2>Empty</h2>
+    <p class="muted"><code>.empty</code>: nothing to show, a quiet icon above a line of text.</p>
+    <div class="kit-demo column">
+      <div class="empty"><svg class="ic" aria-hidden="true"><use href="#i-books"/></svg><span>Nothing here yet.</span></div>
+    </div>
+  </section>
+
+  <section data-piece="loading">
+    <h2>Loading</h2>
+    <p class="muted"><code>.loading-line</code>: “Loading…” with a spinner.</p>
+    <div class="kit-demo column">
+      <div class="loading-line">Loading…</div>
+    </div>
+  </section>
+</main>
+
+<script src="/static/js/kit.js"></script>
+<script>
+  document.addEventListener("alpine:init", () => {
+    Alpine.data("kitPage", () => ({
+      theme: document.documentElement.dataset.theme,
+      tab: "books", seg: "asc", opt: "rtl",
+      menuOpen: false, dialogOpen: false, keepOpen: false,
+      toastText: "", toastKind: "", toastTimer: 0,
+      toggleTheme() {
+        this.theme = this.theme === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = this.theme;
+      },
+      toast(text, kind = "") {
+        this.toastText = text;
+        this.toastKind = kind;
+        clearTimeout(this.toastTimer);
+        this.toastTimer = setTimeout(() => (this.toastText = ""), 3000);
+      },
+    }));
+  });
+</script>
+<script defer src="/static/js/vendor/alpine.min.js"></script>
+</body>
+</html>

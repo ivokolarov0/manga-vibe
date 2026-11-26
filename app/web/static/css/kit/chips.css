@@ -1,0 +1,53 @@
+/* UI kit: chips, small rounded labels (docs/UI-KIT.md, "Chips").
+   .chips (a row of them), .chip (.warn .required .tag .spoiler).
+   Custom properties: --chip-bg. */
+@layer kit {
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--chip-bg, var(--surface2));
+    font-size: 12px;
+    font-weight: 500;
+
+    &.warn {
+      background: var(--warn);
+      color: #000;
+    }
+
+    /* a plugin that can't be switched off: the only one doing a job MangaVibe needs (Settings → Plugins) */
+    &.required {
+      background: transparent;
+      box-shadow: inset 0 0 0 1px var(--accent);
+      color: var(--accent);
+      cursor: help;
+    }
+
+    &.tag {
+      cursor: pointer;
+      transition: background-color var(--fast), border-color var(--fast), color var(--fast),
+        filter var(--fast), box-shadow var(--fast), transform 0.08s;
+    }
+
+    &.spoiler {
+      background: var(--danger);
+      color: #fff;
+    }
+  }
+
+  @media (hover: hover) {
+    .chip.tag:hover {
+      background: color-mix(in srgb, var(--text) 9%, var(--chip-bg, var(--surface2)));
+      border-color: color-mix(in srgb, var(--text) 30%, var(--border));
+    }
+  }
+}

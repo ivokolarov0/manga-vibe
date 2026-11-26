@@ -1,0 +1,95 @@
+/* UI kit: what tells the person what's going on (docs/UI-KIT.md, "Toast", "Empty" and "Loading").
+   #toast: the short message at the bottom (MangaVibe.toast). Inverted colours (text colour as
+   background) so it stands out in both themes; the coloured dot says success/info (accent) or error (danger).
+   .empty: nothing to show, a quiet icon above a line of text. .loading-line: "Loading…" with a spinner.
+   Custom properties: --toast-bg, --toast-text. */
+@layer kit {
+  #toast {
+    position: fixed;
+    bottom: calc(88px + var(--safe-bottom));
+    left: 50%;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 90vw;
+    padding: 11px 18px 11px 14px;
+    background: var(--toast-bg, var(--text));
+    color: var(--toast-text, var(--bg));
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 14px;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, 16px) scale(0.96);
+    transition: opacity 0.2s ease, transform 0.25s var(--ease), visibility 0s linear 0.25s;
+
+    &::before {
+      content: "";
+      flex: none;
+      width: 8px;
+      height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    &.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translate(-50%, 0);
+      transition: opacity 0.2s ease, transform 0.25s var(--ease), visibility 0s;
+    }
+
+    /* no bar at the bottom to stay clear of */
+    [data-nav="top"] & {
+      bottom: calc(24px + var(--safe-bottom));
+    }
+
+    &.error::before {
+      background: var(--danger);
+    }
+  }
+
+  .empty {
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    padding: 56px 16px;
+    color: var(--muted);
+    text-align: center;
+
+    & > .ic {
+      width: 44px;
+      height: 44px;
+      padding: 10px;
+      box-sizing: content-box;
+      background: var(--surface2);
+      border-radius: 50%;
+      stroke-width: 1.6;
+    }
+
+    & > span {
+      max-width: 46ch;
+    }
+  }
+
+  .loading-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 4px;
+
+    &::before {
+      content: "";
+      width: 16px;
+      height: 16px;
+      flex: none;
+      border: 2px solid var(--accent);
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+  }
+}

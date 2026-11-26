@@ -659,6 +659,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `onStart(fn)` | run `fn` when Alpine starts, or at once if it already has |
 | `api(path, { method, body })` | call the server; the JSON answer, or throws an `Error` with the server's message |
 | `toast(text, ms, kind)` | a short message at the bottom; `kind = "error"` for a red one |
+| `kit` | the UI kit's pieces: `kit.extend(pluginId, name, fn)` and `kit.define(pluginId, name, piece)` change one (e.g. every dialog) while your plugin is on, `kit.get(name)`, `kit.names()`. See [UI-KIT.md](UI-KIT.md). Plugin API 31 |
 | `libraryFilters()` | the library page's query (filters, sort, page) as `URLSearchParams`; reactive in Alpine |
 | `filterQuery(params)` | just its filters and sort, in a fixed order (`""` when none are on), to compare two. Which parameters count is the [library-query plugin's](#the-library-query-job) (Plugin API 16) |
 | `filterLabels(query)` | short labels for them: `["Isekai", "not Horror", "Reading"]` |
@@ -1368,7 +1369,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 30 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 31 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 
@@ -1388,6 +1389,12 @@ There are two themes, dark and light: `<html data-theme="dark">` or `"light"`. A
 `--accent-text` is the text colour on the accent (dark in the dark theme, white in the light one):
 set it too if your accent needs the other.
 
+### The UI kit
+
+Buttons, fields, chips, tabs, menus, dialogs, toasts… are the **UI kit** (Plugin API 31): use them by their
+markup, restyle one with its custom properties (`--btn-bg`, `--dialog-width`…), and change or replace what
+one does with `MangaVibe.kit`. See [UI-KIT.md](UI-KIT.md), and every piece at `/kit` in your MangaVibe.
+
 ### Icons
 
 The app's line icons are in one SVG sprite at the top of the page (`app/web/templates/shell/icons.html`). In your HTML:
@@ -1399,9 +1406,9 @@ The app's line icons are in one SVG sprite at the top of the page (`app/web/temp
 In a script, `icon("star")` gives the same as a string (for `x-html`). They take the text colour and
 scale with the font size; add the class `fill` for a filled one. Names: `search` `x` `plus` `check`
 `check-up` `check-circle` `circle` `ban` `alert` `info` `chevron-left` `chevron-right` `chevron-down`
-`arrow-up` `external` `dots` `library` `play` `book-open` `books` `star` `bookmark` `filter` `sort`
-`settings` `sun` `moon` `palette` `tag` `blocks` `download` `upload` `refresh` `phone` `folder` `copy`
-`pencil` `trash` `lock` `unlock` `key` `log-out` `user` `users` `shield` `image`.
+`arrow-up` `arrow-down` `grip` `external` `dots` `home` `library` `list` `play` `book-open` `books` `star`
+`bookmark` `filter` `sort` `settings` `palette` `tag` `blocks` `download` `upload` `refresh` `phone`
+`folder` `copy` `pencil` `trash` `lock` `unlock` `key` `log-out` `user` `users` `shield` `image`.
 
 ## Example
 
