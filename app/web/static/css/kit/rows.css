@@ -1,0 +1,87 @@
+/* UI kit: settings rows and the card they sit in (docs/UI-KIT.md, "Settings rows").
+   .settings-card (Settings' pages are cards by themselves) > .setting-row: a .label (the name, then a
+   <small> hint) and its control: a switch, a select, a field or a few buttons (.row-buttons). With
+   x-field (js/kit.js) the control is named by the name alone and described by the hint.
+   Custom properties: --card-bg, --card-border, --card-radius, --card-padding, --row-height, --row-divider. */
+@layer kit {
+  .settings-card,
+  .settings-content > section,
+  .settings-content > .plugin-slot > .plugin-ui > section {
+    padding: var(--card-padding, 4px 16px 10px);
+    overflow: hidden;  /* the rows' hover tint stays inside the rounded corners */
+    background: var(--card-bg, var(--surface));
+    border: 1px solid var(--card-border, var(--border));
+    border-radius: var(--card-radius, var(--radius-panel));
+    box-shadow: var(--shadow-sm);
+
+    & > h2 {
+      margin: 14px 0 8px;
+      font-size: 20px;
+    }
+
+    & > .muted {
+      margin: 4px 0 10px;
+    }
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: var(--row-height, 54px);
+    margin: 0 -16px;
+    padding: 8px 16px;
+
+    /* the divider goes *between* rows, as a line on top of every row that has a shown row (or a
+       .meta-sources list) before it; never border-bottom removed with :last-child, which came back
+       whenever a hidden row, an Alpine <template> or a wrapper followed the last row (#126, #245).
+       A row inside a wrapper (an x-if's <div>) that comes after a row gets one too. */
+    :is(.setting-row, .meta-sources):not([style*="display: none"], [hidden]) ~ &,
+    .setting-row:not([style*="display: none"], [hidden]) ~ div > & {
+      border-top: 1px solid var(--row-divider, var(--border));
+    }
+
+    transition: background-color var(--fast);
+
+    &:hover {
+      background: color-mix(in srgb, var(--surface2) 45%, transparent);
+    }
+
+    /* a follow-up to the row above it (SETTING_ROWS' sub): indented under it */
+    &.sub {
+      padding-left: 32px;
+    }
+
+    & .label {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+      font-weight: 500;
+
+      & small {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 400;
+
+        & a {
+          color: var(--accent);
+        }
+      }
+    }
+
+    & .row-buttons {
+      display: flex;
+      flex-shrink: 0;
+      gap: 6px;
+    }
+
+    & select {
+      min-width: 150px;
+    }
+
+    & > input[type="checkbox"] {
+      flex-shrink: 0;  /* long text next to it squeezed it */
+    }
+  }
+}

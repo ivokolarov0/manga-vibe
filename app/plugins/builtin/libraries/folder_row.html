@@ -1,4 +1,4 @@
-<label class="lib-option" x-show="$store.libraries.list.length">
+<label x-field class="lib-option" x-show="$store.libraries.list.length">
   <span class="lib-option-text"><span x-text="t('Library')"></span>
     <small x-text="t('Where this folder\'s series show. Series moved to another library by hand stay there.')"></small></span>
   <select @change="$store.libraries.setFolder(l, $event.target.value)" :aria-label="t('Library for the series in {folder}', { folder: l.name })">

@@ -19,7 +19,7 @@
           <button class="btn small danger" @click="remove(sh)" x-text="t('Delete')"></button>
         </div>
       </div>
-      <label class="lib-option">
+      <label x-field class="lib-option">
         <span class="lib-option-text"><span x-text="t('Reading mode')"></span>
           <small x-text="t('For its series that don\'t set their own')"></small></span>
         <select :value="sh.reader_mode || 'default'" @change="patch(sh, { reader_mode: $event.target.value })"
@@ -56,7 +56,7 @@
       </form>
     </div>
   </template>
-  <div class="setting-row">
+  <div x-field class="setting-row">
     <div class="label"><span x-text="t('Add a library')"></span>
       <small x-text="t('For example Manga, Comics, Manhwa. Then point a folder at it, or move series to it. Just a set of filters (e.g. only Isekai)? Filter the home screen and use “Save search”.')"></small></div>
     <button class="btn small primary" @click="store.add()"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg><span x-text="t('New library')"></span></button>

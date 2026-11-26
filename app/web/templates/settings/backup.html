@@ -2,19 +2,19 @@
         <section x-show="section === 'backup'">
           <h2>{{ t("Backup") }}</h2>
           <p class="muted">{{ t("One file with your library's metadata and edits, everyone's reading progress, the accounts, the posters and all settings (plugins' too). The manga files aren't in it. Plugins you installed yourself aren't either: their settings are, so install them again after an import.") }}</p>
-          <label class="setting-row"><span class="label">{{ t("Include tokens") }}<small>{{ t("The GitHub token and the plugins' secret settings (API keys, logins). Leave this off for a file you'll keep somewhere others can see it.") }}</small></span>
+          <label x-field class="setting-row"><span class="label"><span>{{ t("Include tokens") }}</span><small>{{ t("The GitHub token and the plugins' secret settings (API keys, logins). Leave this off for a file you'll keep somewhere others can see it.") }}</small></span>
             <select x-model="backupTokens"><option value="false">{{ t("Off") }}</option><option value="true">{{ t("On") }}</option></select></label>
           <!-- only while the Activity log plugin runs (it's the one that keeps the log) -->
-          <label class="setting-row" x-show="plugins.some((p) => p.id === 'activity-log' && p.enabled)"><span class="label">{{ t("Include the activity log") }}<small>{{ t("Who did what, and when, with the addresses they came from. Off: the file has an empty log, and importing it empties this server's.") }}</small></span>
+          <label x-field class="setting-row" x-show="plugins.some((p) => p.id === 'activity-log' && p.enabled)"><span class="label"><span>{{ t("Include the activity log") }}</span><small>{{ t("Who did what, and when, with the addresses they came from. Off: the file has an empty log, and importing it empties this server's.") }}</small></span>
             <select x-model="backupActivity"><option value="false">{{ t("Off") }}</option><option value="true">{{ t("On") }}</option></select></label>
-          <div class="setting-row">
+          <div x-field class="setting-row">
             <div class="label"><span>{{ t("Export") }}</span><small>{{ t("Downloads {file}", file='mangavibe-backup-<span x-text="new Date().toISOString().slice(0, 10)"></span>.zip'|safe) }}</small></div>
             <button type="button" class="btn small primary" :class="{ busy: exporting }" :disabled="exporting || importing"
                     :aria-busy="exporting" @click="exportBackup()">
               <svg class="ic" aria-hidden="true" x-show="!exporting"><use href="#i-download"/></svg>
               <span x-text="exporting ? t('Preparing…') : t('Export')"></span></button>
           </div>
-          <div class="setting-row">
+          <div x-field class="setting-row">
             <div class="label">
               <span>{{ t("Import") }}</span>
               <small>{{ t("Replaces everything on this server with the file: library data, progress, accounts and settings. The current database is copied to /data/backups first. Files from older versions are updated; files from a newer version need MangaVibe updated first.") }}</small>

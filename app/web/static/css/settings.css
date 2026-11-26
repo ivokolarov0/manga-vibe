@@ -1,5 +1,6 @@
 /* Settings page: navigation on the left (a drop-down menu on phones), the chosen section on the right.
-   Each setting is a row with a divider, so a label and its control clearly belong together. */
+   Each setting is a row with a divider (the UI kit's .setting-row, css/kit/rows.css), so a label and its
+   control clearly belong together. */
 @layer pages {
   .settings-page {
     display: grid;
@@ -226,91 +227,17 @@
   .settings-content {
     min-width: 0;
 
-    /* each page is a card; a plugin's page (inside its slot) looks the same */
+    /* each page is a card (the UI kit's, css/kit/rows.css); a plugin's page (inside its slot) looks the
+       same. It fades in when it opens */
     & > section,
     & > .plugin-slot > .plugin-ui > section {
-      padding: 4px 16px 10px;
-      overflow: hidden;  /* the rows' hover tint stays inside the rounded corners */
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-panel);
-      box-shadow: var(--shadow-sm);
       animation: view-in var(--slow) var(--ease);
-
-      & > h2 {
-        margin: 14px 0 8px;
-        font-size: 20px;
-      }
-
-      & > .muted {
-        margin: 4px 0 10px;
-      }
     }
   }
 
-  .setting-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    min-height: 54px;
-    margin: 0 -16px;
-    padding: 8px 16px;
-
-    /* the divider goes *between* rows, as a line on top of every row that has a shown row (or a
-       .meta-sources list) before it; never border-bottom removed with :last-child, which came back
-       whenever a hidden row, an Alpine <template> or a wrapper followed the last row (#126, #245).
-       A row inside a wrapper (an x-if's <div>) that comes after a row gets one too. */
-    :is(.setting-row, .meta-sources):not([style*="display: none"], [hidden]) ~ &,
-    .setting-row:not([style*="display: none"], [hidden]) ~ div > & {
-      border-top: 1px solid var(--border);
-    }
-
-    transition: background-color var(--fast);
-
-    &:hover {
-      background: color-mix(in srgb, var(--surface2) 45%, transparent);
-    }
-
-    /* a follow-up to the row above it (SETTING_ROWS' sub): indented under it */
-    &.sub {
-      padding-left: 32px;
-    }
-
-    & .label {
-      display: grid;
-      gap: 2px;
-      min-width: 0;
-      font-weight: 500;
-
-      & small {
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 400;
-
-        & a {
-          color: var(--accent);
-        }
-      }
-
-      & small.scan-progress {
-        color: var(--accent);
-      }
-    }
-
-    & .row-buttons {
-      display: flex;
-      flex-shrink: 0;
-      gap: 6px;
-    }
-
-    & select {
-      min-width: 150px;
-    }
-
-    & > input[type="checkbox"] {
-      flex-shrink: 0;  /* long text next to it squeezed it */
-    }
+  /* the rows (.setting-row) are the UI kit's: css/kit/rows.css */
+  .setting-row .label small.scan-progress {
+    color: var(--accent);
   }
 
   /* Settings > Library folders: each folder is its own card.

@@ -9,7 +9,7 @@
           <button class="chip-btn" @click="open(c.path)" x-text="c.name"></button>
         </template>
       </div>
-      <p class="err" x-show="error" x-text="error"></p>
+      <p class="err" role="alert" x-show="error" x-text="error"></p>
       <div class="folder-list">
         <button x-show="parent !== null && path" @click="open(parent)"><svg class="ic" aria-hidden="true"><use href="#i-arrow-up"/></svg> <span>{{ t("Up") }}</span></button>
         <template x-for="d in dirs" :key="d.path">

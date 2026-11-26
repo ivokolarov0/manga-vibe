@@ -18,7 +18,7 @@
           <button class="btn small danger" x-show="a.id !== 1 && a.id !== store.me?.id" @click="remove(a)" x-text="t('Delete')"></button>
         </div>
       </div>
-      <label class="lib-option" x-show="a.id !== 1">
+      <label x-field class="lib-option" x-show="a.id !== 1">
         <span class="lib-option-text"><span x-text="t('Admin')"></span>
           <small x-text="t('Manages the app and the accounts')"></small></span>
         <input type="checkbox" :checked="a.admin" @change="patch(a, { admin: $event.target.checked },

@@ -14,47 +14,48 @@
           <form class="edit-form" data-tab-panel="info" x-show="tab === 'info'" @submit.prevent="save()">
             <!-- plugins' fields, saved with the rest (e.g. Library) -->
             {{ slot("series-edit") }}
-            <label class="wide">{{ t("English title") }}
-              <input x-model="f.title_english" maxlength="300"></label>
-            <label>{{ t("Romaji title") }}
-              <input x-model="f.title_romaji" maxlength="300"></label>
-            <label>{{ t("Native title") }}
-              <input x-model="f.title_native" maxlength="300"></label>
-            <label class="wide">{{ t("Other titles") }} <small>{{ t("one per line") }}</small>
-              <textarea rows="3" x-model="f.synonyms"></textarea></label>
-            <label class="wide">{{ t("Description") }}
-              <textarea rows="7" x-model="f.description" maxlength="20000"></textarea></label>
-            <label>{{ t("Status") }}
+            <!-- the UI kit's fields (x-field: the name, the hint and the control tied together) -->
+            <div class="field wide" x-field><label>{{ t("English title") }}</label>
+              <input x-model="f.title_english" maxlength="300"></div>
+            <div class="field" x-field><label>{{ t("Romaji title") }}</label>
+              <input x-model="f.title_romaji" maxlength="300"></div>
+            <div class="field" x-field><label>{{ t("Native title") }}</label>
+              <input x-model="f.title_native" maxlength="300"></div>
+            <div class="field wide" x-field><label>{{ t("Other titles") }}</label> <small class="hint">{{ t("one per line") }}</small>
+              <textarea rows="3" x-model="f.synonyms"></textarea></div>
+            <div class="field wide" x-field><label>{{ t("Description") }}</label>
+              <textarea rows="7" x-model="f.description" maxlength="20000"></textarea></div>
+            <div class="field" x-field><label>{{ t("Status") }}</label>
               <select x-model="f.publication_status">
                 <template x-for="[k, v] in Object.entries(pubLabels)" :key="k"><option :value="k" :selected="k === f.publication_status" x-text="v"></option></template>
-              </select></label>
-            <label>{{ t("Type") }}
+              </select></div>
+            <div class="field" x-field><label>{{ t("Type") }}</label>
               <select x-model="f.type">
                 <option value="">{{ t("Unknown") }}</option><option value="manga">{{ t("Manga") }}</option><option value="manhwa">{{ t("Manhwa") }}</option>
                 <option value="manhua">{{ t("Manhua") }}</option><option value="one_shot">{{ t("One-shot") }}</option><option value="novel">{{ t("Novel") }}</option>
-              </select></label>
-            <label>{{ t("Year") }}
-              <input type="number" min="1900" max="2100" x-model="f.start_year"></label>
-            <label>{{ t("Volumes") }}
-              <input type="number" min="0" x-model="f.volumes_total"></label>
-            <label>{{ t("Chapters") }}
-              <input type="number" min="0" x-model="f.chapters_total"></label>
-            <label title="{{ t('Complete: count the collection as complete whatever the numbers say, e.g. for omnibus editions') }}">{{ t("Collection") }}
+              </select></div>
+            <div class="field" x-field><label>{{ t("Year") }}</label>
+              <input type="number" min="1900" max="2100" x-model="f.start_year"></div>
+            <div class="field" x-field><label>{{ t("Volumes") }}</label>
+              <input type="number" min="0" x-model="f.volumes_total"></div>
+            <div class="field" x-field><label>{{ t("Chapters") }}</label>
+              <input type="number" min="0" x-model="f.chapters_total"></div>
+            <div class="field" x-field title="{{ t('Complete: count the collection as complete whatever the numbers say, e.g. for omnibus editions') }}"><label>{{ t("Collection") }}</label>
               <select x-model="f.collection_complete">
                 <option value="auto">{{ t("Automatic") }}</option><option value="complete">{{ t("Complete") }}</option>
-              </select></label>
-            <label title="{{ t('Which edition your files are from (regular, kanzenban, omnibus...). Automatic: worked out from the pages per volume and the editions MangaUpdates lists') }}">{{ t("Edition") }}
+              </select></div>
+            <div class="field" x-field title="{{ t('Which edition your files are from (regular, kanzenban, omnibus...). Automatic: worked out from the pages per volume and the editions MangaUpdates lists') }}"><label>{{ t("Edition") }}</label>
               <select x-model="f.edition_volumes">
                 <template x-for="[v, label] in editions" :key="v"><option :value="v" x-text="label" :selected="v === f.edition_volumes"></option></template>
-              </select></label>
-            <label class="wide">{{ t("Authors") }} <small>{{ t("one per line: Name (Role)") }}</small>
-              <textarea rows="3" x-model="f.authors"></textarea></label>
-            <label class="wide">{{ t("Genres") }} <small>{{ t("comma separated") }}</small>
-              <input x-model="f.genres"></label>
-            <label class="wide">{{ t("Tags") }} <small>{{ t("comma separated") }}</small>
-              <textarea rows="2" x-model="f.tags"></textarea></label>
-            <label class="wide">{{ t("Links") }} <small>{{ t("one per line: Site | https://…") }}</small>
-              <textarea rows="3" x-model="f.links"></textarea></label>
+              </select></div>
+            <div class="field wide" x-field><label>{{ t("Authors") }}</label> <small class="hint">{{ t("one per line: Name (Role)") }}</small>
+              <textarea rows="3" x-model="f.authors"></textarea></div>
+            <div class="field wide" x-field><label>{{ t("Genres") }}</label> <small class="hint">{{ t("comma separated") }}</small>
+              <input x-model="f.genres"></div>
+            <div class="field wide" x-field><label>{{ t("Tags") }}</label> <small class="hint">{{ t("comma separated") }}</small>
+              <textarea rows="2" x-model="f.tags"></textarea></div>
+            <div class="field wide" x-field><label>{{ t("Links") }}</label> <small class="hint">{{ t("one per line: Site | https://…") }}</small>
+              <textarea rows="3" x-model="f.links"></textarea></div>
             <div class="btn-row wide">
               <button class="btn primary" type="submit" :disabled="saving" x-text="saving ? t('Saving…') : t('Save')"></button>
               <button class="btn" type="button" @click="close()">{{ t("Cancel") }}</button>

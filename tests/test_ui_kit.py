@@ -16,9 +16,9 @@ DOC = (ROOT / "docs" / "UI-KIT.md").read_text(encoding="utf-8")
 
 
 def documented_pieces():
-    """The ### headings under "## The pieces", as names: "Buttons" -> "buttons"."""
+    """The ### headings under "## The pieces", as names: "Setting rows" -> "setting-rows"."""
     part = DOC.split("\n## The pieces\n", 1)[1].split("\n## ", 1)[0]
-    return [h.strip().lower() for h in re.findall(r"^### (.+)$", part, re.M)]
+    return [h.strip().lower().replace(" ", "-") for h in re.findall(r"^### (.+)$", part, re.M)]
 
 
 def test_every_piece_is_documented_and_on_the_kit_page():
@@ -195,7 +195,7 @@ def test_a_plugin_can_change_a_piece(tmp_path):
     assert out["pluginOff"] == 1                         # switched off: the plain dialog again
     assert out["optionEscape"] == 0                      # data-kit-options on one dialog
     assert out["prevented"] == 0                         # kit-close with preventDefault() keeps it open
-    assert out["names"] == ["dialog", "menu", "choice", "tabs"]
+    assert out["names"] == ["dialog", "menu", "choice", "tabs", "field"]
 
 
 MARKUP = sorted([*(ROOT / "app" / "web" / "templates").rglob("*.html"),
@@ -239,3 +239,21 @@ def test_tabs_and_choices_use_the_kit():
         assert not re.search(r'role="(tab|radio)"|:aria-selected=|:aria-checked=', text), \
             f"{name}: the kit sets the tabs' and choices' roles and state"
     assert counts["tabs"] >= 6 and counts["choice"] >= 6, counts
+
+
+def test_setting_rows_and_fields_use_x_field():
+    """Every .setting-row and .field has x-field (#299), and a setting row's name is an element of its own
+    (the .label's first element), not a bare text the hint would be read with."""
+    rows = fields = 0
+    for path in MARKUP:
+        name = path.relative_to(ROOT).as_posix()
+        text = path.read_text(encoding="utf-8")
+        for m in re.finditer(r'<(label|div|form)\b[^>]*class="(setting-row|field)[ "][^>]*>(\s*<(?:span|div) class="label">(.))?', text):
+            if m.group(2) == "setting-row":
+                rows += 1
+            else:
+                fields += 1
+            assert "x-field" in m.group(0), f"{name}: {m.group(0)[:90]}"
+            if m.group(4) is not None:
+                assert m.group(4) == "<", f"{name}: put the setting's name in a <span>: {m.group(0)[:120]}"
+    assert rows >= 25 and fields >= 15, (rows, fields)

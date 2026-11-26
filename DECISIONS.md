@@ -1581,3 +1581,26 @@ Plugin API version, and the app works after every one.
   read while hidden, and opening the sheet changes nothing inside the group, so the kit looks at the
   button's own `x-show` / `hidden` instead.
 - **The move dialog's `.options` stay plain buttons**: each one moves the series, it's a list of actions.
+
+### Fields and setting rows (Plugin API 35, issue #294, step 5 #299)
+
+- **One directive for both shapes**: `x-field` on a `.field` (the Edit dialog's: `<label>`, `.hint`, the
+  control, `.error`) and on a `.setting-row` / folder card `.lib-option` (a name, a `<small>` hint, the
+  control). It finds the parts, gives them ids and ties them together; a MutationObserver looks again when
+  an error appears or an `x-if` adds the control.
+- **Named by the name alone**: a setting row is a `<label>` around everything, so its hint was read as part
+  of the control's name ("Find metadata automatically For new series after each scan"). The control now
+  gets `aria-labelledby` the name and `aria-describedby` the hint. That needs the name in an element of
+  its own: the few rows whose name was a bare text got a `<span>` (a test checks).
+- **Errors**: a field's `.error` is `role="alert"` (read out when it appears) and makes the control
+  `aria-invalid` (a red border) while it shows: the libraries' unlock dialog uses it. A form-wide error
+  (login, Fix match, the folder picker) is a `<p class="err" role="alert">`.
+- **Switches are `role="switch"`**, but only the checkboxes the CSS draws as switches (`.switch`, right in
+  a `.setting-row` / `.row-buttons` / `.lib-option`): the Home rows' show-boxes stay checkboxes.
+- **`.setting-row` and the Settings card moved to the kit layer** (`css/kit/rows.css`), with
+  `.settings-card` for a card outside Settings. Settings' pages stay cards by themselves. Every page looked
+  the same afterwards (the step 4 screenshots; the only differences were two libraries added to the
+  test data).
+- **Plugins' old `.edit-form label` fields keep working**: `edit.css` keeps those rules, so a plugin's
+  `series-edit` field written the old way still lines up; the built-in ones are `.field`s now.
+- **No range piece**: the only range is the reader's page slider, which has its name and shows the page.

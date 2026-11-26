@@ -3,7 +3,7 @@
   <h2 id="activity-title" x-text="t('Activity')"></h2>
   <p class="muted" x-text="t('Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged.')"></p>
 
-  <label class="setting-row">
+  <label x-field class="setting-row">
     <span class="label"><span x-text="t('Keep entries for')"></span>
       <small x-text="t('Older entries are removed once a day.')"></small></span>
     <select x-model="keep" @change="saveKeep()">
@@ -13,7 +13,7 @@
       <option value="0" x-text="t('Forever')"></option>
     </select>
   </label>
-  <div class="setting-row activity-actions">
+  <div x-field class="setting-row activity-actions">
     <span class="label"><span x-text="t('Take it out of the app')"></span>
       <small x-text="t('A CSV file of what the filters below show. Clearing removes every entry and writes one saying who did it.')"></small></span>
     <div class="row-buttons">
