@@ -5132,7 +5132,7 @@ msgstr[0] "{n} 秒"
 msgid "{n} selected"
 msgstr "{n} 件選択中"
 
-#: app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/static/js/app.js
+#: app/plugins/builtin/continue_page/templates/views/continue.html app/plugins/builtin/libraries/__init__.py app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/settings_pages/templates/views/settings-library.html app/web/static/js/app.js
 msgid "{n} series"
 msgid_plural "{n} series"
 msgstr[0] "{n} シリーズ"

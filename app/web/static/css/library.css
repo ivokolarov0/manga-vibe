@@ -729,19 +729,24 @@
     }
   }
 
+  /* how far into a series, on its cover: a rounded bar inset from the edges, the accent's gradient
+     (the redesign, #303) */
   .bar {
     position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 4px;
-    background: rgb(0 0 0 / 0.55);
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    height: 5px;
+    overflow: hidden;
+    background: rgb(0 0 0 / 0.5);
+    border-radius: var(--radius-pill);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.3);
 
     & i {
       display: block;
       height: 100%;
-      background: var(--accent);
-      border-radius: 0 2px 2px 0;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: inherit;
       transition: width 0.4s var(--ease);
     }
   }
@@ -882,6 +887,9 @@
       }
 
       & .bar {
+        right: 3px;
+        bottom: 3px;
+        left: 3px;
         height: 3px;
       }
     }

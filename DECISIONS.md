@@ -1732,3 +1732,8 @@ One PR per page, on step 8's tokens and kit.
   became switches (`check`); long lists and long words (Tap zones, Fit, the overlay percentages) stay
   dropdowns. The Home page's rows are small cards with a switch, gaps instead of dividers. Pages of other
   plugins are unchanged: a section is a card unless it has `.settings-groups`.
+- **Continue reading**: the library's big title with a count. Its cards' bar shows how far into the book to
+  go on with (what the line under the card says, "p8/12"), not the whole series: early in a long series
+  that was a sliver. The bar is inset and rounded with the accent's gradient, like the mockup's.
+- **Chromium**: every page checked in Chromium (Playwright's, 156) at 1280 and 400 wide, dark and light,
+  as well as Firefox: the same. Needs attention keeps its layout; the new tokens and kit carry it.
