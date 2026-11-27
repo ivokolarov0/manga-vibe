@@ -497,6 +497,10 @@ msgstr ""
 msgid "Built-in version (from the Docker image)"
 msgstr ""
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "by {names}"
+msgstr ""
+
 #: app/plugins/builtin/book_labels/__init__.py
 msgid "Calls books by their numbers (Vol 3, Ch 12-14, Extra 2) instead of their file names. Built in."
 msgstr ""
@@ -1553,7 +1557,7 @@ msgstr ""
 msgid "gone"
 msgstr ""
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Grid"
 msgstr ""
 
@@ -2009,7 +2013,7 @@ msgstr ""
 msgid "Links"
 msgstr ""
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "List"
 msgstr ""
 
@@ -2185,7 +2189,7 @@ msgstr ""
 msgid "Mark all unread"
 msgstr ""
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Mark read"
 msgstr ""
 
@@ -2193,7 +2197,7 @@ msgstr ""
 msgid "Mark this and all previous as read"
 msgstr ""
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Mark unread"
 msgstr ""
 
@@ -2991,7 +2995,7 @@ msgstr ""
 msgid "Page {n}"
 msgstr ""
 
-#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr ""
 
@@ -3233,6 +3237,10 @@ msgstr ""
 
 #: app/plugins/builtin/home_page/templates/views/home.html
 msgid "Read so far"
+msgstr ""
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Read: {book}"
 msgstr ""
 
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
@@ -4763,7 +4771,7 @@ msgstr ""
 msgid "Vertical (webtoons)"
 msgstr ""
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "View"
 msgstr ""
 

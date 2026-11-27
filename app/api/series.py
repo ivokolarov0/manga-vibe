@@ -210,7 +210,7 @@ def get_series(series_id: int, db=Depends(get_db)):
                     for p in plugins.enabled() for a in p.actions],
         "choices": choices,
         "continue": {"book_id": book.id, "page": page, "label": book_dict(book)["label"],
-                     "started": bool(counts[1] or counts[2])} if book else None,
+                     "page_count": book.page_count, "started": bool(counts[1] or counts[2])} if book else None,
     }
 
 

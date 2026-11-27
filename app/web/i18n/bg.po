@@ -499,6 +499,10 @@ msgstr "Вграден източник на метаданни: заглави�
 msgid "Built-in version (from the Docker image)"
 msgstr "Вградена версия (от Docker образа)"
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "by {names}"
+msgstr "от {names}"
+
 #: app/plugins/builtin/book_labels/__init__.py
 msgid "Calls books by their numbers (Vol 3, Ch 12-14, Extra 2) instead of their file names. Built in."
 msgstr "Нарича книгите по номерата им (Том 3, Гл. 12-14, Екстра 2) вместо по имената на файловете. Вградена."
@@ -1555,7 +1559,7 @@ msgstr "Връщане към по-стара версия…"
 msgid "gone"
 msgstr "няма я"
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Grid"
 msgstr "Решетка"
 
@@ -2011,7 +2015,7 @@ msgstr "Като Настройки → Четец"
 msgid "Links"
 msgstr "Връзки"
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "List"
 msgstr "Списък"
 
@@ -2187,7 +2191,7 @@ msgstr "Отбележи всички като прочетени"
 msgid "Mark all unread"
 msgstr "Отбележи всички като непрочетени"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Mark read"
 msgstr "Отбележи като прочетени"
 
@@ -2195,7 +2199,7 @@ msgstr "Отбележи като прочетени"
 msgid "Mark this and all previous as read"
 msgstr "Отбележи тази и всички предишни като прочетени"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Mark unread"
 msgstr "Отбележи като непрочетени"
 
@@ -2993,7 +2997,7 @@ msgstr "Ширина на страницата"
 msgid "Page {n}"
 msgstr "Страница {n}"
 
-#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr "Страница {page} от {pages}"
 
@@ -3236,6 +3240,10 @@ msgstr "Четете в приложението MangaVibe вместо в бр�
 #: app/plugins/builtin/home_page/templates/views/home.html
 msgid "Read so far"
 msgstr "Прочетено досега"
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Read: {book}"
+msgstr "Прочетено: {book}"
 
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
@@ -4765,7 +4773,7 @@ msgstr "Вертикално"
 msgid "Vertical (webtoons)"
 msgstr "Вертикално (уебтуни)"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "View"
 msgstr "Изглед"
 

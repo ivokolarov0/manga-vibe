@@ -499,6 +499,10 @@ msgstr "Eingebaute Metadatenquelle: Titel, Beschreibung, Tags, Cover, Links."
 msgid "Built-in version (from the Docker image)"
 msgstr "Eingebaute Version (aus dem Docker-Image)"
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "by {names}"
+msgstr "von {names}"
+
 #: app/plugins/builtin/book_labels/__init__.py
 msgid "Calls books by their numbers (Vol 3, Ch 12-14, Extra 2) instead of their file names. Built in."
 msgstr "Nennt Bücher nach ihren Nummern (Bd. 3, Kap. 12-14, Extra 2) statt nach ihren Dateinamen. Eingebaut."
@@ -1555,7 +1559,7 @@ msgstr "Zurück zu einer früheren Version…"
 msgid "gone"
 msgstr "weg"
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Grid"
 msgstr "Raster"
 
@@ -2011,7 +2015,7 @@ msgstr "Wie Einstellungen → Reader"
 msgid "Links"
 msgstr "Links"
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "List"
 msgstr "Liste"
 
@@ -2187,7 +2191,7 @@ msgstr "Alle als gelesen markieren"
 msgid "Mark all unread"
 msgstr "Alle als ungelesen markieren"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Mark read"
 msgstr "Als gelesen markieren"
 
@@ -2195,7 +2199,7 @@ msgstr "Als gelesen markieren"
 msgid "Mark this and all previous as read"
 msgstr "Dieses und alle vorherigen als gelesen markieren"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Mark unread"
 msgstr "Als ungelesen markieren"
 
@@ -2993,7 +2997,7 @@ msgstr "Seitenbreite"
 msgid "Page {n}"
 msgstr "Seite {n}"
 
-#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr "Seite {page} von {pages}"
 
@@ -3236,6 +3240,10 @@ msgstr "Lies in der MangaVibe-App statt im Browser: Vollbild ohne Browserleisten
 #: app/plugins/builtin/home_page/templates/views/home.html
 msgid "Read so far"
 msgstr "Bisher gelesen"
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Read: {book}"
+msgstr "Gelesen: {book}"
 
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
@@ -4765,7 +4773,7 @@ msgstr "Vertikal"
 msgid "Vertical (webtoons)"
 msgstr "Vertikal (Webtoons)"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "View"
 msgstr "Ansicht"
 

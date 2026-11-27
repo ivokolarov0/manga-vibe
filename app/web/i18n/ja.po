@@ -497,6 +497,10 @@ msgstr "組み込みのメタデータのソース：タイトル、あらすじ
 msgid "Built-in version (from the Docker image)"
 msgstr "組み込みバージョン（Docker イメージ）"
 
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "by {names}"
+msgstr "作：{names}"
+
 #: app/plugins/builtin/book_labels/__init__.py
 msgid "Calls books by their numbers (Vol 3, Ch 12-14, Extra 2) instead of their file names. Built in."
 msgstr "本をファイル名ではなく番号（3 巻、12-14 話、番外編 2）で呼びます。組み込み。"
@@ -1549,7 +1553,7 @@ msgstr "以前のバージョンに戻しています…"
 msgid "gone"
 msgstr "なし"
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Grid"
 msgstr "グリッド"
 
@@ -2005,7 +2009,7 @@ msgstr "設定 → リーダー と同じ"
 msgid "Links"
 msgstr "リンク"
 
-#: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/app.js
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "List"
 msgstr "リスト"
 
@@ -2181,7 +2185,7 @@ msgstr "すべて既読にする"
 msgid "Mark all unread"
 msgstr "すべて未読にする"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Mark read"
 msgstr "既読にする"
 
@@ -2189,7 +2193,7 @@ msgstr "既読にする"
 msgid "Mark this and all previous as read"
 msgstr "これとそれ以前をすべて既読にする"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Mark unread"
 msgstr "未読にする"
 
@@ -2978,7 +2982,7 @@ msgstr "ページの幅"
 msgid "Page {n}"
 msgstr "{n} ページ"
 
-#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr "{pages} ページ中 {page} ページ"
 
@@ -3221,6 +3225,10 @@ msgstr "ブラウザの代わりに MangaVibe アプリで読めます。ブラ�
 #: app/plugins/builtin/home_page/templates/views/home.html
 msgid "Read so far"
 msgstr "ここまで読んだ分"
+
+#: app/plugins/builtin/series_page/templates/views/series.html
+msgid "Read: {book}"
+msgstr "読了：{book}"
 
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
@@ -4740,7 +4748,7 @@ msgstr "縦スクロール"
 msgid "Vertical (webtoons)"
 msgstr "縦スクロール（ウェブトゥーン）"
 
-#: app/plugins/builtin/library_page/templates/views/library.html
+#: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "View"
 msgstr "表示"
 
