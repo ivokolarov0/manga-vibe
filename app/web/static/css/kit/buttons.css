@@ -41,6 +41,14 @@
       border-color: color-mix(in srgb, var(--btn-danger, var(--danger)) 50%, var(--btn-border, var(--border)));
     }
 
+    /* the button that deletes or replaces something, in a confirm dialog: red, filled */
+    &.primary.danger {
+      background: var(--btn-danger, var(--danger));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 8px 22px color-mix(in srgb, var(--btn-danger, var(--danger)) 30%, transparent);
+    }
+
     &.on {
       color: var(--warn);
       border-color: var(--warn);

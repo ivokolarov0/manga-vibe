@@ -3,7 +3,7 @@
 The pieces MangaVibe and its plugins share: buttons, fields, chips, tabs, menus, dialogs, toasts… Use them in
 a plugin's markup and it looks and works like the rest of the app, and it follows the owner's theme and
 `custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33; tabs and choices (`x-tabs`, `x-choice`), API 34; fields and setting rows (`x-field`), API 35; toasts with an action, tooltips (`x-tooltip`), API 36; the new look (warm darks, the accent's gradient,
-Bricolage Grotesque and Plus Jakarta Sans, choices right in a setting row), API 38.
+Bricolage Grotesque and Plus Jakarta Sans, choices right in a setting row), API 38; our own confirm and prompt dialogs (`MangaVibe.confirm`, `MangaVibe.prompt`), API 39.
 
 **See them all at `/kit`** (e.g. `http://localhost:8000/kit`): every piece in its variants, dark and light,
 with your plugins' CSS and `custom.css` applied. On the [website](https://ivokolarov0.github.io/manga-vibe/docs/ui-kit/),
@@ -59,7 +59,7 @@ change is a normal CSS rule: `.my-panel .btn { font-weight: 700 }` wins over the
 An interactive piece (`dialog`, `menu`, `tabs`, `choice`, `field`, `tooltip`) is an object
 `{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`, `x-tabs`, `x-choice`, `x-field`,
 `x-tooltip`) asks `MangaVibe.kit` for it each time an element starts, so the changes below reach every use.
-(`toast` is a piece without a directive: `MangaVibe.toast` calls its `show()`.)
+(`toast` and `ask` are pieces without a directive: `MangaVibe.toast` calls the toast's `show()`, `MangaVibe.confirm` and `MangaVibe.prompt` the ask's `confirm()` and `prompt()`.)
 
 | | |
 |---|---|
@@ -118,7 +118,7 @@ stops what the piece was about to do (a dialog stays open).
 ```
 
 - `.btn`: `.small`, `.primary` (the accent's gradient, `--accent-gradient`, with a soft light under it),
-  `.danger`, `.on` (switched on), `.busy` (a spinner before the label; disable the button too), `.disabled`
+  `.danger` (red words; with `.primary` filled red, for the button that deletes in a confirm), `.on` (switched on), `.busy` (a spinner before the label; disable the button too), `.disabled`
   or `disabled`.
 - `.iconbtn`: a square button with an icon, the height of a `.btn`; a `<span class="count">` on it is a
   number in its corner. `.icon-btn`: a small round one. `.link-btn`: looks like a link.
@@ -355,6 +355,54 @@ stops what the piece was about to do (a dialog stays open).
   }));
   ```
 - Custom properties: `--dialog-width`, `--dialog-bg`, `--dialog-radius`, `--dialog-backdrop`.
+
+### Confirm and prompt
+
+```js
+if (!await MangaVibe.confirm({ title: t("Delete the library “{name}”?", { name }), danger: true,
+                               text: t("No series or files are deleted."), confirm: t("Delete library") })) return;
+
+const name = await MangaVibe.prompt({ title: t("New library"), label: t("Name"), placeholder: t("e.g. Comics"),
+                                      confirm: t("Add library") });  // null: cancelled
+
+const db = await MangaVibe.ask({ title: t("Which database?"), text,
+  buttons: [{ label: t("Keep the newer one"), value: "keep" }, { label: t("Put back the copy"), value: "restore" }] });
+```
+
+- The app's own dialog in place of the browser's `confirm()` and `prompt()` (Plugin API 39), which look
+  out of place, can't be styled and look broken on phones. **Don't use the browser's**: a test fails on a
+  `confirm(`, `prompt(` or `alert(` in the app's and the built-in plugins' scripts.
+- Each returns a Promise: `await` it, so the function that asks is `async`.
+  - `confirm(o)` → `true` or `false`.
+  - `prompt(o)` → what was typed, or `null` when cancelled.
+  - `ask(o)` → the `value` of the button picked (its `label` without one), or `null` when cancelled.
+    Your `buttons` come after Cancel; the last is the main one (Enter).
+- What `o` can have:
+
+  | | |
+  |---|---|
+  | `title` | the question, big (names the dialog for screen readers) |
+  | `text` | more about it, under the title (a blank line starts a new paragraph) |
+  | `list`, `note` | points in a list under the text (a plugin's permissions), and a paragraph after them |
+  | `confirm`, `cancel` | the buttons' words: say what it does ("Delete library", "Install"), not "OK" |
+  | `danger` | the main button is red (`.btn.primary.danger`) and Cancel has the focus first: for what deletes or replaces something |
+  | `label`, `value`, `placeholder`, `type` | a prompt's field: its name, what's in it already (picked, so typing replaces it), a hint inside it, `"password"` |
+  | `required` | a prompt's button waits until something is typed (`true`); `false` lets it be empty |
+  | `check(value)` | a prompt: returns a message when what's typed won't do (`"At least 4 characters"`), shown under the field (`role="alert"`, `aria-invalid`) instead of closing; it's checked again as you type |
+  | `backdrop` | a click on the backdrop cancels (`true`) |
+
+  `confirm("Sure?")` and `prompt("Name")` with a plain text work too.
+- A native `<dialog>` opened with `showModal()`: the rest of the page can't be reached (not even the Tab
+  key), Escape, a click on the backdrop and the Android app's back button cancel, and the focus goes back to
+  what opened it. It's a sheet from the bottom on phones (buttons as wide as the sheet) and a small box in
+  the middle on wider screens. A confirm is an `alertdialog`, described by its text. Opened from an
+  `x-dialog`, it's on top of it and only it closes. Asked twice at once, the second waits for the first.
+- A plugin button with a `confirm` text (`Action("reset", "Reset", confirm="Forget everything?")`) asks in
+  it: the button's label is the title and the word on the button.
+- The piece is `ask` in `MangaVibe.kit`: `confirm()`, `prompt()` and `ask()`, and `build(o)` (makes the
+  `<dialog>`; returns `{ dialog, form, field, input, error, buttons }`), `focusIn(parts, o)` and `open(o)`, so
+  a plugin can change one part only.
+- Custom properties: `--ask-width`, and the dialog's `--dialog-bg`, `--dialog-radius`, `--dialog-backdrop`.
 
 ### Toast
 

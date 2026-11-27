@@ -199,13 +199,21 @@ msgstr "Konto hinzufügen"
 msgid "Add folder"
 msgstr "Ordner hinzufügen"
 
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Add library"
+msgstr "Bibliothek hinzufügen"
+
 #: app/web/templates/settings/plugins.html
 msgid "add one"
 msgstr "füge eine hinzu"
 
-#: app/web/templates/settings/plugins.html
+#: app/web/static/js/app.js app/web/templates/settings/plugins.html
 msgid "Add source"
 msgstr "Quelle hinzufügen"
+
+#: app/web/static/js/app.js
+msgid "Add this plugin source?"
+msgstr "Diese Plugin-Quelle hinzufügen?"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Add to favorites"
@@ -274,8 +282,16 @@ msgid "All selected"
 msgstr "Alle ausgewählt"
 
 #: app/web/static/js/app.js
+msgid "Allow and install"
+msgstr "Erlauben und installieren"
+
+#: app/web/static/js/app.js
 msgid "Allow them and install it?"
 msgstr "Erlauben und installieren?"
+
+#: app/web/static/js/app.js
+msgid "Allow these permissions?"
+msgstr "Diese Berechtigungen erlauben?"
 
 #: app/plugins/builtin/home_page/templates/views/home.html
 msgid "Also reading"
@@ -366,6 +382,10 @@ msgstr "Verlangt von allen eine Anmeldung; fügt Einstellungen → Konten und ei
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Asks GitHub ({repo}) for its newest release and shows a message when one is out"
 msgstr "Fragt GitHub ({repo}) nach der neuesten Version und zeigt eine Nachricht, wenn eine erscheint"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "At least 4 characters"
+msgstr "Mindestens 4 Zeichen"
 
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "At most {n} saved searches"
@@ -531,13 +551,9 @@ msgstr "Kann nicht laufen: {why}"
 msgid "Can't tell if complete"
 msgstr "Vollständigkeit unklar"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/dialogs/folder-picker.html
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/kit.js app/web/templates/dialogs/folder-picker.html
 msgid "Cancel"
 msgstr "Abbrechen"
-
-#: app/web/static/js/app.js
-msgid "Cancel to see the other choice."
-msgstr "Abbrechen, um die andere Wahl zu sehen."
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Cancelled"
@@ -570,6 +586,10 @@ msgstr "Kap. {n}"
 #: app/plugins/builtin/libraries/settings.html
 msgid "Change or remove…"
 msgstr "Ändern oder entfernen…"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Change password"
+msgstr "Passwort ändern"
 
 #: app/plugins/builtin/accounts/menu.html
 msgid "Change password…"
@@ -656,20 +676,32 @@ msgid "Clear filters"
 msgstr "Filter zurücksetzen"
 
 #: app/web/static/js/app.js
+msgid "Clear progress"
+msgstr "Fortschritt löschen"
+
+#: app/web/static/js/app.js
 msgid "Clear progress for every book in this series? It will also be removed from Continue reading."
 msgstr "Den Fortschritt aller Bücher dieser Serie löschen? Sie verschwindet dann auch aus Weiterlesen."
 
 #: app/plugins/builtin/activity_log/activity_log.js
-msgid "Clear the activity log? Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."
-msgstr "Das Aktivitätsprotokoll leeren? Alle Einträge werden endgültig entfernt; exportiere es vorher, um eine Kopie zu behalten. Das Protokoll beginnt dann mit einem Eintrag, dass du es geleert hast."
+msgid "Clear the activity log?"
+msgstr "Das Aktivitätsprotokoll leeren?"
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Clear the filters"
 msgstr "Filter entfernen"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Clear the log"
+msgstr "Protokoll leeren"
+
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Clear the log…"
 msgstr "Protokoll leeren…"
+
+#: app/web/static/js/app.js
+msgid "Clear the progress?"
+msgstr "Den Fortschritt löschen?"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear the search"
@@ -736,6 +768,10 @@ msgstr "Vollständig: die Sammlung gilt als vollständig, egal was die Zahlen sa
 #: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Completed"
 msgstr "Gelesen"
+
+#: app/web/static/js/kit.js
+msgid "Confirm"
+msgstr "Bestätigen"
 
 #: app/plugins/builtin/mangaupdates.py
 msgid "Connects to api.mangaupdates.com"
@@ -849,9 +885,17 @@ msgstr "Entscheidet, welche Serien die Bibliothek in welcher Reihenfolge zeigt; 
 msgid "Default reading mode"
 msgstr "Standard-Lesemodus"
 
-#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/saved_searches/sheet.html
+#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/saved_searches/saved_searches.js app/plugins/builtin/saved_searches/sheet.html app/web/static/js/kit.js
 msgid "Delete"
 msgstr "Löschen"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Delete account"
+msgstr "Konto löschen"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Delete library"
+msgstr "Bibliothek löschen"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Delete series"
@@ -1087,6 +1131,10 @@ msgstr "Duplikat einer anderen Datei mit derselben Nummer"
 msgid "Duplicates"
 msgstr "Duplikate"
 
+#: app/plugins/builtin/libraries/libraries.js
+msgid "e.g. Comics"
+msgstr "z. B. Comics"
+
 #: app/plugins/builtin/libraries/settings.html
 msgid "Each library shows its own series, picked with the tabs on the home screen. A folder's series show in its library (Settings → Library folders); one series can be moved to another with Edit, or several at once by holding a card. Files never move."
 msgstr "Jede Bibliothek zeigt ihre eigenen Serien, ausgewählt über die Tabs auf dem Startbildschirm. Die Serien eines Ordners erscheinen in seiner Bibliothek (Einstellungen → Bibliotheksordner); eine Serie lässt sich mit Bearbeiten verschieben, mehrere auf einmal durch Halten einer Karte. Dateien werden nie verschoben."
@@ -1146,6 +1194,10 @@ msgstr "Fehler"
 #: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
 msgid "Errors"
 msgstr "Fehler"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."
+msgstr "Jeder Eintrag wird endgültig entfernt; exportiere es vorher, um eine Kopie zu behalten. Das Protokoll beginnt danach mit einem Eintrag, der sagt, dass du es geleert hast."
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Every file in the series folder, in reading order. Faded rows are older revisions or hidden. Use {edit} when a file name has the wrong number or holds several chapters: your numbers re-order the list. The files themselves are never changed."
@@ -1527,7 +1579,7 @@ msgstr "Gib der Bibliothek einen Namen"
 msgid "Give the search a name"
 msgstr "Gib der Suche einen Namen"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js
 msgid "Go back"
 msgstr "Zurück"
 
@@ -1536,10 +1588,18 @@ msgid "Go back to an earlier version"
 msgstr "Zu einer früheren Version zurück"
 
 #: app/web/static/js/app.js
+msgid "Go back to an older version?"
+msgstr "Zu einer älteren Version zurück?"
+
+#: app/web/static/js/app.js
+msgid "Go back to {plugin} {version}?"
+msgstr "Zurück zu {plugin} {version}?"
+
+#: app/web/static/js/app.js
 msgid "Go back to {plugin} {version}? It's the copy kept when you updated it."
 msgstr "Zurück zu {plugin} {version}? Das ist die Kopie, die beim Update behalten wurde."
 
-#: app/web/templates/settings/plugin.html
+#: app/web/static/js/app.js app/web/templates/settings/plugin.html
 msgid "Go back to {version}"
 msgstr "Zurück zu {version}"
 
@@ -1675,9 +1735,13 @@ msgstr "Alle {n} ignorieren"
 msgid "Image reader"
 msgstr "Bild-Reader"
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js app/web/templates/settings/backup.html
 msgid "Import"
 msgstr "Importieren"
+
+#: app/web/static/js/app.js
+msgid "Import this backup?"
+msgstr "Diese Sicherung importieren?"
 
 #: app/web/static/js/app.js
 msgid "Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first."
@@ -1747,7 +1811,7 @@ msgstr "Unvollständige Sammlung"
 msgid "Info"
 msgstr "Infos"
 
-#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "Install"
 msgstr "Installieren"
 
@@ -1762,6 +1826,14 @@ msgstr "{plugin} von {url} installieren?"
 #: app/web/static/js/app.js
 msgid "Install {plugin} {version} from {url}?"
 msgstr "{plugin} {version} von {url} installieren?"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin} {version}?"
+msgstr "{plugin} {version} installieren?"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin}?"
+msgstr "{plugin} installieren?"
 
 #: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "Installed"
@@ -1846,6 +1918,10 @@ msgstr "Einträge 30, 90 oder 365 Tage behalten, oder für immer (0)"
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "Keep the library page's filters and sort under a name (e.g. Isekai) and pick them again from the Saved button. Built in."
 msgstr "Speichert Filter und Sortierung der Bibliotheksseite unter einem Namen (z. B. Isekai) und holt sie über den Button Gespeichert zurück. Eingebaut."
+
+#: app/web/static/js/app.js
+msgid "Keep the newer database"
+msgstr "Neuere Datenbank behalten"
 
 #: app/web/static/js/app.js
 msgid "Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
@@ -2387,17 +2463,9 @@ msgstr[1] "Hat {n} Serien nach {to} verschoben"
 msgid "Moved: {row} is number {n} now"
 msgstr "Verschoben: {row} ist jetzt an Stelle {n}"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/libraries.js app/plugins/builtin/saved_searches/saved_searches.js
 msgid "Name"
 msgstr "Name"
-
-#: app/plugins/builtin/saved_searches/saved_searches.js
-msgid "Name for this search ({filters})"
-msgstr "Name für diese Suche ({filters})"
-
-#: app/plugins/builtin/libraries/libraries.js
-msgid "Name of the new library, e.g. Comics"
-msgstr "Name der neuen Bibliothek, z. B. Comics"
 
 #: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html
 msgid "Name of {name}"
@@ -2451,11 +2519,11 @@ msgstr "Nie zuordnen"
 msgid "New books"
 msgstr "Neue Bücher"
 
-#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+#: app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "New library"
 msgstr "Neue Bibliothek"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
+#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
 msgid "New password"
 msgstr "Neues Passwort"
 
@@ -2464,8 +2532,8 @@ msgid "New password again"
 msgstr "Neues Passwort wiederholen"
 
 #: app/plugins/builtin/accounts/accounts.js
-msgid "New password for {name} (at least 4 characters)"
-msgstr "Neues Passwort für {name} (mindestens 4 Zeichen)"
+msgid "New password for {name}"
+msgstr "Neues Passwort für {name}"
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "New password…"
@@ -2755,6 +2823,10 @@ msgstr "Aus"
 msgid "Off (swipe only)"
 msgstr "Aus (nur Wischen)"
 
+#: app/web/static/js/kit.js
+msgid "OK"
+msgstr "OK"
+
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Older entries are removed once a day."
 msgstr "Ältere Einträge werden einmal am Tag entfernt."
@@ -2920,6 +2992,10 @@ msgstr "Optional: hält diese Bibliothek vor anderen Nutzern der App privat"
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "or"
 msgstr "oder"
+
+#: app/web/static/js/app.js
+msgid "Or keep the newer database: {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
+msgstr "Oder die neuere Datenbank behalten: {version} versteht vielleicht nicht, was neuere Versionen hinzugefügt haben, und Teile können kaputtgehen. Ein erneutes Update behebt das."
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Or paste a link"
@@ -3198,6 +3274,10 @@ msgid "Publication"
 msgstr "Erscheinen"
 
 #: app/web/static/js/app.js
+msgid "Put back the copy"
+msgstr "Kopie zurückspielen"
+
+#: app/web/static/js/app.js
 msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
 msgstr "Die Kopie der Datenbank vom {when} zurückholen? Lesefortschritt, Einstellungen und andere Änderungen seitdem gehen verloren."
 
@@ -3381,6 +3461,10 @@ msgstr "Lade die Seite neu, um die Änderung zu sehen ({error})"
 msgid "Remove"
 msgstr "Entfernen"
 
+#: app/web/static/js/app.js
+msgid "Remove folder"
+msgstr "Ordner entfernen"
+
 #: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Remove from favorites"
 msgstr "Aus Favoriten entfernen"
@@ -3390,8 +3474,20 @@ msgid "Remove password"
 msgstr "Passwort entfernen"
 
 #: app/web/static/js/app.js
+msgid "Remove source"
+msgstr "Quelle entfernen"
+
+#: app/web/static/js/app.js
 msgid "Remove the source {name}? Plugins you installed from it stay."
 msgstr "Die Quelle {name} entfernen? Daraus installierte Plugins bleiben."
+
+#: app/web/static/js/app.js
+msgid "Remove this folder?"
+msgstr "Diesen Ordner entfernen?"
+
+#: app/web/static/js/app.js
+msgid "Remove this plugin source?"
+msgstr "Diese Plugin-Quelle entfernen?"
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Remove {filter}"
@@ -3525,7 +3621,7 @@ msgstr "Gleiche Zuordnung"
 msgid "Same {ids}"
 msgstr "Gleiche {ids}"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/saved_searches/saved_searches.js app/plugins/builtin/series_page/templates/views/series.html app/web/templates/settings/plugins.html
 msgid "Save"
 msgstr "Speichern"
 
@@ -3537,7 +3633,7 @@ msgstr "Passwort speichern"
 msgid "Save search"
 msgstr "Suche speichern"
 
-#: app/plugins/builtin/saved_searches/sheet.html
+#: app/plugins/builtin/saved_searches/saved_searches.js app/plugins/builtin/saved_searches/sheet.html
 msgid "Save this search"
 msgstr "Diese Suche speichern"
 
@@ -4046,8 +4142,8 @@ msgid "Summary"
 msgstr "Zusammenfassung"
 
 #: app/web/static/js/app.js
-msgid "Switch it on?"
-msgstr "Einschalten?"
+msgid "Switch on"
+msgstr "Einschalten"
 
 #: app/web/templates/settings/plugin.html
 msgid "Switch the plugin on to change its settings."
@@ -4056,6 +4152,10 @@ msgstr "Schalte das Plugin ein, um seine Einstellungen zu ändern."
 #: app/web/static/js/reader.js
 msgid "Switch {overlay} on above to hear its text."
 msgstr "Schalte oben {overlay} ein, um den Text zu hören."
+
+#: app/web/static/js/app.js
+msgid "Switch {plugin} on?"
+msgstr "{plugin} einschalten?"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Switched {name} off"
@@ -4345,6 +4445,10 @@ msgstr "Diese Dateien ließen sich nicht öffnen. Die Meldung sagt, warum."
 msgid "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."
 msgstr "Diese Serien sind demselben Online-Eintrag zugeordnet. Oft ist ein Ordner zweigeteilt oder eine Zuordnung falsch."
 
+#: app/plugins/builtin/accounts/accounts.js
+msgid "They're logged out everywhere and log in with the new one."
+msgstr "Die Person wird überall abgemeldet und meldet sich mit dem neuen an."
+
 #: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Thick"
 msgstr "Dick"
@@ -4580,6 +4684,14 @@ msgstr "Status unbekannt"
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
 msgid "Unlock"
 msgstr "Entsperren"
+
+#: app/web/static/js/app.js
+msgid "Unlock all"
+msgstr "Alle entsperren"
+
+#: app/web/static/js/app.js
+msgid "Unlock every field?"
+msgstr "Alle Felder entsperren?"
 
 #: app/api/system.py app/plugins/builtin/libraries/api.py
 msgid "Unlock the folder's library first"
@@ -4869,6 +4981,10 @@ msgstr "Wo Bibliothek und Weiterlesen sitzen (mit dem Seitenleisten-Plugin: nur 
 msgid "Where this folder's series show. Series moved to another library by hand stay there."
 msgstr "Wo die Serien dieses Ordners erscheinen. Von Hand in eine andere Bibliothek verschobene Serien bleiben dort."
 
+#: app/web/static/js/app.js
+msgid "Which database?"
+msgstr "Welche Datenbank?"
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Which edition your files are from (regular, kanzenban, omnibus...). Automatic: worked out from the pages per volume and the editions MangaUpdates lists"
 msgstr "Aus welcher Ausgabe deine Dateien stammen (regulär, Kanzenban, Sammelband...). Automatisch: anhand der Seiten pro Band und der Ausgaben, die MangaUpdates kennt"
@@ -4968,6 +5084,10 @@ msgstr "Du hast diese Version übersprungen"
 #: app/web/static/js/app.js
 msgid "You skipped version {version}. A newer one will show here"
 msgstr "Du hast Version {version} übersprungen. Eine neuere wird hier angezeigt"
+
+#: app/web/static/js/kit.js
+msgid "Your answer"
+msgstr "Deine Antwort"
 
 #: app/plugins/builtin/attention_lists/templates/attention/matches.html
 msgid "Your copy · folder: {folder}"

@@ -218,7 +218,8 @@ class Tracker(Plugin):
 
 ### A button that asks first
 
-`confirm` is a question shown before the button runs.
+`confirm` is a question shown before the button runs, in the app's own dialog (Plugin API 39): the
+button's label is its title and the word on the button that goes ahead.
 
 ```python
 # Asks "Forget everything?" before running
@@ -1041,6 +1042,23 @@ message. `MangaVibe.toast(text)` shows a short message.
 // Call the plugin's own route and show what it said
 const r = await MangaVibe.api("/api/plugins/notes/api/hello");
 MangaVibe.toast(`Hello, ${r.hello}`);
+```
+
+### Asking first, or asking for a name
+
+`MangaVibe.confirm({ … })` and `MangaVibe.prompt({ … })` are the app's own dialogs (Plugin API 39), not the
+browser's `confirm()` and `prompt()`: they return a Promise, so `await` them. `danger: true` makes the
+button red and puts the focus on Cancel. See [UI-KIT.md](UI-KIT.md#confirm-and-prompt).
+
+```js
+// Ask before deleting, and ask for a name
+if (await MangaVibe.confirm({ title: "Delete all notes?", text: "They can't be brought back.",
+                              confirm: "Delete notes", danger: true })) {
+  await MangaVibe.api("/api/plugins/notes/api/all", { method: "DELETE" });
+}
+const name = await MangaVibe.prompt({ title: "New note", label: "Name", confirm: "Add",
+                                      check: (v) => (v.length > 40 ? "40 letters at most" : "") });
+if (name) MangaVibe.toast(`Added ${name}`);
 ```
 
 ### Listening to the app

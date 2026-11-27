@@ -1,0 +1,106 @@
+/* UI kit: our own confirm and prompt dialogs (docs/UI-KIT.md, "Confirm and prompt"): MangaVibe.confirm,
+   MangaVibe.prompt and MangaVibe.ask (js/kit.js, the "ask" piece) open a <dialog class="ask"> with
+   showModal(). It looks like the kit's dialog (dialog.css): a sheet from the bottom on phones, a small
+   centred box on wider screens. The <dialog> is the box and its ::backdrop the dimmed page; the form fills
+   the box, so a click on the dialog itself is a click on the backdrop.
+   Custom properties: --ask-width, and the dialog's --dialog-bg, --dialog-radius, --dialog-backdrop. */
+@layer kit {
+  dialog.ask {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: var(--ask-width, 480px);
+    max-height: 88vh;
+    margin: auto auto 0;  /* phones: on the bottom edge */
+    padding: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--dialog-bg, var(--surface));
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: var(--dialog-radius, 24px) var(--dialog-radius, 24px) 0 0;
+    box-shadow: var(--shadow-lg);
+    animation: sheet-up 0.32s var(--ease);
+
+    /* older browsers don't pass custom properties to ::backdrop: the colour after the comma */
+    &::backdrop {
+      background: var(--dialog-backdrop, var(--backdrop, rgb(8 6 5 / 0.62)));
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      animation: fade-in var(--slow, 0.3s);
+    }
+
+    & > form {
+      display: grid;
+      gap: 14px;
+      padding: 20px 20px calc(20px + var(--safe-bottom));
+    }
+
+    & .ask-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    & .ask-text {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+
+      & p {
+        margin: 0;
+        white-space: pre-line;  /* a single line break in the text stays one */
+      }
+
+      & ul {
+        display: grid;
+        gap: 4px;
+        margin: 0;
+        padding: 10px 12px 10px 30px;
+        background: var(--surface2);
+        border-radius: var(--radius);
+        color: var(--text);
+      }
+    }
+
+    & .field > input {
+      font-size: 15px;
+    }
+
+    & .ask-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 4px;
+
+      /* phones: buttons as wide as the sheet, the main one on top (closest to the thumb is Cancel) */
+      @media (max-width: 699px) {
+        flex-direction: column-reverse;
+
+        & .btn {
+          width: 100%;
+        }
+      }
+    }
+
+    @media (min-width: 700px) {
+      margin: auto;
+      border-bottom: 1px solid var(--border);
+      border-radius: var(--dialog-radius, 24px);
+      animation-name: pop-in;
+      animation-duration: 0.24s;
+
+      & > form {
+        padding: 22px 24px;
+      }
+    }
+  }
+}
