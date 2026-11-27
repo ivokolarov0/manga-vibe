@@ -387,6 +387,8 @@ window.MangaVibeApp = {
   speaking: (run, i) => Reader.speaking(run, i),
   /* the back button: true if the page handled it, false lets the app go back in history (or close) */
   back() {
+    // a confirm or prompt (MangaVibe.confirm) is cancelled first, even over the reader
+    if (kit.asking()) return dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })) || true;
     if (Reader.isOpen) return Reader.back();
     // every sheet and dialog closes on Escape
     const open = [...document.querySelectorAll(".modal, .sheet")].some((el) => el.getClientRects().length);
@@ -405,22 +407,30 @@ async function refreshUpdate() {
    newer versions changed it, keep the newer database, or cancel. Returns "restore", "keep" or null. */
 function askDatabase(d, label) {
   const older = t("{version} is older than your database: newer versions have changed it since.", { version: label });
+  const keep = t("Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that.", { version: label });
+  const buttons = [{ label: t("Keep the newer database"), value: "keep", danger: true }];
+  let text = older + "\n\n" + keep;
   if (d.backup) {
     const when = d.backup.date ? fmtDateTime(d.backup.date) : t("an earlier update");
-    if (confirm(older + "\n\n" + t("Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost.", { when })
-                + "\n\n" + t("Cancel to see the other choice."))) return "restore";
+    text = older + "\n\n" + t("Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost.", { when })
+      + "\n\n" + t("Or keep the newer database: {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that.", { version: label });
+    buttons.push({ label: t("Put back the copy"), value: "restore", danger: true });
   }
-  const keep = t("Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that.", { version: label });
-  if (confirm(d.backup ? keep : older + "\n\n" + keep)) return "keep";
-  return null;
+  return kit.ask({ title: t("Which database?"), text, buttons });
+}
+
+/* A plugin asks for permissions before it's installed: heading, then the permissions as a list. true: allowed. */
+function askPermissions(heading, perms) {
+  return kit.confirm({ title: t("Allow these permissions?"), text: heading, list: perms,
+                       note: t("Allow them and install it?"), confirm: t("Allow and install") });
 }
 
 /* Install a version (how.rollback: an earlier one), follow its progress, then reload the page when
    the new version answers. */
 async function installUpdate(sha, how = {}) {
   const app = Alpine.store("app");
-  const ask = (d) => {
-    const db = askDatabase(d, how.label || t("This version"));
+  const ask = async (d) => {
+    const db = await askDatabase(d, how.label || t("This version"));
     if (db) return installUpdate(sha, { ...how, db });
     app.updating = null;
     toast(t("Nothing was changed"));
@@ -1093,6 +1103,11 @@ window.MangaVibe = {
   // the UI kit's pieces (Plugin API 31, docs/UI-KIT.md): get(name), define(pluginId, name, piece),
   // extend(pluginId, name, fn), names() (js/kit.js)
   kit,
+  // our own confirm and prompt dialogs (Plugin API 39, docs/UI-KIT.md "Confirm and prompt"), Promises:
+  // await confirm({ title, text, list, note, confirm, cancel, danger }) -> true / false;
+  // await prompt({ title, text, label, value, placeholder, type, confirm, required, check }) -> the text / null;
+  // await ask({ title, text, list, note, buttons: [{ label, value, danger }] }) -> a button's value / null
+  confirm: kit.confirm, prompt: kit.prompt, ask: kit.ask,
   // the page's language (Plugin API 27, #263): t(text, values) and tn(singular, plural, n, values) as in
   // common.js, and dates and numbers written its way. In markup, t() and tn() work as they are
   t, tn, th, lang: LANG, fmtDate, fmtDateTime, fmtTime, fmtNum,
@@ -1567,7 +1582,7 @@ function seriesController() {
     edit(tab = "info") { Alpine.store("app").openEdit(this.s.id, () => this.reload(), tab); },  // "info" or "poster"
     actionBusy: "",  // plugin + key of the plugin button that is running (it can take a while)
     async runAction(a) {  // one of s.actions: a plugin's button
-      if (a.confirm && !confirm(a.confirm)) return;
+      if (a.confirm && !await confirmAction(a)) return;
       this.actionBusy = a.plugin + a.key;
       try { await showActionResult(await api(`/api/series/${this.s.id}/actions/${a.plugin}/${a.key}`, { method: "POST" })); }
       catch (e) { toast(e.message, 6000, "error"); }
@@ -1593,7 +1608,8 @@ function seriesController() {
         : tn("{n} page", "{n} pages", b.page_count)) + (b.duplicate ? " · " + t("duplicate") : "");
     },
     async markAll(read) {  // every book read (true) or unread (false, asks first)
-      if (!read && !confirm(t("Clear progress for every book in this series? It will also be removed from Continue reading."))) return;
+      if (!read && !await kit.confirm({ title: t("Clear the progress?"), danger: true, confirm: t("Clear progress"),
+          text: t("Clear progress for every book in this series? It will also be removed from Continue reading.") })) return;
       await api(`/api/series/${this.s.id}/${read ? "mark-read" : "mark-unread"}`, { method: "POST" });
       Alpine.store("app").libraryDirty++;
       this.reload();
@@ -2265,9 +2281,10 @@ function settingsView() {
       } catch (e) { toast(e.message, 6000, "error"); }
     },
     async removeLibrary(l) {
-      if (!confirm(t("Remove “{name}” ({path}) from MangaVibe?", { name: l.name, path: l.root_path }) + "\n\n"
-        + tn("Your files are not touched. Its {n} series and their reading progress are removed from the app.",
-             "Your files are not touched. Its {n} series and their reading progress are removed from the app.", l.series))) return;
+      if (!await kit.confirm({ title: t("Remove this folder?"), danger: true, confirm: t("Remove folder"),
+          text: t("Remove “{name}” ({path}) from MangaVibe?", { name: l.name, path: l.root_path }) + "\n\n"
+            + tn("Your files are not touched. Its {n} series and their reading progress are removed from the app.",
+                 "Your files are not touched. Its {n} series and their reading progress are removed from the app.", l.series) })) return;
       try { await api(`/api/libraries/${l.id}`, { method: "DELETE" }); }
       catch (e) { return toast(e.message, 6000, "error"); }  // e.g. its library is locked
       toast(t("Folder removed"));
@@ -2314,10 +2331,11 @@ function settingsView() {
         : v.on_disk ? t("Still on the server, no download") : t("Downloaded from GitHub");
       return [v.date && fmtDate(v.date), v.message, where].filter(Boolean).join(" · ");
     },
-    goBack(v) {
+    async goBack(v) {
       const cur = this.upd?.current?.short || t("the running version");
-      if (!confirm(t("Go back to {version}? MangaVibe restarts with it. {current} won't be offered again until a newer version is out.",
-                     { version: v.short, current: cur }))) return;
+      if (!await kit.confirm({ title: t("Go back to an older version?"), confirm: t("Go back to {version}", { version: v.short }),
+          text: t("Go back to {version}? MangaVibe restarts with it. {current} won't be offered again until a newer version is out.",
+                  { version: v.short, current: cur }) })) return;
       installUpdate(v.sha, { rollback: true, label: v.short });
     },
     // ---- Settings → Backup (app/backup.py)
@@ -2373,8 +2391,9 @@ function settingsView() {
       const file = e.target.files[0];
       e.target.value = "";  // the same file can be picked again
       if (!file || this.importing || this.exporting) return;
-      if (!confirm(t("Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first.",
-                     { file: file.name }))) return;
+      if (!await kit.confirm({ title: t("Import this backup?"), danger: true, confirm: t("Import"),
+          text: t("Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first.",
+                  { file: file.name }) })) return;
       this.uploaded = 0;
       this.importing = true;
       try {
@@ -2426,8 +2445,10 @@ function settingsView() {
     async togglePlugin(p, picked = null) {
       // picked from a row, it's clear what it replaces there: only ask about the other jobs it takes over
       const replaced = p.enabled ? this.replacedBy(p).filter(([, job]) => job.key !== picked) : [];
-      if (replaced.length && !confirm(replaced.map(([q, job]) => t("{plugin} replaces {other} ({job}).",
-          { plugin: p.name, other: q.name, job: t(job.label) })).join("\n") + " " + t("Switch it on?"))) return (p.enabled = false);
+      if (replaced.length && !await kit.confirm({ title: t("Switch {plugin} on?", { plugin: p.name }), confirm: t("Switch on"),
+          list: replaced.map(([q, job]) => t("{plugin} replaces {other} ({job}).", { plugin: p.name, other: q.name, job: t(job.label) })) })) {
+        return (p.enabled = false);
+      }
       let r;
       try { r = await api(`/api/plugins/${p.id}`, { method: "PUT", body: { enabled: p.enabled } }); }
       catch (e) {  // e.g. Libraries while one has a password, or the only plugin doing a job the app needs
@@ -2517,14 +2538,19 @@ function settingsView() {
         toast(clear ? t("GitHub token removed") : t("GitHub token saved"));
       } catch (e) { toast(e.message, 6000, "error"); }
     },
-    installPluginUpdate(p) {
-      if (!confirm(t("Install {plugin} {version} from {url}?", { plugin: p.name, version: p.update.latest,
-                                                                url: `github.com/${p.update.repo}` }))) return;
+    // install a version of p from GitHub, once the owner said yes
+    askInstallVersion(p, version) {
+      return kit.confirm({ title: t("Install {plugin} {version}?", { plugin: p.name, version }), confirm: t("Install"),
+                           text: t("Install {plugin} {version} from {url}?", { plugin: p.name, version, url: `github.com/${p.update.repo}` }) });
+    },
+    async installPluginUpdate(p) {
+      if (!await this.askInstallVersion(p, p.update.latest)) return;
       this.putInPluginVersion(p, "install", null, p.update.latest);
     },
     // going back: a copy in plugins/.backup (no download), or any release picked from the list
-    restorePluginVersion(p, version) {
-      if (!confirm(t("Go back to {plugin} {version}? It's the copy kept when you updated it.", { plugin: p.name, version }))) return;
+    async restorePluginVersion(p, version) {
+      if (!await kit.confirm({ title: t("Go back to {plugin} {version}?", { plugin: p.name, version }), confirm: t("Go back"),
+                               text: t("Go back to {plugin} {version}? It's the copy kept when you updated it.", { plugin: p.name, version }) })) return;
       this.putInPluginVersion(p, "restore", version, version);
     },
     pluginReleases: {},  // plugin id -> its releases on GitHub, once "Other versions" was pressed
@@ -2538,10 +2564,9 @@ function settingsView() {
         if (!this.pluginReleases[p.id].length) toast(t("No other release found"));
       } catch (e) { toast(e.message, 6000, "error"); } finally { this.busyAction = ""; }
     },
-    installPluginRelease(p) {
+    async installPluginRelease(p) {
       const version = this.pluginPick[p.id];
-      if (!version || !confirm(t("Install {plugin} {version} from {url}?", { plugin: p.name, version,
-                                                                          url: `github.com/${p.update.repo}` }))) return;
+      if (!version || !await this.askInstallVersion(p, version)) return;
       this.putInPluginVersion(p, "install", version, version);
     },
     async putInPluginVersion(p, what, version, label) {
@@ -2554,9 +2579,10 @@ function settingsView() {
           if (e.status !== 409 || !e.detail.permissions) throw e;
           // that version asks for permissions the installed one doesn't have
           const perms = e.detail.permissions;
-          if (!confirm(t("{plugin} {version} asks for new permissions:", { plugin: p.name, version: label }) + "\n\n" +
-                       perms.map((x) => `• ${x}`).join("\n") +
-                       "\n\n" + t("Allow them and install it?"))) { toast(t("Nothing was installed")); return; }
+          if (!await askPermissions(t("{plugin} {version} asks for new permissions:", { plugin: p.name, version: label }), perms)) {
+            toast(t("Nothing was installed"));
+            return;
+          }
           r = await send(perms);
         }
         this.setPlugins(r);
@@ -2595,7 +2621,8 @@ function settingsView() {
     async addSource() {
       const url = this.newSource.trim();
       if (!url) return;
-      if (!confirm(t("Plugins from this source run inside MangaVibe with full access to its data. Only add sources you trust. Add it?"))) return;
+      if (!await kit.confirm({ title: t("Add this plugin source?"), confirm: t("Add source"), text: url + "\n\n"
+          + t("Plugins from this source run inside MangaVibe with full access to its data. Only add sources you trust. Add it?") })) return;
       this.availBusy = true;
       try {
         this.avail = { loaded: true, ...await api("/api/plugins/sources", { method: "POST", body: { url } }) };
@@ -2604,14 +2631,16 @@ function settingsView() {
       } catch (e) { toast(e.message, 8000, "error"); } finally { this.availBusy = false; }
     },
     async removeSource(s) {
-      if (!confirm(t("Remove the source {name}? Plugins you installed from it stay.", { name: s.name }))) return;
+      if (!await kit.confirm({ title: t("Remove this plugin source?"), danger: true, confirm: t("Remove source"),
+          text: t("Remove the source {name}? Plugins you installed from it stay.", { name: s.name }) })) return;
       try {
         this.avail = { loaded: true, ...await api("/api/plugins/sources/remove", { method: "POST", body: { url: s.url } }) };
       } catch (e) { toast(e.message, 6000, "error"); }
     },
     async installAvailable(a) {
-      if (!confirm(t("Install {plugin} from {url}?", { plugin: a.name, url: `github.com/${a.repo}` }) +
-                   (a.official ? "" : "\n\n" + t("It's listed by {source}, not by MangaVibe.", { source: a.sourceName })))) return;
+      if (!await kit.confirm({ title: t("Install {plugin}?", { plugin: a.name }), confirm: t("Install"),
+          text: t("Install {plugin} from {url}?", { plugin: a.name, url: `github.com/${a.repo}` })
+            + (a.official ? "" : "\n\n" + t("It's listed by {source}, not by MangaVibe.", { source: a.sourceName })) })) return;
       this.availInstalling = a.source + " " + a.id;
       const send = (accept) => api("/api/plugins/available/install",
                                    { method: "POST", body: { source: a.source, id: a.id, accept_permissions: accept } });
@@ -2620,8 +2649,10 @@ function settingsView() {
         try { r = await send([]); } catch (e) {
           if (e.status !== 409 || !e.detail.permissions) throw e;
           const perms = e.detail.permissions;
-          if (!confirm(t("{plugin} asks for these permissions:", { plugin: a.name }) + "\n\n" + perms.map((x) => `• ${x}`).join("\n") +
-                       "\n\n" + t("Allow them and install it?"))) { toast(t("Nothing was installed")); return; }
+          if (!await askPermissions(t("{plugin} asks for these permissions:", { plugin: a.name }), perms)) {
+            toast(t("Nothing was installed"));
+            return;
+          }
           r = await send(perms);
         }
         const p = r.plugins.find((x) => x.id === a.id);
@@ -2635,7 +2666,7 @@ function settingsView() {
     },
     busyAction: "",
     async runGlobalAction(p, a) {
-      if (a.confirm && !confirm(a.confirm)) return;
+      if (a.confirm && !await confirmAction(a)) return;
       this.busyAction = p.id + a.key;
       try { await showActionResult(await api(`/api/plugins/${p.id}/actions/${a.key}`, { method: "POST" })); }
       catch (e) { toast(e.message, 6000, "error"); }
@@ -2815,7 +2846,8 @@ function editSeries() {
       } catch (e) { toast(e.message, 7000, "error"); } finally { this.saving = false; }
     },
     async unlockAll() {
-      if (!confirm(t("Let metadata refresh change all fields again? Your edits stay until the next refresh."))) return;
+      if (!await kit.confirm({ title: t("Unlock every field?"), confirm: t("Unlock all"),
+          text: t("Let metadata refresh change all fields again? Your edits stay until the next refresh.") })) return;
       await api(`/api/series/${this.s.id}/metadata`, { method: "PUT", body: { unlock: this.s.locked_fields } });
       toast(t("Unlocked"));
       this.start();

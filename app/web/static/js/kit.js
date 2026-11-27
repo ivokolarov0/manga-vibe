@@ -559,6 +559,179 @@ document.addEventListener("DOMContentLoaded", () => {
   box.addEventListener("focusout", resume);
 });
 
+/* MangaVibe.confirm(…), MangaVibe.prompt(…) and MangaVibe.ask(…) (Plugin API 39, issue #323): our own
+   dialog in place of the browser's confirm() and prompt(). Each returns a Promise:
+     await confirm({ title, text, list, note, confirm: t("Delete"), cancel, danger })  -> true / false
+     await prompt({ title, text, label, value, placeholder, type, confirm, required, check }) -> the text / null
+     await ask({ title, text, list, note, buttons: [{ label, value, danger, primary }] }) -> a button's value / null
+   (confirm and prompt also take a plain text: confirm("Delete it?")). text: blank lines start a new
+   paragraph; list: a list of points under it (a plugin's permissions); note: a paragraph after the list.
+   check(value): a message when what's typed won't do ("At least 4 characters"), shown under the field.
+   A native <dialog> opened with showModal(): the page behind can't be reached, Tab stays inside; Escape, a
+   click on the backdrop and the Android app's back button cancel; the focus goes back to what opened it.
+   It's a sheet from the bottom on phones (css/kit/ask.css). For a danger one, the safe button (Cancel) has
+   the focus first. One at a time: a second one waits for the first to close.
+   build(), focusIn() and open() are methods, so a plugin can change one of them alone. */
+const t = (msgid, values) => (typeof window.t === "function" ? window.t(msgid, values)
+  : String(msgid).replace(/\{(\w+)\}/g, (m, k) => (values && k in values ? values[k] : m)));  // the kit page has no common.js
+const make = (tag, props = {}, ...kids) => {
+  const e = Object.assign(document.createElement(tag), props);
+  e.append(...kids.filter((k) => k !== null && k !== undefined && k !== ""));
+  return e;
+};
+const paragraphs = (text) => String(text ?? "").split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean)
+  .map((s) => make("p", { textContent: s }));
+let askQueue = Promise.resolve();
+own.set("ask", {
+  options: { backdrop: true },
+  // the dialog's parts: { dialog, form, field, input, error, buttons }
+  build(o) {
+    const id = ++uid;
+    const title = o.title ? make("h2", { className: "ask-title", id: `kit-ask-title-${id}`, textContent: o.title }) : null;
+    const list = o.list?.length ? make("ul", {}, ...o.list.map((x) => make("li", { textContent: String(x) }))) : null;
+    const body = [...paragraphs(o.text), list, ...paragraphs(o.note)];
+    const text = body.length ? make("div", { className: "ask-text", id: `kit-ask-text-${id}` }, ...body) : null;
+    let field = null, input = null, error = null;
+    if (o.prompt) {
+      input = make("input", { type: o.type || "text", value: o.value ?? "", placeholder: o.placeholder || "",
+                            id: `kit-ask-input-${id}`, autocomplete: o.type === "password" ? "new-password" : "off" });
+      error = make("p", { className: "error", id: `kit-ask-error-${id}`, hidden: true });
+      error.setAttribute("role", "alert");
+      if (!o.label && !title) input.setAttribute("aria-label", t("Your answer"));
+      field = make("div", { className: "field" },
+                 o.label ? make("label", { htmlFor: input.id, textContent: o.label }) : null, input, error);
+      if (!o.label && title) input.setAttribute("aria-labelledby", title.id);
+    }
+    const buttons = o.buttons.map((b) => {
+      const button = make("button", { type: b.submit ? "submit" : "button", textContent: b.label,
+                                    className: ["btn", b.primary && "primary", b.danger && "danger"].filter(Boolean).join(" ") });
+      button.kitValue = b.value;
+      return button;
+    });
+    const form = make("form", { method: "dialog", noValidate: true }, title, text, field,
+                    make("div", { className: "ask-buttons" }, ...buttons));
+    const dialog = make("dialog", { className: ["ask", o.danger && "danger"].filter(Boolean).join(" ") }, form);
+    if (title) dialog.setAttribute("aria-labelledby", title.id);
+    else dialog.setAttribute("aria-label", o.prompt ? o.label || t("Your answer") : t("Confirm"));
+    if (text) dialog.setAttribute("aria-describedby", text.id);
+    if (o.danger || !o.prompt) dialog.setAttribute("role", "alertdialog");
+    return { dialog, form, field, input, error, buttons };
+  },
+  // a prompt's field (its text picked), else the safe button for a danger one, else the main button
+  focusIn(parts, o) {
+    if (parts.input) {
+      parts.input.focus();
+      return parts.input.select();
+    }
+    const i = o.danger ? o.buttons.findIndex((b) => b.value === null) : o.buttons.findIndex((b) => b.submit);
+    (parts.buttons[i] || parts.buttons.at(-1))?.focus();
+  },
+  open(o) {
+    const run = () => new Promise((resolve) => {
+      const piece = this;
+      const parts = piece.build(o);
+      const { dialog, form, input, error } = parts;
+      const was = document.activeElement;
+      let done = false;
+      const keys = (e) => {
+        if (e.key !== "Escape" || e.isComposing) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();  // only this closes: not a dialog under it, nor the reader
+        finish(null);
+      };
+      const submit = parts.buttons.find((b) => b.type === "submit");
+      // nothing typed yet (and it's needed): the button waits
+      const empty = () => {
+        if (input && o.required !== false) submit.disabled = !input.value.trim();
+      };
+      // what's typed won't do: say why under the field, and don't close
+      const bad = () => {
+        const why = o.check?.(input.value) || "";
+        error.textContent = why;
+        error.hidden = !why;
+        for (const [k, v] of [["aria-invalid", "true"], ["aria-describedby", error.id]]) {
+          if (why) input.setAttribute(k, v);
+          else input.removeAttribute(k);
+        }
+        return !!why;
+      };
+      function finish(value) {
+        if (done) return;
+        done = true;
+        removeEventListener("keydown", keys, true);
+        openDialogs.splice(openDialogs.indexOf(dialog), 1);
+        if (dialog.open) dialog.close();
+        dialog.remove();
+        lockScroll(false);
+        const focus = document.activeElement;
+        if (!focus || focus === document.body) get("dialog").opener(was)?.focus({ preventScroll: true });
+        resolve(value);
+      }
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (input && (submit.disabled || bad())) return input.focus();
+        finish(input ? input.value : submit.kitValue);
+      });
+      for (const b of parts.buttons) if (b.type === "button") b.addEventListener("click", () => finish(b.kitValue));
+      input?.addEventListener("input", () => {
+        empty();
+        if (!error.hidden) bad();  // again, once it said something
+      });
+      empty();
+      dialog.addEventListener("cancel", (e) => {
+        e.preventDefault();
+        finish(null);
+      });
+      // the backdrop is the dialog itself (the form fills the box): a click that started and ended there
+      let downOnBackdrop = false;
+      dialog.addEventListener("pointerdown", (e) => (downOnBackdrop = e.target === dialog));
+      dialog.addEventListener("click", (e) => {
+        if (e.target === dialog && downOnBackdrop && o.backdrop !== false) finish(null);
+      });
+      // the page's own keys (the reader's arrows, a selection's Escape) don't see what's pressed in it
+      dialog.addEventListener("keydown", (e) => e.stopPropagation());
+      addEventListener("keydown", keys, true);  // also the Android back button's (sent to the window)
+      document.body.append(dialog);
+      dialog.inert = false;
+      openDialogs.push(dialog);  // the x-dialog under it leaves Escape and Tab to it
+      lockScroll(true);
+      dialog.showModal();
+      piece.focusIn(parts, o);
+    });
+    const p = askQueue.then(run);
+    askQueue = p.catch(() => {});
+    return p;
+  },
+  confirm(o) {
+    if (typeof o !== "object" || o === null) o = { text: o };
+    const opts = { ...this.options, ...o };
+    return this.open({
+      ...opts,
+      buttons: [{ label: opts.cancel || t("Cancel"), value: null },
+                { label: opts.confirm || t("OK"), value: true, submit: true, primary: true, danger: !!opts.danger }],
+    }).then((v) => v === true);
+  },
+  prompt(o) {
+    if (typeof o !== "object" || o === null) o = { label: o };
+    const opts = { ...this.options, ...o };
+    return this.open({
+      ...opts, prompt: true,
+      buttons: [{ label: opts.cancel || t("Cancel"), value: null },
+                { label: opts.confirm || t("OK"), submit: true, primary: true, danger: !!opts.danger }],
+    });
+  },
+  ask(o) {
+    const opts = { ...this.options, ...o };
+    const given = (opts.buttons || []).map((b) => ({ ...b, value: b.value ?? b.label }));
+    const last = given.length - 1;
+    return this.open({
+      ...opts,
+      buttons: [{ label: opts.cancel || t("Cancel"), value: null },
+                ...given.map((b, i) => ({ ...b, primary: b.primary ?? (i === last), submit: i === last }))],
+    });
+  },
+});
+
 /* x-tooltip="text" on a button (an icon button above all): the text shows in a small bubble above it
    while the mouse is on it or it has the keyboard's focus (not on a tap or click), and is the button's
    name when it has none (aria-label). Without a value it takes the button's title, which it removes,
@@ -633,9 +806,7 @@ own.set("tooltip", {
 
 /* ---------------- the date picker ---------------- */
 
-// the page's texts (common.js's t(), issue #263); the kit page has none, so there they stay English
-const fill = (s, values) => (values ? s.replace(/\{(\w+)\}/g, (m, k) => (k in values ? String(values[k]) : m)) : s);
-const t = (text, values) => (typeof window.t === "function" ? window.t(text, values) : fill(text, values));
+// its texts go through t() (above, with the ask piece): the page's language, English on the kit page
 
 // days are "2026-11-27" strings; worked out on UTC dates, so no time zone or summer time gets in the way
 const pad = (n) => String(n).padStart(2, "0");
@@ -1135,8 +1306,15 @@ return {
   define(pluginId, name, piece) { changes.push([pluginId, name, "define", piece]); },
   // change a piece: fn(the piece so far) -> the new one
   extend(pluginId, name, fn) { changes.push([pluginId, name, "extend", fn]); },
+  // our own confirm and prompt dialogs (the "ask" piece): Promises, see above
+  confirm: (o) => get("ask").confirm(o),
+  prompt: (o) => get("ask").prompt(o),
+  ask: (o) => get("ask").ask(o),
+  // one of them is showing (the Android app's back button cancels it first)
+  asking: () => !!document.querySelector("dialog.ask[open]"),
 };
 })();
 
 window.MangaVibe ??= {};
 window.MangaVibe.kit = kit;
+Object.assign(window.MangaVibe, { confirm: kit.confirm, prompt: kit.prompt, ask: kit.ask });

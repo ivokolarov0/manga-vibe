@@ -83,13 +83,18 @@ MangaVibe.onStart(() => {
       v = v.trim();
       if (v && v !== a.name) this.patch(a, { name: v }, MV.t("Renamed to {name}", { name: v }));
     },
-    newPassword(a) {
-      const pw = prompt(MV.t("New password for {name} (at least 4 characters)", { name: a.name }));
+    async newPassword(a) {
+      const pw = await MV.prompt({
+        title: MV.t("New password for {name}", { name: a.name }), label: MV.t("New password"), type: "password",
+        text: MV.t("They're logged out everywhere and log in with the new one."), confirm: MV.t("Change password"),
+        check: (v) => (v.length < 4 ? MV.t("At least 4 characters") : ""),
+      });
       if (pw) this.patch(a, { password: pw }, MV.t("{name}'s password is changed; they're logged out everywhere.", { name: a.name }));
     },
     async remove(a) {
-      if (!confirm(MV.t("Delete the account “{name}”?", { name: a.name }) + "\n\n"
-        + MV.t("Its reading progress, favorites and saved searches are deleted too. The series and files stay."))) return;
+      if (!await MV.confirm({ title: MV.t("Delete the account “{name}”?", { name: a.name }), danger: true,
+          confirm: MV.t("Delete account"),
+          text: MV.t("Its reading progress, favorites and saved searches are deleted too. The series and files stay.") })) return;
       try {
         await MV.api(`${API}/accounts/${a.id}`, { method: "DELETE" });
         MV.toast(MV.t("{name} is deleted", { name: a.name }));

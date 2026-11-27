@@ -197,7 +197,8 @@ MangaVibe.onStart(() => {
       return `${API}/export.csv?${p}`;
     },
     async clearLog() {
-      if (!confirm(MV.t("Clear the activity log? Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."))) return;
+      if (!await MV.confirm({ title: MV.t("Clear the activity log?"), danger: true, confirm: MV.t("Clear the log"),
+          text: MV.t("Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it.") })) return;
       this.clearing = true;
       try {
         const r = await MV.api(`${API}/clear`, { method: "POST" });

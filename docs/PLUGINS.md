@@ -98,7 +98,7 @@ class Hello(Plugin):
 | **Fix ordering / parsing** | `on_book_scanned(ctx, book, parsed)`: change `parsed.volume`, `.chapter`, `.chapter_end`, `.extra`, `.extra_index`, `.version` |
 | **Do something after a series scan** | `on_series_scanned(ctx, series, books)` |
 | **Clean up when the owner deletes a series** | `on_series_deleted(ctx, series)`: called just before the series and its folder are deleted, so it and your data for it can still be read. Plugin API 6 |
-| **Buttons on the series page** | `actions = [Action("key", "Label", confirm=None)]` and `run_action(ctx, key, series)` returning a message |
+| **Buttons on the series page** | `actions = [Action("key", "Label", confirm=None)]` and `run_action(ctx, key, series)` returning a message; with `confirm="Sure?"` the app asks first in its own dialog, the button's label as its title |
 | **Dropdowns on the series page** | `choices = [Choice("key", "Label", options=[("value", "Label"), ...])]`, `get_choice(ctx, key, series)` and `set_choice(ctx, key, series, value)` (see [Dropdowns](#dropdowns)) |
 | **Change how the app looks** | `css = """ :root { --accent: #ff6fa8; } """` (loaded after the built-in styles, so it wins) |
 | **Metadata provider** | `is_provider = True`, implement `search(ctx, query, year)` → `list[Candidate]` and `fetch(ctx, provider_id)` → dict of series fields. Optional `url = "https://..."` links the site on the Metadata settings page |
@@ -662,6 +662,9 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `onStart(fn)` | run `fn` when Alpine starts, or at once if it already has |
 | `api(path, { method, body })` | call the server; the JSON answer, or throws an `Error` with the server's message |
 | `toast(text, ms, kind, action)` | a short message at the bottom, read out by screen readers; `kind = "error"` for a red one (read at once); `action = { label, run }` adds a button, e.g. Undo (Plugin API 36) |
+| `confirm({ title, text, list, note, confirm, cancel, danger })` | the app's own confirm dialog, in place of the browser's `confirm()`: a Promise of `true` or `false`. `confirm` is the button's word ("Delete library", not "OK"), `danger: true` makes it red and puts the focus on Cancel, `list` is a list of points under the text. Plugin API 39, see [UI-KIT.md](UI-KIT.md#confirm-and-prompt) |
+| `prompt({ title, text, label, value, placeholder, type, confirm, required, check })` | the app's own prompt: a Promise of what was typed, or `null`. `check(value)` returns a message when it won't do ("At least 4 characters"), shown under the field; `type: "password"`. Plugin API 39 |
+| `ask({ title, text, list, note, buttons: [{ label, value, danger }] })` | a question with buttons of your own (and Cancel): a Promise of the picked button's `value`, or `null`. Plugin API 39 |
 | `kit` | the UI kit's pieces: `kit.extend(pluginId, name, fn)` and `kit.define(pluginId, name, piece)` change one (e.g. every dialog) while your plugin is on, `kit.get(name)`, `kit.names()`. See [UI-KIT.md](UI-KIT.md). Plugin API 31 |
 | `libraryFilters()` | the library page's query (filters, sort, page) as `URLSearchParams`; reactive in Alpine |
 | `filterQuery(params)` | just its filters and sort, in a fixed order (`""` when none are on), to compare two. Which parameters count is the [library-query plugin's](#the-library-query-job) (Plugin API 16) |
@@ -995,7 +998,7 @@ grid, the quick buttons, saved searches and `MangaVibe.filterLabels()` are all b
 | kind `tags` | the Genres and Tags groups: `params: ["genre", "exclude"]`, one parameter per name (`genre=A&genre=B`) |
 | kind `names` | free-text names, one parameter per name (`author=A&author=B`), each a chip "Label: A" that can be removed. `source`: a URL giving `[{name, count}]`, the names its group in the filter sheet offers (called with the library's scope, like `/api/tags`); the built-in Author filter uses `/api/authors`, and the series page links each author name to `author=<name>`. Plugin API 26 |
 | kind `length` | published totals in a range: `units: [["chapters", "Chapters"], ...]`, params `<unit>_min`, `<unit>_max`, `length_unknown` |
-| kind `dates` | from one day to another, both included: `params: [from, to]` (`added_from=2026-10-01&added_to=2026-11-15`, either may be left out), picked with the kit's date picker (UI-KIT.md, "Date"), a chip "Label: 1 Oct – 15 Nov". The page also sends its time zone (`tz=Europe/Sofia`, not kept in the URL or saved searches): `day_range()` below works out the days in it. The built-in Added filter. Plugin API 39 |
+| kind `dates` | from one day to another, both included: `params: [from, to]` (`added_from=2026-10-01&added_to=2026-11-15`, either may be left out), picked with the kit's date picker (UI-KIT.md, "Date"), a chip "Label: 1 Oct – 15 Nov". The page also sends its time zone (`tz=Europe/Sofia`, not kept in the URL or saved searches): `day_range()` below works out the days in it. The built-in Added filter. Plugin API 40 |
 | kind `toggle` | on or off (`fav=1`); `fav` is the Favorites quick button |
 | kind `letter`, `text` | the Letter sheet (`letter=a`, `#` for the rest), the search box (`q`) |
 | `hidden: true` | read from links and assistants, not shown in the sheets (e.g. `year_min`) |
@@ -1382,7 +1385,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 39 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 40 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

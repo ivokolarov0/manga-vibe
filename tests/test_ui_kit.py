@@ -216,7 +216,7 @@ def test_a_plugin_can_change_a_piece(tmp_path):
     assert out["pluginOff"] == 1                         # switched off: the plain dialog again
     assert out["optionEscape"] == 0                      # data-kit-options on one dialog
     assert out["prevented"] == 0                         # kit-close with preventDefault() keeps it open
-    assert out["names"] == ["dialog", "menu", "choice", "tabs", "field", "toast", "tooltip", "date"]
+    assert out["names"] == ["dialog", "menu", "choice", "tabs", "field", "toast", "ask", "tooltip", "date"]
 
 
 MARKUP = sorted([*(ROOT / "app" / "web" / "templates").rglob("*.html"),
@@ -267,7 +267,7 @@ BUILTIN = ROOT / "app" / "plugins" / "builtin"
 # custom properties (--btn-bg…), not by drawing the piece again (#301)
 KIT_CLASSES = {"btn", "iconbtn", "icon-btn", "link-btn", "chip", "chips", "tabs", "segmented", "options", "panel",
                "menu", "menu-pop", "modal", "sheet", "sheet-head", "setting-row", "settings-card", "field", "empty",
-               "loading-line", "progress", "skeleton", "skeleton-card", "tooltip"}
+               "loading-line", "progress", "skeleton", "skeleton-card", "tooltip", "ask"}
 LOOK = {"background", "background-color", "border", "border-color", "border-radius", "border-width", "color",
         "padding", "height", "min-height", "font-size", "font-weight", "box-shadow"}
 
@@ -396,3 +396,37 @@ def test_the_date_pickers_keys_and_typing(tmp_path):
     assert de["first"] == 1 and de["parsed"] == {"27.11.2026": "2026-11-27", "27. November 2026": "2026-11-27"}
     ja = run_date(tmp_path, "ja", ["2026/11/27", "2026年11月27日"])
     assert ja["first"] == 0 and ja["parsed"] == {"2026/11/27": "2026-11-27", "2026年11月27日": "2026-11-27"}
+
+
+# the browser's own dialogs, called: confirm("…"), window.prompt(…); not MangaVibe.confirm( or kit.confirm(,
+# nor a method of that name being defined (kit.js: confirm(o) { … })
+BROWSER_DIALOG = re.compile(r"(?<![\w$.])(?:window\.)?(confirm|prompt|alert)\s*\(")
+METHOD = re.compile(r"^\s*(?:async\s+)?(confirm|prompt|alert)\s*\([^)]*\)\s*\{")
+
+
+def browser_dialogs(text):
+    """The calls of confirm(), prompt() and alert() in a script or markup, outside comments."""
+    text = re.sub(r"/\*.*?\*/", lambda m: "\n" * m[0].count("\n"), text, flags=re.S)
+    text = re.sub(r"<!--.*?-->|\{#.*?#\}", lambda m: "\n" * m[0].count("\n"), text, flags=re.S)
+    for n, line in enumerate(text.splitlines(), 1):
+        code = re.sub(r"(?<![:\"'\w])//.*$", "", line)
+        if METHOD.match(code):
+            continue
+        for m in BROWSER_DIALOG.finditer(code):
+            yield f"{n}: {line.strip()[:100]}"
+
+
+def test_no_browser_confirm_or_prompt():
+    """The browser's confirm(), prompt() and alert() look out of place and broken on phones: the app and
+    the built-in plugins ask with MangaVibe.confirm / MangaVibe.prompt (the kit's "ask" piece, #323)."""
+    files = [*(ROOT / "app" / "web" / "static" / "js").glob("*.js"), KIT_PAGE, *MARKUP,
+             *BUILTIN.rglob("*.js"), *BUILTIN.rglob("*.py"), *(ROOT / "examples").rglob("*.py")]
+    found = [f"{p.relative_to(ROOT).as_posix()}:{hit}" for p in files for hit in browser_dialogs(p.read_text(encoding="utf-8"))]
+    assert not found, "Use await MangaVibe.confirm({ … }) / MangaVibe.prompt({ … }) (docs/UI-KIT.md):\n" + "\n".join(found)
+
+
+def test_the_browser_dialog_check_finds_them():
+    hits = list(browser_dialogs('if (!confirm(t("Sure?"))) return;\nconst n = window.prompt("Name");\nalert ("x");'))
+    assert len(hits) == 3
+    assert not list(browser_dialogs("await MangaVibe.confirm({ title });\nawait kit.prompt(o);\n"
+                                    "  confirm(o) {\n// confirm(x)\n/* prompt(y) */\nconst a = MV.ask({});"))
