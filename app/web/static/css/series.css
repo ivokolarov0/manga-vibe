@@ -4,19 +4,45 @@
     position: relative;
   }
 
-  .sp-banner {
+  /* the series' own cover, blurred and saturated, as the light behind the top of the page, fading into the
+     page (the redesign, #303). It reaches out to the page's edges (main's side padding) */
+  .sp-backdrop {
+    --bleed: 12px;
     position: absolute;
-    top: 50px;
-    right: 0;
-    left: 0;
+    top: -14px;
+    right: calc(-1 * var(--bleed));
+    left: calc(-1 * var(--bleed));
     z-index: -1;
-    height: 300px;
-    background-position: center;
-    background-size: cover;
-    border-radius: var(--radius-panel);
-    opacity: 0.3;
-    mask-image: linear-gradient(#000 30%, transparent);
+    height: 470px;
+    overflow: hidden;
+    pointer-events: none;
     animation: fade-in 0.6s;
+
+    @media (min-width: 700px) {
+      --bleed: 20px;
+    }
+
+    :root:has(#bottomnav.sidebar) & {
+      @media (min-width: 900px) {
+        --bleed: 32px;
+      }
+    }
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: -60px;
+      background: var(--art) center 20% / cover;
+      filter: blur(60px) saturate(1.6);
+      opacity: 0.5;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 20%, var(--bg) 96%);
+    }
   }
 
   /* "‹ Back" above the poster and title: a quiet text button that fills in on hover */
@@ -68,29 +94,22 @@
       "main main";
     gap: 12px 14px;
 
-    /* desktop: big poster and controls on the left; title with the tools on its right; panels */
+    /* wider screens (the redesign, #303): the cover on the left; beside it, at its bottom, the pills, the
+       big title and the line under it, then one row of Continue, the status and star / Edit / ⋯; the
+       panels below, across */
     @media (min-width: 800px) {
-      grid-template-columns: var(--poster-width) minmax(0, 1fr) auto;
-      grid-template-rows: auto auto auto 1fr;
+      grid-template-columns: 200px auto minmax(0, 1fr);
+      grid-template-rows: 1fr auto auto;
       grid-template-areas:
-        "poster head tools"
-        "poster main main"
-        "actions main main"
-        ". main main";
-      gap: 16px 28px;
+        "poster head head"
+        "poster actions tools"
+        "main main main";
+      gap: 14px 30px;
     }
 
-    /* tablet: a big poster column leaves the panels too narrow (two columns of ~240px), so the
-       poster gets smaller, the controls sit beside it under the title, and the panels use the
-       full width below */
-    @media (min-width: 800px) and (max-width: 1099px) {
-      grid-template-columns: 200px minmax(0, 1fr) auto;
-      grid-template-rows: auto 1fr auto;
-      grid-template-areas:
-        "poster head tools"
-        "poster actions actions"
-        "main main main";
-      gap: 16px 24px;
+    @media (min-width: 1100px) {
+      grid-template-columns: 220px auto minmax(0, 1fr);
+      gap: 16px 34px;
     }
   }
 
@@ -103,8 +122,19 @@
     align-self: start;
 
     @media (min-width: 800px) {
-      align-self: end;
-      margin-bottom: 6px;
+      align-self: center;
+      justify-content: flex-start;
+      margin-left: -20px;
+
+      & .icon-btn {
+        width: var(--control-height);
+        height: var(--control-height);
+      }
+
+      & .btn.small {
+        height: var(--control-height);
+        padding: 0 16px;
+      }
     }
   }
 
@@ -204,8 +234,8 @@
       aspect-ratio: 2 / 3;
       object-fit: cover;
       background: var(--surface2);
-      border-radius: 14px;
-      box-shadow: var(--shadow-lg);
+      border-radius: 18px;
+      box-shadow: 0 26px 60px rgb(0 0 0 / 0.5);
       outline: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
       outline-offset: -1px;
     }
@@ -214,21 +244,26 @@
   .sp-head {
     grid-area: head;
     align-self: end;
+    display: grid;
+    gap: 6px;
     min-width: 0;
 
     & h1 {
-      margin: 0 0 4px;
-      font-size: 22px;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
+      margin: 0;
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.02;
+      letter-spacing: -0.035em;
       text-wrap: balance;
     }
 
     @media (min-width: 800px) {
-      padding-top: 16px;
+      gap: 10px;
+      padding-top: 22px;
 
       & h1 {
-        font-size: 34px;
+        font-size: clamp(34px, 4vw, 54px);
+        letter-spacing: -0.04em;
       }
     }
   }
@@ -236,28 +271,58 @@
   .alt-titles {
     color: var(--muted);
     font-size: 13px;
+
+    @media (min-width: 800px) {
+      font-size: 15px;
+    }
   }
 
+  /* year, score, status, type, genres: glass pills over the backdrop */
   .sp-facts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 14px;
-    margin: 6px 0;
-    color: var(--muted);
-    font-size: 14px;
+    margin: 0;
 
-    & span {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+    & .chip {
+      --chip-bg: color-mix(in srgb, var(--surface) 55%, transparent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     & .ic {
-      width: 14px;
-      height: 14px;
-      color: var(--warn);
+      width: 13px;
+      height: 13px;
+      color: #ffc04d;
       fill: currentColor;
       stroke-width: 0;
+    }
+  }
+
+  /* "by Author · 7 books · 3 unread" */
+  .sp-by {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 0;
+    color: var(--muted);
+    font-size: 14px;
+
+    & > span:not(.chip) + span::before {
+      content: "·";
+      margin: 0 8px;
+    }
+
+    & .chip {
+      margin-left: 10px;
+    }
+
+    & a {
+      color: var(--text);
+      font-weight: 700;
+
+      @media (hover: hover) {
+        &:hover {
+          color: var(--accent);
+        }
+      }
     }
   }
 
@@ -271,20 +336,58 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
 
-    /* tablet: the controls sit beside the poster, so put them two to a row */
-    @media (min-width: 800px) and (max-width: 1099px) {
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    }
-
     & .ctl {
       width: 100%;
       min-width: 0;
+    }
+
+    /* wider screens: one row beside the cover, Continue first */
+    @media (min-width: 800px) {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+
+      & .ctl {
+        width: auto;
+        max-width: 340px;
+      }
+
+      & select.ctl {
+        height: var(--control-height);
+      }
     }
 
     /* long book titles: cut with an ellipsis instead of spilling out of the column */
     & .ellipsis {
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+  }
+
+  /* Continue, saying where: the book, and the page under it */
+  .sp-continue {
+    height: auto;
+    min-height: var(--control-height);
+    padding: 7px 22px 7px 16px;
+    justify-content: flex-start;
+
+    & .sp-continue-text {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+      font-size: 15px;
+      text-align: left;
+    }
+
+    & small {
+      font-size: 12px;
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    @media (min-width: 800px) {
+      min-height: 50px;
     }
   }
 
@@ -302,25 +405,231 @@
     }
 
     /* phone: the book list comes right after the description */
+    /* (plugins' panels in the series-end slot are grid items too, through its display: contents box, so the
+       two that move up get a lower order instead of the others a higher one) */
     @media (max-width: 799px) {
-      & > * {
-        order: 2;
-      }
-
       & > .about-panel {
-        order: 0;
+        order: -2;
       }
 
       & > .books-panel {
-        order: 1;
+        order: -1;
       }
     }
 
     @media (min-width: 800px) {
+      margin-top: 14px;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 
       & .wide {
         grid-column: 1 / -1;
+      }
+    }
+
+    /* wide screens (the redesign, #303): the books on the left, what's known about the series in a column
+       on the right (about, details, links, metadata, folder, plugins' panels, tags) */
+    @media (min-width: 1100px) {
+      grid-template-columns: minmax(0, 1fr) 330px;
+      gap: 16px 30px;
+
+      & > .books-panel {
+        grid-column: 1;
+        grid-row: 1 / span 8;
+        align-self: start;
+      }
+
+      & > :not(.books-panel) {
+        grid-column: 2;
+      }
+    }
+  }
+
+  /* ---------------------------------------------------------------- the books as covers */
+  .books-panel .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+
+    & .book-view {
+      margin-left: auto;
+
+      & button {
+        padding: 0 10px;
+      }
+    }
+  }
+
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 18px 12px;
+    margin-top: 14px;
+
+    @media (min-width: 700px) {
+      grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+      gap: 22px 16px;
+    }
+  }
+
+  .book-card {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 3px;
+    min-width: 0;
+
+    & small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    & small.err {
+      color: var(--danger);
+    }
+  }
+
+  .book-cover {
+    position: relative;
+    display: block;
+    margin-bottom: 6px;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    background: var(--surface2);
+    border-radius: 12px;
+    box-shadow: var(--shadow-cover);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent);
+      pointer-events: none;
+      transition: box-shadow var(--fast);
+    }
+
+    & img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity var(--fast), transform 0.25s ease;
+    }
+
+    .read & img {
+      opacity: 0.45;
+    }
+
+    /* read: a green check in the corner */
+    & .done-mark {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--ok);
+      color: #062014;
+
+      & .ic {
+        width: 15px;
+        height: 15px;
+        stroke-width: 3;
+      }
+    }
+
+    /* being read: how far, across the bottom of the cover */
+    & .progress {
+      --progress-track: rgb(0 0 0 / 0.45);
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      left: 8px;
+      height: 5px;
+    }
+
+    @media (hover: hover) {
+      &:hover::after {
+        box-shadow: inset 0 0 0 2px var(--accent);
+      }
+
+      &:hover img {
+        transform: scale(1.04);
+      }
+    }
+  }
+
+  /* touch screens: the mark button always shows (green when read), so it's the check */
+  @media (hover: none) {
+    .book-cover .done-mark {
+      display: none;
+    }
+  }
+
+  .reading .book-cover {
+    box-shadow: var(--shadow-cover), 0 0 0 2px var(--accent);
+  }
+
+  /* mark read / unread: a round glass button on the cover's top left, shown on hover (always on touch) */
+  .book-mark {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: rgb(15 13 12 / 0.6);
+    border: 1px solid rgb(255 255 255 / 0.25);
+    border-radius: 50%;
+    color: #fff;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: opacity var(--fast), background-color var(--fast);
+
+    & .ic {
+      width: 15px;
+      height: 15px;
+      stroke-width: 2.6;
+    }
+
+    /* read: the button unmarks it */
+    &[aria-pressed="true"] {
+      background: var(--ok);
+      border-color: var(--ok);
+      color: #062014;
+    }
+
+    @media (hover: hover) {
+      opacity: 0;
+
+      .book-card:hover &,
+      &:focus-visible {
+        opacity: 1;
+      }
+
+      &:hover {
+        background: var(--ok);
+        border-color: var(--ok);
+        color: #062014;
+      }
+    }
+  }
+
+  .book-name {
+    overflow: hidden;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @media (hover: hover) {
+      &:hover {
+        color: var(--accent);
       }
     }
   }

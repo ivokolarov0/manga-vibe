@@ -1705,3 +1705,16 @@ One PR per page, on step 8's tokens and kit.
 - **Covers**: 15px corners and a deeper shadow everywhere a series card shows; the carousel's track got
   room at the bottom so the shadow isn't cut off. Wide tiles (the libraries) write their name bottom-left
   in the display face.
+- **Series page**: the cover blurred behind the top of the page instead of AniList's banner (the banner is
+  missing for most series and a different picture; the cover always matches). Year, score, status, type
+  and genres are glass pills over the title (54px at most), then "by" the authors (links to their
+  series), books and unread. Continue, the status and star / Edit / ⋯ are one row beside the cover; the
+  Continue button says where, with the page under it (`page_count` added to the series' `continue`).
+- **The books are a grid of covers** (each book's first page): read ones faded with a check, the one
+  being read with its progress and an accent ring, a round button to mark one read. **The list stays**,
+  behind a grid/list switch kept per browser, because it has what the grid hasn't room for (read up to
+  here, the `book-row` slot for plugins' buttons).
+- **Wide screens: the books on the left, everything known about the series in a 330px column on the
+  right**, by CSS placement only (no markup moved, so pages that extend the template keep their blocks).
+  Phones: about, the books, then the rest; the reordering lowers the two that move up, since plugins'
+  panels in a `display: contents` slot are grid items too and would otherwise jump ahead.

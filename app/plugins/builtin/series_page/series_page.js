@@ -13,6 +13,12 @@ MangaVibe.onStart(() => {
       editing: null, form: {}, copied: false,
       del: { open: false, info: null, busy: false },
       seen: null,  // the series shown last: another one starts with "show more" and the tags closed again
+      // the books as a grid of covers (the redesign, #303) or the list with every button; kept per browser
+      bookView: (() => { try { return localStorage.getItem("series-book-view") || "grid"; } catch { return "grid"; } })(),
+      setBookView(v) {
+        this.bookView = v;
+        try { localStorage.setItem("series-book-view", v); } catch {}
+      },
 
       init() {
         this.$watch("$store.series.loads", async () => {

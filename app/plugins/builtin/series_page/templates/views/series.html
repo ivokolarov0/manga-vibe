@@ -6,7 +6,8 @@
     <div class="series-page-view" x-data="seriesPage()">
       <template x-if="s">
         <div>
-          <div class="sp-banner" x-show="s.banner_url" :style="s.banner_url && `background-image:url('${s.banner_url}')`"></div>
+          <!-- the series' own cover, blurred, as the light behind the top of the page (the redesign, #303) -->
+          <div class="sp-backdrop" aria-hidden="true" :style="`--art: url('${s.poster_large}')`"></div>
           <button class="sp-back" @click="back()">
             <svg class="ic" aria-hidden="true"><use href="#i-chevron-left"/></svg>
             <span x-text="$store.app.seriesBack ? t('Back') : t('Library')"></span></button>
@@ -15,15 +16,17 @@
             <button class="sp-poster" title="{{ t('Change poster') }}" @click="editInfo('poster')"><img :src="s.poster_large" alt="">
               <span class="poster-hint"><svg class="ic" aria-hidden="true"><use href="#i-pencil"/></svg>{{ t("Poster") }}</span></button>
             <header class="sp-head">
+              <!-- year, score, status, type and the first genres as pills over the title; the score is
+                   "★ 92%": the star is drawn as an icon -->
+              <div class="sp-facts chips" x-show="facts.length || genres.length"><template x-for="f in facts">
+                <span class="chip"><svg class="ic" x-show="String(f).startsWith('★')" aria-hidden="true"><use href="#i-star"/></svg><span x-text="String(f).replace(/^★ /, '')"></span></span>
+              </template><span class="chip" x-show="genres.length" x-text="genres.slice(0, 2).map((g) => g.name).join(' · ')"></span></div>
               <h1 x-text="s.title"></h1>
               <div class="alt-titles" x-show="alt.length" x-text="alt.join(' · ')"></div>
-              <!-- the score is "★ 92%": the star is drawn as an icon -->
-              <div class="sp-facts" x-show="facts.length"><template x-for="f in facts">
-                <span><svg class="ic" x-show="String(f).startsWith('★')" aria-hidden="true"><use href="#i-star"/></svg><span x-text="String(f).replace(/^★ /, '')"></span></span>
-              </template></div>
-              <div class="chips">
-                <span class="chip" x-text="tn('{n} book', '{n} books', s.book_count)"></span>
-                <span class="chip" x-text="t('{n} unread', { n: s.unread_count })"></span>
+              <div class="sp-by">
+                <template x-if="authors.length"><span>{{ t("by {names}", names='<template x-for="(a, i) in authors.slice(0, 2)" :key="a.name"><span><span x-show="i">, </span><a :href="authorUrl(a.name)" x-text="a.name"></a></span></template>'|safe) }}</span></template>
+                <span x-text="tn('{n} book', '{n} books', s.book_count)"></span>
+                <span x-show="s.unread_count" x-text="t('{n} unread', { n: s.unread_count })"></span>
                 <span class="chip warn" x-show="s.has_duplicates">{{ t("Duplicates") }}</span>
               </div>
             </header>
@@ -57,10 +60,13 @@
             </div>
             <div class="sp-actions">
               <template x-if="s.continue">
-                <a class="btn primary ctl" :href="`#/read/${s.continue.book_id}?page=${s.continue.page}`"
+                <!-- one Continue that says where: the book, and the page under it -->
+                <a class="btn primary ctl sp-continue" :href="`#/read/${s.continue.book_id}?page=${s.continue.page}`"
                    :title="(s.continue.started ? t('Continue') : t('Start')) + ' · ' + s.continue.label">
                   <svg class="ic fill" aria-hidden="true"><use href="#i-play"/></svg>
-                  <span class="ellipsis" x-text="(s.continue.started ? t('Continue') : t('Start')) + ' · ' + s.continue.label"></span></a>
+                  <span class="sp-continue-text"><span class="ellipsis" x-text="(s.continue.started ? t('Continue') : t('Start')) + ' · ' + s.continue.label"></span>
+                    <small x-show="s.continue.page > 0 && s.continue.page_count"
+                           x-text="t('Page {page} of {pages}', { page: fmtNum(s.continue.page + 1), pages: fmtNum(s.continue.page_count) })"></small></span></a>
               </template>
               <span class="btn ctl disabled" x-show="!s.continue"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>{{ t("All read") }}</span>
               <select class="ctl" aria-label="{{ t('Reading status') }}" @change="setStatus($event.target.value)">
@@ -254,8 +260,32 @@
                       <svg class="ic" aria-hidden="true"><use href="#i-check-circle"/></svg>{{ t("Mark all read") }}</button>
                     <button class="btn small" @click="markAll(false)">
                       <svg class="ic" aria-hidden="true"><use href="#i-circle"/></svg>{{ t("Mark all unread") }}</button>
+                    <!-- the books as covers or as a list (with every button and the book-row slot) -->
+                    <div class="segmented book-view" x-choice aria-label="{{ t('View') }}">
+                      <button :class="{ on: bookView === 'grid' }" @click="setBookView('grid')"
+                              aria-label="{{ t('Grid') }}" title="{{ t('Grid') }}" x-tooltip><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></button>
+                      <button :class="{ on: bookView === 'list' }" @click="setBookView('list')"
+                              aria-label="{{ t('List') }}" title="{{ t('List') }}" x-tooltip><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg></button>
+                    </div>
                   </div>
-                  <ul class="books">
+                  <!-- the covers: a read one faded with a check, the one being read with its progress; the
+                       round button marks it read or unread -->
+                  <div class="book-grid" x-show="bookView === 'grid'">
+                    <template x-for="b in books" :key="b.id">
+                      <div class="book-card" :class="{ read: b.completed, reading: !b.completed && b.page > 0 }">
+                        <a class="book-cover" :href="'#/read/' + b.id"><img :src="b.thumbnail" loading="lazy" alt="">
+                          <span class="done-mark" x-show="b.completed"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></span>
+                          <span class="progress" x-show="!b.completed && b.page > 0" aria-hidden="true"><i :style="`width:${progressPct(b)}%`"></i></span></a>
+                        <button class="book-mark" @click="toggleBook(b)" :aria-pressed="String(b.completed)"
+                                :aria-label="t('Read: {book}', { book: b.label })" x-tooltip="b.completed ? t('Mark unread') : t('Mark read')">
+                          <svg class="ic" aria-hidden="true"><use href="#i-check"/></svg></button>
+                        <a class="book-name" :href="'#/read/' + b.id" x-text="b.label"></a>
+                        <small class="err" x-show="b.error" x-text="t(b.error)"></small>
+                        <small x-show="!b.error" x-text="bookState(b)"></small>
+                      </div>
+                    </template>
+                  </div>
+                  <ul class="books" x-show="bookView === 'list'">
                     <template x-for="(b, i) in books" :key="b.id">
                       <li class="book" :class="{ read: b.completed, reading: !b.completed && b.page > 0 }">
                         <a class="thumb" :href="'#/read/' + b.id"><img :src="b.thumbnail" loading="lazy" alt="">
