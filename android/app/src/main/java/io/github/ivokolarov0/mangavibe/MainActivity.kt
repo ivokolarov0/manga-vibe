@@ -1,11 +1,13 @@
 package io.github.ivokolarov0.mangavibe
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
@@ -16,6 +18,7 @@ import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.webkit.PermissionRequest
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -64,6 +67,8 @@ class MainActivity : Activity() {
     private var readerOpen = false
     private var volumeKeys = false
     private var fileCallback: ValueCallback<Array<Uri>>? = null
+    /** a page's camera request, waiting for the user to answer Android's permission dialog */
+    private var cameraRequest: PermissionRequest? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -468,6 +473,41 @@ class MainActivity : Activity() {
             }
             return true
         }
+
+        /**
+         * getUserMedia: the WebView denies it unless the app grants it here. Only the camera, and only
+         * to the user's own server; Android asks for the camera permission the first time.
+         */
+        override fun onPermissionRequest(request: PermissionRequest) {
+            val camera = PermissionRequest.RESOURCE_VIDEO_CAPTURE
+            if (camera !in request.resources || Server.origin(request.origin) != server) {
+                request.deny()
+                return
+            }
+            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                request.grant(arrayOf(camera))
+                return
+            }
+            cameraRequest?.deny()
+            cameraRequest = request
+            requestPermissions(arrayOf(Manifest.permission.CAMERA), ASK_CAMERA)
+        }
+
+        override fun onPermissionRequestCanceled(request: PermissionRequest) {
+            if (cameraRequest == request) cameraRequest = null
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, results: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, results)
+        if (requestCode != ASK_CAMERA) return
+        val request = cameraRequest ?: return
+        cameraRequest = null
+        if (results.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+            request.grant(arrayOf(PermissionRequest.RESOURCE_VIDEO_CAPTURE))
+        } else {
+            request.deny()
+        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -482,5 +522,6 @@ class MainActivity : Activity() {
 
     private companion object {
         const val PICK_FILE = 1
+        const val ASK_CAMERA = 2
     }
 }

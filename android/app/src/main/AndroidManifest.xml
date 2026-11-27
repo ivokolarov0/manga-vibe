@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- for pages of the user's server that ask for the camera (getUserMedia), e.g. the eye control
+         plugin; asked for only when a page wants it. Not required: the app installs without a camera. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
 
     <!-- MangaVibe usually runs over plain HTTP on the home network: see res/xml/network_security_config.xml -->
     <application
