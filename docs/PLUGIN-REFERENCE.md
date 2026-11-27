@@ -1403,6 +1403,19 @@ MangaVibe.screenCommand("notes", "show", { description: "Open the notes", params
 MangaVibe.reader.step(true);
 ```
 
+### Zooming and moving the page from a script
+
+`MangaVibe.reader.zoom(scale, x, y)` zooms around a point of the screen (1 is the fitted page again), and
+`pan(dx, dy)` moves the page by pixels (in vertical mode it scrolls). `pan` gives how far the page really
+moved, so 0 means it's at an edge. Plugin API 41.
+
+```js
+// Zoom into where the eyes are, then follow them; at the page's bottom, turn it
+MangaVibe.reader.zoom(2.5, gaze.x, gaze.y);
+const moved = MangaVibe.reader.pan(0, -12);
+if (moved && moved.y === 0) MangaVibe.reader.step(true);
+```
+
 ---
 
 ## A reader of its own

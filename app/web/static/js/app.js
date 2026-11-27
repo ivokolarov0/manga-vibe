@@ -1200,7 +1200,11 @@ window.MangaVibe = {
     openBook: (which, page = null) => Reader.openBook(which, page), setMode: (mode) => Reader.setMode(mode),
     options: (open = true) => Reader.options(open), overlay: (plugin, on = null) => Reader.overlay(plugin, on),
     press: (plugin, key) => Reader.press(plugin, key), leave: () => Reader.leave(),
-    refresh: () => Reader.refresh() },
+    refresh: () => Reader.refresh(),
+    // Plugin API 41, e.g. eye control: zoom(scale, x, y) around a screen point (paged; 1: fitted again),
+    // pan(dx, dy) moves the page by pixels (vertical: scrolls) and gives how far it really moved
+    zoom: (scale, x, y, animate = true) => Reader.zoom(scale, x, y, animate),
+    pan: (dx, dy, animate = false) => Reader.pan(dx, dy, animate) },
   // something the page can do for an assistant or voice control (the MCP plugin offers it as a tool
   // named <plugin id>__<name>), Plugin API 13. spec: { description, params: { name: { type,
   // description } }, required: [names] }; fn(args) gives the answer (text, or anything JSON can hold)

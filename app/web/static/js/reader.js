@@ -735,6 +735,7 @@ function state() {
   const b = R.book, on = R.ov?.on || [];
   return { ...where(), label: b.label, series_title: b.series_title, mode: R.mode,
     fit: (R.img && imgCall("state")?.fit) || settings.reader_fit || "screen",
+    zoom: (R.img && imgCall("state")?.zoom) || 1,
     modes: R.own ? [] : imgModes(), options_open: R.drawer, panel: R.panel,
     at_end: !!$("#reader .endcard"), fullscreen: !!document.fullscreenElement,
     previous: b.prev ? { book: b.prev.id, label: b.prev.label } : null,
@@ -774,6 +775,21 @@ async function setMode(mode) {
     await openReader(R.book.id, R.page);
   }
   return true;
+}
+
+/* zoom the page to scale s around the screen point (x, y), the middle if left out (Plugin API 41, e.g.
+   eye control); s 1 is the fitted page. false in vertical mode, with the zoom locked, or when the image
+   reader has no zoomTo() */
+function zoom(s, x, y, animate = true) {
+  if (!R.book || R.own) return false;
+  return imgCall("zoomTo", +s, x ?? innerWidth / 2, y ?? innerHeight / 2, animate) === true;
+}
+
+/* move the page by (dx, dy) pixels (vertical mode: scroll by dy); { x, y } is how far it really moved,
+   0 at an edge. false when it can't move (no book, the zoom locked, no panBy() in the image reader) */
+function pan(dx, dy, animate = false) {
+  if (!R.book || R.own) return false;
+  return imgCall("panBy", +dx || 0, +dy || 0, animate) || false;
 }
 
 /* open or close the reading options (the drawer), with the bars */
@@ -1473,7 +1489,7 @@ return {
   speaking,
   where,
   redraw,
-  state, step, openBook, setMode, options, overlay, press,
+  state, step, openBook, setMode, options, overlay, press, zoom, pan,
   goTo: (i) => (!R.book ? false : R.own ? ownCall("goTo", +i) !== false : imgCall("goTo", +i) !== false),
   refresh, leave: () => (R.book ? (leaveReader(), true) : false),
   get isOpen() { return !$("#reader").hidden; },
