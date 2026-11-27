@@ -1679,3 +1679,21 @@ Plugin API version, and the app works after every one.
   Which rows use it is step 9's.
 - **Sizes**: controls keep their 40px height (the top bar's height depends on it); radii grew (12px,
   cards 20px, covers `--radius-cover` 15px, dialogs 24px).
+
+### The redesign's pages (issue #303, step 9)
+
+One PR per page, on step 8's tokens and kit.
+
+- **Navigation: the sidebar is the default.** The Sidebar plugin (it already listed the libraries) is on
+  by default and the top bar is the alternative. An existing install changes over once, on the update
+  (`NEW_DEFAULTS` + `jobs_defaults_seen` in `app/plugins`), only when the top bar was doing the job as the
+  untouched default: not when the owner had picked a navigation (`jobs_chosen`), nor over a plugin they
+  installed. A generic table rather than a one-off, for the next built-in default that changes.
+- **The column**: the logo is its top (the top bar's `.brand` widened to the column and given its colour, so
+  no markup moved and a nav plugin's contract is unchanged); the bar's line runs under the page only;
+  Settings at the bottom under a line. The libraries have coloured dots (their place in the list picks
+  from six colours: there's no colour per library to store) and their series counts. The account menu
+  stays in the top bar's `topbar` slot: moving it would change that slot's contract.
+- **The phone bar floats**: a rounded glass bar clear of the edges, the current page's whole entry tinted
+  with the accent. Both nav plugins share it (`layout.css`); the top bar's "Navigation bar: Top" tabs keep
+  their own look.

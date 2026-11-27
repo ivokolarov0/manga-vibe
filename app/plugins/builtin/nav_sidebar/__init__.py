@@ -5,8 +5,10 @@ slot (e.g. the account menu) stay in a bar at the top. On phones and narrow wind
 usual Library / Continue bar, with Settings as its third entry (Settings → Display → Navigation bar still
 puts it at the bottom or under the top bar). Its markup is templates/views/nav.html, its look sidebar.css.
 
-Starts switched off: the top bar is the app's own navigation; pick this one in Settings → Plugins
-(Navigation: pick one). See docs/PLUGINS.md, "The view:nav job".
+The app's navigation since the redesign (issue #303): on by default, and switched on once on the update
+where the top bar was the built-in default the owner never changed (NEW_DEFAULTS in app/plugins). The top
+bar is the alternative, picked in Settings → Plugins (Navigation: pick one). See docs/PLUGINS.md, "The
+view:nav job".
 """
 from pathlib import Path
 
@@ -24,5 +26,4 @@ class NavSidebar(Plugin):
                    "On phones, the usual bar. Built in.")
     permissions = ["Draws the sidebar and the top bar; connects to nothing"]
     provides = {"view:nav": 1}
-    enabled_by_default = False  # the top bar (nav) is the default; this one is picked
     css = (HERE / "sidebar.css").read_text(encoding="utf-8")

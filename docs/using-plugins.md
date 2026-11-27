@@ -224,7 +224,7 @@ These are the parts a plugin can do today, each done by a built-in plugin until 
 |---|---|
 | Library page, Continue reading page, Series page | the pages themselves |
 | Series cards | how a series looks in the grid, the list and Continue reading |
-| Navigation | the bar at the top and Library / Continue: the built-in **Top bar**, or the built-in **Sidebar** (Library, Continue and Settings on the left, the search box at the top; the usual bar on phones) |
+| Navigation | the built-in **Sidebar**, the default (Home, Library, Continue, your libraries and Settings on the left, the search box at the top; a floating bar on phones), or the built-in **Top bar** (the search box and Settings at the top, Library and Continue in a bar) |
 | Edit dialog, Fix match dialog | editing a series' details and poster; picking the right metadata |
 | Settings: Library folders, Display, Reader, Metadata, Updates | Settings' pages (these can also just be switched off) |
 | Library filters and sorting | what the library can be filtered and sorted by |

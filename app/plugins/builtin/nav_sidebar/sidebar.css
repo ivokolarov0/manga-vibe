@@ -3,7 +3,7 @@
    bottom, or under the top bar), Settings its third entry. From 900px: a column on the left. */
 
 :root:has(#bottomnav.sidebar) {
-  --sidebar-width: 220px;
+  --sidebar-width: 236px;
 }
 
 /* Settings' Needs attention count: on the icon in the bar at the bottom, beside the label otherwise */
@@ -55,16 +55,45 @@
     --top-nav-height: 0px;
   }
 
-  /* the column starts under the top bar: the bar is exactly --topbar-height tall, whatever plugins put in it */
+  /* the column starts under the top bar: the bar is exactly --topbar-height tall, whatever plugins put in it.
+     The bar's line runs under the page only: on the left, the logo is the top of the column */
   #topbar.with-sidebar {
     box-sizing: border-box;
     height: var(--topbar-height);
+    padding-right: 20px;
+    border-bottom-color: transparent;
+
+    &::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      bottom: -1px;
+      left: var(--sidebar-width);
+      height: 1px;
+      background: var(--border);
+    }
   }
 
-  /* the logo as wide as the sidebar, so the search box starts where the page does */
+  /* the logo as wide as the sidebar and in its colour, so the column runs up to the top of the page and
+     the search box starts where the page does */
   #topbar.with-sidebar .brand {
     flex: none;
-    width: calc(var(--sidebar-width) - 4px);
+    align-self: stretch;
+    width: var(--sidebar-width);
+    margin: -8px 20px -9px -12px;
+    padding: 0 22px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+
+    & .logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+    }
   }
 
   #bottomnav.sidebar {
@@ -76,36 +105,40 @@
     z-index: 9;
     flex-direction: column;
     justify-content: flex-start;
-    gap: 2px;
+    gap: 3px;
     width: var(--sidebar-width);
+    max-width: none;
     height: auto;
-    padding: 12px 10px calc(12px + var(--safe-bottom));
+    margin: 0;
+    padding: 10px 14px calc(14px + var(--safe-bottom));
     overflow-y: auto;
-    background: color-mix(in srgb, var(--surface) 55%, var(--bg));
+    background: var(--surface);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     border: 0;
     border-right: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: none;
 
     & :is(a, button.nav-entry) {
       display: flex;
       flex: none;
       align-items: center;
       justify-content: flex-start;
-      gap: 10px;
+      gap: 12px;
       max-width: none;
-      padding: 4px 12px 4px 6px;
+      min-height: 40px;
+      padding: 0 12px;
       color: var(--muted);
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 14.5px;
+      font-weight: 600;
       border: 0;
-      border-radius: 10px;
+      border-radius: 11px;
       transition: background-color var(--fast), color var(--fast);
 
       &.active {
         background: var(--accent-soft);
         color: var(--text);
-        font-weight: 600;
       }
 
       @media (hover: hover) {
@@ -117,9 +150,32 @@
     }
 
     & .nav-ic {
-      width: 32px;
-      height: 32px;
+      flex: none;
+      width: 20px;
+      height: 20px;
       background: transparent;
+
+      & .ic {
+        width: 19px;
+        height: 19px;
+      }
+    }
+
+    /* a number on the right of an entry (a library's series) */
+    & .nav-num {
+      margin-left: auto;
+      color: var(--faint);
+      font-size: 12.5px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* a coloured dot in place of an icon (a library) */
+    & .nav-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 3px;
+      background: var(--dot, var(--accent));
     }
 
     & a.active .nav-ic {
@@ -134,8 +190,8 @@
     /* the one picked in a group (e.g. the library shown): accent icon and bold, no fill (the page's entry
        above has that) */
     & .nav-entry.picked {
+      background: var(--hover);
       color: var(--text);
-      font-weight: 600;
 
       & .nav-ic {
         color: var(--accent);
@@ -147,10 +203,8 @@
       display: flex;
       flex: none;
       flex-direction: column;
-      gap: 2px;
-      margin-top: 14px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
+      gap: 3px;
+      margin-top: 12px;
     }
 
     & .nav-section-head {
@@ -159,10 +213,10 @@
       justify-content: space-between;
       min-height: 26px;
       padding: 0 4px 4px 12px;
-      color: var(--muted);
+      color: var(--faint);
       font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
+      font-weight: 700;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
 
       & button {
@@ -191,9 +245,20 @@
       }
     }
 
-    /* Settings at the end of the column, its count on the right */
+    /* Settings at the end of the column, under a line, its count on the right */
     & #settings-link {
+      position: relative;
       margin-top: auto;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: -8px;
+        right: 0;
+        left: 0;
+        height: 1px;
+        background: var(--border);
+      }
 
       & .nav-ic .ic {
         transition: transform 0.5s var(--ease);
@@ -216,7 +281,8 @@
   :root:has(#bottomnav.sidebar) main {
     max-width: calc(var(--page-max) + var(--sidebar-width));
     padding-bottom: calc(24px + var(--safe-bottom));
-    padding-left: calc(var(--sidebar-width) + 20px);
+    padding-left: calc(var(--sidebar-width) + 32px);
+    padding-right: 32px;
   }
 
   :root:has(#bottomnav.sidebar) #toast {

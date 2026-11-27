@@ -59,6 +59,10 @@ API_VERSION = 38
 BUILTIN = Path(__file__).parent / "builtin"  # the plugins that come with the app
 # built-in plugins that moved to a repo of their own: id -> its name and where to get it now
 MOVED = {"mcp": {"name": "Remote control (MCP)", "url": "https://github.com/ivokolarov0/manga-vibe-mcp"}}
+# exclusive job -> the built-in plugin that became its default in a later version. Once, on the update, it
+# takes the job over from the old built-in default, unless the owner picked a plugin for that job
+# (jobs_chosen) or one they installed does it. The sidebar became the navigation (redesign, issue #303).
+NEW_DEFAULTS = {"view:nav": "nav-sidebar"}
 
 # Where a plugin is listed in Settings -> Plugins (Plugin.category), in the order shown there
 CATEGORIES = {  # the labels are shown in the page's language (catLabel in app.js)
@@ -1044,10 +1048,36 @@ class PluginManager:
                 taken |= set(jobs)
             set_setting(db, "plugins_known", sorted(known | set(new)))
             changed = True
+        changed |= self._new_defaults(db, known)
         changed |= self._settle_jobs()
         if changed:
             set_setting(db, "plugins_disabled", sorted(self.disabled))
             db.commit()
+
+    def _new_defaults(self, db, known: set) -> bool:
+        """A job whose built-in default changed (NEW_DEFAULTS): the new default takes it over, once
+        (jobs_defaults_seen). Not on a fresh install (enabled_by_default already did it), not when the owner
+        picked a plugin for the job, not from a plugin they installed. True if a switch changed."""
+        from app.db import get_setting, set_setting
+        seen = get_setting(db, "jobs_defaults_seen", {}) or {}
+        seen = seen if isinstance(seen, dict) else {}
+        changed = False
+        for job, pid in NEW_DEFAULTS.items():
+            if seen.get(job) == pid or pid not in self.plugins:
+                continue
+            seen[job] = pid
+            set_setting(db, "jobs_defaults_seen", seen)
+            db.commit()
+            if not known or job in self.chosen or pid not in self.disabled:
+                continue
+            doing = [p for p in self.switched_on() if job in exclusive_jobs(p)]
+            if any(not self.is_builtin(p.id) for p in doing):
+                continue
+            log.info("Plugin %s switched on: the new default for %s", pid, job)
+            self.disabled -= {pid}
+            self.disabled |= {p.id for p in doing}
+            changed = True
+        return changed
 
     def _settle_jobs(self) -> bool:
         """Two plugins switched on for one exclusive job (e.g. both on before they did that job): the

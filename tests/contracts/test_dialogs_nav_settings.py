@@ -96,30 +96,74 @@ def test_a_top_bar_of_its_own(client, mine):
 
 
 def test_the_sidebar(client):
-    """The built-in alternative to the top bar: off at first (the top bar stays the fallback), and once
-    picked it draws the sidebar with Settings as an entry, switching the top bar off."""
+    """The app's navigation since the redesign (#303): on at first and the fallback, drawing the sidebar with
+    Settings as an entry and the libraries in it. The top bar is the alternative: picking it switches the
+    sidebar off."""
     from app.plugins import manager
-    assert info(client, "nav-sidebar")["enabled"] is False and info(client, "nav")["enabled"] is True
-    assert manager.builtin_for("view:nav").id == "nav"
-    assert "nav-libraries" not in client.get("/").text  # the top bar leaves the nav-items slot out
+    assert info(client, "nav-sidebar")["enabled"] is True and info(client, "nav")["enabled"] is False
+    assert manager.builtin_for("view:nav").id == "nav-sidebar"
+    page = client.get("/").text
+    assert 'class="sidebar"' in page and 'class="with-sidebar"' in page
+    assert page.count('id="settings-link"') == 1 and 'class="nav-label">Settings' in page
+    assert 'data-slot="topbar"' in page
+    # the libraries in the column (the nav-items slot), as well as their tabs (for phones)
+    assert 'data-slot="nav-items"' in page and 'class="nav-section nav-libraries"' in page
+    assert 'class="tabs shelf-tabs"' in page
+    assert info(client, "nav-sidebar")["warnings"] == []
     nav_job = next(j for j in client.get("/api/plugins").json()["jobs"] if j["key"] == "view:nav")
     assert set(nav_job["plugins"]) >= {"nav", "nav-sidebar"} and nav_job["exclusive"]  # one "pick one" group
-    r = client.put("/api/plugins/nav-sidebar", json={"enabled": True})
+    r = client.put("/api/plugins/nav", json={"enabled": True})
     assert r.status_code == 200, r.text
     try:
-        assert "nav" in r.json()["stopped"]
+        assert "nav-sidebar" in r.json()["stopped"]
         page = client.get("/").text
-        assert 'class="sidebar"' in page and 'class="with-sidebar"' in page
-        assert page.count('id="settings-link"') == 1 and 'class="nav-label">Settings' in page
-        assert 'data-slot="topbar"' in page
-        # the libraries in the column (the nav-items slot), as well as their tabs (for phones)
-        assert 'data-slot="nav-items"' in page and 'class="nav-section nav-libraries"' in page
-        assert 'class="tabs shelf-tabs"' in page
-        assert info(client, "nav-sidebar")["warnings"] == []
-        assert manager.builtin_for("view:nav").id == "nav"  # still the fallback
+        assert 'class="sidebar"' not in page and 'id="settings-link"' in page
+        assert "nav-libraries" not in page  # the top bar leaves the nav-items slot out
+        assert manager.builtin_for("view:nav").id == "nav-sidebar"  # still the fallback
     finally:
-        client.put("/api/plugins/nav", json={"enabled": True})
-    assert info(client, "nav-sidebar")["enabled"] is False
+        client.put("/api/plugins/nav-sidebar", json={"enabled": True})
+    assert info(client, "nav")["enabled"] is False
+
+
+def test_the_sidebar_takes_over_once_on_the_update():
+    """NEW_DEFAULTS: an install from before the redesign, where the top bar did the job nobody picked, gets
+    the sidebar once; not when the owner picked the top bar, nor over a plugin they installed, nor twice."""
+    from app.plugins import PluginManager, manager
+
+    class FakeDb:
+        def __init__(self, **settings):
+            self.settings = settings
+
+        def commit(self):
+            pass
+
+    def run(disabled, chosen=None, seen=None, mine=False):
+        db = FakeDb(plugins_disabled=disabled, jobs_chosen=chosen or {}, plugins_known=sorted(m.plugins),
+                    jobs_defaults_seen=seen or {})
+        m.disabled, m.chosen = set(disabled), dict(chosen or {})
+        if mine:
+            m.is_builtin = lambda pid: pid != "nav"
+        changed = m._new_defaults(db, set(m.plugins))
+        m.__dict__.pop("is_builtin", None)
+        return changed, m.disabled, db.settings["jobs_defaults_seen"]
+
+    m = PluginManager()
+    m.plugins, m.paths = dict(manager.plugins), dict(manager.paths)
+    import app.db
+    get, put = app.db.get_setting, app.db.set_setting
+    app.db.get_setting = lambda db, key, default=None: db.settings.get(key, default)
+    app.db.set_setting = lambda db, key, value: db.settings.__setitem__(key, value)
+    try:
+        changed, off, seen = run(["nav-sidebar"])
+        assert changed and "nav" in off and "nav-sidebar" not in off and seen == {"view:nav": "nav-sidebar"}
+        changed, off, _ = run(["nav-sidebar"], seen={"view:nav": "nav-sidebar"})  # only once
+        assert not changed and "nav-sidebar" in off
+        changed, off, _ = run(["nav-sidebar"], chosen={"view:nav": "nav"})  # the owner picked the top bar
+        assert not changed and "nav-sidebar" in off
+        changed, off, _ = run(["nav-sidebar"], mine=True)  # a top bar the owner installed
+        assert not changed and "nav-sidebar" in off
+    finally:
+        app.db.get_setting, app.db.set_setting = get, put
 
 
 def test_a_settings_section_of_its_own(client, mine):
