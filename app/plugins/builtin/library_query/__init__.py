@@ -1,8 +1,8 @@
 """Library filters and sorting (built-in plugin, issue #204): the `library-query` job.
 
 What the library page can be filtered and sorted by, and how: the search box, reading status,
-publication, metadata, format, collection, genres and tags, author, length, favorites, the first letter, and the
-sorts. The page's filter, sort and letter sheets, the filter chips and saved searches are built from
+publication, metadata, format, collection, when it was added, genres and tags, author, length, favorites, the
+first letter, and the sorts. The page's filter, sort and letter sheets, the filter chips and saved searches are built from
 query_schema(), so a plugin that replaces this one (provides = {"library-query": 1}) changes all of them.
 
 A copy of this file is a good start for your own: keep the parameter names you keep (saved searches and
@@ -12,7 +12,7 @@ from sqlalchemy import String, and_, cast, exists, func, or_
 
 from app.plugins.sdk import N_, Series, SeriesTag, Tag
 from app.plugins import Plugin
-from app.plugins.query import flag, number, values
+from app.plugins.query import day_range, flag, number, values
 
 # The labels stay English in the schema (assistants read it too); N_() marks them, and the page shows them
 # in its language (t() in app.js, issue #263)
@@ -63,6 +63,9 @@ SCHEMA = {
         {"key": "length", "label": N_("Length"), "kind": "length",
          "units": [[u, label] for u, label, _ in LENGTH_UNITS],
          "params": [p for u, _, _ in LENGTH_UNITS for p in (f"{u}_min", f"{u}_max")] + ["length_unknown"]},
+        # when the series was added: from and to are whole days (2026-10-01), either may be left out; the
+        # page also sends its time zone (tz, not part of the search), so a day is the person's own
+        {"key": "added", "label": N_("Added"), "kind": "dates", "params": ["added_from", "added_to"]},
         {"key": "genres", "label": N_("Genres & tags"), "kind": "tags", "params": ["genre", "exclude"]},
         # the series page links each author name here (author=A&author=B: by both); the filter sheet
         # lists the names from `source`
@@ -120,7 +123,8 @@ class LibraryQuery(Plugin):
 
     def filter_query(self, ctx, lq, params):
         """The GET /api/series filters (q, genre, exclude, author, pub, read, match, format, have, fav, year_min,
-        year_max, score_min, chapters_min/max, volumes_min/max, length_unknown, letter).
+        year_max, score_min, chapters_min/max, volumes_min/max, length_unknown, letter, added_from, added_to
+        with tz).
         The chapter/volume ranges are on the published totals (metadata), not the books here; a series
         with no known total (ongoing, no metadata) only matches them with length_unknown on."""
         q = lq.query
@@ -156,6 +160,11 @@ class LibraryQuery(Plugin):
             n = number(params, key)
             if n:  # 0 is no limit, as before (a score of at least 0 would leave out unscored series)
                 q = q.filter(col >= n if op == "ge" else col <= n)
+        since, until = day_range(params, "added_from", "added_to")
+        if since is not None:
+            q = q.filter(Series.added_at >= since)
+        if until is not None:
+            q = q.filter(Series.added_at < until)
         unknown = flag(params, "length_unknown")
         for unit, _, col in LENGTH_UNITS:
             lo, hi = number(params, f"{unit}_min"), number(params, f"{unit}_max")

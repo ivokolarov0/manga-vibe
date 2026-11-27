@@ -219,6 +219,10 @@ msgstr "Да се добави ли този източник на добавк�
 msgid "Add to favorites"
 msgstr "Добави в любими"
 
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Added"
+msgstr "Добавени"
+
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Added the account {name}"
 msgstr "Добави акаунта {name}"
@@ -663,7 +667,11 @@ msgstr "Проверка на папката…"
 msgid "Checking…"
 msgstr "Проверява се…"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/web/templates/sheets/library.html
+#: app/web/static/js/kit.js
+msgid "Choose a date"
+msgstr "Изберете дата"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/web/static/js/kit.js app/web/templates/sheets/library.html
 msgid "Clear"
 msgstr "Изчисти"
 
@@ -1035,7 +1043,7 @@ msgstr "Не показвай отново"
 msgid "Don't skip"
 msgstr "Не пропускай"
 
-#: app/plugins/builtin/saved_searches/sheet.html app/web/templates/sheets/library.html
+#: app/plugins/builtin/saved_searches/sheet.html app/web/static/js/kit.js app/web/templates/sheets/library.html
 msgid "Done"
 msgstr "Готово"
 
@@ -1479,7 +1487,7 @@ msgstr "Забравихте ли я? Стартирайте MangaVibe ведн�
 msgid "Format"
 msgstr "Формат"
 
-#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html app/web/templates/sheets/library.html
 msgid "From"
 msgstr "От"
 
@@ -1963,6 +1971,14 @@ msgstr "Език"
 msgid "Large"
 msgstr "Големи"
 
+#: app/web/static/js/kit.js
+msgid "Last 30 days"
+msgstr "Последните 30 дни"
+
+#: app/web/static/js/kit.js
+msgid "Last 7 days"
+msgstr "Последните 7 дни"
+
 #: app/web/static/js/app.js
 msgid "Last checked {when}"
 msgstr "Последна проверка: {when}"
@@ -2373,6 +2389,10 @@ msgstr "Липсват глави {chapters}"
 msgid "Missing metadata"
 msgstr "Липсващи метаданни"
 
+#: app/web/static/js/kit.js
+msgid "Month"
+msgstr "Месец"
+
 #: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "More"
 msgstr "По-голям"
@@ -2562,6 +2582,10 @@ msgstr "Напред"
 #: app/web/static/js/reader.js
 msgid "Next chapter"
 msgstr "Следваща глава"
+
+#: app/web/static/js/kit.js
+msgid "Next month"
+msgstr "Следващ месец"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Next page"
@@ -3256,6 +3280,10 @@ msgstr "Назад"
 #: app/web/static/js/reader.js
 msgid "Previous chapter"
 msgstr "Предишна глава"
+
+#: app/web/static/js/kit.js
+msgid "Previous month"
+msgstr "Предишен месец"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Previous page"
@@ -4549,6 +4577,10 @@ msgstr "Тази версия изисква нов Docker образ. Вижт�
 msgid "This was the last book in the series."
 msgstr "Това беше последната книга от поредицата."
 
+#: app/web/static/js/kit.js
+msgid "This year"
+msgstr "Тази година"
+
 #: app/plugins/builtin/activity_log/export.py
 msgid "Time (local)"
 msgstr "Час (местен)"
@@ -4577,7 +4609,7 @@ msgstr "Заглавието започва с"
 msgid "Title starts with {letter}"
 msgstr "Заглавието започва с {letter}"
 
-#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html app/web/templates/sheets/library.html
 msgid "To"
 msgstr "До"
 
@@ -4585,7 +4617,7 @@ msgstr "До"
 msgid "to chapter"
 msgstr "до глава"
 
-#: app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/kit.js
 msgid "Today"
 msgstr "Днес"
 
@@ -5013,6 +5045,10 @@ msgstr "Кой какво е направил и кога, с адресите, 
 msgid "Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged."
 msgstr "Кой какво е направил и кога: влизания, акаунти, папки и сканирания, изтрити поредици, добавки и настройки. Само администраторите виждат тази страница. Четенето никога не се записва."
 
+#: app/web/templates/sheets/library.html
+msgid "Whole days, both included. Leave a box empty for no limit."
+msgstr "Цели дни, включително двата. Оставете поле празно за без ограничение."
+
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Why"
 msgstr "Защо"
@@ -5049,7 +5085,7 @@ msgstr "Грешно име или парола"
 msgid "Wrong password"
 msgstr "Грешна парола"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js app/web/static/js/kit.js
 msgid "Year"
 msgstr "Година"
 
@@ -5132,6 +5168,10 @@ msgid "{from}–{to} volumes"
 msgstr "{from}–{to} тома"
 
 #: app/plugins/query.py
+msgid "{key} must be a day like 2026-11-27"
+msgstr "{key} трябва да е ден, например 2026-11-27"
+
+#: app/plugins/query.py
 msgid "{key} must be a whole number"
 msgstr "{key} трябва да е цяло число"
 
@@ -5139,9 +5179,21 @@ msgstr "{key} трябва да е цяло число"
 msgid "{label}: not one of the options"
 msgstr "{label}: не е от възможностите"
 
+#: app/web/static/js/app.js
+msgid "{label}: since {from}"
+msgstr "{label}: от {from}"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "{label}: unknown"
 msgstr "{label}: неизвестно"
+
+#: app/web/static/js/app.js
+msgid "{label}: until {to}"
+msgstr "{label}: до {to}"
+
+#: app/web/static/js/app.js
+msgid "{label}: {from} – {to}"
+msgstr "{label}: {from} – {to}"
 
 #: app/web/static/js/app.js
 msgid "{length} or unknown"
@@ -5388,6 +5440,14 @@ msgstr "{what}, поне"
 #: app/web/templates/sheets/library.html
 msgid "{what}, at most"
 msgstr "{what}, най-много"
+
+#: app/web/templates/sheets/library.html
+msgid "{what}, from"
+msgstr "{what}, от"
+
+#: app/web/templates/sheets/library.html
+msgid "{what}, to"
+msgstr "{what}, до"
 
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "“If you liked this” at the end of a series page: what AniList's readers recommend, with covers. Series you have open here; the others on AniList. Built in."
