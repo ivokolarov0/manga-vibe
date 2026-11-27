@@ -1835,17 +1835,21 @@ const SETTINGS_NAV = (window.MV_SETTINGS_PAGES || [{ key: "plugins", label: t("P
 /* The plain settings of a page: a label, a hint and a dropdown, saved when changed. Each is
    { key, label, hint, options: [[value, text], ...], show(st) }; show (when there) decides whether
    it's there at all. choices(value) (when there) gives the options for the saved value instead.
+   check: an on/off switch ("true" / "false"); inline: two or three short choices side by side in the row
+   (a .segmented), the rest a dropdown. group: the title of the card it starts (the redesign, #303; the rows
+   after it are in that card until the next group).
    Values are strings, like st's; save() turns them into numbers or booleans. The words in the page's
    language (t(), issue #263). */
-const ON_OFF = [["true", t("On")], ["false", t("Off")]];
 const SETTING_ROWS = {
   display: [
     // the app's language: the browser's, or one picked (the page is drawn again in it)
     { key: "language", label: t("Language"), hint: t("Just for you. Missing words are shown in English"), personal: true,
+      group: t("Appearance"),
       options: [["auto", t("Browser's language")], ...(I18N.languages || ["en"]).map((c) => [c, languageName(c)])] },
-    { key: "theme", label: t("Theme"), hint: t("Just for you"), personal: true,
+    { key: "theme", label: t("Theme"), hint: t("Just for you"), personal: true, inline: true,
       options: [["dark", t("Dark")], ["light", t("Light")], ["auto", t("Match device")]] },
-    { key: "card_size", label: t("Card size"), options: [["small", t("Small")], ["medium", t("Medium")], ["large", t("Large")]] },
+    { key: "card_size", label: t("Card size"), inline: true,
+      options: [["small", t("Small")], ["medium", t("Medium")], ["large", t("Large")]] },
     { key: "grid_columns", label: t("Grid columns"), personal: true,
       hint: t("Just for you. Auto fits as many cards as the screen has room for; narrow screens show fewer than picked"),
       options: [["auto", t("Auto")], ...GRID_COLUMNS.map((n) => [String(n), fmtNum(n)])] },
@@ -1856,23 +1860,23 @@ const SETTING_ROWS = {
       show: (st) => st.grid_columns === "auto" },
     { key: "page_width", label: t("Page width"), personal: true,
       hint: t("Just for you. Full width lets the Library and Continue grids use the whole screen, however wide"),
-      options: [["contained", t("Contained")], ["full", t("Full width")]] },
+      inline: true, options: [["contained", t("Contained")], ["full", t("Full width")]] },
     { key: "page_width_series", label: t("Series page full width as well"), personal: true, sub: true, check: true,
       hint: t("The page of a series also uses the whole screen"), show: (st) => st.page_width === "full" },
     { key: "nav_position", label: t("Navigation bar"), hint: t("Where Library and Continue sit (with the Sidebar plugin: on phones only)"),
-      options: [["bottom", t("Bottom")], ["top", t("Top")]] },
+      inline: true, options: [["bottom", t("Bottom")], ["top", t("Top")]] },
     { key: "library_listing", label: t("Library listing"), hint: t("Load more while scrolling, or show numbered pages"),
-      options: [["lazy", t("Lazy load")], ["paged", t("Paginated")]] },
+      group: t("Library"), inline: true, options: [["lazy", t("Lazy load")], ["paged", t("Paginated")]] },
     { key: "library_page_size", label: t("Series per page"), options: PAGE_SIZES.map((n) => [String(n), fmtNum(n)]),
       show: (st) => st.library_listing === "paged" },
     // also the grid/list switch above the library (the library picks it up when shown again)
     { key: "library_view", label: t("Library view"), hint: t("Just for you"), personal: true,
-      options: [["grid", t("Grid")], ["list", t("List")]] },
+      inline: true, options: [["grid", t("Grid")], ["list", t("List")]] },
     { key: "title_language", label: t("Title language"), hint: t("Falls back to the next one if missing"),
-      options: [["english", t("English")], ["romaji", t("Romaji")], ["native", t("Native")]] },
+      inline: true, options: [["english", t("English")], ["romaji", t("Romaji")], ["native", t("Native")]] },
   ],
   reader: [
-    { key: "reader_mode", label: t("Default reading mode"),
+    { key: "reader_mode", label: t("Default reading mode"), group: t("Reading"), inline: true,
       hint: t("Pages: one at a time, the next one on the right (→, a tap on the right, a swipe to the left). For series whose library has no mode of its own (Settings → Libraries); each series can be set by hand"),
       options: [["paged", t("Pages")], ["vertical", t("Vertical")]] },
     { key: "reader_fit", label: t("Fit"),
@@ -1882,11 +1886,11 @@ const SETTING_ROWS = {
       hint: t("Pages side by side, like an open book (in Pages mode). The cover and double-page pictures show alone. On wide screens: one page at a time while the screen is upright or narrow"),
       options: [["off", t("Off")], ["auto", t("On wide screens")], ["on", t("Always")]] },
     // no fullscreen in the Android app: it already fills the screen between the phone's bars
-    { key: "auto_fullscreen", label: t("Fullscreen on first tap"), options: ON_OFF, show: () => !Alpine.store("app").inApp,
+    { key: "auto_fullscreen", label: t("Fullscreen on first tap"), check: true, show: () => !Alpine.store("app").inApp,
       hint: t("Phones and tablets; after the phone was locked, the next tap goes back to fullscreen. With a mouse, use the fullscreen button or F") },
     { key: "preload", label: t("Pages to preload"), hint: t("More = smoother, uses more data"),
       options: ["2", "3", "4", "5", "8"].map((n) => [n, fmtNum(+n)]) },
-    { key: "reader_autohide", label: t("Hide controls after"),
+    { key: "reader_autohide", label: t("Hide controls after"), group: t("Controls"),
       hint: t("When nothing is touched. Turning the page or a tap in the middle hides them at once"),
       // also in the reading options; choices(v): the options, with a saved time that isn't one of them
       options: autohideOptions(), choices: autohideOptions },
@@ -1896,16 +1900,16 @@ const SETTING_ROWS = {
       options: Object.entries(TOP_BAR) },
     { key: "reader_drawer_side", label: t("Reading hand"),
       hint: t("Back, fullscreen and the options button sit on this side, within thumb reach"),
-      options: [["right", t("Right")], ["left", t("Left")]] },
+      inline: true, options: [["right", t("Right")], ["left", t("Left")]] },
     { key: "reader_tap_layout", label: t("Tap zones"),
       hint: t("One-handed: most of the page turns forward, a narrow edge goes back, the middle opens the menu"),
       options: [["default", t("Left back, right forward")], ["one-handed", t("One-handed")], ["off", t("Off (swipe only)")]] },
-    { key: "overlay_opacity", label: t("Overlay box background"),
+    { key: "overlay_opacity", label: t("Overlay box background"), group: t("Page look"),
       hint: t("Plugin boxes over the page, e.g. translations. Lower shows the art underneath"),
       options: [["100", t("Solid")], ["75", pct(75)], ["50", pct(50)], ["25", pct(25)], ["0", t("See-through")]] },
     { key: "overlay_outline", label: t("Overlay text outline"),
       hint: t("A white outline around the letters, so they stay readable over the art"),
-      options: [["off", t("Off")], ["thin", t("Thin")], ["thick", t("Thick")]] },
+      inline: true, options: [["off", t("Off")], ["thin", t("Thin")], ["thick", t("Thick")]] },
     { key: "reader_brightness", label: t("Page brightness"), hint: t("Darker pages are easier on the eyes, e.g. at night"),
       options: [["100", t("Normal")], ["85", pct(85)], ["70", pct(70)], ["55", pct(55)], ["40", pct(40)]] },
     { key: "reader_contrast", label: t("Page contrast"), hint: t("More makes faint lines and small text stand out"),
@@ -1915,8 +1919,8 @@ const SETTING_ROWS = {
       options: [["normal", t("Normal")], ["dark", t("Inverted")], ["warm", t("Warm")], ["dark-warm", t("Inverted, warm")]] },
   ],
   app: [
-    { key: "reader_volume_keys", label: t("Volume buttons turn pages"),
-      hint: t("In the reader: volume down goes to the next page, volume up goes back"), options: ON_OFF },
+    { key: "reader_volume_keys", label: t("Volume buttons turn pages"), check: true,
+      hint: t("In the reader: volume down goes to the next page, volume up goes back") },
   ],
 };
 // Settings pages that are each person's own (with accounts, everyone sees them; the rest is for admins) are
@@ -2019,6 +2023,15 @@ function settingsView() {
     rows: SETTING_ROWS,  // the plain dropdown settings of each page
     // Display: all of it for an admin, only the personal rows for others
     get displayRows() { return this.$store.app.admin ? SETTING_ROWS.display : SETTING_ROWS.display.filter((r) => r.personal); },
+    // the rows in cards: a row with a group starts a card with that title (setting_groups in ui/macros.html)
+    groupRows(rows) {
+      const groups = [];
+      for (const r of rows) {
+        if (r.group || !groups.length) groups.push({ title: r.group || "", rows: [] });
+        groups.at(-1).rows.push(r);
+      }
+      return groups;
+    },
     get section() {
       const s = this.$store.app.sub || this.nav[0][0];
       return s.startsWith("plugin-") ? "plugin" : s;

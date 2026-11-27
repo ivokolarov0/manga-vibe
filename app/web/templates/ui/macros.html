@@ -14,6 +14,17 @@
   <template x-if="!r.check && !r.inline"><select x-model="st[r.key]" @change="save(r.key)"><template x-for="[v, text] in (r.choices ? r.choices(st[r.key]) : r.options)" :key="v"><option :value="v" :selected="st[r.key] === v" x-text="text"></option></template></select></template></div></template>
 {%- endmacro %}
 
+{#- The same rows in titled cards (the redesign, #303): a row with a `group` starts a card with that title
+    (groupRows() in Settings' component). For a page whose <section> has .settings-groups (no card of its own). -#}
+{% macro setting_groups(rows) -%}
+<template x-for="g in groupRows({{ rows }})" :key="g.title">
+  <div class="settings-group">
+    <h3 x-show="g.title" x-text="g.title"></h3>
+    <div class="settings-card">{{ setting_rows("g.rows") }}</div>
+  </div>
+</template>
+{%- endmacro %}
+
 {#- The Settings button with the Needs attention count: what a top bar (view:nav) must have, as
     settings_link() (the page gives it to the nav view and checks it's there). settings_link(nav=True): as
     an entry of the Library / Continue bar instead, its icon in a .nav-ic pill and "Settings" under it (the

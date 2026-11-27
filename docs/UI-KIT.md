@@ -181,7 +181,8 @@ stops what the piece was about to do (a dialog stays open).
 - A row with a `.segmented` is a `<div>`, not a `<label>`: a click on a label presses the first button in it.
   On/off is a switch, two or three choices a `.segmented`, a longer list a select.
 - Settings' own rows come from `SETTING_ROWS` (app.js) through the `setting_rows` macro: `check: true` for a
-  switch, `inline: true` for a `.segmented`, else a select.
+  switch, `inline: true` for a `.segmented`, else a select. `group: "Title"` starts a titled card, drawn by
+  the `setting_groups` macro in a `<section class="settings-groups">` (a page of cards, not one card).
 - `x-field` as for Fields: the control is named by the name alone and described by the hint, and the
   checkbox is a switch for screen readers.
 - `.settings-card`: the card they sit in. Settings' pages (`section` in the settings content, a plugin's

@@ -235,6 +235,44 @@
     }
   }
 
+  /* a page of titled cards (Display, Reader: the redesign, #303): the page's title with a line under it,
+     then each group's title over its card. The section itself is no card */
+  .settings-content > section.settings-groups {
+    display: grid;
+    gap: 22px;
+    padding: 0;
+    overflow: visible;
+    background: none;
+    border: 0;
+    box-shadow: none;
+
+    & > h2 {
+      margin: 6px 0 0;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.035em;
+
+      @media (min-width: 700px) {
+        font-size: 34px;
+      }
+    }
+  }
+
+  .settings-group {
+    & > h3 {
+      margin: 0 0 10px 4px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    & > .settings-card {
+      padding-block: 2px;
+    }
+  }
+
   /* the rows (.setting-row) are the UI kit's: css/kit/rows.css */
   .setting-row .label small.scan-progress {
     color: var(--accent);

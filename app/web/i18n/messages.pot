@@ -333,7 +333,7 @@ msgstr ""
 msgid "App version"
 msgstr ""
 
-#: app/plugins/__init__.py
+#: app/plugins/__init__.py app/web/static/js/app.js
 msgid "Appearance"
 msgstr ""
 
@@ -769,6 +769,10 @@ msgstr ""
 
 #: app/plugins/builtin/image_reader/image_reader.js
 msgid "Contrast"
+msgstr ""
+
+#: app/web/static/js/app.js
+msgid "Controls"
 msgstr ""
 
 #: app/plugins/builtin/optimize/__init__.py
@@ -2757,7 +2761,7 @@ msgstr ""
 msgid "Oldest first"
 msgstr ""
 
-#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr ""
 
@@ -2979,7 +2983,7 @@ msgstr ""
 msgid "Page contrast"
 msgstr ""
 
-#: app/plugins/builtin/image_reader/image_reader.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page look"
 msgstr ""
 
@@ -3489,6 +3493,10 @@ msgstr ""
 
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Romaji title"
+msgstr ""
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Rows"
 msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html

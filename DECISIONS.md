@@ -1724,3 +1724,9 @@ One PR per page, on step 8's tokens and kit.
   plugins' tools and the grid / list switch (moved up from the count line). The line under the bar is only
   for numbered pages now. The quick filters have no counts: the API gives the total of the current filter
   only, and five more counts per load weren't worth it.
+- **Settings: titled cards, inline choices, switches.** `SETTING_ROWS` entries got `group` (the title of the
+  card a row starts), and Display and Reader draw them with `setting_groups` (cards under the page's title,
+  which has a line under it). Two or three short choices are `inline` (a segmented in the row); On/Off rows
+  became switches (`check`); long lists and long words (Tap zones, Fit, the overlay percentages) stay
+  dropdowns. The Home page's rows are small cards with a switch, gaps instead of dividers. Pages of other
+  plugins are unchanged: a section is a card unless it has `.settings-groups`.
