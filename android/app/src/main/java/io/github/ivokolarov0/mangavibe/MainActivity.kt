@@ -240,12 +240,13 @@ class MainActivity : Activity() {
         connect.setText(R.string.setup_checking)
         setupError.visibility = View.GONE
         thread {
-            val ok = Server.answers(origin)
+            val check = Server.check(origin)
             runOnUiThread {
                 connect.isEnabled = true
                 connect.setText(R.string.setup_connect)
-                if (!ok) {
-                    showSetupError(getString(R.string.setup_no_answer, origin))
+                if (check != Server.Check.OK) {
+                    val msg = if (check == Server.Check.UNTRUSTED) R.string.setup_untrusted else R.string.setup_no_answer
+                    showSetupError(getString(msg, origin))
                     return@runOnUiThread
                 }
                 getSystemService(InputMethodManager::class.java)?.hideSoftInputFromWindow(address.windowToken, 0)
