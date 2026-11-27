@@ -276,6 +276,10 @@ msgstr "すべて選択済み"
 msgid "Allow them and install it?"
 msgstr "許可してインストールしますか？"
 
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Also reading"
+msgstr "ほかに読んでいるもの"
+
 #: app/web/templates/sheets/library.html
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr "総数が不明なシリーズも表示（連載中、メタデータなし）"
@@ -746,7 +750,7 @@ msgstr "外部には接続しません"
 msgid "Contained"
 msgstr "制限あり"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Continue"
 msgstr "続きを読む"
 
@@ -2974,7 +2978,7 @@ msgstr "ページの幅"
 msgid "Page {n}"
 msgstr "{n} ページ"
 
-#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr "{pages} ページ中 {page} ページ"
 
@@ -3174,7 +3178,7 @@ msgstr "刊行状況"
 msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
 msgstr "{when} に作成したデータベースのコピーに戻しますか？それ以降の読書の進み具合、設定などの変更は失われます。"
 
-#: app/plugins/builtin/cards/templates/views/card.html
+#: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/home_page/templates/views/home.html
 msgid "p{page}/{pages}"
 msgstr "{page}/{pages} ページ"
 
@@ -3213,6 +3217,10 @@ msgstr "読み上げ"
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
 msgstr "ブラウザの代わりに MangaVibe アプリで読めます。ブラウザのバーのない全画面で、読んでいる間は画面が消えず、音量ボタンでページをめくれます。同じ MangaVibe を表示するので、ライブラリ・進み具合・設定はそのままです。"
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Read so far"
+msgstr "ここまで読んだ分"
 
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
@@ -3685,7 +3693,7 @@ msgstr "なくなったシリーズ"
 msgid "Series not found"
 msgstr "シリーズが見つかりません"
 
-#: app/contracts/__init__.py app/plugins/builtin/series_page/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/series_page/__init__.py
 msgid "Series page"
 msgstr "シリーズのページ"
 

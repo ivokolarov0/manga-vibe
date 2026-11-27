@@ -1697,3 +1697,11 @@ One PR per page, on step 8's tokens and kit.
 - **The phone bar floats**: a rounded glass bar clear of the edges, the current page's whole entry tinted
   with the accent. Both nav plugins share it (`layout.css`); the top bar's "Navigation bar: Top" tabs keep
   their own look.
+- **Home: Continue reading is the hero.** The first series of the Continue reading row, big, at the top,
+  with up to three more under "Also reading" and "See all" past four, in place of that row (so hiding the
+  row in Settings hides the hero too). The backdrop is the cover itself, blurred and saturated under a
+  dark veil (CSS only, no colour extraction), the same in both themes since it's a picture. The hero always
+  comes first, whatever the row's place in the person's order: it's the page's one thing to do.
+- **Covers**: 15px corners and a deeper shadow everywhere a series card shows; the carousel's track got
+  room at the bottom so the shadow isn't cut off. Wide tiles (the libraries) write their name bottom-left
+  in the display face.
