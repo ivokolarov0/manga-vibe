@@ -29,9 +29,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/desktop.webp" width="74%" alt="MangaVibe on a computer: the library grid and list view, a genre filter, a series page with its books in order and the files behind them, the Needs attention lists, and the light theme">
+  <img src="docs/media/desktop.webp" width="74%" alt="MangaVibe on a computer: Home with the series you're reading big at the top, the library grid and list view with its filter bar, a series page with its books as covers, Settings in cards, and the light theme">
   &nbsp;
-  <img src="docs/media/mobile.webp" width="23%" alt="MangaVibe on a phone: opening a series and reading it with swipes, taps, pinch zoom, the page slider and vertical mode">
+  <img src="docs/media/mobile.webp" width="23%" alt="MangaVibe on a phone: Home, a series page with its cover behind it, reading a webtoon in vertical mode, and the floating bar at the bottom">
 </p>
 <p align="center"><sub>The series and art shown are made up for the demo.</sub></p>
 
