@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import java.net.HttpURLConnection
 import java.net.URL
+import javax.net.ssl.SSLException
 
 /** The MangaVibe server the app shows: stored as an origin, e.g. "http://192.168.1.20:8090". */
 object Server {
@@ -59,17 +60,28 @@ object Server {
         return if (uri.port == -1) "$scheme://$host" else "$scheme://$host:${uri.port}"
     }
 
+    enum class Check { OK, UNTRUSTED, NO_ANSWER }
+
     /** Whether a MangaVibe answers at this origin. Blocks: call it off the main thread. */
-    fun answers(origin: String, timeoutMs: Int = 5000): Boolean = try {
+    fun answers(origin: String, timeoutMs: Int = 5000): Boolean = check(origin, timeoutMs) == Check.OK
+
+    /**
+     * Like [answers], but tells a server whose HTTPS certificate the phone doesn't trust (UNTRUSTED)
+     * apart from one that doesn't answer at all, so the setup screen can say which it is.
+     */
+    fun check(origin: String, timeoutMs: Int = 5000): Check = try {
         val c = URL("$origin/api/health").openConnection() as HttpURLConnection
         c.connectTimeout = timeoutMs
         c.readTimeout = timeoutMs
         try {
-            c.responseCode == 200 && c.inputStream.bufferedReader().use { it.readText() }.contains("\"ok\"")
+            val ok = c.responseCode == 200 && c.inputStream.bufferedReader().use { it.readText() }.contains("\"ok\"")
+            if (ok) Check.OK else Check.NO_ANSWER
         } finally {
             c.disconnect()
         }
+    } catch (e: SSLException) {
+        Check.UNTRUSTED
     } catch (e: Exception) {
-        false
+        Check.NO_ANSWER
     }
 }
