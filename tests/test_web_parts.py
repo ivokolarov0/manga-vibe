@@ -28,7 +28,7 @@ def test_page_is_put_together(client):
     assert page.startswith("<!doctype html>")  # nothing before it, not even the templates' notes
     assert "{{" not in page and "{%" not in page and "<!-- part:" not in page
     assert page.count('class="meta-progress"') == 2  # Settings → Metadata and Needs attention
-    assert page.count('<label x-field class="setting-row" :class="{ sub: r.sub }" x-show="!r.show || r.show(st)">') == 3  # Display, Reader, app
+    assert page.count('<div x-field class="setting-row" :class="{ sub: r.sub }" x-show="!r.show || r.show(st)"') == 3  # Display, Reader, app
     for view in ("libraryPage()", "seriesPage()", "settingsView()", "attentionView()",
                  "fixMatch()", "editSeries()", "folderPicker()", "filterSheet()"):
         assert f'x-data="{view}"' in page, view

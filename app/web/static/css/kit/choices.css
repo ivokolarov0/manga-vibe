@@ -2,33 +2,50 @@
    .segmented: two or three choices side by side in one frame; the chosen button has .on.
    .options: a list of choices, one per row, like radio buttons (sort menu, reading direction): a button
    with a .radio and a .text (a line and an optional <small>); the chosen one has .on.
-   Custom properties: --choice-on (the chosen one's colour), --choice-on-text, --segmented-bg. */
+   A segmented's chosen one is a raised tile (--surface on --surface2); .segmented.accent fills it with the
+   accent instead.
+   Custom properties: --choice-on (the chosen one's colour), --choice-on-text, --segmented-bg,
+   --segmented-min (a button's least width). */
 @layer kit {
   .segmented {
     display: inline-flex;
+    max-width: 100%;
     padding: 3px;
     background: var(--segmented-bg, var(--surface2));
-    border: 1px solid var(--border);
-    border-radius: calc(var(--radius) + 3px);
+    border-radius: calc(var(--radius) - 1px);
 
     & button {
-      min-width: 110px;
+      display: inline-flex;
+      flex: 1 1 auto;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-width: var(--segmented-min, 0);
       height: var(--control-height-small);
-      padding: 0 14px;
+      padding: 0 13px;
       background: none;
       border: 0;
-      border-radius: var(--radius);
+      border-radius: calc(var(--radius) - 4px);
       color: var(--muted);
       font-size: 13px;
+      font-weight: 650;
       white-space: nowrap;
 
       &.on {
-        background: var(--choice-on, var(--accent));
-        color: var(--choice-on-text, var(--accent-text));
-        font-weight: 600;
-        box-shadow: var(--shadow-sm);
+        background: var(--choice-on, var(--surface));
+        color: var(--choice-on-text, var(--text));
+        box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
       }
     }
+
+    &.accent button.on {
+      background: var(--choice-on, var(--accent-gradient));
+      color: var(--choice-on-text, var(--accent-text));
+    }
+  }
+
+  [data-theme="light"] .segmented button.on {
+    box-shadow: 0 2px 6px rgb(60 35 20 / 0.12);
   }
 
   .options {

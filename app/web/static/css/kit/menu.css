@@ -17,7 +17,7 @@
     padding: 6px;
     background: var(--menu-bg, var(--surface));
     border: 1px solid var(--border);
-    border-radius: var(--menu-radius, 14px);
+    border-radius: var(--menu-radius, 16px);
     box-shadow: var(--shadow-lg);
     transform-origin: top right;
     animation: menu-in 0.16s var(--ease);
@@ -31,8 +31,9 @@
       padding: 9px 10px;
       background: none;
       border: 0;
-      border-radius: 9px;
+      border-radius: 10px;
       font-size: 14px;
+      font-weight: 500;
       text-align: left;
       transition: background-color var(--fast), border-color var(--fast), color var(--fast),
         filter var(--fast), box-shadow var(--fast), transform 0.08s;

@@ -1,6 +1,7 @@
 /* UI kit: settings rows and the card they sit in (docs/UI-KIT.md, "Settings rows").
    .settings-card (Settings' pages are cards by themselves) > .setting-row: a .label (the name, then a
-   <small> hint) and its control: a switch, a select, a field or a few buttons (.row-buttons). With
+   <small> hint) and its control: a switch, a select, a .segmented (a few choices right in the row), a
+   field or a few buttons (.row-buttons). With
    x-field (js/kit.js) the control is named by the name alone and described by the hint.
    Custom properties: --card-bg, --card-border, --card-radius, --card-padding, --row-height, --row-divider. */
 @layer kit {
@@ -29,9 +30,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: var(--row-height, 54px);
+    min-height: var(--row-height, 62px);
     margin: 0 -16px;
-    padding: 8px 16px;
+    padding: 10px 16px;
 
     /* the divider goes *between* rows, as a line on top of every row that has a shown row (or a
        .meta-sources list) before it; never border-bottom removed with :last-child, which came back
@@ -57,11 +58,11 @@
       display: grid;
       gap: 2px;
       min-width: 0;
-      font-weight: 500;
+      font-weight: 600;
 
       & small {
         color: var(--muted);
-        font-size: 12px;
+        font-size: 12.5px;
         font-weight: 400;
 
         & a {
@@ -82,6 +83,21 @@
 
     & > input[type="checkbox"] {
       flex-shrink: 0;  /* long text next to it squeezed it */
+    }
+
+    /* a few choices right in the row (a .segmented with x-choice): beside the name when there's room,
+       under it when there isn't (a phone) */
+    &:has(> .segmented) {
+      flex-wrap: wrap;
+      row-gap: 10px;
+
+      & > .label {
+        flex: 1 1 220px;
+      }
+
+      & > .segmented {
+        flex: none;
+      }
     }
   }
 }

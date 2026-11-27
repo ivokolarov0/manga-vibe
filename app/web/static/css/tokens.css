@@ -14,37 +14,57 @@
     /* native controls, scrollbars and form pop-ups follow the theme */
     color-scheme: dark;
 
-    /* colours (dark theme) */
-    --bg: #0f1115;
-    --surface: #181b22;
-    --surface2: #22262f;
-    --text: #eceef2;
-    --muted: #979eab;
-    --border: #2b303b;
-    --accent: #ff7a59;
-    --accent-text: #1d0d07;  /* text on the accent colour */
+    /* colours (dark theme): warm darks, the orange */
+    --bg: #0f0d0c;
+    --surface: #191614;   /* cards, the sidebar, menus */
+    --surface2: #231f1c;  /* buttons, fields, things on a card */
+    --surface3: #2d2825;  /* the off switch, the picked one in a row of things on --surface2 */
+    --text: #f6f0ea;
+    --muted: #a69b92;
+    --faint: #7a7068;     /* counts, labels over lists */
+    --border: rgb(255 238 226 / 0.08);  /* hairlines */
+    --accent: #ff7a45;
+    --accent-text: #1e0b03;  /* text on the accent colour */
     --ok: #4cc38a;
     --warn: #f2b84b;
     --danger: #f06363;
 
     /* made from the colours above, so a custom --accent or --bg carries through */
     --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent);
+    /* the other end of the accent's gradient: the accent a little lighter and turned towards yellow
+       (#ff7a45 → about #ffad5c), so a custom --accent gets a gradient of its own colour. Browsers without
+       relative colours: the accent mixed with white */
+    --accent-2: color-mix(in oklab, var(--accent) 72%, #fff);
+
+    @supports (color: oklch(from red l c h)) {
+      --accent-2: oklch(from var(--accent) calc(l + 0.1) calc(c * 0.8) calc(h + 25));
+    }
+
+    /* primary buttons, progress bars, switches: the accent fading into --accent-2 */
+    --accent-gradient: linear-gradient(135deg, var(--accent), var(--accent-2));
     --hover: color-mix(in srgb, var(--text) 8%, transparent);
-    --glass: color-mix(in srgb, var(--bg) 86%, transparent);  /* bars with the page blurred behind */
+    --glass: color-mix(in srgb, var(--surface) 74%, transparent);  /* bars with the page blurred behind */
 
     /* shadows and the dimmed page behind a sheet or dialog */
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
-    --shadow: 0 8px 24px rgb(0 0 0 / 0.4);
-    --shadow-lg: 0 24px 60px rgb(0 0 0 / 0.55);
-    --backdrop: rgb(4 6 10 / 0.62);
+    --shadow: 0 12px 32px rgb(0 0 0 / 0.42);
+    --shadow-lg: 0 18px 50px rgb(0 0 0 / 0.5);
+    --shadow-cover: 0 10px 28px rgb(0 0 0 / 0.5);  /* under a cover */
+    --backdrop: rgb(8 6 5 / 0.62);
 
     /* shapes and sizes */
-    --radius: 10px;
-    --radius-panel: 16px;
+    --radius: 12px;
+    --radius-panel: 20px;
+    --radius-cover: 15px;
     --radius-pill: 999px;
     --control-height: 40px;
     --control-height-small: 32px;
-    --font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+
+    /* type: Bricolage Grotesque for titles, Plus Jakarta Sans for the rest (css/fonts.css). The system
+       fonts after them cover the scripts they don't have (Cyrillic, Japanese) */
+    --font-ui: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+    --font-display: "Bricolage Grotesque", var(--font-ui);
+    --font: 15px/1.5 var(--font-ui);
 
     /* motion: one easing for things that move, short times so nothing feels slow */
     --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -82,22 +102,25 @@
     &[data-theme="light"] {
       color-scheme: light;
 
-      --bg: #f3f4f7;
+      --bg: #faf7f4;
       --surface: #ffffff;
-      --surface2: #eef0f4;
-      --text: #15181e;
-      --muted: #5d6573;
-      --border: #dcdfe6;
-      --accent: #e5532d;  /* deeper than in the dark theme: readable as text on white */
+      --surface2: #f3eee9;
+      --surface3: #e9e2db;
+      --text: #1d1714;
+      --muted: #6e635b;
+      --faint: #9a8f86;
+      --border: rgb(60 35 20 / 0.1);
+      --accent: #ec5a1e;  /* deeper than in the dark theme: readable as text on white */
       --accent-text: #fff;
       --ok: #1f9d63;
       --warn: #e2a11f;
       --danger: #d9413f;
 
-      --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.07);
-      --shadow: 0 8px 24px rgb(16 24 40 / 0.12);
-      --shadow-lg: 0 24px 60px rgb(16 24 40 / 0.2);
-      --backdrop: rgb(15 18 25 / 0.42);
+      --shadow-sm: 0 1px 2px rgb(60 35 20 / 0.07);
+      --shadow: 0 12px 32px rgb(60 35 20 / 0.12);
+      --shadow-lg: 0 18px 50px rgb(60 35 20 / 0.16);
+      --shadow-cover: 0 10px 24px rgb(60 35 20 / 0.22);
+      --backdrop: rgb(30 20 14 / 0.42);
     }
 
     &[data-card="small"] {

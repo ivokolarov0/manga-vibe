@@ -8,6 +8,9 @@
  */
 @layer tokens, base, kit, layout, components, pages, reader;
 
+/* the app's typefaces, served from static/fonts (no CDN: the app works offline) */
+@import url("fonts.css");
+
 /* design tokens: colours, sizes (change these to re-theme) */
 @import url("tokens.css");
 

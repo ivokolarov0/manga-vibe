@@ -49,6 +49,27 @@ def test_the_kit_page(client):
     assert client.get("/static/css/kit/buttons.css").status_code == 200
 
 
+def test_the_fonts_are_served_by_mangavibe(client):
+    """The two typefaces (#302) come from static/fonts, with their licences: the app works offline, so no
+    CSS loads anything from another server."""
+    fonts = (CSS / "fonts.css").read_text(encoding="utf-8")
+    assert '@import url("fonts.css");' in (CSS / "main.css").read_text(encoding="utf-8")
+    files = re.findall(r'url\("\.\./fonts/([^"]+)"\)', fonts)
+    assert len(files) >= 4
+    for name in files:
+        assert (CSS.parent / "fonts" / name).is_file(), name
+        r = client.get(f"/static/fonts/{name}")
+        assert r.status_code == 200 and r.content[:4] == b"wOF2", name
+    for family in ("Bricolage Grotesque", "Plus Jakarta Sans"):
+        assert f'font-family: "{family}"' in fonts
+        assert (CSS.parent / "fonts" / f"OFL-{family.lower().replace(' ', '-')}.txt").is_file()
+    tokens = (CSS / "tokens.css").read_text(encoding="utf-8")
+    assert '--font-ui: "Plus Jakarta Sans"' in tokens and '--font-display: "Bricolage Grotesque"' in tokens
+    for path in CSS.rglob("*.css"):
+        text = path.read_text(encoding="utf-8")
+        assert not re.search(r"url\(\s*[\"']?(https?:)?//", text), path.name
+
+
 def test_the_app_page_loads_the_kit_before_app_js(client):
     page = client.get("/").text
     assert page.index("/static/js/kit.js") < page.index("/static/js/app.js")
