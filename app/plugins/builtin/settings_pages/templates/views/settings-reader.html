@@ -1,10 +1,10 @@
 {#- Settings → Reader and, on Android, Settings → Android app (settings:reader). Markup in Settings' component:
     st, save(key), rows (SETTING_ROWS in app.js), appServer, appVersion, changeServer(), apkUrl(). -#}
-{% from "ui/macros.html" import setting_rows %}
-        <!-- reader -->
-        <section x-show="section === 'reader'">
+{% from "ui/macros.html" import setting_rows, setting_groups %}
+        <!-- reader: titled cards (the redesign, #303) -->
+        <section class="settings-groups" x-show="section === 'reader'">
           <h2>{{ t("Reader") }}</h2>
-          {{ setting_rows("rows.reader") }}
+          {{ setting_groups("rows.reader") }}
         </section>
 
         <!-- Android app (only on Android: the page is registered with android: True) -->

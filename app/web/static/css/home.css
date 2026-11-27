@@ -553,7 +553,27 @@
     }
   }
 
-  /* Settings → Display: Home's rows, each with a handle to drag, up / down and a show box */
+  /* Settings → Display: Home's rows, each a small card (the redesign, #303) with a handle to drag, up / down
+     and a switch. Cards with gaps between them, so no dividers */
+  .home-rows {
+    display: grid;
+    gap: 8px;
+    padding: 2px 0 14px;
+  }
+
+  .settings-card .home-row-setting.setting-row {
+    min-height: 0;
+    margin: 0;
+    padding: 8px 10px 8px 12px;
+    background: var(--surface2);
+    border: 0;
+    border-radius: 13px;
+
+    &:hover {
+      background: color-mix(in srgb, var(--text) 5%, var(--surface2));
+    }
+  }
+
   .home-row-setting {
     cursor: grab;
 

@@ -335,7 +335,7 @@ msgstr "AniList/MangaUpdates не отговарят; нов опит в {time}"
 msgid "App version"
 msgstr "Версия на приложението"
 
-#: app/plugins/__init__.py
+#: app/plugins/__init__.py app/web/static/js/app.js
 msgid "Appearance"
 msgstr "Външен вид"
 
@@ -772,6 +772,10 @@ msgstr "Страница Продължи четенето"
 #: app/plugins/builtin/image_reader/image_reader.js
 msgid "Contrast"
 msgstr "Контраст"
+
+#: app/web/static/js/app.js
+msgid "Controls"
+msgstr "Управление"
 
 #: app/plugins/builtin/optimize/__init__.py
 msgid "Convert pages to"
@@ -2759,7 +2763,7 @@ msgstr "По-старите записи се премахват веднъж н
 msgid "Oldest first"
 msgstr "Първо най-старите"
 
-#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr "Вкл."
 
@@ -2981,7 +2985,7 @@ msgstr "Цветове на страницата"
 msgid "Page contrast"
 msgstr "Контраст на страницата"
 
-#: app/plugins/builtin/image_reader/image_reader.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page look"
 msgstr "Вид на страницата"
 
@@ -3492,6 +3496,10 @@ msgstr "Ромаджи"
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Romaji title"
 msgstr "Заглавие на ромаджи"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Rows"
+msgstr "Редове"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html
 msgid "Rows on Home"

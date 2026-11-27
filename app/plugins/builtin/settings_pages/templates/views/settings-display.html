@@ -1,14 +1,16 @@
 {#- Settings → Display (settings:display). Markup in Settings' component: st, save(key), displayRows
     (the rows of SETTING_ROWS.display this person may change). -#}
-{% from "ui/macros.html" import setting_rows %}
-        <!-- display -->
-        <section x-show="section === 'display'">
+{% from "ui/macros.html" import setting_groups %}
+        <!-- display: titled cards (the redesign, #303) -->
+        <section class="settings-groups" x-show="section === 'display'">
           <h2>{{ t("Display") }}</h2>
-          <!-- part of the page's settings: a dropdown each (SETTING_ROWS in app.js) -->
-          {{ setting_rows("displayRows") }}
+          <!-- part of the page's settings, in cards by their group (SETTING_ROWS in app.js) -->
+          {{ setting_groups("displayRows") }}
           <!-- the Home page's rows (#291): everyone's own order and which show; homeSettings() in app.js -->
-          <div class="home-settings" x-data="homeSettings()">
-            <div x-field class="setting-row"><span class="label"><span>{{ t("Home page") }}</span>
+          <div class="settings-group home-settings" x-data="homeSettings()">
+            <h3>{{ t("Home page") }}</h3>
+            <div class="settings-card">
+            <div x-field class="setting-row"><span class="label"><span>{{ t("Rows") }}</span>
               <small>{{ t("Just for you. The rows of the first page: drag them or use the arrows to change their order, untick one to hide it") }}</small></span></div>
               <div class="home-rows" role="list" :aria-label="t('Rows on Home')">
                 <template x-for="(s, i) in sections" :key="s.id">
@@ -22,10 +24,11 @@
                               :aria-label="t('Move {row} up', { row: s.title })" x-tooltip="t('Up')"><svg class="ic" aria-hidden="true"><use href="#i-arrow-up"/></svg></button>
                       <button type="button" class="iconbtn" :aria-disabled="String(i === sections.length - 1)" @click="move(i, 1)"
                               :aria-label="t('Move {row} down', { row: s.title })" x-tooltip="t('Down')"><svg class="ic" aria-hidden="true"><use href="#i-arrow-down"/></svg></button>
-                      <input type="checkbox" :checked="!s.hidden" @change="toggle(s)" :aria-label="t('Show {row} on Home', { row: s.title })" :title="t('Show on Home')">
+                      <input type="checkbox" class="switch" :checked="!s.hidden" @change="toggle(s)" :aria-label="t('Show {row} on Home', { row: s.title })" :title="t('Show on Home')">
                     </span>
                   </div>
                 </template>
               </div>
+            </div>
           </div>
         </section>

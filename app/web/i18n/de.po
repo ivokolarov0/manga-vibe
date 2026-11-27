@@ -335,7 +335,7 @@ msgstr "AniList/MangaUpdates nicht erreichbar; neuer Versuch um {time}"
 msgid "App version"
 msgstr "App-Version"
 
-#: app/plugins/__init__.py
+#: app/plugins/__init__.py app/web/static/js/app.js
 msgid "Appearance"
 msgstr "Aussehen"
 
@@ -772,6 +772,10 @@ msgstr "Seite Weiterlesen"
 #: app/plugins/builtin/image_reader/image_reader.js
 msgid "Contrast"
 msgstr "Kontrast"
+
+#: app/web/static/js/app.js
+msgid "Controls"
+msgstr "Bedienung"
 
 #: app/plugins/builtin/optimize/__init__.py
 msgid "Convert pages to"
@@ -2759,7 +2763,7 @@ msgstr "Ältere Einträge werden einmal am Tag entfernt."
 msgid "Oldest first"
 msgstr "Älteste zuerst"
 
-#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/settings_pages/templates/views/settings-metadata.html app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/reader.js app/web/templates/settings/backup.html app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "On"
 msgstr "An"
 
@@ -2981,7 +2985,7 @@ msgstr "Seitenfarben"
 msgid "Page contrast"
 msgstr "Seitenkontrast"
 
-#: app/plugins/builtin/image_reader/image_reader.js
+#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page look"
 msgstr "Seitenbild"
 
@@ -3492,6 +3496,10 @@ msgstr "Romaji"
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Romaji title"
 msgstr "Romaji-Titel"
+
+#: app/plugins/builtin/settings_pages/templates/views/settings-display.html
+msgid "Rows"
+msgstr "Reihen"
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-display.html
 msgid "Rows on Home"
