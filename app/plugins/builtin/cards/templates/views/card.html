@@ -10,7 +10,8 @@
 {% if layout == "continue" %}
             <div class="poster">{% block continue_poster %}<img :src="s.poster" loading="lazy" alt="">
               {{ slot("card-badges") }}
-              <div class="bar" aria-hidden="true"><i :style="`width:${Math.max(s.progress * 100, 3)}%`"></i></div>{% endblock %}</div>
+              <!-- how far into the book to go on with: what the line under the card says (p8/12) -->
+              <div class="bar" aria-hidden="true"><i :style="`width:${Math.max((s.continue.page + 1) / Math.max(1, s.continue.page_count) * 100, 3)}%`"></i></div>{% endblock %}</div>
             {% block continue_text %}
             <div class="card-title" x-text="s.title"></div>
             <div class="card-sub reading" x-text="s.continue.label + ' · ' + t('p{page}/{pages}', { page: s.continue.page + 1, pages: s.continue.page_count })"></div>

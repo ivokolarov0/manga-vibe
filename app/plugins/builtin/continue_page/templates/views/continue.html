@@ -4,7 +4,12 @@
     continue-top. -#}
 {% from "ui/macros.html" import continue_card with context %}
     <div class="continue-page-view" x-data>
-      <h2>{{ t("Continue reading") }}</h2>
+      <!-- a big title and how many series, like the library's (the redesign, #303) -->
+      <div class="lib-title">
+        <h1>{{ t("Continue reading") }}</h1>
+        <span class="lib-count" x-show="$store.continue.items?.length" x-cloak
+              x-text="tn('{n} series', '{n} series', $store.continue.items?.length || 0)"></span>
+      </div>
       {{ slot("continue-top") }}
       {% block grid %}
       <div class="grid">
