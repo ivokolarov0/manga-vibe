@@ -211,6 +211,10 @@ msgstr "ソースを追加"
 msgid "Add to favorites"
 msgstr "お気に入りに追加"
 
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Added"
+msgstr "追加日"
+
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Added the account {name}"
 msgstr "アカウント {name} を追加しました"
@@ -641,7 +645,11 @@ msgstr "フォルダを確認中…"
 msgid "Checking…"
 msgstr "確認中…"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/web/templates/sheets/library.html
+#: app/web/static/js/kit.js
+msgid "Choose a date"
+msgstr "日付を選択"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/web/static/js/kit.js app/web/templates/sheets/library.html
 msgid "Clear"
 msgstr "クリア"
 
@@ -985,7 +993,7 @@ msgstr "今後表示しない"
 msgid "Don't skip"
 msgstr "スキップしない"
 
-#: app/plugins/builtin/saved_searches/sheet.html app/web/templates/sheets/library.html
+#: app/plugins/builtin/saved_searches/sheet.html app/web/static/js/kit.js app/web/templates/sheets/library.html
 msgid "Done"
 msgstr "完了"
 
@@ -1421,7 +1429,7 @@ msgstr "忘れた場合は {setting} を付けて MangaVibe を一度起動し�
 msgid "Format"
 msgstr "種類"
 
-#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html app/web/templates/sheets/library.html
 msgid "From"
 msgstr "開始日"
 
@@ -1881,6 +1889,14 @@ msgstr "言語"
 msgid "Large"
 msgstr "大"
 
+#: app/web/static/js/kit.js
+msgid "Last 30 days"
+msgstr "過去 30 日"
+
+#: app/web/static/js/kit.js
+msgid "Last 7 days"
+msgstr "過去 7 日"
+
 #: app/web/static/js/app.js
 msgid "Last checked {when}"
 msgstr "最終確認：{when}"
@@ -2288,6 +2304,10 @@ msgstr "欠けている章：{chapters}"
 msgid "Missing metadata"
 msgstr "メタデータなし"
 
+#: app/web/static/js/kit.js
+msgid "Month"
+msgstr "月"
+
 #: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "More"
 msgstr "高め"
@@ -2480,6 +2500,10 @@ msgstr "次へ"
 #: app/web/static/js/reader.js
 msgid "Next chapter"
 msgstr "次の章"
+
+#: app/web/static/js/kit.js
+msgid "Next month"
+msgstr "次の月"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Next page"
@@ -3165,6 +3189,10 @@ msgstr "前へ"
 #: app/web/static/js/reader.js
 msgid "Previous chapter"
 msgstr "前の章"
+
+#: app/web/static/js/kit.js
+msgid "Previous month"
+msgstr "前の月"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Previous page"
@@ -4420,6 +4448,10 @@ msgstr "このバージョンには新しい Docker イメージが必要です�
 msgid "This was the last book in the series."
 msgstr "シリーズ最後の本でした。"
 
+#: app/web/static/js/kit.js
+msgid "This year"
+msgstr "今年"
+
 #: app/plugins/builtin/activity_log/export.py
 msgid "Time (local)"
 msgstr "日時（ローカル）"
@@ -4448,7 +4480,7 @@ msgstr "タイトルの頭文字"
 msgid "Title starts with {letter}"
 msgstr "タイトルが {letter} で始まる"
 
-#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html app/web/templates/sheets/library.html
 msgid "To"
 msgstr "終了日"
 
@@ -4456,7 +4488,7 @@ msgstr "終了日"
 msgid "to chapter"
 msgstr "終わりの話"
 
-#: app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/kit.js
 msgid "Today"
 msgstr "今日"
 
@@ -4872,6 +4904,10 @@ msgstr "誰がいつ何をしたか、接続元のアドレスとともに。オ
 msgid "Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged."
 msgstr "誰がいつ何をしたか（ログイン、アカウント、フォルダーとスキャン、削除したシリーズ、プラグイン、設定）。このページは管理者だけが見られます。読書は記録されません。"
 
+#: app/web/templates/sheets/library.html
+msgid "Whole days, both included. Leave a box empty for no limit."
+msgstr "日単位で、両端の日を含みます。空欄なら制限なし。"
+
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Why"
 msgstr "理由"
@@ -4908,7 +4944,7 @@ msgstr "名前またはパスワードが違います"
 msgid "Wrong password"
 msgstr "パスワードが違います"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js app/web/static/js/kit.js
 msgid "Year"
 msgstr "年"
 
@@ -4986,6 +5022,10 @@ msgid "{from}–{to} volumes"
 msgstr "{from}〜{to} 巻"
 
 #: app/plugins/query.py
+msgid "{key} must be a day like 2026-11-27"
+msgstr "{key} は 2026-11-27 のような日付にしてください"
+
+#: app/plugins/query.py
 msgid "{key} must be a whole number"
 msgstr "{key} は整数でなければなりません"
 
@@ -4993,9 +5033,21 @@ msgstr "{key} は整数でなければなりません"
 msgid "{label}: not one of the options"
 msgstr "{label}：選択肢にありません"
 
+#: app/web/static/js/app.js
+msgid "{label}: since {from}"
+msgstr "{label}：{from} 以降"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "{label}: unknown"
 msgstr "{label}：不明"
+
+#: app/web/static/js/app.js
+msgid "{label}: until {to}"
+msgstr "{label}：{to} まで"
+
+#: app/web/static/js/app.js
+msgid "{label}: {from} – {to}"
+msgstr "{label}：{from} – {to}"
 
 #: app/web/static/js/app.js
 msgid "{length} or unknown"
@@ -5225,6 +5277,14 @@ msgstr "{what}（最小）"
 #: app/web/templates/sheets/library.html
 msgid "{what}, at most"
 msgstr "{what}（最大）"
+
+#: app/web/templates/sheets/library.html
+msgid "{what}, from"
+msgstr "{what}（開始日）"
+
+#: app/web/templates/sheets/library.html
+msgid "{what}, to"
+msgstr "{what}（終了日）"
 
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "“If you liked this” at the end of a series page: what AniList's readers recommend, with covers. Series you have open here; the others on AniList. Built in."

@@ -23,6 +23,8 @@ const COUNTRY = { JP: t("Manga"), KR: t("Manhwa"), CN: t("Manhua"), TW: t("Manhu
    - names: free-text names, one parameter per value (author=A&author=B), each a chip "Author: A";
      a group in the filter sheet lists the names `source` gives ([{name, count}], e.g. /api/authors)
    - length: published totals within a range per unit (<unit>_min, <unit>_max, length_unknown)
+   - dates: from one day to another (its two params, 2026-10-01; either may be left out), with the kit's
+     date picker; the API also gets the browser's time zone (tz)
    - toggle "fav" and the "read" choice also make the quick buttons; letter: the Letter sheet
    - text: the search box; anything "hidden" only comes through links and assistants
    The schema's labels are English (assistants read it too): they're shown with t() (issue #263). */
@@ -34,6 +36,7 @@ function deriveLib(s = {}) {
   const tags = filters.find((f) => f.kind === "tags");
   const length = filters.find((f) => f.kind === "length");
   const names = filters.filter((f) => f.kind === "names" && f.params?.length);
+  const dates = filters.filter((f) => f.kind === "dates" && !f.hidden && f.params?.length === 2);
   const read = choices.find((f) => f.params[0] === "read");
   return {
     plugin: s.plugin || null,
@@ -48,6 +51,7 @@ function deriveLib(s = {}) {
     listKeys: [...choices.map((f) => f.params[0]), ...(tags ? tags.params : []), ...names.map((f) => f.params[0])],
     lengthUnits: length ? length.units || [] : [],
     lengthKeys: length ? length.params || [] : [],
+    dates: dates.map((f) => [f.key, f.label, ...f.params]),  // [key, label, from param, to param]
     letter: filters.some((f) => f.kind === "letter"),
     fav: filters.some((f) => f.kind === "toggle" && f.params?.[0] === "fav"),
     readValues: read ? read.options.map(([v]) => v) : [],
@@ -76,6 +80,17 @@ function lengthLabel(p, unit) {
   if (lo) return w.min(lo);
   return hi ? w.max(hi) : "";
 }
+// "Added: 1 Oct – 15 Nov", "Added: since 1 Oct", "Added: until 15 Nov"; "" when neither day is given. f is
+// one of lib().dates: [key, label, from param, to param]
+function datesLabel(p, [, label, from, to]) {
+  const date = kit.get("date"), a = p.get(from), b = p.get(to);
+  if (a && b) return t("{label}: {from} – {to}", { label, from: date.short(a), to: date.short(b) });
+  if (a) return t("{label}: since {from}", { label, from: date.short(a) });
+  return b ? t("{label}: until {to}", { label, to: date.short(b) }) : "";
+}
+// the browser's time zone, sent with the library's requests (not kept in the URL), so a filter's days are
+// the person's own (the Added filter, #322)
+const TIME_ZONE = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { return ""; } })();
 // first-letter filter (letter=B); "#" is everything else: numbers, symbols, other scripts
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
 // the quick buttons above the grid, each shown while the library-query plugin has its filter (lib())
@@ -576,6 +591,7 @@ function libraryController() {
       const p = new URLSearchParams(Alpine.store("app").query);
       p.delete("page");
       for (const [k, v] of scopeEntries()) p.set(k, v);
+      if (TIME_ZONE && lib().dates.some(([, , from, to]) => p.get(from) || p.get(to))) p.set("tz", TIME_ZONE);
       return p.toString();
     },
     sync() {
@@ -715,7 +731,7 @@ function libraryController() {
     get filterCount() {
       const p = this.params;
       return lib().listKeys.reduce((a, k) => a + getList(p, k).length, 0) + (lib().fav && p.get("fav") ? 1 : 0)
-        + lib().lengthUnits.filter(([u]) => lengthLabel(p, u)).length;
+        + lib().lengthUnits.filter(([u]) => lengthLabel(p, u)).length + lib().dates.filter((f) => datesLabel(p, f)).length;
     },
     get customSort() { return !!this.params.get("sort"); },
     get letter() { return this.params.get("letter") || ""; },
@@ -737,6 +753,10 @@ function libraryController() {
         const label = lengthLabel(p, u);
         if (label) out.push({ k: "length", v: u, label: p.get("length_unknown") ? t("{length} or unknown", { length: label }) : label });
       }
+      for (const f of lib().dates) {
+        const label = datesLabel(p, f);
+        if (label) out.push({ k: "dates", v: f[0], label });
+      }
       if (p.get("letter")) out.push({ k: "letter", v: p.get("letter"), label: t("Starts with {letter}", { letter: p.get("letter") }) });
       const sort = p.get("sort");
       if (sort && sort !== lib().defaultSort) out.push({ k: "sort", v: sort,
@@ -750,6 +770,8 @@ function libraryController() {
       else if (c.k === "length") {
         p.delete(`${c.v}_min`); p.delete(`${c.v}_max`);
         if (!lib().lengthUnits.some(([u]) => lengthLabel(p, u))) p.delete("length_unknown");
+      } else if (c.k === "dates") {
+        for (const k of lib().dates.find((f) => f[0] === c.v)?.slice(2) || []) p.delete(k);
       } else setList(p, c.k, getList(p, c.k).filter((x) => x !== c.v));
       navigateLibrary(p);
     },
@@ -895,6 +917,7 @@ function filterSheet() {
         // unfold the groups that have something selected, so nothing chosen is hidden
         for (const [k] of this.groups) if (this.selected(k)) this.open[k] = true;
         if (this.selected("length")) this.open.length = true;
+        for (const [k] of this.lib.dates) if (this.selected(k)) this.open[k] = true;
         for (const [k] of this.lib.names) if (this.selected(k)) this.open[k] = true;
         this.loadNames();
         this.tags = await api(`/api/tags?${scopeParam()}`).catch(() => this.tags);
@@ -923,6 +946,8 @@ function filterSheet() {
     // how many options of a group are on (include and exclude both count)
     selected(k) {
       if (k === "length") return this.lib.lengthUnits.filter(([u]) => lengthLabel(this.p, u)).length;
+      const dates = this.lib.dates.find((f) => f[0] === k);
+      if (dates) return datesLabel(this.p, dates) ? 1 : 0;
       if (k !== "genres" && k !== "tags") return getList(this.p, k).length;
       const names = new Set(this.tags.filter((t) => (t.kind === "genre") === (k === "genres")).map((t) => t.name));
       return [...getList(this.p, "genre"), ...getList(this.p, "exclude")].filter((n) => names.has(n)).length;
@@ -956,6 +981,16 @@ function filterSheet() {
     },
     get lengthUnknown() { return this.p.get("length_unknown") === "true"; },
     setLengthUnknown(on) { this.apply((p) => (on ? p.set("length_unknown", "true") : p.delete("length_unknown"))); },
+    // the dates filters' days, for x-date="day[param]": read from the URL, a pick goes into it
+    get day() {
+      return new Proxy({}, {
+        get: (_, k) => (typeof k === "string" ? this.p.get(k) || "" : undefined),  // not Symbol.toPrimitive…
+        set: (_, k, v) => {
+          if (typeof k === "string") this.apply((p) => (v ? p.set(k, v) : p.delete(k)));
+          return true;
+        },
+      });
+    },
     cycleTag(t) {  // include -> exclude -> off
       this.apply((p) => {
         const inc = getList(p, "genre"), exc = getList(p, "exclude");
@@ -1028,6 +1063,7 @@ function searchParts(qs) {
   for (const [k] of lib().names) for (const v of getList(p, k)) out.push(v);
   for (const [k, , labels] of lib().groups) for (const v of getList(p, k)) out.push(labels[v] || v);
   for (const [u] of lib().lengthUnits) if (lengthLabel(p, u)) out.push(lengthLabel(p, u));
+  for (const f of lib().dates) if (datesLabel(p, f)) out.push(datesLabel(p, f));
   if (p.get("fav")) out.push(t("Favorites"));
   if (p.get("letter")) out.push(t("Starts with {letter}", { letter: p.get("letter") }));
   const sort = lib().sortInfo[p.get("sort")]?.label;

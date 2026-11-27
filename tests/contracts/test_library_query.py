@@ -51,6 +51,8 @@ def sample(f, client):
         return {params[0]: "Nobody Like This"}
     if kind == "letter":
         return {params[0]: "h"}
+    if kind == "dates":
+        return {params[0]: "2000-01-01", params[1]: "2099-12-31"}  # from, to (whole days)
     if kind == "text":
         return {params[0]: "a"}
     return {p: "1" for p in params}  # length, range, toggle: a number or an on
@@ -135,6 +137,6 @@ def test_a_hidden_series_stays_hidden(doing, client, monkeypatch):
 def test_bad_numbers_are_refused_not_a_crash(doing, client):
     _, schema = doing
     for f in schema["filters"]:
-        if f["kind"] in ("length", "range"):
+        if f["kind"] in ("length", "range", "dates"):
             r = client.get("/api/series", params={f["params"][0]: "lots"})
             assert r.status_code < 500, f["key"]

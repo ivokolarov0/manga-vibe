@@ -3,7 +3,8 @@
 The pieces MangaVibe and its plugins share: buttons, fields, chips, tabs, menus, dialogs, toasts… Use them in
 a plugin's markup and it looks and works like the rest of the app, and it follows the owner's theme and
 `custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33; tabs and choices (`x-tabs`, `x-choice`), API 34; fields and setting rows (`x-field`), API 35; toasts with an action, tooltips (`x-tooltip`), API 36; the new look (warm darks, the accent's gradient,
-Bricolage Grotesque and Plus Jakarta Sans, choices right in a setting row), API 38.
+Bricolage Grotesque and Plus Jakarta Sans, choices right in a setting row), API 38; the date picker
+(`x-date`), API 39.
 
 **See them all at `/kit`** (e.g. `http://localhost:8000/kit`): every piece in its variants, dark and light,
 with your plugins' CSS and `custom.css` applied. On the [website](https://ivokolarov0.github.io/manga-vibe/docs/ui-kit/),
@@ -56,8 +57,8 @@ change is a normal CSS rule: `.my-panel .btn { font-weight: 700 }` wins over the
 
 ## Changing the behaviour: `MangaVibe.kit`
 
-An interactive piece (`dialog`, `menu`, `tabs`, `choice`, `field`, `tooltip`) is an object
-`{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`, `x-tabs`, `x-choice`, `x-field`,
+An interactive piece (`dialog`, `menu`, `tabs`, `choice`, `field`, `tooltip`, `date`) is an object
+`{ options, setup(ctx) }`. Its directive (`x-dialog`, `x-menu`, `x-tabs`, `x-choice`, `x-field`, `x-date`,
 `x-tooltip`) asks `MangaVibe.kit` for it each time an element starts, so the changes below reach every use.
 (`toast` is a piece without a directive: `MangaVibe.toast` calls its `show()`.)
 
@@ -160,6 +161,53 @@ stops what the piece was about to do (a dialog stays open).
   and `wire(el)`.
 - Custom properties: `--field-bg`, `--field-border`, `--field-radius`, `--field-height`, `--field-focus`,
   `--check-on`, `--switch-off`, `--switch-on`.
+
+### Date
+
+```html
+<div class="field" x-field><label>Started</label>
+  <input x-date="started" :placeholder="t('Pick a day')"></div>
+
+<!-- a from/to pair -->
+<div class="date-range">
+  <input x-date="from" :aria-label="t('Added, from')"> <span class="date-to" aria-hidden="true">–</span>
+  <input x-date="to" :aria-label="t('Added, to')">
+</div>
+```
+
+- **`x-date="day"` on an `<input>`** (Plugin API 39): a field for one day, with a calendar of our own under
+  it. Not the browser's `<input type="date">`, which looks different in every browser and doesn't follow
+  the theme. The expression holds the day as `"2026-11-27"`, or `""` for none; the field shows it in the
+  page's language (“27 Nov 2026”, “Nov 27, 2026”, “2026年11月27日”).
+- **Typing works too**: on Enter or leaving the field, what's typed is read in the language's order
+  (`27.11.2026`, `11/27/2026`, `2026/11/27`), as `2026-11-27`, or with a month's name (`27 Nov`,
+  `November 27, 2026`); no year is this year. Something that isn't a day marks the field
+  `aria-invalid` (a red border) and changes nothing. While you type, the open calendar follows.
+- **A from/to pair**: two `x-date` fields in a `.date-range`. The calendar shows the days between them, a
+  pick that would put them the wrong way round swaps them, and it has quick picks: Last 7 days, Last 30
+  days, This year (each sets *from* and leaves *to* empty, “since”).
+- **The calendar**: a click on the field, or Down, opens it; the month and year to move through (‹ ›
+  and two selects), a grid of days (the week starts on Monday or Sunday as the language does it; today
+  ringed, the picked day filled), Today and Clear. Keys in the grid: the arrows move by day and week,
+  Page Up / Page Down by month (with Shift by a year), Home / End to the week's first and last day, Enter
+  or Space picks, Escape closes (a dialog around it stays open), Tab goes round inside it. A click
+  outside closes it.
+- **For screen readers**: the field is a `combobox` with `aria-haspopup="dialog"` and `aria-expanded`;
+  the calendar a `dialog` named after the field's `aria-label`; the days a `grid` with week-day column
+  headers, each day named in full (“Friday, 27 November 2026”), today `aria-current="date"`, the picked
+  one `aria-selected`. The month is read out when it changes.
+- **On a phone** (narrower than 700 px) it opens as a bottom sheet with days big enough to tap, and a tap
+  doesn't bring up the phone's keyboard.
+- It goes in the dialog the field is in (so that dialog's focus and Escape work around it).
+- Options (`data-kit-options`): `min`, `max` (days outside can't be picked), `quick` (the pair's quick
+  picks; `true`), `sheetBelow` (700).
+- Events: `kit-change` with `detail.value` after a pick, `kit-open`, `kit-closed`.
+- The piece is `date` in `MangaVibe.kit`; its methods are `locale()`, `firstDay()`, `today()`,
+  `format(day, options)` (`Intl.DateTimeFormat` options), `short(day)` (no year when it's this year: a
+  filter's pill), `parse(text)` (a day, `""` or `null`), `move(day, key, { shift, first })` and `quick()`,
+  so a plugin can change one alone, or use them: `MangaVibe.kit.get("date").short("2026-10-01")`.
+- Custom properties: `--date-bg`, `--date-radius`, `--date-day` (a day's size), `--date-picked`,
+  `--date-between`.
 
 ### Setting rows
 

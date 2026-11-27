@@ -995,6 +995,7 @@ grid, the quick buttons, saved searches and `MangaVibe.filterLabels()` are all b
 | kind `tags` | the Genres and Tags groups: `params: ["genre", "exclude"]`, one parameter per name (`genre=A&genre=B`) |
 | kind `names` | free-text names, one parameter per name (`author=A&author=B`), each a chip "Label: A" that can be removed. `source`: a URL giving `[{name, count}]`, the names its group in the filter sheet offers (called with the library's scope, like `/api/tags`); the built-in Author filter uses `/api/authors`, and the series page links each author name to `author=<name>`. Plugin API 26 |
 | kind `length` | published totals in a range: `units: [["chapters", "Chapters"], ...]`, params `<unit>_min`, `<unit>_max`, `length_unknown` |
+| kind `dates` | from one day to another, both included: `params: [from, to]` (`added_from=2026-10-01&added_to=2026-11-15`, either may be left out), picked with the kit's date picker (UI-KIT.md, "Date"), a chip "Label: 1 Oct – 15 Nov". The page also sends its time zone (`tz=Europe/Sofia`, not kept in the URL or saved searches): `day_range()` below works out the days in it. The built-in Added filter. Plugin API 39 |
 | kind `toggle` | on or off (`fav=1`); `fav` is the Favorites quick button |
 | kind `letter`, `text` | the Letter sheet (`letter=a`, `#` for the rest), the search box (`q`) |
 | `hidden: true` | read from links and assistants, not shown in the sheets (e.g. `year_min`) |
@@ -1006,7 +1007,10 @@ filters read: what saved searches keep, with `sort` and `order`).
 
 **`filter_query(ctx, lq, params)`** and **`sort_order(ctx, lq, params)`** build the list. `params` is the
 request's `QueryParams`; `app.plugins.query` has `values(params, key)` (comma-separated), `number()` (a
-whole number, 422 for anything else) and `flag()` (`1`/`true`/`yes`/`on`). `lq` is a `ListQuery`:
+whole number, 422 for anything else), `day()` (a day, `2026-11-27`, as a `date`; 422 for anything else),
+`day_range(params, from_key, to_key)` (the two days as UTC times to compare a stored time with:
+`stored >= since` and `stored < until`, whole days in the person's time zone `tz`, UTC without one;
+each `None` when not given), `time_zone()` and `flag()` (`1`/`true`/`yes`/`on`). `lq` is a `ListQuery`:
 
 | | |
 |---|---|
@@ -1378,7 +1382,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 38 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 39 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 

@@ -211,6 +211,10 @@ msgstr "Quelle hinzufügen"
 msgid "Add to favorites"
 msgstr "Zu Favoriten hinzufügen"
 
+#: app/plugins/builtin/library_query/__init__.py
+msgid "Added"
+msgstr "Hinzugefügt"
+
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Added the account {name}"
 msgstr "Hat das Konto {name} angelegt"
@@ -643,7 +647,11 @@ msgstr "Ordner wird geprüft…"
 msgid "Checking…"
 msgstr "Wird geprüft…"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/web/templates/sheets/library.html
+#: app/web/static/js/kit.js
+msgid "Choose a date"
+msgstr "Datum wählen"
+
+#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/web/static/js/kit.js app/web/templates/sheets/library.html
 msgid "Clear"
 msgstr "Leeren"
 
@@ -991,7 +999,7 @@ msgstr "Nicht mehr anzeigen"
 msgid "Don't skip"
 msgstr "Nicht überspringen"
 
-#: app/plugins/builtin/saved_searches/sheet.html app/web/templates/sheets/library.html
+#: app/plugins/builtin/saved_searches/sheet.html app/web/static/js/kit.js app/web/templates/sheets/library.html
 msgid "Done"
 msgstr "Fertig"
 
@@ -1427,7 +1435,7 @@ msgstr "Vergessen? Starte MangaVibe einmal mit {setting}. Die App hat keine Kont
 msgid "Format"
 msgstr "Format"
 
-#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html app/web/templates/sheets/library.html
 msgid "From"
 msgstr "Von"
 
@@ -1887,6 +1895,14 @@ msgstr "Sprache"
 msgid "Large"
 msgstr "Groß"
 
+#: app/web/static/js/kit.js
+msgid "Last 30 days"
+msgstr "Letzte 30 Tage"
+
+#: app/web/static/js/kit.js
+msgid "Last 7 days"
+msgstr "Letzte 7 Tage"
+
 #: app/web/static/js/app.js
 msgid "Last checked {when}"
 msgstr "Zuletzt geprüft: {when}"
@@ -2297,6 +2313,10 @@ msgstr "Fehlende Kapitel {chapters}"
 msgid "Missing metadata"
 msgstr "Fehlende Metadaten"
 
+#: app/web/static/js/kit.js
+msgid "Month"
+msgstr "Monat"
+
 #: app/plugins/builtin/image_reader/image_reader.js app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "More"
 msgstr "Mehr"
@@ -2494,6 +2514,10 @@ msgstr "Weiter"
 #: app/web/static/js/reader.js
 msgid "Next chapter"
 msgstr "Nächstes Kapitel"
+
+#: app/web/static/js/kit.js
+msgid "Next month"
+msgstr "Nächster Monat"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Next page"
@@ -3180,6 +3204,10 @@ msgstr "Zurück"
 #: app/web/static/js/reader.js
 msgid "Previous chapter"
 msgstr "Vorheriges Kapitel"
+
+#: app/web/static/js/kit.js
+msgid "Previous month"
+msgstr "Voriger Monat"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/web/static/js/reader.js
 msgid "Previous page"
@@ -4445,6 +4473,10 @@ msgstr "Diese Version braucht ein neues Docker-Image. Siehe github.com/ivokolaro
 msgid "This was the last book in the series."
 msgstr "Das war das letzte Buch der Serie."
 
+#: app/web/static/js/kit.js
+msgid "This year"
+msgstr "Dieses Jahr"
+
 #: app/plugins/builtin/activity_log/export.py
 msgid "Time (local)"
 msgstr "Zeit (lokal)"
@@ -4473,7 +4505,7 @@ msgstr "Titel beginnt mit"
 msgid "Title starts with {letter}"
 msgstr "Titel beginnt mit {letter}"
 
-#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html
+#: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/activity_log/settings.html app/web/templates/sheets/library.html
 msgid "To"
 msgstr "Bis"
 
@@ -4481,7 +4513,7 @@ msgstr "Bis"
 msgid "to chapter"
 msgstr "bis Kapitel"
 
-#: app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/activity_log/activity_log.js app/web/static/js/kit.js
 msgid "Today"
 msgstr "Heute"
 
@@ -4897,6 +4929,10 @@ msgstr "Wer hat was wann getan, mit den Adressen, von denen es kam. Aus: Die Dat
 msgid "Who did what, and when: logins, accounts, folders and scans, deleted series, plugins and settings. Only admins see this page. Reading is never logged."
 msgstr "Wer hat was wann getan: Anmeldungen, Konten, Ordner und Scans, gelöschte Serien, Plugins und Einstellungen. Nur Admins sehen diese Seite. Das Lesen wird nie protokolliert."
 
+#: app/web/templates/sheets/library.html
+msgid "Whole days, both included. Leave a box empty for no limit."
+msgstr "Ganze Tage, beide eingeschlossen. Lass ein Feld leer für keine Grenze."
+
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Why"
 msgstr "Warum"
@@ -4933,7 +4969,7 @@ msgstr "Falscher Name oder falsches Passwort"
 msgid "Wrong password"
 msgstr "Falsches Passwort"
 
-#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
+#: app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js app/web/static/js/kit.js
 msgid "Year"
 msgstr "Jahr"
 
@@ -5012,6 +5048,10 @@ msgid "{from}–{to} volumes"
 msgstr "{from}–{to} Bände"
 
 #: app/plugins/query.py
+msgid "{key} must be a day like 2026-11-27"
+msgstr "{key} muss ein Tag wie 2026-11-27 sein"
+
+#: app/plugins/query.py
 msgid "{key} must be a whole number"
 msgstr "{key} muss eine ganze Zahl sein"
 
@@ -5019,9 +5059,21 @@ msgstr "{key} muss eine ganze Zahl sein"
 msgid "{label}: not one of the options"
 msgstr "{label}: keine der Möglichkeiten"
 
+#: app/web/static/js/app.js
+msgid "{label}: since {from}"
+msgstr "{label}: seit {from}"
+
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "{label}: unknown"
 msgstr "{label}: unbekannt"
+
+#: app/web/static/js/app.js
+msgid "{label}: until {to}"
+msgstr "{label}: bis {to}"
+
+#: app/web/static/js/app.js
+msgid "{label}: {from} – {to}"
+msgstr "{label}: {from} – {to}"
 
 #: app/web/static/js/app.js
 msgid "{length} or unknown"
@@ -5268,6 +5320,14 @@ msgstr "{what}, mindestens"
 #: app/web/templates/sheets/library.html
 msgid "{what}, at most"
 msgstr "{what}, höchstens"
+
+#: app/web/templates/sheets/library.html
+msgid "{what}, from"
+msgstr "{what}, von"
+
+#: app/web/templates/sheets/library.html
+msgid "{what}, to"
+msgstr "{what}, bis"
 
 #: app/plugins/builtin/anilist_recommendations/__init__.py
 msgid "“If you liked this” at the end of a series page: what AniList's readers recommend, with covers. Series you have open here; the others on AniList. Built in."

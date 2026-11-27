@@ -216,7 +216,7 @@ def test_a_plugin_can_change_a_piece(tmp_path):
     assert out["pluginOff"] == 1                         # switched off: the plain dialog again
     assert out["optionEscape"] == 0                      # data-kit-options on one dialog
     assert out["prevented"] == 0                         # kit-close with preventDefault() keeps it open
-    assert out["names"] == ["dialog", "menu", "choice", "tabs", "field", "toast", "tooltip"]
+    assert out["names"] == ["dialog", "menu", "choice", "tabs", "field", "toast", "tooltip", "date"]
 
 
 MARKUP = sorted([*(ROOT / "app" / "web" / "templates").rglob("*.html"),
@@ -342,3 +342,57 @@ def test_setting_rows_and_fields_use_x_field():
             if m.group(4) is not None:
                 assert m.group(4) == "<", f"{name}: put the setting's name in a <span>: {m.group(0)[:120]}"
     assert rows >= 25 and fields >= 15, (rows, fields)
+
+
+# The date picker's keys and typing (#322), on its own methods: in the calendar the arrows move by day and
+# week, Page Up / Page Down by month (Shift: a year), Home / End to the week's ends; typed dates are read
+# in the language's order.
+DATE_HARNESS = r"""
+globalThis.window = globalThis;
+globalThis.document = { addEventListener() {}, documentElement: { lang: process.argv[3] } };
+Object.defineProperty(globalThis, "navigator", { value: { language: process.argv[3] }, configurable: true });
+require(process.argv[2]);
+const d = window.MangaVibe.kit.get("date");
+const keys = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End", "PageUp", "PageDown", "Enter"];
+const out = { first: d.firstDay(), moves: {}, parsed: {} };
+for (const k of keys) out.moves[k] = d.move("2026-03-31", k, { first: out.first });
+out.moves["Shift+PageUp"] = d.move("2024-02-29", "PageUp", { shift: true, first: out.first });
+out.moves.leap = d.move("2024-01-31", "PageDown", { first: out.first });
+for (const s of JSON.parse(process.argv[4])) out.parsed[s] = d.parse(s);
+out.format = d.format("2026-11-27");
+out.quick = d.quick("2026-03-05").map((q) => q.slice(1));
+console.log(JSON.stringify(out));
+"""
+
+
+def run_date(tmp_path, lang, texts):
+    harness = tmp_path / "date.js"
+    harness.write_text(DATE_HARNESS, encoding="utf-8")
+    r = subprocess.run(["node", str(harness), str(KIT_JS), lang, json.dumps(texts)],
+                       capture_output=True, text=True, encoding="utf-8")
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
+@pytest.mark.skipif(not shutil.which("node"), reason="node is not installed")
+def test_the_date_pickers_keys_and_typing(tmp_path):
+    gb = run_date(tmp_path, "en-GB", ["27/11/2026", "2026-11-27", "27 Nov 2026", "5 march", "31/02/2026", "soon", ""])
+    assert gb["first"] == 1  # Monday
+    # 31 Mar 2026 is a Tuesday
+    assert gb["moves"] == {"ArrowLeft": "2026-03-30", "ArrowRight": "2026-04-01", "ArrowUp": "2026-03-24",
+                           "ArrowDown": "2026-04-07", "Home": "2026-03-30", "End": "2026-04-05",
+                           "PageUp": "2026-02-28", "PageDown": "2026-04-30", "Enter": None,
+                           "Shift+PageUp": "2023-02-28", "leap": "2024-02-29"}
+    year = gb["parsed"]["5 march"][:4]
+    assert gb["parsed"] == {"27/11/2026": "2026-11-27", "2026-11-27": "2026-11-27", "27 Nov 2026": "2026-11-27",
+                            "5 march": f"{year}-03-05", "31/02/2026": None, "soon": None, "": ""}
+    assert gb["format"] == "27 Nov 2026"
+    assert gb["quick"] == [["2026-02-27", ""], ["2026-02-04", ""], ["2026-01-01", ""]]
+    us = run_date(tmp_path, "en-US", ["11/27/2026", "Nov 27, 2026"])
+    assert us["first"] == 0  # Sunday
+    assert us["moves"]["Home"] == "2026-03-29" and us["moves"]["End"] == "2026-04-04"
+    assert us["parsed"] == {"11/27/2026": "2026-11-27", "Nov 27, 2026": "2026-11-27"}
+    de = run_date(tmp_path, "de", ["27.11.2026", "27. November 2026"])
+    assert de["first"] == 1 and de["parsed"] == {"27.11.2026": "2026-11-27", "27. November 2026": "2026-11-27"}
+    ja = run_date(tmp_path, "ja", ["2026/11/27", "2026年11月27日"])
+    assert ja["first"] == 0 and ja["parsed"] == {"2026/11/27": "2026-11-27", "2026年11月27日": "2026-11-27"}

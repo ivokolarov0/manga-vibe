@@ -1737,3 +1737,30 @@ One PR per page, on step 8's tokens and kit.
   that was a sliver. The bar is inset and rounded with the accent's gradient, like the mockup's.
 - **Chromium**: every page checked in Chromium (Playwright's, 156) at 1280 and 400 wide, dark and light,
   as well as Firefox: the same. Needs attention keeps its layout; the new tokens and kit carry it.
+
+### The library's Added filter and the kit's date picker (Plugin API 39, issue #322)
+
+- **The filter**: `added_from` and `added_to` (days, `2026-10-01`; either may be left out), a new schema kind
+  `dates` in the library-query plugin, so the filter sheet, the pill ("Added: 1 Oct – 15 Nov"), the
+  Filter button's count and saved searches come from the schema, as for the other kinds. Named
+  `added_from`/`added_to`, not the issue's bare `from`/`to`: the library's URL holds every filter, and a
+  later date filter (read, updated) needs names of its own.
+- **Whole days in the person's time zone.** The page sends the browser's time zone (`tz=Europe/Sofia`) with
+  the library's requests while a dates filter is on; it isn't a schema parameter, so the URL and saved
+  searches keep the days, not the zone (a link opened elsewhere means that reader's days). Without one
+  (assistants) it's UTC. `app.plugins.query.day_range()` turns the days into UTC times: from the start of
+  the first day to the start of the day after the last. `tzdata` is a requirement now: Python on Windows
+  has no time zones of its own (the Docker image has the system's).
+- **A date picker of our own** (kit piece `date`, `x-date`), not `<input type="date">`, which looks
+  different in every browser and ignores the theme. The field stays a text field (typing works; it reads
+  the language's order and month names); the calendar is a combobox's dialog with a grid (the ARIA date
+  picker pattern). Days are `"YYYY-MM-DD"` strings worked out on UTC dates, so summer time can't shift
+  one. The week's first day comes from `Intl.Locale` week info, and where the browser has none (Firefox)
+  from the language's region. A from/to pair is two fields in a `.date-range`; a pick the wrong way round
+  swaps them. The quick picks set *from* only ("since"), so a saved "Last 7 days" stays the days it was
+  saved with rather than pretending to move.
+- **Where the calendar goes**: inside the dialog the field is in (the filter sheet), so that dialog's
+  focus trap, `inert` and Escape keep working around it; on a phone a bottom sheet over its own backdrop,
+  and a tap sets `inputmode="none"` for the moment so the phone's keyboard doesn't come up.
+- Its keys and typing are tested in node on the piece's own methods (`move()`, `parse()`), as the kit
+  has no browser tests; the clicks were checked in Firefox and Chromium at 1280 and 400 wide.

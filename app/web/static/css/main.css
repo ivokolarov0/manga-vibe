@@ -29,6 +29,7 @@
 @import url("kit/menu.css");
 @import url("kit/dialog.css");
 @import url("kit/feedback.css");
+@import url("kit/date.css");
 
 /* top bar, bottom navigation, banners */
 @import url("layout.css");

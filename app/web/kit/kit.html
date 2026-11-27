@@ -121,6 +121,10 @@
         min-height: 560px;
       }
 
+      &[data-kit-piece="date"] body {
+        min-height: 560px;
+      }
+
       &[data-kit-piece="menu"] body {
         min-height: 400px;
       }
@@ -214,6 +218,28 @@
       <div class="field" x-field><label>Year</label> <small class="hint">four digits</small>
         <input x-model="fieldYear" inputmode="numeric">
         <p class="error" x-show="fieldYear && !/^\d{4}$/.test(fieldYear)">A year has four digits, e.g. 1999.</p></div>
+    </div>
+  </section>
+
+  <section data-piece="date">
+    <h2>Date</h2>
+    <p class="muted"><code>x-date="day"</code> on an input: a day (<code>"2026-11-27"</code> or <code>""</code>), shown
+      in the page's language, with a calendar of our own. Two in a <code>.date-range</code> are a from/to pair with
+      quick picks. Click, or press Down; then the arrows, Page Up / Page Down, Home / End, Enter, Escape. Or type a
+      date.</p>
+    <div class="kit-demo column kit-fields">
+      <div class="field" x-field><label>Started</label> <small class="hint">one day</small>
+        <input x-date="started" placeholder="Pick a day"></div>
+      <div class="field" x-field><label>Added</label> <small class="hint">from – to</small>
+        <div class="date-range">
+          <input x-date="addedFrom" placeholder="From" aria-label="Added, from">
+          <span class="date-to" aria-hidden="true">–</span>
+          <input x-date="addedTo" placeholder="To" aria-label="Added, to">
+        </div></div>
+    </div>
+    <div class="kit-demo">
+      <span class="muted" x-text="'started = ' + JSON.stringify(started) + ', addedFrom = ' + JSON.stringify(addedFrom)
+        + ', addedTo = ' + JSON.stringify(addedTo)"></span>
     </div>
   </section>
 
@@ -501,6 +527,7 @@
       theme: document.documentElement.dataset.theme,
       fieldTitle: "Alive", fieldYear: "19999",
       tab: "books", small: "one", seg: "asc", rowSeg: "dark", opt: "rtl",
+      started: "2026-11-27", addedFrom: "", addedTo: "",
       menuOpen: false, picked: "", dialogOpen: false, keepOpen: false, innerOpen: false,
       toggleTheme() {
         this.theme = this.theme === "dark" ? "light" : "dark";

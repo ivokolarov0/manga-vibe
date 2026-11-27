@@ -9,12 +9,16 @@ library-query job"). It gives three things:
 
 `lq` is a `ListQuery`: the query (`lq.query`, on `models.Series`) and what a filter needs from the core,
 so a plugin doesn't import `app.api`. `params` are the request's query parameters (a Starlette
-`QueryParams`: `.get(key)`, `.getlist(key)`); `values()`, `number()` and `flag()` below read them.
+`QueryParams`: `.get(key)`, `.getlist(key)`); `values()`, `number()`, `day()`, `day_range()` and `flag()`
+below read them.
 
 The core does the rest: what the person may see at all (plugins' `series_filter()`, e.g. a locked
 library; a filter plugin never sees or changes those conditions), the last sort on the title and the
 series' id (paging needs a stable order), paging, counts and the cards.
 """
+from datetime import date, datetime, time, timedelta, timezone, tzinfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
 from fastapi import HTTPException
 from sqlalchemy import func
 
@@ -23,7 +27,8 @@ from app.i18n import t
 from app.api.common import my_state
 from app.models import Series
 
-__all__ = ["ListQuery", "values", "number", "flag", "schema_params", "search_params"]
+__all__ = ["ListQuery", "values", "number", "day", "day_range", "time_zone", "flag", "schema_params",
+           "search_params"]
 
 
 class ListQuery:
@@ -87,6 +92,45 @@ def number(params, key) -> int | None:
         return int(raw)
     except ValueError:
         raise HTTPException(422, t("{key} must be a whole number", key=key))
+
+
+def day(params, key) -> date | None:
+    """A day parameter (2026-11-27), None when it isn't given. Anything else is refused (422)."""
+    raw = (params.get(key) or "").strip()
+    if not raw:
+        return None
+    try:
+        if len(raw) != 10:
+            raise ValueError
+        return date.fromisoformat(raw)
+    except ValueError:
+        raise HTTPException(422, t("{key} must be a day like 2026-11-27", key=key))
+
+
+def time_zone(params) -> tzinfo:
+    """The person's time zone: the page sends its own (tz=Europe/Sofia) with the library's requests. UTC
+    when there's none or this server doesn't know it (an assistant's request)."""
+    name = (params.get("tz") or "").strip()
+    if name:
+        try:
+            return ZoneInfo(name)
+        except (ZoneInfoNotFoundError, ValueError):
+            pass
+    return timezone.utc
+
+
+def day_range(params, start_key, end_key):
+    """The two days of a "from … to …" filter as times to compare a stored (UTC) time with: (from, until),
+    where `from` is the start of the first day and `until` the start of the day after the last one, in the
+    person's time zone (time_zone()), so whole days count: stored >= from and stored < until. Each is None
+    when that day isn't given."""
+    tz = time_zone(params)
+
+    def start(d):
+        return datetime.combine(d, time(), tz).astimezone(timezone.utc).replace(tzinfo=None)
+
+    first, last = day(params, start_key), day(params, end_key)
+    return (start(first) if first else None, start(last + timedelta(days=1)) if last else None)
 
 
 def flag(params, key) -> bool:
