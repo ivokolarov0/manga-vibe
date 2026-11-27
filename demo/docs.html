@@ -55,6 +55,12 @@
   .doc .edit { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 0.88rem; }
 
   .loading, .failed { color: var(--muted); }
+
+  /* the UI kit's pieces, live (the UI kit page: kitPreviews) */
+  .kit-live { margin: 10px 0 14px; }
+  .kit-live iframe { display: block; width: 100%; height: 140px; border: 1px solid var(--border);
+                     border-radius: 14px; background: var(--surface); }
+  .kit-live figcaption { margin-top: 5px; font-size: 0.8rem; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -131,10 +137,46 @@ function build(md) {
   edit.className = "edit";
   edit.innerHTML = `<a href="${MVDoc.REPO}${SITE.src}">View or edit this page on GitHub</a>`;
   page.append(edit);
+  if (SITE.kit) kitPreviews(page);
   buildSide(page);
   spy(page);
   MVDoc.drawDiagrams(page);
   if (location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();
+}
+
+/* The UI kit page: each piece (an h3 under "The pieces") live under its heading, in a frame showing the
+   app's own kit page with only that piece (kit.html?piece=<its id>, written by demo/website.py from
+   app/web/kit/kit.html). The frame takes the piece's height, and the site's light/dark switch. */
+function kitPreviews(page) {
+  const theme = () => (MVSite.dark() ? "dark" : "light");
+  const frames = [];
+  let inPieces = false;
+  for (const s of page.querySelectorAll("section")) {
+    if (s.dataset.level === "2") { inPieces = s.id === "the-pieces"; continue; }
+    if (!inPieces) continue;
+    const name = s.querySelector("h3").textContent;
+    const fig = document.createElement("figure");
+    fig.className = "kit-live";
+    const frame = document.createElement("iframe");
+    frame.src = `${SITE.kit}?piece=${encodeURIComponent(s.id)}&theme=${theme()}`;
+    frame.title = `${name}, live`;
+    frame.loading = "lazy";
+    // the switch may have changed while it loaded
+    frame.addEventListener("load", () => frame.contentWindow?.postMessage({ type: "mv-kit-theme", theme: theme() }, location.origin));
+    const cap = document.createElement("figcaption");
+    cap.textContent = "Live: the kit itself, with the app's CSS. Try it: click, tab, use the arrow keys.";
+    fig.append(frame, cap);
+    s.querySelector("h3").after(fig);
+    frames.push(frame);
+  }
+  addEventListener("message", (e) => {
+    if (e.origin !== location.origin || e.data?.type !== "mv-kit-height") return;
+    const frame = frames.find((f) => f.contentWindow === e.source);
+    if (frame) frame.style.height = `${Math.min(e.data.height + 2, 1400)}px`;
+  });
+  document.addEventListener("mv-scheme", () => {
+    for (const f of frames) f.contentWindow?.postMessage({ type: "mv-kit-theme", theme: theme() }, location.origin);
+  });
 }
 
 /* The menu: the developer pages; under this one, its sections */

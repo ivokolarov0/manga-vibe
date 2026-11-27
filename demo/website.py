@@ -20,6 +20,7 @@ SITE_CONFIG = re.compile(r"/\*MV_SITE\*/\{[^}]*\}")
 # A doc drawn into the homepage
 MARKDOWN = re.compile(r'<script type="text/markdown" data-src="([^"]+)"></script>')
 ASSETS = ("site.css", "site.js", "md.js")
+KIT_DOC = "docs/UI-KIT.md"  # its page shows the kit's pieces live (write_kit)
 
 
 def api_version() -> int:
@@ -76,6 +77,34 @@ def redirect_page(target: str, path: str) -> str:
 """
 
 
+def write_kit(folder: Path):
+    """The app's UI kit page (/kit, app/web/kit/kit.html) next to the UI kit's docs, as kit.html with the
+    app's CSS, fonts and the kit's script beside it in static/: the docs page shows each piece live from it
+    (kit.html?piece=buttons, demo/docs.html). The real pieces, not copies, so they can't drift apart."""
+    from jinja2 import Environment, FileSystemLoader
+    web = ROOT / "app" / "web"
+    env = Environment(loader=FileSystemLoader([web / "kit", web / "templates"]), autoescape=True)
+    html = env.get_template("kit.html").render()
+    html = html.replace('"/static/', '"static/')  # next to it on the site, not at the server's root
+    if "/static/" in html.replace('"static/', ""):
+        raise SystemExit("kit.html has a /static/ address website.py doesn't turn into a relative one")
+    (folder / "kit.html").write_text(html, encoding="utf-8")
+    static = folder / "static"
+    if static.exists():
+        shutil.rmtree(static)
+    for part in ("css", "fonts"):
+        shutil.copytree(web / "static" / part, static / part)
+    # no plugins or owner's custom.css on the website: leave out the import of /custom.css (a 404 there)
+    main = static / "css" / "main.css"
+    text = main.read_text(encoding="utf-8")
+    if '@import url("/custom.css");' not in text:
+        raise SystemExit("main.css no longer imports /custom.css as website.py expects")
+    main.write_text(text.replace('@import url("/custom.css");', ""), encoding="utf-8")
+    for part in ("js/kit.js", "js/vendor/alpine.min.js", "icons/icon.svg"):
+        (static / part).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(web / "static" / part, static / part)
+
+
 def write_site(out: Path):
     out.mkdir(parents=True, exist_ok=True)
     (out / "assets").mkdir(exist_ok=True)
@@ -94,7 +123,12 @@ def write_site(out: Path):
     for page in pages:
         folder = out / page["path"]
         folder.mkdir(parents=True, exist_ok=True)
-        (folder / "index.html").write_text(fill(viewer, page["path"], src=page["src"], pages=pages), encoding="utf-8")
+        extra = {}
+        if page["src"] == KIT_DOC:  # the UI kit's pieces, live under their headings
+            write_kit(folder)
+            extra["kit"] = "kit.html"
+        (folder / "index.html").write_text(fill(viewer, page["path"], src=page["src"], pages=pages, **extra),
+                                           encoding="utf-8")
         shutil.copy2(ROOT / page["src"], folder / "page.md")
 
     for old, target in REDIRECTS.items():

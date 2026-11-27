@@ -66,6 +66,28 @@ def test_the_site_is_written(tmp_path):
         assert (tmp_path / "assets" / name).is_file()
 
 
+def test_the_ui_kit_page_shows_each_piece_live(tmp_path):
+    """The UI kit's page on the site has the app's own /kit page beside it, with relative addresses and the
+    files it loads, so each piece shows live under its heading (demo/docs.html, kitPreviews)."""
+    write_site(tmp_path)
+    folder = tmp_path / next(path for src, path, _ in DEV_PAGES if src == "docs/UI-KIT.md")
+    assert '"kit": "kit.html"' in (folder / "index.html").read_text(encoding="utf-8")
+    kit = (folder / "kit.html").read_text(encoding="utf-8")
+    assert "{{" not in kit and "{%" not in kit and 'id="i-star"' in kit  # rendered, with the app's icons
+    refs = re.findall(r'(?:src|href)="(static/[^"]+)"', kit)
+    assert {"static/css/main.css", "static/js/kit.js", "static/js/vendor/alpine.min.js"} <= set(refs)
+    assert '"/static/' not in kit
+    for ref in refs:
+        assert (folder / ref).is_file(), ref
+    css = (folder / "static" / "css" / "fonts.css").read_text(encoding="utf-8")
+    for font in re.findall(r'url\("\.\./fonts/([^"]+)"\)', css):
+        assert (folder / "static" / "fonts" / font).is_file(), font
+    # one piece alone: what the frame asks for, with each piece the docs list (their ids are the slugs)
+    assert "kit-embed" in kit and "mv-kit-height" in kit and "mv-kit-theme" in kit
+    viewer = (folder / "index.html").read_text(encoding="utf-8")
+    assert "kitPreviews(page)" in viewer and '"the-pieces"' in viewer
+
+
 def test_old_addresses_still_work(tmp_path):
     write_site(tmp_path)
     for path in OLD_PATHS:

@@ -6,7 +6,9 @@ a plugin's markup and it looks and works like the rest of the app, and it follow
 Bricolage Grotesque and Plus Jakarta Sans, choices right in a setting row), API 38.
 
 **See them all at `/kit`** (e.g. `http://localhost:8000/kit`): every piece in its variants, dark and light,
-with your plugins' CSS and `custom.css` applied.
+with your plugins' CSS and `custom.css` applied. On the [website](https://ivokolarov0.github.io/manga-vibe/docs/ui-kit/),
+each piece below is also live under its heading (the same page, one piece at a time): click it, tab
+through it, switch the site's theme.
 
 Three promises:
 
