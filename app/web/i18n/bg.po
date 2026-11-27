@@ -199,13 +199,21 @@ msgstr "Добавяне на акаунт"
 msgid "Add folder"
 msgstr "Добави папка"
 
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Add library"
+msgstr "Добави библиотека"
+
 #: app/web/templates/settings/plugins.html
 msgid "add one"
 msgstr "добавете такъв"
 
-#: app/web/templates/settings/plugins.html
+#: app/web/static/js/app.js app/web/templates/settings/plugins.html
 msgid "Add source"
 msgstr "Добави източник"
+
+#: app/web/static/js/app.js
+msgid "Add this plugin source?"
+msgstr "Да се добави ли този източник на добавки?"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Add to favorites"
@@ -274,8 +282,16 @@ msgid "All selected"
 msgstr "Всички са избрани"
 
 #: app/web/static/js/app.js
+msgid "Allow and install"
+msgstr "Разреши и инсталирай"
+
+#: app/web/static/js/app.js
 msgid "Allow them and install it?"
 msgstr "Да се разрешат ли и да се инсталира?"
+
+#: app/web/static/js/app.js
+msgid "Allow these permissions?"
+msgstr "Да се разрешат ли тези права?"
 
 #: app/plugins/builtin/home_page/templates/views/home.html
 msgid "Also reading"
@@ -366,6 +382,10 @@ msgstr "Иска от всички да влизат; добавя Настро�
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Asks GitHub ({repo}) for its newest release and shows a message when one is out"
 msgstr "Пита GitHub ({repo}) за най-новата версия и показва съобщение, когато излезе"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "At least 4 characters"
+msgstr "Поне 4 знака"
 
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "At most {n} saved searches"
@@ -531,13 +551,9 @@ msgstr "Не може да работи: {why}"
 msgid "Can't tell if complete"
 msgstr "Не е ясно дали е пълна"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/dialogs/folder-picker.html
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/kit.js app/web/templates/dialogs/folder-picker.html
 msgid "Cancel"
 msgstr "Отказ"
-
-#: app/web/static/js/app.js
-msgid "Cancel to see the other choice."
-msgstr "Отказ, за да видите другия вариант."
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Cancelled"
@@ -570,6 +586,10 @@ msgstr "Гл. {n}"
 #: app/plugins/builtin/libraries/settings.html
 msgid "Change or remove…"
 msgstr "Смяна или премахване…"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Change password"
+msgstr "Смени паролата"
 
 #: app/plugins/builtin/accounts/menu.html
 msgid "Change password…"
@@ -656,20 +676,32 @@ msgid "Clear filters"
 msgstr "Изчисти филтрите"
 
 #: app/web/static/js/app.js
+msgid "Clear progress"
+msgstr "Изчисти напредъка"
+
+#: app/web/static/js/app.js
 msgid "Clear progress for every book in this series? It will also be removed from Continue reading."
 msgstr "Да се изчисти ли напредъкът за всички книги от поредицата? Тя ще бъде премахната и от Продължи четенето."
 
 #: app/plugins/builtin/activity_log/activity_log.js
-msgid "Clear the activity log? Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."
-msgstr "Да се изчисти ли дневникът на действията? Всички записи се премахват завинаги; изнесете го първо, за да запазите копие. След това дневникът започва с един запис, че сте го изчистили."
+msgid "Clear the activity log?"
+msgstr "Да се изчисти ли дневникът на действията?"
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Clear the filters"
 msgstr "Изчисти филтрите"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Clear the log"
+msgstr "Изчисти дневника"
+
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Clear the log…"
 msgstr "Изчисти дневника…"
+
+#: app/web/static/js/app.js
+msgid "Clear the progress?"
+msgstr "Да се изчисти ли напредъкът?"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear the search"
@@ -736,6 +768,10 @@ msgstr "Пълна: колекцията се смята за пълна, как
 #: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Completed"
 msgstr "Прочетена"
+
+#: app/web/static/js/kit.js
+msgid "Confirm"
+msgstr "Потвърждение"
 
 #: app/plugins/builtin/mangaupdates.py
 msgid "Connects to api.mangaupdates.com"
@@ -849,9 +885,17 @@ msgstr "Решава кои поредици показва библиотека
 msgid "Default reading mode"
 msgstr "Режим на четене по подразбиране"
 
-#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/saved_searches/sheet.html
+#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/saved_searches/saved_searches.js app/plugins/builtin/saved_searches/sheet.html app/web/static/js/kit.js
 msgid "Delete"
 msgstr "Изтрий"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Delete account"
+msgstr "Изтрий акаунта"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Delete library"
+msgstr "Изтрий библиотеката"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Delete series"
@@ -1087,6 +1131,10 @@ msgstr "Дубликат на друг файл със същия номер"
 msgid "Duplicates"
 msgstr "Дубликати"
 
+#: app/plugins/builtin/libraries/libraries.js
+msgid "e.g. Comics"
+msgstr "напр. Комикси"
+
 #: app/plugins/builtin/libraries/settings.html
 msgid "Each library shows its own series, picked with the tabs on the home screen. A folder's series show in its library (Settings → Library folders); one series can be moved to another with Edit, or several at once by holding a card. Files never move."
 msgstr "Всяка библиотека показва своите поредици, избрана с разделите на началния екран. Поредиците на дадена папка са в нейната библиотека (Настройки → Папки на библиотеката); една поредица се мести в друга чрез Редактиране, а няколко наведнъж – със задържане на карта. Файловете никога не се местят."
@@ -1146,6 +1194,10 @@ msgstr "Грешка"
 #: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
 msgid "Errors"
 msgstr "Грешки"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."
+msgstr "Всеки запис се премахва завинаги; първо го експортирайте, за да запазите копие. След това дневникът започва с един запис, че сте го изчистили."
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Every file in the series folder, in reading order. Faded rows are older revisions or hidden. Use {edit} when a file name has the wrong number or holds several chapters: your numbers re-order the list. The files themselves are never changed."
@@ -1527,7 +1579,7 @@ msgstr "Дайте име на библиотеката"
 msgid "Give the search a name"
 msgstr "Дайте име на търсенето"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js
 msgid "Go back"
 msgstr "Върни се"
 
@@ -1536,10 +1588,18 @@ msgid "Go back to an earlier version"
 msgstr "Връщане към по-стара версия"
 
 #: app/web/static/js/app.js
+msgid "Go back to an older version?"
+msgstr "Да се върне ли по-стара версия?"
+
+#: app/web/static/js/app.js
+msgid "Go back to {plugin} {version}?"
+msgstr "Да се върне ли {plugin} {version}?"
+
+#: app/web/static/js/app.js
 msgid "Go back to {plugin} {version}? It's the copy kept when you updated it."
 msgstr "Да се върне ли {plugin} {version}? Това е копието, запазено при обновяването."
 
-#: app/web/templates/settings/plugin.html
+#: app/web/static/js/app.js app/web/templates/settings/plugin.html
 msgid "Go back to {version}"
 msgstr "Върни {version}"
 
@@ -1675,9 +1735,13 @@ msgstr "Игнорирай всички {n}"
 msgid "Image reader"
 msgstr "Четец на изображения"
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js app/web/templates/settings/backup.html
 msgid "Import"
 msgstr "Импорт"
+
+#: app/web/static/js/app.js
+msgid "Import this backup?"
+msgstr "Да се импортира ли това резервно копие?"
 
 #: app/web/static/js/app.js
 msgid "Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first."
@@ -1747,7 +1811,7 @@ msgstr "Непълна колекция"
 msgid "Info"
 msgstr "Данни"
 
-#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "Install"
 msgstr "Инсталирай"
 
@@ -1762,6 +1826,14 @@ msgstr "Да се инсталира ли {plugin} от {url}?"
 #: app/web/static/js/app.js
 msgid "Install {plugin} {version} from {url}?"
 msgstr "Да се инсталира ли {plugin} {version} от {url}?"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin} {version}?"
+msgstr "Да се инсталира ли {plugin} {version}?"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin}?"
+msgstr "Да се инсталира ли {plugin}?"
 
 #: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "Installed"
@@ -1846,6 +1918,10 @@ msgstr "Пазете записите 30, 90 или 365 дни, или зави�
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "Keep the library page's filters and sort under a name (e.g. Isekai) and pick them again from the Saved button. Built in."
 msgstr "Запазва филтрите и подредбата на библиотеката под име (напр. Isekai) и ги избира отново от бутона Запазени. Вградена."
+
+#: app/web/static/js/app.js
+msgid "Keep the newer database"
+msgstr "Запази по-новата база данни"
 
 #: app/web/static/js/app.js
 msgid "Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
@@ -2387,17 +2463,9 @@ msgstr[1] "Премести {n} поредици в {to}"
 msgid "Moved: {row} is number {n} now"
 msgstr "Преместено: {row} вече е номер {n}"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/libraries.js app/plugins/builtin/saved_searches/saved_searches.js
 msgid "Name"
 msgstr "Име"
-
-#: app/plugins/builtin/saved_searches/saved_searches.js
-msgid "Name for this search ({filters})"
-msgstr "Име за това търсене ({filters})"
-
-#: app/plugins/builtin/libraries/libraries.js
-msgid "Name of the new library, e.g. Comics"
-msgstr "Име на новата библиотека, напр. Комикси"
 
 #: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html
 msgid "Name of {name}"
@@ -2451,11 +2519,11 @@ msgstr "Никога да не се свързва"
 msgid "New books"
 msgstr "Нови книги"
 
-#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+#: app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "New library"
 msgstr "Нова библиотека"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
+#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
 msgid "New password"
 msgstr "Нова парола"
 
@@ -2464,8 +2532,8 @@ msgid "New password again"
 msgstr "Новата парола отново"
 
 #: app/plugins/builtin/accounts/accounts.js
-msgid "New password for {name} (at least 4 characters)"
-msgstr "Нова парола за {name} (поне 4 знака)"
+msgid "New password for {name}"
+msgstr "Нова парола за {name}"
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "New password…"
@@ -2755,6 +2823,10 @@ msgstr "Изкл."
 msgid "Off (swipe only)"
 msgstr "Изкл. (само плъзгане)"
 
+#: app/web/static/js/kit.js
+msgid "OK"
+msgstr "ОК"
+
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Older entries are removed once a day."
 msgstr "По-старите записи се премахват веднъж на ден."
@@ -2920,6 +2992,10 @@ msgstr "По желание: пази тази библиотека от дру�
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "or"
 msgstr "или"
+
+#: app/web/static/js/app.js
+msgid "Or keep the newer database: {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
+msgstr "Или запазете по-новата база данни: {version} може да не разбере добавеното от по-новите версии и части от нея може да не работят. Ново обновяване оправя това."
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Or paste a link"
@@ -3198,6 +3274,10 @@ msgid "Publication"
 msgstr "Издаване"
 
 #: app/web/static/js/app.js
+msgid "Put back the copy"
+msgstr "Върни копието"
+
+#: app/web/static/js/app.js
 msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
 msgstr "Да се върне ли копието на базата данни от {when}? Напредъкът, настройките и другите промени оттогава ще се загубят."
 
@@ -3381,6 +3461,10 @@ msgstr "Презаредете страницата, за да видите пр
 msgid "Remove"
 msgstr "Премахни"
 
+#: app/web/static/js/app.js
+msgid "Remove folder"
+msgstr "Премахни папката"
+
 #: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Remove from favorites"
 msgstr "Махни от любими"
@@ -3390,8 +3474,20 @@ msgid "Remove password"
 msgstr "Премахни паролата"
 
 #: app/web/static/js/app.js
+msgid "Remove source"
+msgstr "Премахни източника"
+
+#: app/web/static/js/app.js
 msgid "Remove the source {name}? Plugins you installed from it stay."
 msgstr "Да се премахне ли източникът {name}? Инсталираните от него добавки остават."
+
+#: app/web/static/js/app.js
+msgid "Remove this folder?"
+msgstr "Да се премахне ли тази папка?"
+
+#: app/web/static/js/app.js
+msgid "Remove this plugin source?"
+msgstr "Да се премахне ли този източник на добавки?"
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Remove {filter}"
@@ -3525,7 +3621,7 @@ msgstr "Едно и също съвпадение"
 msgid "Same {ids}"
 msgstr "Едно и също {ids}"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/saved_searches/saved_searches.js app/plugins/builtin/series_page/templates/views/series.html app/web/templates/settings/plugins.html
 msgid "Save"
 msgstr "Запази"
 
@@ -3537,7 +3633,7 @@ msgstr "Запази паролата"
 msgid "Save search"
 msgstr "Запази търсенето"
 
-#: app/plugins/builtin/saved_searches/sheet.html
+#: app/plugins/builtin/saved_searches/saved_searches.js app/plugins/builtin/saved_searches/sheet.html
 msgid "Save this search"
 msgstr "Запази това търсене"
 
@@ -4046,8 +4142,8 @@ msgid "Summary"
 msgstr "Обобщение"
 
 #: app/web/static/js/app.js
-msgid "Switch it on?"
-msgstr "Да се включи ли?"
+msgid "Switch on"
+msgstr "Включи"
 
 #: app/web/templates/settings/plugin.html
 msgid "Switch the plugin on to change its settings."
@@ -4056,6 +4152,10 @@ msgstr "Включете добавката, за да промените нас
 #: app/web/static/js/reader.js
 msgid "Switch {overlay} on above to hear its text."
 msgstr "Включете {overlay} по-горе, за да чуете текста."
+
+#: app/web/static/js/app.js
+msgid "Switch {plugin} on?"
+msgstr "Да се включи ли {plugin}?"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Switched {name} off"
@@ -4345,6 +4445,10 @@ msgstr "Тези файлове не можаха да се отворят. Съ
 msgid "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."
 msgstr "Тези поредици са свързани с един и същ запис онлайн. Често една папка е разделена на две или едно съвпадение е грешно."
 
+#: app/plugins/builtin/accounts/accounts.js
+msgid "They're logged out everywhere and log in with the new one."
+msgstr "Акаунтът излиза навсякъде и влиза с новата парола."
+
 #: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Thick"
 msgstr "Дебел"
@@ -4580,6 +4684,14 @@ msgstr "Неизвестно състояние"
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
 msgid "Unlock"
 msgstr "Отключи"
+
+#: app/web/static/js/app.js
+msgid "Unlock all"
+msgstr "Отключи всички"
+
+#: app/web/static/js/app.js
+msgid "Unlock every field?"
+msgstr "Да се отключат ли всички полета?"
 
 #: app/api/system.py app/plugins/builtin/libraries/api.py
 msgid "Unlock the folder's library first"
@@ -4869,6 +4981,10 @@ msgstr "Къде са Библиотека и Продължи (с добавк�
 msgid "Where this folder's series show. Series moved to another library by hand stay there."
 msgstr "Къде се показват поредиците на тази папка. Ръчно преместените в друга библиотека остават там."
 
+#: app/web/static/js/app.js
+msgid "Which database?"
+msgstr "Коя база данни?"
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Which edition your files are from (regular, kanzenban, omnibus...). Automatic: worked out from the pages per volume and the editions MangaUpdates lists"
 msgstr "От кое издание са файловете ви (стандартно, канзенбан, омнибус...). Автоматично: по страниците на том и изданията в MangaUpdates"
@@ -4968,6 +5084,10 @@ msgstr "Пропуснахте тази версия"
 #: app/web/static/js/app.js
 msgid "You skipped version {version}. A newer one will show here"
 msgstr "Пропуснахте версия {version}. По-новата ще се появи тук"
+
+#: app/web/static/js/kit.js
+msgid "Your answer"
+msgstr "Вашият отговор"
 
 #: app/plugins/builtin/attention_lists/templates/attention/matches.html
 msgid "Your copy · folder: {folder}"

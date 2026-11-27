@@ -1737,3 +1737,28 @@ One PR per page, on step 8's tokens and kit.
   that was a sliver. The bar is inset and rounded with the accent's gradient, like the mockup's.
 - **Chromium**: every page checked in Chromium (Playwright's, 156) at 1280 and 400 wide, dark and light,
   as well as Firefox: the same. Needs attention keeps its layout; the new tokens and kit carry it.
+
+### Our own confirm and prompt dialogs (Plugin API 39, issue #323)
+
+- **`MangaVibe.confirm`, `MangaVibe.prompt` and `MangaVibe.ask`** replace the browser's `confirm()` and
+  `prompt()` everywhere (about 30 calls). They return Promises, so every caller became `async`. In the
+  app's own code they're `kit.confirm(…)`; the built-in plugins use `MV.confirm(…)` like any plugin.
+  A test fails on a `confirm(`, `prompt(` or `alert(` call in the app's and the built-in plugins' code.
+- **A native `<dialog>` with `showModal()`**, not another `x-dialog`: the browser keeps the rest of the page
+  out of reach (top layer, inert) and it can be opened from plain script without markup in a slot. It's
+  made for each question and removed after, so an `x-dialog` opened later can't make it inert. It joins
+  the kit's list of open dialogs, so an `x-dialog` under it leaves Escape and Tab alone; Escape is taken in
+  the capture phase and stopped, so neither the dialog under it nor the reader sees it. The Android back
+  button cancels it before anything else, even over the reader. Two at once queue up.
+- **A piece without a directive**, like the toast: `ask` in `MangaVibe.kit`, with `build()`, `focusIn()`
+  and `open()` as methods so a plugin can change one part.
+- **Better than the native ones**: a title and the text apart, a list (a plugin's permissions; no more "•"
+  lines), the button saying what it does, red (`.btn.primary.danger`, new) for what deletes or replaces, and
+  Cancel focused first then. A prompt's button waits until something is typed, and `check()` says why what
+  was typed won't do (the account password's 4 characters) instead of the server's error after closing.
+- **The database choice** after going back to an older version was two `confirm()`s in a row ("Cancel to
+  see the other choice"): now one question with three buttons (`ask`).
+- **A plugin button's `confirm` text** uses it too, with the button's label as the title and the word on
+  the button that goes ahead: the texts plugins already send fit without a change.
+- **Its look** is the kit's dialog (dialog.css): a sheet from the bottom on phones with full-width
+  buttons (the main one on top), a small box in the middle (480px) on wider screens.

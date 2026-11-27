@@ -129,6 +129,12 @@ async function copyText(text) {
   return ok;
 }
 
+/* A plugin button with a `confirm` text (Action(confirm=…)) asks first, in the kit's dialog: the button's
+   label is its title and the word on the button that goes ahead. true to go ahead. */
+function confirmAction(a) {
+  return kit.confirm({ title: a.label, text: a.confirm, confirm: a.label });
+}
+
 /* What a plugin button returned: a message, and maybe a page to open (e.g. a website's login). */
 async function showActionResult(r) {
   if (r.message) toast(r.message, 6000);

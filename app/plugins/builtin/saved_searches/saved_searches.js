@@ -17,8 +17,8 @@ MangaVibe.onStart(() => {
     },
     async save() {
       const p = MV.libraryFilters(), query = MV.filterQuery(p);
-      const name = prompt(MV.t("Name for this search ({filters})", { filters: MV.filterLabels(query).join(", ") }),
-                          p.getAll("genre").find(Boolean) || "");
+      const name = await MV.prompt({ title: MV.t("Save this search"), text: MV.filterLabels(query).join(", "),
+                                     label: MV.t("Name"), value: p.getAll("genre").find(Boolean) || "", confirm: MV.t("Save") });
       if (!name?.trim()) return;
       try {
         const r = await MV.api(API, { method: "POST", body: { name, query } });
@@ -27,7 +27,8 @@ MangaVibe.onStart(() => {
       } catch (e) { MV.toast(e.message, 6000, "error"); }
     },
     async remove(x) {
-      if (!confirm(MV.t("Delete the saved search “{name}”?", { name: x.name }))) return;
+      if (!await MV.confirm({ title: MV.t("Delete the saved search “{name}”?", { name: x.name }), danger: true,
+                              confirm: MV.t("Delete") })) return;
       await MV.api(`${API}/${x.id}`, { method: "DELETE" }).catch((e) => MV.toast(e.message, 6000, "error"));
       await this.load();
     },

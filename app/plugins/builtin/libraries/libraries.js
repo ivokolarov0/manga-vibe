@@ -64,7 +64,8 @@ MangaVibe.onStart(() => {
     },
     openUnlock(id, onDone) { this.unlock = { open: true, id, onDone }; },
     async add() {
-      const name = prompt(MV.t("Name of the new library, e.g. Comics"));
+      const name = await MV.prompt({ title: MV.t("New library"), label: MV.t("Name"), placeholder: MV.t("e.g. Comics"),
+                                     confirm: MV.t("Add library") });
       if (!name?.trim()) return null;
       try {
         const r = await MV.api(`${API}/shelves`, { method: "POST", body: { name } });
@@ -197,8 +198,9 @@ MangaVibe.onStart(() => {
     async remove(s) {
       if (s.locked) return store.openUnlock(s.id, () => this.remove(store.list.find((x) => x.id === s.id)));
       if (store.list.length < 2) return MV.toast(MV.t("This is the only library. Add another one first."), 5000);
-      if (!confirm(MV.t("Delete the library “{name}”?", { name: s.name }) + "\n\n"
-        + MV.t("No series or files are deleted: its folders and the series moved to it show in another library."))) return;
+      if (!await MV.confirm({ title: MV.t("Delete the library “{name}”?", { name: s.name }), danger: true,
+          confirm: MV.t("Delete library"),
+          text: MV.t("No series or files are deleted: its folders and the series moved to it show in another library.") })) return;
       try {
         const r = await MV.api(`${API}/shelves/${s.id}`, { method: "DELETE" });
         MV.toast(MV.t("Deleted. Its series are in {library} now.", { library: r.moved_to.name }), 5000);

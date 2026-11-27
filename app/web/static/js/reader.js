@@ -808,7 +808,7 @@ async function refresh() {
 }
 
 async function ovAction(a) {
-  if (a.confirm && !confirm(a.confirm)) return;
+  if (a.confirm && !await confirmAction(a)) return;
   try {
     // the plugin's own script may do the button's work in the page (its "book-action" handler says
     // so by returning true), e.g. open an editor: then the server isn't asked

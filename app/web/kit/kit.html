@@ -59,6 +59,11 @@
       }
     }
 
+    .kit-answer {
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
     .kit-demo {
       display: flex;
       flex-wrap: wrap;
@@ -119,6 +124,10 @@
 
       &[data-kit-piece="dialog"] body {
         min-height: 560px;
+      }
+
+      &[data-kit-piece="confirm-and-prompt"] body {
+        min-height: 460px;
       }
 
       &[data-kit-piece="menu"] body {
@@ -404,6 +413,20 @@
     </div>
   </section>
 
+  <section data-piece="confirm-and-prompt">
+    <h2>Confirm and prompt</h2>
+    <p class="muted"><code>await MangaVibe.confirm({ … })</code>, <code>MangaVibe.prompt({ … })</code> and
+      <code>MangaVibe.ask({ … })</code>: our own dialog in place of the browser's. A sheet on phones.</p>
+    <div class="kit-demo">
+      <button class="btn" @click="askDelete()">Confirm, danger</button>
+      <button class="btn" @click="askPermissions()">Confirm with a list</button>
+      <button class="btn" @click="askName()">Prompt</button>
+      <button class="btn" @click="askPassword()">Prompt with a check</button>
+      <button class="btn" @click="askChoice()">Ask, three buttons</button>
+    </div>
+    <div class="muted kit-answer" role="status" x-text="answer"></div>
+  </section>
+
   <section data-piece="toast">
     <h2>Toast</h2>
     <p class="muted"><code>MangaVibe.toast(text, ms, kind, action)</code>: read out by screen readers (an error at
@@ -501,7 +524,27 @@
       theme: document.documentElement.dataset.theme,
       fieldTitle: "Alive", fieldYear: "19999",
       tab: "books", small: "one", seg: "asc", rowSeg: "dark", opt: "rtl",
-      menuOpen: false, picked: "", dialogOpen: false, keepOpen: false, innerOpen: false,
+      menuOpen: false, picked: "", dialogOpen: false, keepOpen: false, innerOpen: false, answer: "",
+      async show(p) { this.answer = "It returned " + JSON.stringify(await p); },
+      askDelete() {
+        this.show(MangaVibe.confirm({ title: "Delete the library “Comics”?", danger: true, confirm: "Delete library",
+          text: "No series or files are deleted: its folders and the series moved to it show in another library." }));
+      },
+      askPermissions() {
+        this.show(MangaVibe.confirm({ title: "Allow these permissions?", text: "Reading log asks for these permissions:",
+          list: ["Read your library", "Connect to anilist.co"], note: "Allow them and install it?", confirm: "Allow and install" }));
+      },
+      askName() {
+        this.show(MangaVibe.prompt({ title: "New library", label: "Name", placeholder: "e.g. Comics", confirm: "Add library" }));
+      },
+      askPassword() {
+        this.show(MangaVibe.prompt({ title: "New password for Ana", label: "New password", type: "password",
+          confirm: "Change password", check: (v) => (v.length < 4 ? "At least 4 characters" : "") }));
+      },
+      askChoice() {
+        this.show(MangaVibe.ask({ title: "Which database?", text: "Put back the copy made on 12 May, or keep the newer one?",
+          buttons: [{ label: "Keep the newer one", value: "keep" }, { label: "Put back the copy", value: "restore" }] }));
+      },
       toggleTheme() {
         this.theme = this.theme === "dark" ? "light" : "dark";
         document.documentElement.dataset.theme = this.theme;

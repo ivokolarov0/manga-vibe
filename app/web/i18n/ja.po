@@ -199,13 +199,21 @@ msgstr "アカウントを追加"
 msgid "Add folder"
 msgstr "フォルダを追加"
 
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Add library"
+msgstr "ライブラリを追加"
+
 #: app/web/templates/settings/plugins.html
 msgid "add one"
 msgstr "追加する"
 
-#: app/web/templates/settings/plugins.html
+#: app/web/static/js/app.js app/web/templates/settings/plugins.html
 msgid "Add source"
 msgstr "ソースを追加"
+
+#: app/web/static/js/app.js
+msgid "Add this plugin source?"
+msgstr "このプラグインソースを追加しますか？"
 
 #: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Add to favorites"
@@ -273,8 +281,16 @@ msgid "All selected"
 msgstr "すべて選択済み"
 
 #: app/web/static/js/app.js
+msgid "Allow and install"
+msgstr "許可してインストール"
+
+#: app/web/static/js/app.js
 msgid "Allow them and install it?"
 msgstr "許可してインストールしますか？"
+
+#: app/web/static/js/app.js
+msgid "Allow these permissions?"
+msgstr "これらの権限を許可しますか？"
 
 #: app/plugins/builtin/home_page/templates/views/home.html
 msgid "Also reading"
@@ -364,6 +380,10 @@ msgstr "全員にログインを求めます。設定 → アカウントとア�
 #: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
 msgid "Asks GitHub ({repo}) for its newest release and shows a message when one is out"
 msgstr "GitHub（{repo}）に最新リリースを確認し、出たらお知らせします"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "At least 4 characters"
+msgstr "4 文字以上"
 
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "At most {n} saved searches"
@@ -529,13 +549,9 @@ msgstr "実行できません：{why}"
 msgid "Can't tell if complete"
 msgstr "揃っているか不明"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/dialogs/folder-picker.html
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/libraries/move_dialog.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/kit.js app/web/templates/dialogs/folder-picker.html
 msgid "Cancel"
 msgstr "キャンセル"
-
-#: app/web/static/js/app.js
-msgid "Cancel to see the other choice."
-msgstr "キャンセルするともう一つの選択肢が表示されます。"
 
 #: app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Cancelled"
@@ -568,6 +584,10 @@ msgstr "{n} 話"
 #: app/plugins/builtin/libraries/settings.html
 msgid "Change or remove…"
 msgstr "変更または削除…"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Change password"
+msgstr "パスワードを変更"
 
 #: app/plugins/builtin/accounts/menu.html
 msgid "Change password…"
@@ -654,20 +674,32 @@ msgid "Clear filters"
 msgstr "フィルターをクリア"
 
 #: app/web/static/js/app.js
+msgid "Clear progress"
+msgstr "進捗を消去"
+
+#: app/web/static/js/app.js
 msgid "Clear progress for every book in this series? It will also be removed from Continue reading."
 msgstr "このシリーズのすべての本の進み具合を消去しますか？続きを読むからも削除されます。"
 
 #: app/plugins/builtin/activity_log/activity_log.js
-msgid "Clear the activity log? Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."
-msgstr "アクティビティログを消去しますか？すべての項目が完全に削除されます。コピーを残すには先にエクスポートしてください。消去後のログは、あなたが消去したことを示す1件から始まります。"
+msgid "Clear the activity log?"
+msgstr "アクティビティログを消去しますか？"
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Clear the filters"
 msgstr "絞り込みをクリア"
 
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Clear the log"
+msgstr "ログを消去"
+
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Clear the log…"
 msgstr "ログを消去…"
+
+#: app/web/static/js/app.js
+msgid "Clear the progress?"
+msgstr "進捗を消去しますか？"
 
 #: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html
 msgid "Clear the search"
@@ -733,6 +765,10 @@ msgstr "全巻揃い：番号に関係なく全巻揃いとみなします（合
 #: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/library_query/__init__.py app/web/static/js/app.js
 msgid "Completed"
 msgstr "読了"
+
+#: app/web/static/js/kit.js
+msgid "Confirm"
+msgstr "確認"
 
 #: app/plugins/builtin/mangaupdates.py
 msgid "Connects to api.mangaupdates.com"
@@ -846,9 +882,17 @@ msgstr "ライブラリにどのシリーズをどの順に並べるかを決め
 msgid "Default reading mode"
 msgstr "標準の読み方"
 
-#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/saved_searches/sheet.html
+#: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/saved_searches/saved_searches.js app/plugins/builtin/saved_searches/sheet.html app/web/static/js/kit.js
 msgid "Delete"
 msgstr "削除"
+
+#: app/plugins/builtin/accounts/accounts.js
+msgid "Delete account"
+msgstr "アカウントを削除"
+
+#: app/plugins/builtin/libraries/libraries.js
+msgid "Delete library"
+msgstr "ライブラリを削除"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Delete series"
@@ -1081,6 +1125,10 @@ msgstr "同じ番号のほかのファイルと重複しています"
 msgid "Duplicates"
 msgstr "重複"
 
+#: app/plugins/builtin/libraries/libraries.js
+msgid "e.g. Comics"
+msgstr "例: コミック"
+
 #: app/plugins/builtin/libraries/settings.html
 msgid "Each library shows its own series, picked with the tabs on the home screen. A folder's series show in its library (Settings → Library folders); one series can be moved to another with Edit, or several at once by holding a card. Files never move."
 msgstr "ライブラリごとに自分のシリーズを表示し、ホーム画面のタブで切り替えます。フォルダのシリーズはそのライブラリに表示されます（設定 → ライブラリのフォルダ）。シリーズは編集で別のライブラリへ移せ、カードを長押しすれば複数まとめて移せます。ファイルは移動しません。"
@@ -1140,6 +1188,10 @@ msgstr "エラー"
 #: app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/attention_lists/__init__.py app/web/templates/settings/plugins.html
 msgid "Errors"
 msgstr "エラー"
+
+#: app/plugins/builtin/activity_log/activity_log.js
+msgid "Every entry is removed for good; export it first to keep a copy. The log then starts with one entry saying you cleared it."
+msgstr "すべての記録が完全に削除されます。残しておくには先にエクスポートしてください。消去後のログは、消去したことを示す記録 1 件から始まります。"
 
 #: app/plugins/builtin/series_page/templates/views/series.html
 msgid "Every file in the series folder, in reading order. Faded rows are older revisions or hidden. Use {edit} when a file name has the wrong number or holds several chapters: your numbers re-order the list. The files themselves are never changed."
@@ -1521,7 +1573,7 @@ msgstr "ライブラリに名前を付けてください"
 msgid "Give the search a name"
 msgstr "検索に名前を付けてください"
 
-#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html
+#: app/plugins/builtin/settings_pages/templates/views/settings-updates.html app/web/static/js/app.js
 msgid "Go back"
 msgstr "戻す"
 
@@ -1530,10 +1582,18 @@ msgid "Go back to an earlier version"
 msgstr "以前のバージョンに戻す"
 
 #: app/web/static/js/app.js
+msgid "Go back to an older version?"
+msgstr "古いバージョンに戻しますか？"
+
+#: app/web/static/js/app.js
+msgid "Go back to {plugin} {version}?"
+msgstr "{plugin} {version} に戻しますか？"
+
+#: app/web/static/js/app.js
 msgid "Go back to {plugin} {version}? It's the copy kept when you updated it."
 msgstr "{plugin} {version} に戻しますか？更新時に保存したコピーです。"
 
-#: app/web/templates/settings/plugin.html
+#: app/web/static/js/app.js app/web/templates/settings/plugin.html
 msgid "Go back to {version}"
 msgstr "{version} に戻す"
 
@@ -1669,9 +1729,13 @@ msgstr "{n} 件すべて無視"
 msgid "Image reader"
 msgstr "画像リーダー"
 
-#: app/web/templates/settings/backup.html
+#: app/web/static/js/app.js app/web/templates/settings/backup.html
 msgid "Import"
 msgstr "インポート"
+
+#: app/web/static/js/app.js
+msgid "Import this backup?"
+msgstr "このバックアップをインポートしますか？"
 
 #: app/web/static/js/app.js
 msgid "Import {file}? It replaces this server's library data, reading progress, accounts and settings with the file's. The current database is copied to /data/backups first."
@@ -1741,7 +1805,7 @@ msgstr "欠けあり"
 msgid "Info"
 msgstr "情報"
 
-#: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
+#: app/web/static/js/app.js app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "Install"
 msgstr "インストール"
 
@@ -1756,6 +1820,14 @@ msgstr "{url} から {plugin} をインストールしますか？"
 #: app/web/static/js/app.js
 msgid "Install {plugin} {version} from {url}?"
 msgstr "{url} から {plugin} {version} をインストールしますか？"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin} {version}?"
+msgstr "{plugin} {version} をインストールしますか？"
+
+#: app/web/static/js/app.js
+msgid "Install {plugin}?"
+msgstr "{plugin} をインストールしますか？"
 
 #: app/web/templates/settings/plugin.html app/web/templates/settings/plugins.html
 msgid "Installed"
@@ -1840,6 +1912,10 @@ msgstr "保存期間は 30、90、365 日、または無期限（0）です"
 #: app/plugins/builtin/saved_searches/__init__.py
 msgid "Keep the library page's filters and sort under a name (e.g. Isekai) and pick them again from the Saved button. Built in."
 msgstr "ライブラリの絞り込みと並べ替えに名前（例：異世界）を付けて保存し、保存ボタンから呼び出します。組み込み。"
+
+#: app/web/static/js/app.js
+msgid "Keep the newer database"
+msgstr "新しいデータベースを残す"
 
 #: app/web/static/js/app.js
 msgid "Keep the newer database? {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
@@ -2373,17 +2449,9 @@ msgstr[0] "{n} シリーズを {to} に移動しました"
 msgid "Moved: {row} is number {n} now"
 msgstr "移動しました：{row}は{n}番目になりました"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/accounts/settings.html app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/libraries.js app/plugins/builtin/saved_searches/saved_searches.js
 msgid "Name"
 msgstr "名前"
-
-#: app/plugins/builtin/saved_searches/saved_searches.js
-msgid "Name for this search ({filters})"
-msgstr "この検索の名前（{filters}）"
-
-#: app/plugins/builtin/libraries/libraries.js
-msgid "Name of the new library, e.g. Comics"
-msgstr "新しいライブラリの名前（例：コミック）"
 
 #: app/plugins/builtin/accounts/settings.html app/plugins/builtin/libraries/settings.html
 msgid "Name of {name}"
@@ -2437,11 +2505,11 @@ msgstr "マッチさせない"
 msgid "New books"
 msgstr "新しい本"
 
-#: app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
+#: app/plugins/builtin/libraries/libraries.js app/plugins/builtin/libraries/nav_libraries.html app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/tabs.html
 msgid "New library"
 msgstr "新しいライブラリ"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
+#: app/plugins/builtin/accounts/accounts.js app/plugins/builtin/accounts/login.html app/plugins/builtin/libraries/settings.html
 msgid "New password"
 msgstr "新しいパスワード"
 
@@ -2450,8 +2518,8 @@ msgid "New password again"
 msgstr "新しいパスワード（確認）"
 
 #: app/plugins/builtin/accounts/accounts.js
-msgid "New password for {name} (at least 4 characters)"
-msgstr "{name} の新しいパスワード（4 文字以上）"
+msgid "New password for {name}"
+msgstr "{name} の新しいパスワード"
 
 #: app/plugins/builtin/accounts/settings.html
 msgid "New password…"
@@ -2741,6 +2809,10 @@ msgstr "オフ"
 msgid "Off (swipe only)"
 msgstr "オフ（スワイプのみ）"
 
+#: app/web/static/js/kit.js
+msgid "OK"
+msgstr "OK"
+
 #: app/plugins/builtin/activity_log/settings.html
 msgid "Older entries are removed once a day."
 msgstr "古い項目は1日に1回削除されます。"
@@ -2905,6 +2977,10 @@ msgstr "任意：アプリを使うほかの人からこのライブラリを隠
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "or"
 msgstr "または"
+
+#: app/web/static/js/app.js
+msgid "Or keep the newer database: {version} may not understand what newer versions added, and parts of it can break. Updating again fixes that."
+msgstr "または新しいデータベースを残します。{version} は新しいバージョンで追加された内容を理解できず、一部が動かない可能性があります。もう一度更新すれば直ります。"
 
 #: app/plugins/builtin/dialogs/templates/views/fix-match.html
 msgid "Or paste a link"
@@ -3183,6 +3259,10 @@ msgid "Publication"
 msgstr "刊行状況"
 
 #: app/web/static/js/app.js
+msgid "Put back the copy"
+msgstr "コピーを戻す"
+
+#: app/web/static/js/app.js
 msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
 msgstr "{when} に作成したデータベースのコピーに戻しますか？それ以降の読書の進み具合、設定などの変更は失われます。"
 
@@ -3364,6 +3444,10 @@ msgstr "変更を反映するにはページを再読み込みしてください
 msgid "Remove"
 msgstr "削除"
 
+#: app/web/static/js/app.js
+msgid "Remove folder"
+msgstr "フォルダを削除"
+
 #: app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Remove from favorites"
 msgstr "お気に入りから外す"
@@ -3373,8 +3457,20 @@ msgid "Remove password"
 msgstr "パスワードを削除"
 
 #: app/web/static/js/app.js
+msgid "Remove source"
+msgstr "ソースを削除"
+
+#: app/web/static/js/app.js
 msgid "Remove the source {name}? Plugins you installed from it stay."
 msgstr "ソース {name} を削除しますか？そこからインストールしたプラグインは残ります。"
+
+#: app/web/static/js/app.js
+msgid "Remove this folder?"
+msgstr "このフォルダを削除しますか？"
+
+#: app/web/static/js/app.js
+msgid "Remove this plugin source?"
+msgstr "このプラグインソースを削除しますか？"
 
 #: app/plugins/builtin/library_page/templates/views/library.html
 msgid "Remove {filter}"
@@ -3506,7 +3602,7 @@ msgstr "同じ照合先"
 msgid "Same {ids}"
 msgstr "同じ {ids}"
 
-#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/series_page/templates/views/series.html app/web/templates/settings/plugins.html
+#: app/plugins/builtin/accounts/login.html app/plugins/builtin/dialogs/templates/views/edit.html app/plugins/builtin/saved_searches/saved_searches.js app/plugins/builtin/series_page/templates/views/series.html app/web/templates/settings/plugins.html
 msgid "Save"
 msgstr "保存"
 
@@ -3518,7 +3614,7 @@ msgstr "パスワードを保存"
 msgid "Save search"
 msgstr "検索を保存"
 
-#: app/plugins/builtin/saved_searches/sheet.html
+#: app/plugins/builtin/saved_searches/saved_searches.js app/plugins/builtin/saved_searches/sheet.html
 msgid "Save this search"
 msgstr "この検索を保存"
 
@@ -4021,8 +4117,8 @@ msgid "Summary"
 msgstr "概要"
 
 #: app/web/static/js/app.js
-msgid "Switch it on?"
-msgstr "オンにしますか？"
+msgid "Switch on"
+msgstr "オンにする"
 
 #: app/web/templates/settings/plugin.html
 msgid "Switch the plugin on to change its settings."
@@ -4031,6 +4127,10 @@ msgstr "設定を変更するにはプラグインをオンにしてください
 #: app/web/static/js/reader.js
 msgid "Switch {overlay} on above to hear its text."
 msgstr "テキストを聞くには、上の {overlay} をオンにしてください。"
+
+#: app/web/static/js/app.js
+msgid "Switch {plugin} on?"
+msgstr "{plugin} をオンにしますか？"
 
 #: app/plugins/builtin/activity_log/activity_log.js
 msgid "Switched {name} off"
@@ -4320,6 +4420,10 @@ msgstr "これらのファイルは開けませんでした。理由はメッセ
 msgid "These series are matched to the same entry online. Often one folder is split in two, or one match is wrong."
 msgstr "これらのシリーズはオンラインの同じ作品に照合されています。フォルダが二つに分かれているか、照合が誤っていることがよくあります。"
 
+#: app/plugins/builtin/accounts/accounts.js
+msgid "They're logged out everywhere and log in with the new one."
+msgstr "すべての端末でログアウトされ、新しいパスワードでログインすることになります。"
+
 #: app/web/static/js/app.js app/web/static/js/reader.js
 msgid "Thick"
 msgstr "太い"
@@ -4555,6 +4659,14 @@ msgstr "状況不明"
 #: app/plugins/builtin/libraries/settings.html app/plugins/builtin/libraries/unlock_dialog.html
 msgid "Unlock"
 msgstr "ロック解除"
+
+#: app/web/static/js/app.js
+msgid "Unlock all"
+msgstr "すべてロック解除"
+
+#: app/web/static/js/app.js
+msgid "Unlock every field?"
+msgstr "すべての項目のロックを解除しますか？"
 
 #: app/api/system.py app/plugins/builtin/libraries/api.py
 msgid "Unlock the folder's library first"
@@ -4844,6 +4956,10 @@ msgstr "ライブラリと続きを読むの位置（サイドバープラグイ
 msgid "Where this folder's series show. Series moved to another library by hand stay there."
 msgstr "このフォルダのシリーズの表示先です。手動で別のライブラリに移したシリーズはそのままです。"
 
+#: app/web/static/js/app.js
+msgid "Which database?"
+msgstr "どちらのデータベースにしますか？"
+
 #: app/plugins/builtin/dialogs/templates/views/edit.html
 msgid "Which edition your files are from (regular, kanzenban, omnibus...). Automatic: worked out from the pages per volume and the editions MangaUpdates lists"
 msgstr "ファイルの版（通常版、完全版、合本版など）。自動：1 巻あたりのページ数と MangaUpdates の版情報から判断"
@@ -4943,6 +5059,10 @@ msgstr "このバージョンはスキップしました"
 #: app/web/static/js/app.js
 msgid "You skipped version {version}. A newer one will show here"
 msgstr "バージョン {version} をスキップしました。新しいバージョンはここに表示されます"
+
+#: app/web/static/js/kit.js
+msgid "Your answer"
+msgstr "回答"
 
 #: app/plugins/builtin/attention_lists/templates/attention/matches.html
 msgid "Your copy · folder: {folder}"
