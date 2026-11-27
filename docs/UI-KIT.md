@@ -381,9 +381,10 @@ MangaVibe.toast(t("Marked 3 series as read"), 3000, "", { label: t("Undo"), run:
 
 - A bar: its `<i>` is the filled part. Give it a name (`aria-labelledby` or `aria-label`) and its value
   (`aria-valuenow`, and `aria-valuetext` to say it the way it shows).
-- Without `aria-valuenow` it's busy with no known end: a piece of the bar slides across (slowly with
-  "reduce motion").
-- A bar that only repeats what the text next to it says (a card's reading progress) is `aria-hidden`.
+- A `role="progressbar"` without `aria-valuenow` is busy with no known end: a piece of the bar slides
+  across (slowly with "reduce motion").
+- A bar that only repeats what the text next to it says (a card's reading progress) is `aria-hidden`, with
+  no `role`: it stays still and just shows its `<i>`'s width.
 - Custom properties: `--progress-color`, `--progress-track`.
 
 ### Badges
