@@ -48,13 +48,40 @@
     }
   }
 
-  /* library header: Filter / Sort / Letter buttons, then the quick filters.
-     Phones: two rows. Wide screens: one row, quick filters left, tools right. */
+  /* the library's title (the library picked, or "Library") and how many series (the redesign, #303) */
+  .lib-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 14px;
+    margin: 4px 0 14px;
+
+    & h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+
+      @media (min-width: 700px) {
+        font-size: 38px;
+      }
+    }
+  }
+
+  .lib-count {
+    color: var(--faint);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* library header: one bar. Phones: the quick filters, then Filter / Sort / Letter / grid-list under them.
+     Wide screens: one bar on a card, quick filters left, tools right. */
   .lib-head {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
 
     & .quick {
       margin: 0;
@@ -63,11 +90,65 @@
     @media (min-width: 700px) {
       flex-direction: row-reverse;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
+      padding: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
 
       & .quick {
         flex: 1;
         min-width: 0;
+      }
+    }
+
+    /* the quick filters as quiet chips; the one on is the text colour, inverted */
+    & .quick {
+      gap: 4px;
+
+      & button {
+        padding: 7px 14px;
+        background: none;
+        border-color: transparent;
+        border-radius: 11px;
+        color: var(--muted);
+        font-weight: 650;
+
+        &.on {
+          background: var(--text);
+          border-color: var(--text);
+          color: var(--bg);
+        }
+
+        @media (hover: hover) {
+          &:not(.on):hover {
+            background: var(--hover);
+            color: var(--text);
+          }
+        }
+      }
+
+      @media (max-width: 699px) {
+        & button {
+          background: var(--surface2);
+        }
+      }
+    }
+
+    & .tool {
+      height: 36px;
+      padding: 0 12px;
+      border-color: transparent;
+      font-size: 13.5px;
+    }
+
+    & .view-switch {
+      flex: none;
+      padding: 3px;
+
+      & button {
+        width: 32px;
+        height: 30px;
       }
     }
   }
@@ -120,12 +201,13 @@
     }
 
     & .count {
-      min-width: 20px;
+      min-width: 19px;
       padding: 1px 6px;
       border-radius: 10px;
       background: var(--accent);
       color: var(--accent-text);
-      font-size: 12px;
+      font-size: 11px;
+      font-weight: 800;
       text-align: center;
     }
 
