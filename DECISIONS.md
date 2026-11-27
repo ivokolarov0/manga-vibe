@@ -1714,10 +1714,12 @@ One PR per page, on step 8's tokens and kit.
   being read with its progress and an accent ring, a round button to mark one read. **The list stays**,
   behind a grid/list switch kept per browser, because it has what the grid hasn't room for (read up to
   here, the `book-row` slot for plugins' buttons).
-- **Wide screens: the books on the left, everything known about the series in a 330px column on the
-  right**, by CSS placement only (no markup moved, so pages that extend the template keep their blocks).
-  Phones: about, the books, then the rest; the reordering lowers the two that move up, since plugins'
-  panels in a `display: contents` slot are grid items too and would otherwise jump ahead.
+- **Wide screens: one grid, as before the redesign** (about across, details and the other panels two side
+  by side, tags, the books across). A first try put the books on the left and everything else in a 330px
+  column on the right; the owner turned it down: the important bits were all squeezed to the right and a
+  long book list left a big empty space under the column. Phones: about, the books, then the rest; the
+  reordering lowers the two that move up, since plugins' panels in a `display: contents` slot are grid
+  items too and would otherwise jump ahead.
 - **Library**: a big title, the library picked in the sidebar (read from `$store.libraries` with `?.`, so
   the page still says "Library" without the Libraries plugin) with its series count, then one bar on a card:
   the quick filters as quiet chips (the one on in the text colour, inverted), then Filter, Sort, Letter,

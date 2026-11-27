@@ -417,29 +417,15 @@
       }
     }
 
+    /* wider screens: one grid across the page, the panels flowing in it: about, then details and the
+       rest two side by side, tags, the books (wide panels across the whole width) */
     @media (min-width: 800px) {
       margin-top: 14px;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px 18px;
 
       & .wide {
         grid-column: 1 / -1;
-      }
-    }
-
-    /* wide screens (the redesign, #303): the books on the left, what's known about the series in a column
-       on the right (about, details, links, metadata, folder, plugins' panels, tags) */
-    @media (min-width: 1100px) {
-      grid-template-columns: minmax(0, 1fr) 330px;
-      gap: 16px 30px;
-
-      & > .books-panel {
-        grid-column: 1;
-        grid-row: 1 / span 8;
-        align-self: start;
-      }
-
-      & > :not(.books-panel) {
-        grid-column: 2;
       }
     }
   }
