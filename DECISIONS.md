@@ -1718,3 +1718,9 @@ One PR per page, on step 8's tokens and kit.
   right**, by CSS placement only (no markup moved, so pages that extend the template keep their blocks).
   Phones: about, the books, then the rest; the reordering lowers the two that move up, since plugins'
   panels in a `display: contents` slot are grid items too and would otherwise jump ahead.
+- **Library**: a big title, the library picked in the sidebar (read from `$store.libraries` with `?.`, so
+  the page still says "Library" without the Libraries plugin) with its series count, then one bar on a card:
+  the quick filters as quiet chips (the one on in the text colour, inverted), then Filter, Sort, Letter,
+  plugins' tools and the grid / list switch (moved up from the count line). The line under the bar is only
+  for numbered pages now. The quick filters have no counts: the API gives the total of the current filter
+  only, and five more counts per load weren't worth it.

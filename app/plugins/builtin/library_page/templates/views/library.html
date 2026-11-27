@@ -7,6 +7,12 @@
 {% from "ui/macros.html" import library_card with context %}
     <div class="library-page-view" x-data="libraryPage()">
       {% block head %}
+      <!-- the redesign (#303): a big title (the library picked in the sidebar, with the Libraries plugin) and
+           how many series, then one bar: what you're reading on the left, the tools and grid / list on the right -->
+      <div class="lib-title">
+        <h1 x-text="$store.libraries?.picked ? $store.libraries.name($store.libraries.picked) : t('Library')"></h1>
+        <span class="lib-count" x-show="total > 0" x-cloak x-text="tn('{n} series', '{n} series', total)"></span>
+      </div>
       <div class="lib-head">
         <div class="lib-tools">
           <button class="tool" :class="{ on: filterCount }" @click="openSheet('filter')">
@@ -20,6 +26,13 @@
             <i class="az" aria-hidden="true">A<small>z</small></i>
             <span x-text="letter ? t('Starts with {letter}', { letter }) : t('Letter')"></span></button>
           {{ slot("library-tools") }}
+          <!-- grid or list: the library_view setting -->
+          <div class="segmented view-switch" x-choice aria-label="{{ t('View') }}">
+            <button :class="{ on: layout === 'grid' }" @click="setLayout('grid')"
+                    aria-label="{{ t('Grid') }}" title="{{ t('Grid') }}" x-tooltip><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></button>
+            <button :class="{ on: layout === 'list' }" @click="setLayout('list')"
+                    aria-label="{{ t('List') }}" title="{{ t('List') }}" x-tooltip><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg></button>
+          </div>
         </div>
         <div class="quick">
           <template x-for="[v, label] in quick" :key="v">
@@ -41,20 +54,14 @@
         <button class="clear-all" x-show="chips.length" @click="clearAll()">{{ t("Clear all") }}</button>
         {{ slot("library-filters") }}
       </div>
-      <div class="page-info" x-show="total > 0" x-cloak>
-        <span x-text="paged ? pageInfo : tn('{n} series', '{n} series', total)"></span>
+      <!-- numbered pages: which ones these are, and how many to a page (the count is by the title) -->
+      <div class="page-info" x-show="paged && total > 0" x-cloak>
+        <span x-text="pageInfo"></span>
         <div class="page-tools">
-          <label x-show="paged">{{ t("Per page") }}
+          <label>{{ t("Per page") }}
             <select :value="pageSize" @change="setPageSize($event.target.value)">
               <template x-for="n in pageSizes" :key="n"><option :value="n" x-text="n" :selected="n === pageSize"></option></template>
             </select></label>
-          <!-- grid or list: the library_view setting -->
-          <div class="segmented view-switch" x-choice aria-label="{{ t('View') }}">
-            <button :class="{ on: layout === 'grid' }" @click="setLayout('grid')"
-                    aria-label="{{ t('Grid') }}" title="{{ t('Grid') }}" x-tooltip><svg class="ic" aria-hidden="true"><use href="#i-library"/></svg></button>
-            <button :class="{ on: layout === 'list' }" @click="setLayout('list')"
-                    aria-label="{{ t('List') }}" title="{{ t('List') }}" x-tooltip><svg class="ic" aria-hidden="true"><use href="#i-list"/></svg></button>
-          </div>
         </div>
       </div>
       {% endblock %}

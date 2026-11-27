@@ -1951,7 +1951,7 @@ msgstr "Буква"
 msgid "Libraries"
 msgstr "Библиотеки"
 
-#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
+#: app/plugins/__init__.py app/plugins/builtin/activity_log/activity_log.js app/plugins/builtin/libraries/edit_field.html app/plugins/builtin/libraries/folder_row.html app/plugins/builtin/libraries/libraries.js app/plugins/builtin/library_page/templates/views/library.html app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html app/web/static/js/app.js
 msgid "Library"
 msgstr "Библиотека"
 
