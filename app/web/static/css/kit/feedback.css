@@ -2,7 +2,7 @@
    and "Tooltip").
    #toast: the short message at the bottom (MangaVibe.toast). Inverted colours (text colour as
    background) so it stands out in both themes; the coloured dot says success/info (accent) or error (danger).
-   .progress: a bar (role="progressbar"); without aria-valuenow it's busy without a known end.
+   .progress: a bar (role="progressbar"); a progressbar without aria-valuenow is busy without a known end.
    .empty: nothing to show, a quiet icon above a line of text and maybe a button.
    .loading-line: "Loading…" with a spinner. .skeleton: a grey shape where something is loading;
    .skeleton-card: a card's poster and two lines.
@@ -40,8 +40,9 @@
       transition: width 0.4s var(--ease);
     }
 
-    /* busy, no known end: a piece of the bar slides across */
-    &:not([aria-valuenow]) i {
+    /* busy, no known end: a piece of the bar slides across. Only a real progress bar: a decorative one
+       (aria-hidden, no role, e.g. how far into a book on a cover) just shows its width */
+    &[role="progressbar"]:not([aria-valuenow]) i {
       width: 35%;
       animation: progress-slide 1.2s ease-in-out infinite;
     }
