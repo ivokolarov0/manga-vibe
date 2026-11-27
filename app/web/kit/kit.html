@@ -1,7 +1,10 @@
 {#- The UI kit page at /kit (app/main.py): every piece of the kit in its variants, with the app's own CSS
     (plugin CSS and custom.css included, so a theme shows here too) and js/kit.js. For plugin authors and for
     working on the look (docs/UI-KIT.md). Each piece's section has data-piece="<name>": a test checks that
-    every piece in docs/UI-KIT.md is here. Not translated: it's a page for developers, like the docs. -#}
+    every piece in docs/UI-KIT.md is here. Not translated: it's a page for developers, like the docs.
+    ?piece=<name> shows that piece alone (and ?theme=dark|light): the website's UI kit page (demo/docs.html)
+    shows each piece live in a frame under its heading. Alone, the page tells the frame around it how tall
+    it is, and takes the theme from it when the site's switch changes. -#}
 <!doctype html>
 <html lang="en" data-theme="dark">
 <head>
@@ -9,6 +12,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>MangaVibe UI kit</title>
   <script>try { if (localStorage.getItem("theme-last") === "light") document.documentElement.dataset.theme = "light"; } catch (e) {}</script>
+  <script>
+    /* one piece alone, in the website's frame: ?piece=buttons&theme=light */
+    (() => {
+      const q = new URLSearchParams(location.search);
+      if (!q.get("piece")) return;
+      const root = document.documentElement;
+      root.classList.add("kit-embed");
+      root.dataset.kitPiece = q.get("piece");
+      if (["dark", "light"].includes(q.get("theme"))) root.dataset.theme = q.get("theme");
+    })();
+  </script>
   <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/css/main.css">
   <style>
@@ -78,6 +92,46 @@
     .kit-popover {
       gap: 10px;
       padding: 12px;
+    }
+
+    /* one piece alone (?piece=): only its demos, without the page's header and the piece's title and text
+       (the website says them). A piece that opens something over the page (a dialog, a menu, a toast)
+       leaves room for it */
+    .kit-embed {
+      & .kit-head,
+      & .kit-page > section:not(.kit-shown),
+      & .kit-page > section > :is(h2, p) {
+        display: none;
+      }
+
+      & .kit-page {
+        max-width: none;
+        padding: 14px;
+      }
+
+      & .kit-page > section {
+        margin: 0;
+      }
+
+      & .kit-demo {
+        border-style: solid;
+      }
+
+      &[data-kit-piece="dialog"] body {
+        min-height: 560px;
+      }
+
+      &[data-kit-piece="menu"] body {
+        min-height: 400px;
+      }
+
+      &[data-kit-piece="toast"] body {
+        min-height: 220px;
+      }
+
+      &[data-kit-piece="tooltip"] body {
+        min-height: 130px;
+      }
     }
 
     /* a box that restyles the buttons inside it with the kit's custom properties */
@@ -422,6 +476,25 @@
 </main>
 
 <script src="/static/js/kit.js"></script>
+<script>
+  /* one piece alone (?piece=, in the website's frame): show it, tell the frame how tall the page is (again
+     whenever that changes), and take the theme the site switches to */
+  (() => {
+    const root = document.documentElement;
+    if (!root.classList.contains("kit-embed")) return;
+    const piece = [...document.querySelectorAll(".kit-page > section[data-piece]")].find((s) => s.dataset.piece === root.dataset.kitPiece);
+    piece?.classList.add("kit-shown");
+    if (window.parent === window) return;
+    // the body, not the page: the page is at least as tall as the frame, so it could never shrink
+    const tell = () => parent.postMessage({ type: "mv-kit-height", height: Math.ceil(document.body.getBoundingClientRect().height) }, location.origin);
+    new ResizeObserver(tell).observe(document.body);
+    tell();
+    addEventListener("message", (e) => {
+      if (e.origin !== location.origin || e.data?.type !== "mv-kit-theme") return;
+      if (["dark", "light"].includes(e.data.theme)) root.dataset.theme = e.data.theme;
+    });
+  })();
+</script>
 <script>
   document.addEventListener("alpine:init", () => {
     Alpine.data("kitPage", () => ({
