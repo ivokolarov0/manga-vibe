@@ -1,9 +1,10 @@
-/* The demo's badge (demo.js). Uses the app's own colours (tokens.css), so it follows the theme. */
+/* The demo's badge (demo.js). Uses the app's own colours (tokens.css), so it follows the theme. Bottom
+   right: the sidebar's Settings is at the bottom left. */
 .mv-demo {
   position: fixed;
   z-index: 95;
-  left: 12px;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 .mv-demo-pill {
@@ -21,7 +22,7 @@
 }
 .mv-demo-card {
   position: absolute;
-  left: 0;
+  right: 0;
   bottom: calc(100% + 8px);
   width: min(320px, calc(100vw - 24px));
   max-height: calc(100dvh - 180px);
@@ -36,9 +37,7 @@
 .mv-demo-card p { margin: 6px 0; opacity: 0.85; }
 .mv-demo-card a { color: var(--accent, #ff7a59); font-weight: 600; }
 
-/* Phones: on the right, above the bottom bar (Library / Continue), and the card opens leftwards from
-   there so it stays on the screen. Last in the file, so it wins over the rules above. */
-@media (max-width: 720px) {
-  .mv-demo { left: auto; right: 12px; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
-  .mv-demo-card { left: auto; right: 0; }
+/* Phones: above the floating bar at the bottom. Last in the file, so it wins over the rules above. */
+@media (max-width: 899px) {
+  .mv-demo { right: 12px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
 }
