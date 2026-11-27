@@ -1176,14 +1176,18 @@ keep `{{ settings_link() }}`**, the Settings button with the Needs attention cou
 a top bar without it isn't drawn, the built-in one is, so Settings → Plugins is always one tap away. It
 keeps the `topbar` slot (e.g. the account menu) and hides while reading (`$store.app.view === 'read'`).
 
-A second built-in plugin does this job too: "Sidebar" (`app/plugins/builtin/nav_sidebar/`), off until the
-owner picks it. It keeps the top bar (`#topbar`, logo, search and the `topbar` slot) and draws Library,
-Continue and Settings as `#bottomnav.sidebar`: the usual bar on phones, a column on the left from 900px.
+A second built-in plugin does this job too: "Sidebar" (`app/plugins/builtin/nav_sidebar/`), **the
+default since the redesign** (issue #303; an install that still had the top bar the owner never changed
+gets it once on the update, `NEW_DEFAULTS` in `app/plugins`; the top bar is then the alternative the
+owner picks). It keeps the top bar (`#topbar`, logo, search and the `topbar` slot) and draws Home,
+Library, Continue and Settings as `#bottomnav.sidebar`: the floating bar on phones, a column on the left
+from 900px (the logo at its top, Settings at its bottom). An entry may end with a `.nav-num` (a number on
+the right) and show a `.nav-dot` (a coloured dot, `--dot`) in its `.nav-ic`, as the libraries do.
 Between Continue and Settings is the `nav-items` slot, where the Libraries plugin lists the libraries (the
 tabs above the grid are hidden while the column shows them). A nav of your own may draw that slot or not.
 Plugin API 25: `{{ settings_link(nav=True) }}` draws the Settings button as an entry of that bar (icon in a
-`.nav-ic`, then "Settings"), not as an icon button. The plain top bar stays the fallback (`builtin_for`
-prefers the built-in plugin that's `enabled_by_default`).
+`.nav-ic`, then "Settings"), not as an icon button. The sidebar is the fallback (`builtin_for` prefers
+the built-in plugin that's `enabled_by_default`).
 
 Settings → Plugins shows the plugins that do one exclusive job as one row, named after the job, once there
 are two or more of them: closed, it says which one is in use and how many there are; opened, each has a

@@ -8,12 +8,15 @@
     <button type="button" x-show="$store.app.admin" @click="$store.libraries.addAndPick()" :title="t('New library')"
             :aria-label="t('New library')"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button>
   </div>
-  <template x-for="s in [...($store.libraries.showAll ? [{ id: 0, name: t('All') }] : []), ...$store.libraries.list]" :key="s.id">
+  <!-- each library a coloured dot (its place in the list picks the colour) and its number of series -->
+  <template x-for="(s, i) in [...($store.libraries.showAll ? [{ id: 0, name: t('All') }] : []), ...$store.libraries.list]" :key="s.id">
     <button type="button" class="nav-entry" :class="{ picked: $store.libraries.picked === s.id }"
             :aria-pressed="$store.libraries.picked === s.id" :title="s.locked ? t('Locked: asks for the password') : null"
             @click="$store.libraries.choose(s.id)">
-      <span class="nav-ic"><svg class="ic" aria-hidden="true"><use :href="s.id ? '#i-books' : '#i-blocks'"/></svg></span>
+      <span class="nav-ic" aria-hidden="true"><template x-if="!s.id"><svg class="ic"><use href="#i-blocks"/></svg></template>
+        <template x-if="s.id"><span class="nav-dot" :style="`--dot: ${['var(--accent)', '#7c8cff', '#4cc38a', '#e879b9', '#f2b84b', '#38bdf8'][(i - ($store.libraries.showAll ? 1 : 0)) % 6]}`"></span></template></span>
       <span class="nav-label" x-text="s.name"></span>
+      <span class="nav-num" x-show="s.id && !s.locked && s.series != null" x-text="fmtNum(s.series)"></span>
       <span class="lock" x-show="s.has_password" x-html="icon(s.locked ? 'lock' : 'unlock')"
             role="img" :aria-label="s.locked ? t('locked') : t('unlocked')"></span>
     </button>
