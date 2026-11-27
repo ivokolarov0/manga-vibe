@@ -693,6 +693,36 @@ function step(forward, how = "page") {
   return true;
 }
 
+/* zoom to scale s around the screen point (px, py), for a script (MangaVibe.reader.zoom, Plugin API 41,
+   e.g. eye control). Paged mode only, and not while the zoom is locked; s 1 is the fitted page. */
+function zoomTo(s, px = innerWidth / 2, py = innerHeight / 2, animate = true) {
+  if (!R.book || R.mode === "vertical" || locked() || !view()) return false;
+  if (s <= 1.01) resetZoom(animate);
+  else { zoomAt(s, px, py); applyZoom(animate); }
+  return true;
+}
+
+/* move the page by (dx, dy) pixels, for a script (MangaVibe.reader.pan): paged, a zoomed page or one
+   bigger than the screen moves (dx/dy > 0 shows more of its left/top); vertical, the strip scrolls by dy.
+   Gives { x, y }: how far it really moved, 0 at an edge (so the script can turn the page there). */
+function panBy(dx, dy, animate = false) {
+  if (!R.book) return false;
+  if (R.mode === "vertical") {
+    const box = vbox();
+    if (!box) return false;
+    const before = box.scrollTop;
+    box.scrollTop = before - dy;
+    return { x: 0, y: before - box.scrollTop };
+  }
+  if (locked() || !view()) return false;
+  const from = { x: Z.x, y: Z.y };
+  Z.x += dx;
+  Z.y += dy;
+  clampPan();
+  applyZoom(animate);
+  return { x: Z.x - from.x, y: Z.y - from.y };
+}
+
 /* the keys the host leaves to the reader; true: it used the key */
 function key(e) {
   if (!R.book) return false;
@@ -818,7 +848,7 @@ function bindDrawer(root) {
 
 MangaVibe.registerReader("image-reader", "images", {
   modes: ["paged", "vertical"],
-  open, close, goTo, step, key, wheel, pageBox, drawer, bindDrawer,
+  open, close, goTo, step, key, wheel, pageBox, drawer, bindDrawer, zoomTo, panBy,
   where: () => (R.book ? { page: R.page } : null),
   state: () => ({ fit: fit(), zoom: Z.s, locked: locked(), two_pages: R.two }),
 });

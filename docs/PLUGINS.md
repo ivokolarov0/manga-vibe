@@ -679,6 +679,7 @@ Alpine.store(…); Alpine.data(…) })`, which works both ways, and use only `wi
 | `reader.where()` | what is being read: `{ book, series, page, pages }` (ids; `page` counts from 0), or `null` while no book is open. Plugin API 12 |
 | `reader.redraw()` | the reader asks for the pages' overlays again and draws them, after your script changed what `page_overlay()` gives. Plugin API 12 |
 | `reader.state()`, `.step(forward)`, `.goTo(page)`, `.openBook(which, page)`, `.setMode(mode)`, `.options(open)`, `.overlay(plugin, on)`, `.press(plugin, key)`, `.leave()`, `.refresh()` | the reader from a script, doing what its own buttons do (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
+| `reader.zoom(scale, x, y, animate)`, `reader.pan(dx, dy, animate)` | zoom the page around a point of the screen (`x`, `y` in pixels, the middle if left out; `scale` 1 is the fitted page), and move it by pixels: a zoomed page or one bigger than the screen, or the strip in vertical mode (it scrolls by `dy`). `pan` gives `{ x, y }`, how far the page really moved (0 at an edge), or `false`; `zoom` gives `false` in vertical mode or with the zoom locked. For eye or head control. `state().zoom` is the scale now. Plugin API 41 |
 | `screenCommand(pluginId, name, spec, fn)` | something the page can do for an assistant or voice control (see [Assistants and voice control](#assistants-and-voice-control)). Plugin API 13 |
 | `reloadSettings()` | load the settings again and show them, after they changed elsewhere. Plugin API 13 |
 | `ui.*` | to show things as the app does, in your markup or a view: `ui.cardSub(s)` ("Reading · 3/10"), `ui.updated(s)`, `ui.ago(ms)`, `ui.status(st)`, `ui.publication(p)`, `ui.kind(s)` ("Manhwa"), `ui.scoreCls(n)`, `ui.haveText(c)`, `ui.editionText(c)`, `ui.icon(name)`, `ui.libraryUrl(params)`. Plugin API 17. And `ui.fileSize(bytes)`, `ui.number(v)` ("–" for none), `ui.text(description)` (as HTML, escaped). Plugin API 18 |
@@ -1332,7 +1333,9 @@ MangaVibe.registerReader("my-reader", "images", {
   wheel(e) {},                   // optional: the wheel over the host's bottom strip
   drawer() { return { rows: "", panels: [] }; },  // optional: its options in the reading options (HTML)
   bindDrawer(root) {},           // optional: wire them up (root: the whole reader)
-  state() { return {}; },        // optional: e.g. { fit } for MangaVibe.reader.state()
+  state() { return {}; },        // optional: e.g. { fit, zoom } for MangaVibe.reader.state()
+  zoomTo(s, x, y, animate) {},   // optional (API 41): MangaVibe.reader.zoom(); true if it zoomed
+  panBy(dx, dy, animate) {},     // optional (API 41): MangaVibe.reader.pan(); { x, y } it really moved
 });
 ```
 
@@ -1385,7 +1388,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 40 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 41 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 
