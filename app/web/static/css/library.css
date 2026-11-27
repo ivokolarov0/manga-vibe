@@ -542,8 +542,8 @@
     position: relative;
     aspect-ratio: 2 / 3;
     overflow: hidden;
-    border-radius: 12px;
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-cover);
+    box-shadow: var(--shadow-cover);
     /* keeps the corners rounded while the image is transformed (Safari) */
     isolation: isolate;
 

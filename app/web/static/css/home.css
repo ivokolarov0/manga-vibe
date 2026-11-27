@@ -2,6 +2,255 @@
    app/plugins/builtin/home_page). The cards are the library's (library.css), as wide as Settings → Display
    → Card size makes them (--card). Swipe or scroll a row sideways; on screens with a mouse, the arrows. */
 @layer pages {
+  /* ---------------------------------------------------------------- the hero: Continue reading, big
+     The series' own cover, blurred and saturated, is the light behind it (--art, set by the markup), under a
+     dark veil so the white text reads on any cover. Cover, text, then "Also reading" on wide screens; on a
+     phone the cover and text side by side, "Also reading" under them. The same in both themes: it's a
+     picture, not a surface. */
+  .home-hero {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 26px;
+    padding: 16px;
+    overflow: hidden;
+    border-radius: 22px;
+    background: #1b120e;
+    color: #fff;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: -50px;
+      z-index: -2;
+      background: var(--art) center / cover;
+      filter: blur(46px) saturate(1.5);
+      opacity: 0.75;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(100deg, rgb(15 10 8 / 0.9) 25%, rgb(15 10 8 / 0.55) 65%, rgb(15 10 8 / 0.8));
+    }
+
+    @media (min-width: 700px) {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 28px;
+      margin-bottom: 34px;
+      padding: 28px;
+      border-radius: 24px;
+    }
+
+    @media (min-width: 1100px) {
+      grid-template-columns: auto minmax(0, 1fr) 280px;
+    }
+  }
+
+  .hero-cover img {
+    display: block;
+    width: 92px;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: 11px;
+    box-shadow: 0 14px 36px rgb(0 0 0 / 0.55);
+
+    @media (min-width: 700px) {
+      width: 150px;
+      border-radius: 14px;
+      transform: rotate(-2deg);
+      transition: transform var(--slow) var(--ease);
+    }
+  }
+
+  @media (hover: hover) and (min-width: 700px) {
+    .hero-cover:hover img {
+      transform: rotate(0deg) scale(1.03);
+    }
+  }
+
+  .hero-text {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+
+    & h2 {
+      margin: 0;
+      overflow: hidden;
+      font-size: 23px;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    @media (min-width: 700px) {
+      gap: 11px;
+
+      & h2 {
+        font-size: clamp(30px, 3.4vw, 42px);
+      }
+    }
+  }
+
+  .hero-eyebrow {
+    color: #ffad5c;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .hero-where {
+    color: rgb(255 255 255 / 0.78);
+    font-size: 14px;
+
+    @media (min-width: 700px) {
+      font-size: 15px;
+    }
+  }
+
+  .hero-progress {
+    display: grid;
+    gap: 7px;
+    max-width: 420px;
+    color: rgb(255 255 255 / 0.7);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+
+    & .progress {
+      --progress-track: rgb(255 255 255 / 0.16);
+      height: 7px;
+    }
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+
+    & .btn {
+      --btn-height: 42px;
+      --btn-radius: 12px;
+      padding: 0 18px;
+    }
+
+    /* the second button: glass over the picture */
+    & .btn.ghost {
+      background: rgb(255 255 255 / 0.1);
+      border-color: rgb(255 255 255 / 0.14);
+      color: #fff;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (hover: hover) {
+      & .btn.ghost:hover {
+        background: rgb(255 255 255 / 0.18);
+        border-color: rgb(255 255 255 / 0.3);
+      }
+    }
+
+    @media (max-width: 699px) {
+      & .btn {
+        --btn-height: 36px;
+        padding: 0 14px;
+        font-size: 13px;
+      }
+    }
+  }
+
+  /* "Also reading": a column on the right on wide screens, under the rest elsewhere */
+  .hero-more {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    align-content: center;
+
+    @media (min-width: 1100px) {
+      grid-column: auto;
+      grid-template-columns: minmax(0, 1fr);
+      align-self: stretch;
+      padding-left: 24px;
+      border-left: 1px solid rgb(255 255 255 / 0.12);
+    }
+
+    & .home-see-all {
+      justify-self: start;
+      margin: 0;
+      color: #ffad5c;
+    }
+  }
+
+  .hero-more-title {
+    grid-column: 1 / -1;
+    color: rgb(255 255 255 / 0.6);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hero-mini {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    padding: 8px;
+    border-radius: 14px;
+    background: rgb(255 255 255 / 0.07);
+    transition: background-color var(--fast);
+
+    & img {
+      width: 46px;
+      aspect-ratio: 2 / 3;
+      object-fit: cover;
+      border-radius: 7px;
+    }
+
+    & b {
+      display: block;
+      overflow: hidden;
+      font-size: 13.5px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & small {
+      display: block;
+      overflow: hidden;
+      color: rgb(255 255 255 / 0.6);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    & .progress {
+      --progress-track: rgb(255 255 255 / 0.16);
+      display: block;
+      height: 4px;
+      margin-top: 6px;
+    }
+
+    @media (hover: hover) {
+      &:hover {
+        background: rgb(255 255 255 / 0.13);
+      }
+    }
+  }
+
+  .hero-mini-text {
+    min-width: 0;
+  }
+
   .home-row {
     margin-bottom: 22px;
 
@@ -38,14 +287,15 @@
 
     & h2 {
       margin: 0;
-      font-size: 18px;
+      font-size: 19px;
+      letter-spacing: -0.025em;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
 
       @media (min-width: 700px) {
-        font-size: 20px;
+        font-size: 22px;
       }
     }
   }
@@ -110,7 +360,8 @@
      set) the row scrolls sideways by itself and stops at a card */
   .home-track {
     --gap-x: 10px;
-    padding: 2px 0 6px;  /* room for the cards' shadow */
+    margin-bottom: -18px;
+    padding: 4px 0 24px;  /* room for the covers' shadow, which the carousel would cut off */
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
@@ -231,12 +482,14 @@
 
     & .tile-cover {
       aspect-ratio: 16 / 9;
+      place-items: end start;
+      border-radius: 18px;
 
       & img {
         position: absolute;
         inset: 0;
         object-position: 50% 30%;  /* a cover's faces and titles are mostly in its upper part */
-        filter: brightness(0.6) saturate(1.05);
+        filter: brightness(0.55) saturate(1.15);
         transition: filter var(--fast), transform 0.25s ease;
       }
 
@@ -253,14 +506,15 @@
       position: relative;
       display: block;
       max-width: 100%;
-      padding: 0 12px;
+      padding: 14px 16px;
       overflow: hidden;
       color: #fff;
-      font-size: clamp(16px, calc(var(--card) * 0.2), 30px);
+      font-family: var(--font-display);
+      font-size: clamp(17px, calc(var(--card) * 0.16), 26px);
       font-weight: 800;
       line-height: 1.15;
-      letter-spacing: -0.01em;
-      text-align: center;
+      letter-spacing: -0.02em;
+      text-align: left;
       text-overflow: ellipsis;
       text-shadow: 0 2px 10px rgb(0 0 0 / 0.65), 0 1px 2px rgb(0 0 0 / 0.5);
       white-space: nowrap;
@@ -278,7 +532,7 @@
 
     & .card-sub {
       margin-top: 6px;
-      text-align: center;
+      padding-left: 2px;
     }
 
     @media (hover: hover) {

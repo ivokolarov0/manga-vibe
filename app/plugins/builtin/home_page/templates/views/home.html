@@ -6,9 +6,48 @@
     viewport, .home-slides what moves, each .home-item a card; canPrev, canNext and step(dir) are its arrows.
     Keep the slots home-end and card-badges. A plugin's page can {% extends "@home-page/views/home.html" %} and change a block. -#}
 {% from "ui/macros.html" import home_card with context %}
-    <div class="home-page-view" x-data>
+    <div class="home-page-view" x-data="{ get hero() { return ($store.home.sections || []).find((s) => s.layout === 'continue' && s.items.length) } }">
+      {% block hero %}
+      {#- Continue reading, big (the redesign, #303): the series last read with its own cover blurred behind
+          it, where you stopped and how far into that book, then up to three more ("Also reading"). It
+          takes the place of the Continue reading row, at the top. -#}
+      <template x-if="hero">
+        <section class="home-hero" x-data="{ get c() { return hero.items[0] }, get more() { return hero.items.slice(1, 4) } }"
+                 :style="`--art: url('${c.poster_large}')`" aria-labelledby="home-hero-title">
+          <a class="hero-cover" :href="'#/series/' + c.id" tabindex="-1" aria-hidden="true"><img :src="c.poster_large" alt=""></a>
+          <div class="hero-text">
+            <span class="hero-eyebrow" x-text="hero.title"></span>
+            <h2 id="home-hero-title" x-text="c.title"></h2>
+            <span class="hero-where" x-text="c.continue.label"></span>
+            <div class="hero-progress">
+              <div class="progress" role="progressbar" aria-valuemin="0" :aria-valuemax="c.continue.page_count"
+                   :aria-valuenow="c.continue.page + 1" :aria-label="t('Read so far')">
+                <i :style="`width: ${Math.max(2, (c.continue.page + 1) / Math.max(1, c.continue.page_count) * 100)}%`"></i></div>
+              <span x-text="t('Page {page} of {pages}', { page: fmtNum(c.continue.page + 1), pages: fmtNum(c.continue.page_count) })"></span>
+            </div>
+            <div class="hero-actions">
+              <a class="btn primary" :href="`#/read/${c.continue.book_id}?page=${c.continue.page}`">
+                <svg class="ic fill" aria-hidden="true"><use href="#i-play"/></svg>{{ t("Continue") }}</a>
+              <a class="btn ghost" :href="'#/series/' + c.id">{{ t("Series page") }}</a>
+            </div>
+          </div>
+          <div class="hero-more" x-show="more.length">
+            <span class="hero-more-title">{{ t("Also reading") }}</span>
+            <template x-for="m in more" :key="m.id">
+              <a class="hero-mini" :href="`#/read/${m.continue.book_id}?page=${m.continue.page}`">
+                <img :src="m.poster" alt="" loading="lazy">
+                <span class="hero-mini-text"><b x-text="m.title"></b>
+                  <small x-text="m.continue.label + ' · ' + t('p{page}/{pages}', { page: m.continue.page + 1, pages: m.continue.page_count })"></small>
+                  <span class="progress" aria-hidden="true"><i :style="`width: ${Math.max(2, (m.continue.page + 1) / Math.max(1, m.continue.page_count) * 100)}%`"></i></span></span>
+              </a>
+            </template>
+            <a class="home-see-all" x-show="hero.items.length > 4 && hero.see_all" :href="hero.see_all">{{ t("See all") }}<svg class="ic" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>
+          </div>
+        </section>
+      </template>
+      {% endblock %}
       {% block rows %}
-      <template x-for="sec in $store.home.sections || []" :key="sec.id">
+      <template x-for="sec in ($store.home.sections || []).filter((s) => s !== hero)" :key="sec.id">
         <section class="home-row" x-data="homeRow()" :aria-labelledby="'home-row-' + sec.id">
           <div class="home-row-head">
             <h2 :id="'home-row-' + sec.id" x-text="sec.title"></h2>

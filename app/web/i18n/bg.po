@@ -277,6 +277,10 @@ msgstr "Всички са избрани"
 msgid "Allow them and install it?"
 msgstr "Да се разрешат ли и да се инсталира?"
 
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Also reading"
+msgstr "Четете още"
+
 #: app/web/templates/sheets/library.html
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr "Покажи и поредици без известен брой (текущи, без метаданни)"
@@ -749,7 +753,7 @@ msgstr "Не се свързва никъде"
 msgid "Contained"
 msgstr "Ограничена"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Continue"
 msgstr "Продължи"
 
@@ -2989,7 +2993,7 @@ msgstr "Ширина на страницата"
 msgid "Page {n}"
 msgstr "Страница {n}"
 
-#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr "Страница {page} от {pages}"
 
@@ -3189,7 +3193,7 @@ msgstr "Издаване"
 msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
 msgstr "Да се върне ли копието на базата данни от {when}? Напредъкът, настройките и другите промени оттогава ще се загубят."
 
-#: app/plugins/builtin/cards/templates/views/card.html
+#: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/home_page/templates/views/home.html
 msgid "p{page}/{pages}"
 msgstr "с. {page}/{pages}"
 
@@ -3228,6 +3232,10 @@ msgstr "Четене на глас"
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
 msgstr "Четете в приложението MangaVibe вместо в браузъра: цял екран без ленти на браузъра, екранът не изгасва, докато четете, а бутоните за звук обръщат страниците. То показва същия MangaVibe, така че библиотеката, напредъкът и настройките ви са същите."
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Read so far"
+msgstr "Прочетено досега"
 
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
@@ -3707,7 +3715,7 @@ msgstr "Изчезнали поредици"
 msgid "Series not found"
 msgstr "Поредицата не е намерена"
 
-#: app/contracts/__init__.py app/plugins/builtin/series_page/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/series_page/__init__.py
 msgid "Series page"
 msgstr "Страница на поредицата"
 

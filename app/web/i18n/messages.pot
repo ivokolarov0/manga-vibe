@@ -275,6 +275,10 @@ msgstr ""
 msgid "Allow them and install it?"
 msgstr ""
 
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Also reading"
+msgstr ""
+
 #: app/web/templates/sheets/library.html
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr ""
@@ -747,7 +751,7 @@ msgstr ""
 msgid "Contained"
 msgstr ""
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Continue"
 msgstr ""
 
@@ -2987,7 +2991,7 @@ msgstr ""
 msgid "Page {n}"
 msgstr ""
 
-#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr ""
 
@@ -3187,7 +3191,7 @@ msgstr ""
 msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
 msgstr ""
 
-#: app/plugins/builtin/cards/templates/views/card.html
+#: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/home_page/templates/views/home.html
 msgid "p{page}/{pages}"
 msgstr ""
 
@@ -3225,6 +3229,10 @@ msgstr ""
 
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
+msgstr ""
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Read so far"
 msgstr ""
 
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
@@ -3705,7 +3713,7 @@ msgstr ""
 msgid "Series not found"
 msgstr ""
 
-#: app/contracts/__init__.py app/plugins/builtin/series_page/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/series_page/__init__.py
 msgid "Series page"
 msgstr ""
 

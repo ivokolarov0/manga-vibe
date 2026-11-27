@@ -277,6 +277,10 @@ msgstr "Alle ausgewählt"
 msgid "Allow them and install it?"
 msgstr "Erlauben und installieren?"
 
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Also reading"
+msgstr "Außerdem am Lesen"
+
 #: app/web/templates/sheets/library.html
 msgid "Also show series with no known total (ongoing, no metadata)"
 msgstr "Auch Serien ohne bekannte Gesamtzahl zeigen (laufend, ohne Metadaten)"
@@ -749,7 +753,7 @@ msgstr "Verbindet sich mit nichts"
 msgid "Contained"
 msgstr "Begrenzt"
 
-#: app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/nav/templates/views/nav.html app/plugins/builtin/nav_sidebar/templates/views/nav.html app/plugins/builtin/series_page/templates/views/series.html
 msgid "Continue"
 msgstr "Weiterlesen"
 
@@ -2989,7 +2993,7 @@ msgstr "Seitenbreite"
 msgid "Page {n}"
 msgstr "Seite {n}"
 
-#: app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
+#: app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/image_reader/image_reader.js app/web/static/js/app.js
 msgid "Page {page} of {pages}"
 msgstr "Seite {page} von {pages}"
 
@@ -3189,7 +3193,7 @@ msgstr "Erscheinen"
 msgid "Put back the copy of the database made on {when}? Reading progress, settings and other changes made since then are lost."
 msgstr "Die Kopie der Datenbank vom {when} zurückholen? Lesefortschritt, Einstellungen und andere Änderungen seitdem gehen verloren."
 
-#: app/plugins/builtin/cards/templates/views/card.html
+#: app/plugins/builtin/cards/templates/views/card.html app/plugins/builtin/home_page/templates/views/home.html
 msgid "p{page}/{pages}"
 msgstr "S. {page}/{pages}"
 
@@ -3228,6 +3232,10 @@ msgstr "Vorlesen"
 #: app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Read in the MangaVibe app instead of the browser: fullscreen without browser bars, the screen stays on while you read, and the volume buttons turn pages. It shows this same MangaVibe, so your library, progress and settings are the same."
 msgstr "Lies in der MangaVibe-App statt im Browser: Vollbild ohne Browserleisten, der Bildschirm bleibt beim Lesen an und die Lautstärketasten blättern um. Sie zeigt dasselbe MangaVibe, also sind Bibliothek, Fortschritt und Einstellungen gleich."
+
+#: app/plugins/builtin/home_page/templates/views/home.html
+msgid "Read so far"
+msgstr "Bisher gelesen"
 
 #: app/plugins/__init__.py app/plugins/builtin/settings_pages/__init__.py app/plugins/builtin/settings_pages/templates/views/settings-reader.html
 msgid "Reader"
@@ -3707,7 +3715,7 @@ msgstr "Verschwundene Serien"
 msgid "Series not found"
 msgstr "Serie nicht gefunden"
 
-#: app/contracts/__init__.py app/plugins/builtin/series_page/__init__.py
+#: app/contracts/__init__.py app/plugins/builtin/home_page/templates/views/home.html app/plugins/builtin/series_page/__init__.py
 msgid "Series page"
 msgstr "Serienseite"
 
