@@ -86,6 +86,7 @@
       --btn-border: var(--ok);
       --btn-radius: var(--radius-pill);
       --btn-primary-bg: var(--ok);
+      --btn-primary-glow: color-mix(in srgb, var(--ok) 30%, transparent);
     }
   </style>
 </head>
@@ -128,7 +129,7 @@
     </div>
     <div class="kit-demo kit-custom">
       <span class="muted">Restyled with <code>--btn-bg</code>, <code>--btn-border</code>, <code>--btn-radius</code>,
-        <code>--btn-primary-bg</code> on the box:</span>
+        <code>--btn-primary-bg</code>, <code>--btn-primary-glow</code> on the box:</span>
       <div class="btn-row">
         <button class="btn">Button</button>
         <button class="btn primary">Primary</button>
@@ -171,6 +172,13 @@
       <label x-field class="setting-row"><span class="label"><span>Find metadata automatically</span>
         <small>For new series after each scan</small></span>
         <input type="checkbox" checked></label>
+      <div x-field class="setting-row"><span class="label"><span>Theme</span>
+        <small>Two or three short choices: a .segmented right in the row</small></span>
+        <div class="segmented" x-choice>
+          <template x-for="[key, label] in [['dark', 'Dark'], ['light', 'Light'], ['auto', 'Match device']]" :key="key">
+            <button type="button" :class="{ on: rowSeg === key }" @click="rowSeg = key" x-text="label"></button>
+          </template>
+        </div></div>
       <label x-field class="setting-row"><span class="label"><span>Reading direction</span></span>
         <select><option>Right to left</option><option>Left to right</option></select></label>
       <div x-field class="setting-row"><div class="label"><span>Scan for new files</span>
@@ -219,9 +227,13 @@
   <section data-piece="segmented">
     <h2>Segmented</h2>
     <p class="muted"><code>.segmented</code> with <code>x-choice</code>: two or three choices side by side, the
-      chosen one <code>.on</code>. The arrow keys move and pick.</p>
+      chosen one <code>.on</code> (a raised tile; <code>.accent</code>: the accent colour). The arrow keys move and pick.</p>
     <div class="kit-demo">
       <div class="segmented" x-choice aria-label="Order">
+        <button :class="{ on: seg === 'asc' }" @click="seg = 'asc'">Ascending</button>
+        <button :class="{ on: seg === 'desc' }" @click="seg = 'desc'">Descending</button>
+      </div>
+      <div class="segmented accent" x-choice aria-label="Order, accent">
         <button :class="{ on: seg === 'asc' }" @click="seg = 'asc'">Ascending</button>
         <button :class="{ on: seg === 'desc' }" @click="seg = 'desc'">Descending</button>
       </div>
@@ -415,7 +427,7 @@
     Alpine.data("kitPage", () => ({
       theme: document.documentElement.dataset.theme,
       fieldTitle: "Alive", fieldYear: "19999",
-      tab: "books", small: "one", seg: "asc", opt: "rtl",
+      tab: "books", small: "one", seg: "asc", rowSeg: "dark", opt: "rtl",
       menuOpen: false, picked: "", dialogOpen: false, keepOpen: false, innerOpen: false,
       toggleTheme() {
         this.theme = this.theme === "dark" ? "light" : "dark";

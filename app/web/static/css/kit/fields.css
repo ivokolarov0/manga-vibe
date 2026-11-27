@@ -3,7 +3,7 @@
    x-field (js/kit.js) tying them together. The name and its hint on one line, the control under them,
    so fields side by side line up.
    Custom properties: --field-bg, --field-border, --field-radius, --field-height, --field-focus,
-   --check-on, --switch-off, --switch-on. */
+   --check-on, --switch-off, --switch-on (--check-on and --switch-on: a colour or a gradient). */
 @layer kit {
   .field {
     display: flex;
@@ -49,7 +49,7 @@
   textarea {
     background: var(--field-bg, var(--surface2));
     border: 1px solid var(--field-border, var(--border));
-    border-radius: var(--field-radius, var(--radius));
+    border-radius: var(--field-radius, calc(var(--radius) - 1px));
     padding: 0 12px;
     transition: border-color var(--fast), box-shadow var(--fast), background-color var(--fast);
   }
@@ -119,8 +119,8 @@
     }
 
     &:checked {
-      background: var(--check-on, var(--accent));
-      border-color: var(--check-on, var(--accent));
+      background: var(--check-on, var(--accent-gradient));
+      border-color: transparent;
 
       &::before {
         transform: rotate(45deg) scale(1);
@@ -136,9 +136,9 @@
   /* a checkbox that turns something on or off in a settings row is a switch */
   :is(.setting-row, .row-buttons, .lib-option) > input[type="checkbox"],
   input[type="checkbox"].switch {
-    width: 40px;
-    height: 24px;
-    background: var(--switch-off, color-mix(in srgb, var(--text) 18%, var(--surface2)));
+    width: 44px;
+    height: 26px;
+    background: var(--switch-off, var(--surface3));
     border: 0;
     border-radius: var(--radius-pill);
 
@@ -146,22 +146,23 @@
       position: absolute;
       top: 3px;
       left: 3px;
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       margin: 0;
       background: #fff;
       border: 0;
       border-radius: 50%;
-      box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+      box-shadow: 0 2px 4px rgb(0 0 0 / 0.3);
       transform: none;
       transition: transform var(--slow) var(--ease);
     }
 
+    /* on: the accent's gradient (a colour or a gradient in --switch-on) */
     &:checked {
-      background: var(--switch-on, var(--accent));
+      background: var(--switch-on, var(--accent-gradient));
 
       &::before {
-        transform: translateX(16px);
+        transform: translateX(18px);
       }
     }
   }

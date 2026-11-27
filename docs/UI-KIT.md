@@ -2,7 +2,8 @@
 
 The pieces MangaVibe and its plugins share: buttons, fields, chips, tabs, menus, dialogs, toasts… Use them in
 a plugin's markup and it looks and works like the rest of the app, and it follows the owner's theme and
-`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33; tabs and choices (`x-tabs`, `x-choice`), API 34; fields and setting rows (`x-field`), API 35; toasts with an action, tooltips (`x-tooltip`), API 36.
+`custom.css`. Plugin API 31 (issue #294); dialogs for the keyboard and screen readers, API 32; menus (`x-menu`), API 33; tabs and choices (`x-tabs`, `x-choice`), API 34; fields and setting rows (`x-field`), API 35; toasts with an action, tooltips (`x-tooltip`), API 36; the new look (warm darks, the accent's gradient,
+Bricolage Grotesque and Plus Jakarta Sans, choices right in a setting row), API 38.
 
 **See them all at `/kit`** (e.g. `http://localhost:8000/kit`): every piece in its variants, dark and light,
 with your plugins' CSS and `custom.css` applied.
@@ -21,8 +22,20 @@ Three promises:
 ## Restyling
 
 The tokens in `app/web/static/css/tokens.css` (`--accent`, `--surface`, `--radius`…) change everything at
-once (see [Styling](PLUGINS.md#styling-plugins-and-your-own-customcss)). To change one piece, set its
-custom properties, on `:root` for the whole app or on a box for the pieces inside it:
+once (see [Styling](PLUGINS.md#styling-plugins-and-your-own-customcss)). The ones the pieces use most:
+
+| | |
+|---|---|
+| `--bg`, `--surface`, `--surface2`, `--surface3` | the page, cards, things on a card, things on those (warm darks; light in the light theme) |
+| `--text`, `--muted`, `--faint` | text, quieter text, counts and labels over lists |
+| `--border` | hairlines (a see-through warm white in the dark theme) |
+| `--accent`, `--accent-2`, `--accent-gradient`, `--accent-soft`, `--accent-text` | the orange, the other end of its gradient (made from `--accent`), the gradient (primary buttons, progress, switches), a soft tint of it, text on it |
+| `--radius`, `--radius-panel`, `--radius-cover`, `--radius-pill` | buttons and fields, cards, covers, pills |
+| `--shadow-sm`, `--shadow`, `--shadow-lg`, `--shadow-cover` | shadows, and the one under a cover |
+| `--font-ui`, `--font-display` | Plus Jakarta Sans for everything, Bricolage Grotesque for titles (`h1`, `h2`, a dialog's title); both are served by MangaVibe (`static/fonts/`), so they work offline |
+
+To change one piece, set its custom properties, on `:root` for the whole app or on a box for the pieces
+inside it:
 
 ```css
 /* every button in my plugin's panel: green and round */
@@ -102,14 +115,16 @@ stops what the piece was about to do (a dialog stays open).
 <div class="btn-row">…</div>
 ```
 
-- `.btn`: `.small`, `.primary` (the accent colour), `.danger`, `.on` (switched on), `.busy` (a spinner before
-  the label; disable the button too), `.disabled` or `disabled`.
+- `.btn`: `.small`, `.primary` (the accent's gradient, `--accent-gradient`, with a soft light under it),
+  `.danger`, `.on` (switched on), `.busy` (a spinner before the label; disable the button too), `.disabled`
+  or `disabled`.
 - `.iconbtn`: a square button with an icon, the height of a `.btn`; a `<span class="count">` on it is a
   number in its corner. `.icon-btn`: a small round one. `.link-btn`: looks like a link.
 - `.btn-row`: a row of buttons that wraps.
 - Give a button that only has an icon an `aria-label` (and a `title`).
-- Custom properties: `--btn-bg`, `--btn-border`, `--btn-radius`, `--btn-height` (all buttons), `--btn-primary-bg`,
-  `--btn-primary-text`, `--btn-danger`.
+- Custom properties: `--btn-bg`, `--btn-border`, `--btn-radius`, `--btn-height` (all buttons), `--btn-primary-bg`
+  (a colour or a gradient), `--btn-primary-text`, `--btn-primary-glow` (the light under it: set it with a
+  `--btn-primary-bg` of another colour), `--btn-danger`.
 
 ### Fields
 
@@ -160,8 +175,13 @@ stops what the piece was about to do (a dialog stays open).
 ```
 
 - A setting per row: a `.label` with its name (**in an element of its own**, a `<span>`) and an optional
-  `<small>` hint, then its control: a checkbox (drawn as a switch), a select, a field, or buttons in a
-  `.row-buttons`. `.sub`: a follow-up to the row above, indented.
+  `<small>` hint, then its control: a checkbox (drawn as a switch), a select, a `.segmented` with
+  `x-choice` (two or three short choices right in the row, beside the name when there's room and under it
+  on a phone), a field, or buttons in a `.row-buttons`. `.sub`: a follow-up to the row above, indented.
+- A row with a `.segmented` is a `<div>`, not a `<label>`: a click on a label presses the first button in it.
+  On/off is a switch, two or three choices a `.segmented`, a longer list a select.
+- Settings' own rows come from `SETTING_ROWS` (app.js) through the `setting_rows` macro: `check: true` for a
+  switch, `inline: true` for a `.segmented`, else a select.
 - `x-field` as for Fields: the control is named by the name alone and described by the hint, and the
   checkbox is a switch for screen readers.
 - `.settings-card`: the card they sit in. Settings' pages (`section` in the settings content, a plugin's
@@ -218,11 +238,13 @@ stops what the piece was about to do (a dialog stays open).
 </div>
 ```
 
-- Two or three choices side by side; the chosen one has `.on`, and your `@click` picks.
+- Two or three choices side by side; the chosen one has `.on` (a raised tile), and your `@click` picks.
+  `.segmented.accent`: the chosen one in the accent's gradient. In a setting row: see Setting rows.
 - `x-choice` makes it a radio group for screen readers (`role="radiogroup"`, `role="radio"` with
   `aria-checked`; give the group an `aria-label`), with one stop for Tab and the arrow keys (all four, round,
   plus Home and End) moving and picking. Option `manual`, `data-kit-skip`, the methods: as for tabs.
-- Custom properties: `--choice-on`, `--choice-on-text`, `--segmented-bg`.
+- Custom properties: `--choice-on`, `--choice-on-text`, `--segmented-bg`, `--segmented-min` (a button's
+  least width).
 
 ### Options
 

@@ -444,7 +444,8 @@ own.set("tabs", {
 /* x-field on a .field or a .setting-row: ties a control to its name, its hint and its error, for screen
    readers. A .field is <label> (the name), an optional .hint, the control, an optional .error; a
    .setting-row is a .label holding the name (its first element) and an optional <small> hint, then the
-   control (a folder card's .lib-option, with its .lib-option-text, the same). The kit:
+   control: a field, or a .segmented of choices (a folder card's .lib-option, with its .lib-option-text,
+   the same). The kit:
    - names the control by the name alone (for/id, or aria-labelledby in a setting row, so a hint inside the
      row's <label> isn't read as part of the name);
    - describes it with the hint and, while it shows, the error (aria-describedby); the error gets
@@ -455,7 +456,8 @@ own.set("tabs", {
    control(), name(), hint(), error() and wire() are methods, so a plugin can change one of them alone. */
 own.set("field", {
   options: {},
-  control: (el) => el.querySelector("input:not([type='hidden']), select, textarea"),
+  // a .segmented (choices right in a setting row) is named and described like a field
+  control: (el) => el.querySelector("input:not([type='hidden']), select, textarea, .segmented"),
   name: (el) => el.querySelector(":scope > label, :scope > :is(.label, .lib-option-text) > :first-child:not(small)"),
   hint: (el) => el.querySelector(":scope > .hint, :scope > :is(.label, .lib-option-text) > small"),
   error: (el) => el.querySelector(":scope > .error"),

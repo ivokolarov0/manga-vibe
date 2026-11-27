@@ -1653,3 +1653,29 @@ Plugin API version, and the app works after every one.
   button was already the kit's `.btn`.
 - **Examples**: the Sakura theme shows the two ways to restyle (tokens, and a piece's custom properties);
   the plugin reference has a menu, a field and a tooltip in a slot.
+
+### The new look: tokens, fonts and the kit (Plugin API 38, issue #294, step 8 #302)
+
+- **The approved redesign's first half** (the mockup and spec are on #302): the tokens and the kit's
+  pieces. The pages' layouts (sidebar, Home hero, series header, filter bar, grouped Settings) are step 9.
+- **Warm darks** instead of the blue-grey ones, hairline borders (`rgb(255 238 226 / 0.08)`), a new
+  `--surface3` and `--faint`. The orange stays. **Old token names stay** (`--surface2`, `--border`…): only
+  their values changed, so plugins and `custom.css` keep working.
+- **The accent's gradient** (`--accent-gradient`) on primary buttons, progress bars, switches and ticked
+  checkboxes. Its other end, `--accent-2`, is *made from* `--accent` (relative colour: lighter, the hue
+  turned 25° towards yellow; mixed with white where relative colours aren't supported), not a fixed orange:
+  an owner's `custom.css` with a blue accent would otherwise fade from blue into orange.
+  `--btn-primary-glow` is new because the light under a primary button can't be mixed from a gradient.
+- **Bricolage Grotesque (titles) and Plus Jakarta Sans (the rest), vendored** in `static/fonts/` as
+  variable woff2 (from Fontsource 5.3.0), split by script with `unicode-range`, with their OFL licences.
+  No CDN: the app works offline. They have no basic Cyrillic or Japanese, so Bulgarian and Japanese text
+  falls back to the system fonts in the stacks. `h1`, `h2` and a dialog's title use the display face.
+- **The segmented's chosen one is a raised tile** (as in the mockup's Settings), not filled with the
+  accent; `.segmented.accent` keeps the filled look. Its buttons have no 110px minimum any more
+  (`--segmented-min`).
+- **Choices right in a setting row**: `inline: true` in `SETTING_ROWS` draws a `.segmented`; `x-field`
+  names it like any control. The macro's rows became `<div>`s: a click on a `<label>` presses the first
+  button inside it. A click on the name still flips the switch or focuses the dropdown (a click handler).
+  Which rows use it is step 9's.
+- **Sizes**: controls keep their 40px height (the top bar's height depends on it); radii grew (12px,
+  cards 20px, covers `--radius-cover` 15px, dialogs 24px).

@@ -1372,7 +1372,7 @@ Plugin API 22. What a plugin may use of MangaVibe. The built-in plugins use only
   Anything else in `app` is the app's inside and may change in any version.
 - **Page**: `window.MangaVibe` only (and Alpine). The app's own functions in `app.js` and `common.js`
   (`api`, `toast`...) are not for plugins; use `MangaVibe.api`, `MangaVibe.toast`...
-- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 37 now). **The deprecation rule**: something taken
+- **Its version is the Plugin API version** (`app.plugins.API_VERSION`, 38 now). **The deprecation rule**: something taken
   out of the SDK first warns (in the log) for one minor version, and the notes of that release say what to
   use instead.
 
@@ -1390,7 +1390,11 @@ edit it with File Station and reload the page.
 There are two themes, dark and light: `<html data-theme="dark">` or `"light"`. A token set on
 `:root` counts for both; for one theme only, use `:root[data-theme="light"] { --accent: … }`.
 `--accent-text` is the text colour on the accent (dark in the dark theme, white in the light one):
-set it too if your accent needs the other.
+set it too if your accent needs the other. Primary buttons, progress bars and switches use the accent's
+gradient (`--accent-gradient`, from `--accent` to `--accent-2`). `--accent-2` is made from `--accent` (a
+little lighter, the hue turned towards yellow), so a new accent gets a gradient of its own colour; set
+`--accent-2` for another end, or the same as `--accent` for no gradient. The fonts are `--font-ui` and
+`--font-display` (Plugin API 38).
 
 ### The UI kit
 

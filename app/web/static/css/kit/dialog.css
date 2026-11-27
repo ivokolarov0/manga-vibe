@@ -41,17 +41,17 @@
       background: var(--dialog-bg, var(--surface));
       border: 1px solid var(--border);
       border-bottom: 0;
-      border-radius: var(--dialog-radius, 20px) var(--dialog-radius, 20px) 0 0;
+      border-radius: var(--dialog-radius, 24px) var(--dialog-radius, 24px) 0 0;
       box-shadow: var(--shadow-lg);
       animation: sheet-up 0.32s var(--ease);
     }
 
     & h3 {
       margin: 16px 0 8px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
+      color: var(--faint);
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     }
 
@@ -67,7 +67,7 @@
 
       & > div {
         border-bottom: 1px solid var(--border);
-        border-radius: var(--dialog-radius, 20px);
+        border-radius: var(--dialog-radius, 24px);
         animation-name: pop-in;
         animation-duration: 0.24s;
       }
@@ -89,7 +89,10 @@
     & > b {
       min-width: 0;
       overflow: hidden;
-      font-size: 17px;
+      font-family: var(--font-display);
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
